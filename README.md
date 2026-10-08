@@ -1,9 +1,10 @@
 # Lichilón y el Patrón
 
-Juego de plataformas estilo Mario Bros. para el navegador. Abre `index.html` para jugar.
+Juego de plataformas para el navegador. Abre `index.html` para jugar.
 
-- Elige personaje: Lichilón (salta alto), Julián Chón (rápido), Ofi Lofi (cae despacito).
-- Mover: flechas o A/D. Saltar: espacio/W. Patear: Z. Poder: X. Música/sonido: M.
+- Personajes: Lichilón (salta alto), Julián Chón (rápido), Sofi Lofi (cae despacito).
+- Teclado: flechas/A-D mover, espacio/W saltar, Z patear, X poder, M sonido.
 - Control (Switch, Xbox, PS): palanca o cruceta, A/B saltar, Y patear, X poder.
-- Bloques "?" dan flor de fuego, cristal de hielo o corazón.
-- Las serpientes gigantes se matan con patadas, fuego, o congelándolas y pateándolas.
+- Celular/tableta: 5 botones táctiles en pantalla (gira el celular en horizontal).
+- Kit Kats: 3 = 1 vida (máximo 5 vidas). Las cajas sorpresa dan el poder de hielo.
+- Enemigos: escarabajos hechizados, murciélagos y serpientes (3 golpes; congeladas, 2).
