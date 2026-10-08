@@ -1,10 +1,13 @@
 # Lichilón y el Patrón
 
-Juego de plataformas para el navegador. Abre `index.html` para jugar.
+Historia: el Patrón y la Patrona, dueños de los departamentos, subieron la renta. Los tres hermanos
+(Lichilón, Julián Chón y Sofi Lofi) tienen que derrotarlos para ganar su depa gratis.
 
-- Personajes: Lichilón (salta alto), Julián Chón (rápido), Sofi Lofi (cae despacito).
+Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `index.html` para jugar.
+
+- Nivel 1: Calle 60, Centro de Mérida (jefe: el Patrón). Nivel 2: Paseo de Montejo al atardecer (jefa: la Patrona).
 - Teclado: flechas/A-D mover, espacio/W saltar, Z patear, X poder, M sonido.
 - Control (Switch, Xbox, PS): palanca o cruceta, A/B saltar, Y patear, X poder.
-- Celular/tableta: 5 botones táctiles en pantalla (gira el celular en horizontal).
-- Kit Kats: 3 = 1 vida (máximo 5 vidas). Las cajas sorpresa dan el poder de hielo.
-- Enemigos: escarabajos hechizados, murciélagos y serpientes (3 golpes; congeladas, 2).
+- Celular/tableta: 5 botones táctiles (gira el celular en horizontal).
+- Power-ups (cajas de regalo): hielo, botas de resorte (15 s) y escudo amarillo (absorbe un golpe).
+- Pinchos: quitan una vida (el escudo los absorbe). Kit Kats: 3 = 1 vida (máximo 5).
