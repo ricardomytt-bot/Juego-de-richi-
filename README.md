@@ -13,4 +13,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Celular/tableta: 5 botones táctiles (gira el celular en horizontal).
 - Power-ups: hielo, botas de resorte (15 s) y escudo amarillo (absorbe un golpe).
 - Kit Kats: 3 = 1 vida (máximo 5). Al perder una vida te quedas donde estás; sin vidas, vuelves al inicio del nivel.
-- Logros: desbloquean personajes nuevos (Venadito, Chocolate y El Toh).
+- Logros: hay 3 personajes secretos que aparecen bloqueados (todavía no están hechos).
+- Dibujos al estilo de caricaturas antiguas (contornos gruesos, guantes blancos, ojos de pastel) con efecto de película antigua opcional.
+- Si no se oye nada: Ajustes > Sonido compatible = Sí (usa archivos de audio generados con código).
