@@ -5,112 +5,273 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>Lichilón y el Patrón</title>
 <style>
-  html, body { margin: 0; height: 100%; background: #111; overflow: hidden; }
+  html, body { margin: 0; height: 100%; background: #0b0b14; overflow: hidden; }
   body { display: flex; align-items: center; justify-content: center; }
-  canvas { background: #5c94fc; image-rendering: pixelated; max-width: 100vw; max-height: 100vh; }
+  canvas { max-width: 100vw; max-height: 100vh; image-rendering: pixelated; touch-action: none; }
 </style>
 </head>
 <body>
 <canvas id="juego" width="800" height="450"></canvas>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 0.1
-//  Todo el juego está en este archivo. Se divide en partes:
-//   1. Configuración   2. Controles   3. Nivel   4. Reglas   5. Dibujo
+//  LICHILÓN Y EL PATRÓN  -  Versión 0.2
+//  Partes del código:
+//   1. Configuración y personajes   2. Sonidos   3. Controles
+//   4. Gráficos (sprites)           5. Nivel     6. Reglas del juego
+//   7. Dibujo                       8. Ciclo principal
 // ============================================================
 
 const canvas = document.getElementById('juego');
 const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
 const W = canvas.width, H = canvas.height;
-const T = 32;                         // tamaño de cada bloque (tile)
-
-// ---------- 1. CONFIGURACIÓN (cambia estos números y mira qué pasa) ----------
-const GRAVEDAD   = 0.6;
-const VEL_CAMINAR = 3.2;
-const FUERZA_SALTO = 13.5;
+const T = 32;                                    // tamaño de cada bloque
+const GRAVEDAD = 0.6;
 const VIDAS_INICIO = 3;
 
-// ---------- 2. CONTROLES ----------
-// Teclado: flechas o A/D para moverse, espacio / W / flecha arriba para saltar.
-// Control (Switch, Xbox, PS...): palanca o cruceta para moverse, botón A o B para saltar.
-const teclas = {};
+// ---------- 1. PERSONAJES (cambia estos números para inventar ventajas) ----------
+const PERSONAJES = [
+  { nombre: 'LICHILÓN',    vel: 2.9, salto: 15.2, caida: 1.0,  maxCaida: 15,
+    desc: ['Lento pero salta', 'altísimo.'],  stats: { vel: 2, salto: 5, caida: 3 },
+    pal: { H:'#e52521', R:'#fff', S:'#f9c79b', B:'#6b3a1e', K:'#111', C:'#e52521', P:'#2b49d6', O:'#5a2d0c', W:'#fff' }, extra: [] },
+  { nombre: 'JULIÁN CHÓN', vel: 4.6, salto: 12.0, caida: 1.0,  maxCaida: 15,
+    desc: ['Rapidísimo pero', 'salta poquito.'], stats: { vel: 5, salto: 2, caida: 3 },
+    pal: { H:'#2ea043', R:'#fff', S:'#f1b98a', B:'#1a1a1a', K:'#111', C:'#2ea043', P:'#2a2f4a', O:'#111', W:'#fff' }, extra: [] },
+  { nombre: 'OFI LOFI',    vel: 3.6, salto: 13.4, caida: 0.45, maxCaida: 4.5,
+    desc: ['Cae despacito,', 'casi vuela.'],   stats: { vel: 3, salto: 3, caida: 5 },
+    pal: { H:'#f6d04d', R:'#ff4f9a', S:'#f9c79b', B:'#d4a017', K:'#111', C:'#fff0f6', P:'#ff8cc6', O:'#c2185b', W:'#fff' },
+    extra: [[0,3,'B'],[0,4,'B'],[0,5,'B'],[0,6,'B'],[0,7,'B'],[0,8,'B'],[1,6,'B'],[1,7,'B'],[7,0,'R'],[8,0,'R'],[9,0,'R'],[8,1,'R']] },
+];
+
+// ---------- 2. SONIDOS (se fabrican con código, no hay archivos) ----------
+let audioCtx = null, silencio = false, musicaOn = false;
+function audio() {
+  if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function tono(f1, f2, dur, tipo = 'square', vol = 0.08, retraso = 0) {
+  const a = audio(); if (!a || silencio) return;
+  const t0 = a.currentTime + retraso, o = a.createOscillator(), g = a.createGain();
+  o.type = tipo; o.frequency.setValueAtTime(f1, t0);
+  o.frequency.exponentialRampToValueAtTime(Math.max(20, f2), t0 + dur);
+  g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + dur + 0.02);
+}
+function ruido(dur, vol = 0.1, filtro = 1200) {
+  const a = audio(); if (!a || silencio) return;
+  const n = Math.floor(a.sampleRate * dur), b = a.createBuffer(1, n, a.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = a.createBufferSource(), g = a.createGain(), f = a.createBiquadFilter();
+  f.type = 'lowpass'; f.frequency.value = filtro; g.gain.value = vol;
+  s.buffer = b; s.connect(f); f.connect(g); g.connect(a.destination); s.start();
+}
+const SONIDOS = {
+  salto:   () => tono(280, 720, 0.16),
+  moneda:  () => { tono(988, 988, 0.07, 'square', 0.07); tono(1319, 1319, 0.2, 'square', 0.07, 0.07); },
+  pisoton: () => { tono(400, 120, 0.12, 'square', 0.1); },
+  patada:  () => { ruido(0.12, 0.18, 800); tono(200, 80, 0.1, 'triangle', 0.12); },
+  fuego:   () => { tono(900, 200, 0.22, 'sawtooth', 0.06); ruido(0.15, 0.05, 3000); },
+  hielo:   () => { tono(1800, 2600, 0.18, 'triangle', 0.08); tono(2400, 3200, 0.14, 'sine', 0.05, 0.05); },
+  rompe:   () => { ruido(0.3, 0.2, 5000); tono(1500, 300, 0.25, 'triangle', 0.08); },
+  poder:   () => [523, 659, 784, 1047].forEach((f, i) => tono(f, f, 0.12, 'square', 0.07, i * 0.07)),
+  golpe:   () => { tono(500, 100, 0.35, 'sawtooth', 0.1); },
+  tragar:  () => { tono(300, 60, 0.5, 'sawtooth', 0.12); ruido(0.3, 0.12, 400); },
+  siseo:   () => ruido(0.25, 0.06, 6000),
+  gana:    () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tono(f, f, 0.18, 'square', 0.08, i * 0.12)),
+  pierde:  () => [400, 350, 300, 200].forEach((f, i) => tono(f, f * 0.8, 0.25, 'triangle', 0.1, i * 0.2)),
+  menu:    () => tono(660, 880, 0.08, 'square', 0.06),
+  bloque:  () => tono(150, 100, 0.08, 'square', 0.08),
+};
+const sfx = n => { try { SONIDOS[n](); } catch (e) {} };
+
+// Música de fondo (muy sencilla). Tecla M para quitarla.
+const MELODIA = [0,4,7,12,7,4,0,null,2,5,9,14,9,5,2,null,4,7,11,16,11,7,4,null,0,4,7,12,16,12,7,4];
+const BAJO    = [0,0,-5,-5,-7,-7,-5,-5];
+let pasoMusica = 0;
+setInterval(() => {
+  if (!musicaOn || silencio || !audioCtx) return;
+  const n = MELODIA[pasoMusica % MELODIA.length];
+  if (n !== null) tono(261.6 * Math.pow(2, n / 12), 261.6 * Math.pow(2, n / 12), 0.13, 'square', 0.025);
+  if (pasoMusica % 4 === 0) { const b = BAJO[(pasoMusica / 4) % BAJO.length]; tono(130.8 * Math.pow(2, b / 12), 130.8 * Math.pow(2, b / 12), 0.4, 'triangle', 0.05); }
+  pasoMusica++;
+}, 170);
+
+// ---------- 3. CONTROLES ----------
+// Teclado: flechas o A/D mover | Espacio, W o ↑ saltar | Z o K patear | X o J poder
+// Control (Switch, Xbox, PS): palanca/cruceta mover | A o B saltar | Y patear | X poder
+const teclas = {}, pulsos = {};
 addEventListener('keydown', e => {
-  teclas[e.code] = true;
   if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
-  if (e.code === 'Enter' || e.code === 'Space') presionarInicio();
+  if (!e.repeat) pulsos[e.code] = true;
+  teclas[e.code] = true;
+  audio();
+  if (e.code === 'KeyM' && !e.repeat) silencio = !silencio;
 });
 addEventListener('keyup', e => teclas[e.code] = false);
+const pulso = (...cods) => cods.reduce((hay, c) => { const v = pulsos[c]; pulsos[c] = false; return hay || !!v; }, false);
 
-function leerControles() {
-  let izq = teclas.ArrowLeft || teclas.KeyA;
-  let der = teclas.ArrowRight || teclas.KeyD;
-  let salto = teclas.Space || teclas.ArrowUp || teclas.KeyW;
+const pad = { held: {}, edge: {}, prev: {} };
+function actualizarPad() {
+  pad.held = {}; pad.edge = {};
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   for (const p of pads) {
     if (!p) continue;
-    if (p.axes[0] < -0.4 || (p.buttons[14] && p.buttons[14].pressed)) izq = true;
-    if (p.axes[0] >  0.4 || (p.buttons[15] && p.buttons[15].pressed)) der = true;
-    if ((p.buttons[0] && p.buttons[0].pressed) || (p.buttons[1] && p.buttons[1].pressed)) salto = true;
-    if (p.buttons[9] && p.buttons[9].pressed) presionarInicio();
+    p.buttons.forEach((b, i) => { if (b.pressed) pad.held[i] = true; });
+    if (p.axes[0] < -0.5) pad.held[100] = true;
+    if (p.axes[0] >  0.5) pad.held[101] = true;
   }
-  return { izq, der, salto };
+  for (const k in pad.held) if (!pad.prev[k]) pad.edge[k] = true;
+  pad.prev = pad.held;
 }
 
-// ---------- 3. NIVEL ----------
-// # = bloque   ? = bloque de moneda   o = moneda   e = enemigo (secuaz de la bruja)
-// P = inicio de Lichilón   F = meta (donde está el Patrón hechizado)
-const MAPA = [
-"                                                                                    ",
-"                                                                                    ",
-"                                                                                    ",
-"                                                                                    ",
-"                      ooo                                                           ",
-"                     #####                         ooo                              ",
-"              ?                        o         ########                           ",
-"                                      ###                                           ",
-"      o  o                    e                      o  o      e                    ",
-"     ####                  ######      ##        ###########  ####                  ",
-"                                                                                    ",
-"  P          e        ###           e        ###               e                F   ",
-"##############   ##########   #####################   ##############################",
-"##############   ##########   #####################   ##############################",
+function leerControles() {
+  const h = pad.held, e = pad.edge;
+  return {
+    izq: teclas.ArrowLeft || teclas.KeyA || h[14] || h[100],
+    der: teclas.ArrowRight || teclas.KeyD || h[15] || h[101],
+    salto: teclas.Space || teclas.ArrowUp || teclas.KeyW || h[0] || h[1],
+    patada: pulso('KeyZ', 'KeyK') || e[2],
+    poder: pulso('KeyX', 'KeyJ') || e[3] || e[5] || e[7],
+  };
+}
+
+// ---------- 4. GRÁFICOS: sprites dibujados con "pixeles" ----------
+function crearCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+function pintarGrid(grid, pal, extra = []) {
+  const c = crearCanvas(grid[0].length, grid.length), g = c.getContext('2d');
+  grid.forEach((fila, y) => [...fila].forEach((ch, x) => { if (ch !== '.' && pal[ch]) { g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); } }));
+  extra.forEach(([x, y, ch]) => { g.fillStyle = pal[ch]; g.fillRect(x, y, 1, 1); });
+  return c;
+}
+const CABEZA = [
+  "...HHHHH....",
+  "..HHHHHHHHH.",
+  "..BBBSSKS...",
+  ".BSBSSSKSSS.",
+  ".BSBBSSSKSSS",
+  ".BBSSSSKKK..",
+  "...SSSSSSS..",
+  "..CCCCCCCC..",
+  ".CCCPCCPCCC.",
+  "SSCCPPPPCCSS",
+  "SS.PPPPPP.SS",
+  "..PPPPPPPP..",
+];
+const PIES = [
+  ["..PPP..PPP..", "..OOO..OOO.."],     // quieto
+  ["..PPP...PPP.", ".OOOO...OOO."],     // caminar A
+  ["...PP.PP....", "..OOO.OOO..."],     // caminar B
+  ["PPP......PPP", "OOO......OOO"],     // salto
+];
+const spritesPersonaje = PERSONAJES.map(p => PIES.map(pies => pintarGrid([...CABEZA, ...pies], p.pal, p.extra)));
+
+const CUERPO_ENEMIGO = [
+  "..PP....PP..",
+  ".PPPPPPPPPP.",
+  "PPPPPPPPPPPP",
+  "PPKKWPPWKKPP",
+  "PPWKKPPKKWPP",
+  "PPPPPPPPPPPP",
+  ".PPWPPPPWPP.",
+  "..PPPPPPPP..",
+];
+const PAL_ENEMIGO = { P:'#7b3fb5', W:'#fff', K:'#111', B:'#3b1d5e' };
+const spritesEnemigo = [
+  pintarGrid([...CUERPO_ENEMIGO, ".BBB....BBB.", "BBBB....BBBB"], PAL_ENEMIGO),
+  pintarGrid([...CUERPO_ENEMIGO, "..BBB..BBB..", "..BBBBBBBB.."], PAL_ENEMIGO),
 ];
 
-const FILAS = MAPA.length, COLS = MAPA[0].length;
-const bloques = [];   // matriz de sólidos
-let monedas = [], enemigos = [], meta = null, inicio = {x: 64, y: 300};
-
-function cargarNivel() {
-  monedas = []; enemigos = []; meta = null;
-  for (let r = 0; r < FILAS; r++) {
-    bloques[r] = [];
-    for (let c = 0; c < COLS; c++) {
-      const ch = MAPA[r][c] || ' ';
-      bloques[r][c] = (ch === '#' || ch === '?');
-      const x = c * T, y = r * T;
-      if (ch === 'o') monedas.push({x: x + 8, y: y + 8, w: 16, h: 16, tomada: false});
-      if (ch === 'e') enemigos.push({x, y, w: 28, h: 28, vx: -1, vy: 0, vivo: true, aplastado: 0});
-      if (ch === 'P') inicio = {x, y};
-      if (ch === 'F' && !meta) meta = {x, y: y - 4 * T, w: T, h: 5 * T};
-    }
-  }
+// Mosaicos del piso y los bloques (se dibujan una vez y se reutilizan)
+function azar(n) { const x = Math.sin(n * 127.1) * 43758.5453; return x - Math.floor(x); }
+function crearTile(fn) { const c = crearCanvas(T, T); fn(c.getContext('2d')); return c; }
+const TILE_TIERRA = crearTile(g => {
+  g.fillStyle = '#8b4a1f'; g.fillRect(0, 0, T, T);
+  for (let i = 0; i < 26; i++) { g.fillStyle = azar(i) > .5 ? '#6f3a16' : '#a35c2a'; g.fillRect(Math.floor(azar(i + 9) * 14) * 2, Math.floor(azar(i + 40) * 14) * 2, 4, 2); }
+  g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(0, T - 2, T, 2);
+});
+const TILE_PASTO = crearTile(g => {
+  g.drawImage(TILE_TIERRA, 0, 0);
+  g.fillStyle = '#2e7d32'; g.fillRect(0, 0, T, 12);
+  g.fillStyle = '#4caf50'; g.fillRect(0, 0, T, 8);
+  g.fillStyle = '#7bd36b'; g.fillRect(0, 0, T, 3);
+  for (let x = 0; x < T; x += 4) { g.fillStyle = '#2e7d32'; g.fillRect(x, 12, 4, 2 + Math.floor(azar(x) * 4)); }
+});
+const TILE_LADRILLO = crearTile(g => {
+  g.fillStyle = '#7a2e10'; g.fillRect(0, 0, T, T);
+  g.fillStyle = '#c0562b';
+  [[1,1,14,6],[17,1,14,6],[1,9,6,6],[9,9,14,6],[25,9,6,6],[1,17,14,6],[17,17,14,6],[1,25,6,6],[9,25,14,6],[25,25,6,6]].forEach(r => g.fillRect(...r));
+  g.fillStyle = '#e0773f'; [[1,1,14,2],[17,1,14,2],[9,9,14,2],[1,17,14,2],[17,17,14,2],[9,25,14,2]].forEach(r => g.fillRect(...r));
+});
+function tileBloque(color, borde, brillo) {
+  return crearTile(g => {
+    g.fillStyle = borde; g.fillRect(0, 0, T, T);
+    g.fillStyle = color; g.fillRect(2, 2, T - 4, T - 4);
+    g.fillStyle = brillo; g.fillRect(2, 2, T - 4, 3); g.fillRect(2, 2, 3, T - 4);
+    g.fillStyle = borde; [[4,4],[T-7,4],[4,T-7],[T-7,T-7]].forEach(([x, y]) => g.fillRect(x, y, 3, 3));
+  });
 }
+const TILE_PREGUNTA = tileBloque('#f6b21a', '#8a4f00', '#ffd966');
+const TILE_USADO    = tileBloque('#8a7a6a', '#4a3f35', '#a5978a');
 
-// ---------- 4. REGLAS DEL JUEGO ----------
-let estado = 'titulo';      // titulo | jugando | perdio | gano
-let vidas = VIDAS_INICIO, puntos = 0, camara = 0, tiempoMensaje = 0;
-const jugador = { x: 0, y: 0, w: 24, h: 30, vx: 0, vy: 0, enSuelo: false, mirando: 1 };
+// ---------- 5. NIVEL ----------
+const COLS = 150, FILAS = 14;
+const mapa = Array.from({ length: FILAS }, () => Array(COLS).fill(' '));
+const monedasDef = [], caminantesDef = [], serpientesDef = [];
+const suelo = (a, b) => { for (let c = a; c <= b; c++) { mapa[12][c] = '#'; mapa[13][c] = '#'; } };
+const plat  = (a, b, r) => { for (let c = a; c <= b; c++) mapa[r][c] = '#'; };
+const bq    = (c, r, t) => { mapa[r][c] = t; };       // 'f' fuego, 'i' hielo, 'h' corazón, '?' sorpresa
+const monedas = (a, b, r) => { for (let c = a; c <= b; c++) monedasDef.push([c, r]); };
+const camina  = (...cs) => cs.forEach(c => caminantesDef.push(c));
+const serpiente = c => serpientesDef.push(c);
 
-function reiniciarPosicion() {
-  jugador.x = inicio.x; jugador.y = inicio.y;
-  jugador.vx = jugador.vy = 0; camara = 0;
-}
+suelo(0, 13); suelo(17, 28); suelo(32, 50); suelo(54, 70); suelo(74, 100); suelo(104, 125); suelo(129, 149);
+// Zona A
+bq(8, 8, 'f'); monedas(5, 7, 10); monedas(10, 12, 10); camina(11);
+// Zona B
+plat(20, 24, 9); bq(22, 9, '?'); monedas(20, 24, 8); camina(25);
+// Zona C (primera serpiente)
+plat(35, 39, 8); bq(36, 8, 'f'); bq(38, 8, 'i'); monedas(35, 39, 7); serpiente(45);
+// Zona D
+plat(58, 63, 9); bq(60, 9, '?'); monedas(58, 63, 8); camina(57, 65, 68);
+// Zona E (escalera y segunda serpiente)
+bq(77, 8, 'h'); camina(86);
+for (let k = 0; k < 3; k++) for (let r = 11 - k; r <= 11; r++) mapa[r][80 + k] = '#';
+plat(94, 98, 9); bq(96, 9, 'i'); monedas(94, 98, 8); serpiente(91);
+// Zona F
+plat(107, 111, 9); bq(109, 9, 'f'); monedas(107, 111, 8); camina(106, 113, 117); serpiente(121);
+// Zona G (castillo)
+bq(131, 8, 'h'); bq(133, 8, 'i'); bq(135, 8, 'f'); camina(132); serpiente(139); monedas(141, 143, 10);
+
+const sol = mapa.map(f => f.map(ch => ch !== ' '));
+const POS_INICIO = { x: 2 * T, y: 12 * T - 38 };
+const COL_CHECKPOINT = 75;
+const META = { x: 144 * T, y: 12 * T - 112, w: 80, h: 112 };
+
+// ---------- 6. REGLAS DEL JUEGO ----------
+let estado = 'elegir';      // elegir | jugando | perdio | gano
+let seleccion = 0, personaje = PERSONAJES[0], spritesJ = spritesPersonaje[0];
+let vidas = 0, puntos = 0, nMonedas = 0, camara = 0, reloj = 0, checkpoint = 0, poder = null, usados = {}, rebote = {};
+let enemigos = [], serpientes = [], items = [], balas = [], particulas = [], monedasVivas = [], tragando = 0;
+const jugador = { x: 0, y: 0, w: 24, h: 38, vx: 0, vy: 0, enSuelo: false, mirando: 1, patada: 0, invulnerable: 0, enfriamiento: 0, pasos: 0, golpeaA: new Set() };
+
 function nuevoJuego() {
-  vidas = VIDAS_INICIO; puntos = 0;
-  cargarNivel(); reiniciarPosicion(); estado = 'jugando';
+  vidas = VIDAS_INICIO; puntos = 0; nMonedas = 0; poder = null; checkpoint = POS_INICIO.x;
+  usados = {}; rebote = {}; items = []; balas = []; particulas = []; tragando = 0;
+  monedasVivas = monedasDef.map(([c, r]) => ({ x: c * T + 8, y: r * T + 8, w: 16, h: 16, tomada: false }));
+  enemigos = caminantesDef.map(c => ({ x: c * T, y: 12 * T - 28, w: 28, h: 28, vx: -0.9, vy: 0, vivo: true, congelado: 0 }));
+  serpientes = serpientesDef.map(c => ({ x: c * T, y: 12 * T - 56, w: 112, h: 56, vx: -0.8, vy: 0, dir: -1, hp: 4, hpMax: 4, vivo: true,
+    congelado: 0, destello: 0, enfria: 0, boca: 0, comiendo: 0 }));
+  estado = 'jugando'; reaparecer(true);
+  musicaOn = true; pasoMusica = 0;
 }
-function presionarInicio() {
-  if (estado !== 'jugando') nuevoJuego();
+function reaparecer(inicio) {
+  jugador.x = inicio ? POS_INICIO.x : checkpoint; jugador.y = inicio ? POS_INICIO.y : 12 * T - 38;
+  jugador.vx = jugador.vy = 0; jugador.patada = 0; jugador.invulnerable = 150; tragando = 0;
+  camara = Math.max(0, Math.min(jugador.x - W / 2, COLS * T - W));
+}
+function elegirPersonaje(i) {
+  seleccion = i; personaje = PERSONAJES[i]; spritesJ = spritesPersonaje[i];
 }
 
 const choca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -118,11 +279,12 @@ const hayBloque = (px, py) => {
   const c = Math.floor(px / T), r = Math.floor(py / T);
   if (c < 0 || c >= COLS) return true;
   if (r < 0 || r >= FILAS) return false;
-  return bloques[r][c];
+  return sol[r][c];
 };
 
 // Mueve un objeto y lo frena contra los bloques (primero en X y luego en Y).
 function moverConColision(o) {
+  o.chocoPared = false; o.golpeCabeza = null;
   o.x += o.vx;
   if (o.vx !== 0) {
     const lado = o.vx > 0 ? o.x + o.w : o.x;
@@ -132,163 +294,438 @@ function moverConColision(o) {
     }
   }
   o.y += o.vy; o.enSuelo = false;
-  const bordeX = [o.x + 2, o.x + o.w - 2];
+  const bordes = [o.x + 2, o.x + o.w / 2, o.x + o.w - 2];
   if (o.vy >= 0) {
     const pie = o.y + o.h;
-    if (bordeX.some(px => hayBloque(px, pie))) {
-      o.y = Math.floor(pie / T) * T - o.h; o.vy = 0; o.enSuelo = true;
+    if (bordes.some(px => hayBloque(px, pie))) { o.y = Math.floor(pie / T) * T - o.h; o.vy = 0; o.enSuelo = true; }
+  } else {
+    const px = bordes.find(p => hayBloque(p, o.y));
+    if (px !== undefined) {
+      o.golpeCabeza = { c: Math.floor(px / T), r: Math.floor(o.y / T) };
+      o.y = (Math.floor(o.y / T) + 1) * T; o.vy = 0;
     }
-  } else if (bordeX.some(px => hayBloque(px, o.y))) {
-    o.y = (Math.floor(o.y / T) + 1) * T; o.vy = 0;
   }
+}
+
+function chispas(x, y, n, color, vel = 3, grav = 0.15) {
+  for (let i = 0; i < n; i++) particulas.push({ x, y, vx: (Math.random() - .5) * vel * 2, vy: (Math.random() - .8) * vel * 2, vida: 25 + Math.random() * 20, color, tam: 2 + Math.random() * 3, grav });
 }
 
 function perderVida() {
-  vidas--;
-  if (vidas <= 0) { estado = 'perdio'; return; }
-  reiniciarPosicion();
+  vidas--; poder = null; sfx('golpe');
+  if (vidas <= 0) { estado = 'perdio'; musicaOn = false; sfx('pierde'); return; }
+  reaparecer(false);
+}
+function recibirGolpe() {              // golpe de un caminante: primero pierdes el poder
+  if (jugador.invulnerable > 0) return;
+  if (poder) { poder = null; jugador.invulnerable = 100; jugador.vy = -7; sfx('golpe'); chispas(jugador.x + 12, jugador.y + 12, 10, '#fff'); }
+  else perderVida();
+}
+function abrirBloque(c, r) {
+  const k = r + ',' + c, tipo = mapa[r][c];
+  if (tipo === ' ' || tipo === '#') { sfx('bloque'); rebote[k] = 8; return; }
+  if (usados[k]) { sfx('bloque'); return; }
+  usados[k] = true; rebote[k] = 8;
+  const t = tipo === '?' ? ['f', 'i', 'h'][Math.floor(Math.random() * 3)] : tipo;
+  items.push({ tipo: t, x: c * T + 4, y: r * T - 4, w: 24, h: 24, subir: 24 });
+  chispas(c * T + 16, r * T, 6, '#ffd966', 2);
+  sfx('bloque');
+}
+function dispararPoder() {
+  if (!poder || balas.length >= 3 || jugador.enfriamiento > 0) return;
+  jugador.enfriamiento = 16;
+  const d = jugador.mirando;
+  balas.push({ tipo: poder, x: jugador.x + (d > 0 ? jugador.w : -10), y: jugador.y + 12, w: 12, h: 12, vx: (poder === 'fuego' ? 6 : 7) * d, vy: -1, vida: 120, giro: 0 });
+  sfx(poder === 'fuego' ? 'fuego' : 'hielo');
+}
+function cajaPatada() {
+  const d = jugador.mirando;
+  return { x: d > 0 ? jugador.x + jugador.w - 4 : jugador.x - 30, y: jugador.y + jugador.h - 24, w: 34, h: 24 };
+}
+function matarCaminante(e, congelado) {
+  e.vivo = false; puntos += congelado ? 200 : 100;
+  if (congelado) { chispas(e.x + 14, e.y + 14, 18, '#bfeaff', 4); sfx('rompe'); }
+  else { chispas(e.x + 14, e.y + 14, 12, '#7b3fb5', 3); }
+}
+function danarSerpiente(s, n) {
+  if (!s.vivo || s.enfria > 0) return;
+  s.hp -= n; s.destello = 10; s.enfria = 14; sfx('golpe');
+  chispas(s.x + (s.dir > 0 ? s.w - 20 : 20), s.y + 20, 10, '#7dff7d', 3);
+  if (s.hp <= 0) matarSerpiente(s, false);
+}
+function matarSerpiente(s, congelada) {
+  s.vivo = false; puntos += 500;
+  chispas(s.x + s.w / 2, s.y + 28, 40, congelada ? '#bfeaff' : '#3aa845', 6);
+  sfx(congelada ? 'rompe' : 'golpe');
 }
 
 function actualizar() {
-  if (estado !== 'jugando') return;
+  reloj++;
+  if (estado !== 'jugando') {
+    for (const pa of particulas) { pa.x += pa.vx; pa.y += pa.vy; pa.vy += pa.grav; pa.vida--; }
+    particulas = particulas.filter(pa => pa.vida > 0);
+    return;
+  }
   const ctrl = leerControles();
+  const p = jugador, pj = personaje;
+  if (p.invulnerable > 0) p.invulnerable--;
+  if (p.enfriamiento > 0) p.enfriamiento--;
 
-  // Lichilón
-  jugador.vx = (ctrl.der ? VEL_CAMINAR : 0) - (ctrl.izq ? VEL_CAMINAR : 0);
-  if (jugador.vx) jugador.mirando = Math.sign(jugador.vx);
-  if (ctrl.salto && jugador.enSuelo) { jugador.vy = -FUERZA_SALTO; jugador.enSuelo = false; }
-  if (!ctrl.salto && jugador.vy < -4) jugador.vy = -4;   // salto corto si sueltas el botón
-  jugador.vy = Math.min(jugador.vy + GRAVEDAD, 15);
-  moverConColision(jugador);
-  if (jugador.y > FILAS * T + 100) perderVida();         // se cayó al hoyo
+  // --- Lichilón / Julián / Ofi ---
+  if (tragando > 0) {
+    tragando--; p.vx = 0;
+    if (tragando === 0) { perderVida(); if (estado !== 'jugando') return; }
+  } else {
+    p.vx = (ctrl.der ? pj.vel : 0) - (ctrl.izq ? pj.vel : 0);
+    if (p.vx) { p.mirando = Math.sign(p.vx); p.pasos += Math.abs(p.vx); }
+    if (ctrl.salto && p.enSuelo) { p.vy = -pj.salto; p.enSuelo = false; sfx('salto'); }
+    if (!ctrl.salto && p.vy < -4) p.vy = -4;
+    if (ctrl.patada && p.patada === 0) { p.patada = 14; p.golpeaA = new Set(); sfx('patada'); }
+    if (ctrl.poder) dispararPoder();
+    p.vy = Math.min(p.vy + GRAVEDAD * (p.vy > 0 ? pj.caida : 1), pj.maxCaida);
+    moverConColision(p);
+    if (p.golpeCabeza) abrirBloque(p.golpeCabeza.c, p.golpeCabeza.r);
+    if (p.y > FILAS * T + 100) { perderVida(); if (estado !== 'jugando') return; }
+    if (p.x > COL_CHECKPOINT * T) checkpoint = COL_CHECKPOINT * T;
+  }
+  if (p.patada > 0) p.patada--;
+  const caja = p.patada > 0 ? cajaPatada() : null;
 
-  // Enemigos
+  // --- Enemigos caminantes ---
   for (const e of enemigos) {
-    if (!e.vivo) { if (e.aplastado > 0) e.aplastado--; continue; }
-    e.chocoPared = false;
+    if (!e.vivo) continue;
+    if (e.congelado > 0) { e.congelado--; e.vx = 0; }
+    else if (e.vx === 0) e.vx = e.ultimoVx || -0.9;
     e.vy = Math.min(e.vy + GRAVEDAD, 15);
     const antes = e.x;
+    if (e.vx !== 0) e.ultimoVx = e.vx;
     moverConColision(e);
-    // Da la vuelta si choca o llega al borde de una plataforma
-    const adelante = e.vx > 0 ? e.x + e.w + 2 : e.x - 2;
-    if (e.chocoPared || (e.enSuelo && !hayBloque(adelante, e.y + e.h + 4))) { e.vx *= -1; e.x = antes; }
-    if (choca(jugador, e)) {
-      if (jugador.vy > 0 && jugador.y + jugador.h - e.y < 18) {   // pisotón
-        e.vivo = false; e.aplastado = 20; jugador.vy = -9; puntos += 100;
-      } else { perderVida(); break; }
+    if (e.vx !== 0) {
+      const adelante = e.vx > 0 ? e.x + e.w + 2 : e.x - 2;
+      if (e.chocoPared || (e.enSuelo && !hayBloque(adelante, e.y + e.h + 4))) { e.vx = -e.vx; e.x = antes; }
+    }
+    if (caja && !p.golpeaA.has(e) && choca(caja, e)) { p.golpeaA.add(e); matarCaminante(e, e.congelado > 0); continue; }
+    if (tragando === 0 && choca(p, e)) {
+      if (p.vy > 0 && p.y + p.h - e.y < 20) { matarCaminante(e, e.congelado > 0); p.vy = -9; sfx('pisoton'); }
+      else if (e.congelado === 0) { recibirGolpe(); if (estado !== 'jugando') return; }
     }
   }
 
-  // Monedas
-  for (const m of monedas) if (!m.tomada && choca(jugador, m)) { m.tomada = true; puntos += 50; }
+  // --- Serpientes gigantes ---
+  for (const s of serpientes) {
+    if (!s.vivo) continue;
+    if (s.destello > 0) s.destello--;
+    if (s.enfria > 0) s.enfria--;
+    if (s.congelado > 0) s.congelado--;
+    s.vy = Math.min(s.vy + GRAVEDAD, 15);
+    const dx = (p.x + p.w / 2) - (s.x + s.w / 2), cerca = Math.abs(dx) < 260 && Math.abs(p.y - s.y) < 100;
+    s.boca = ((Math.abs(dx) < 175 && s.congelado === 0) || s.comiendo > 0) ? Math.min(s.boca + 1, 10) : Math.max(s.boca - 1, 0);
+    if (s.comiendo > 0) { s.comiendo--; s.vx = 0; }
+    else if (s.congelado > 0) s.vx = 0;
+    else {
+      if (cerca) s.dir = dx > 0 ? 1 : -1;
+      s.vx = s.dir * (cerca ? 1.3 : 0.8);
+      const frente = s.dir > 0 ? s.x + s.w + 4 : s.x - 4;
+      if (s.enSuelo && !hayBloque(frente, s.y + s.h + 4)) { if (cerca) s.vx = 0; else { s.dir *= -1; s.vx = 0; } }
+    }
+    const sxAntes = s.x;
+    moverConColision(s);
+    if (s.chocoPared) { s.dir *= -1; s.x = sxAntes; }
+    if (s.congelado === 0 && Math.random() < 0.004) sfx('siseo');
+    if (caja && !p.golpeaA.has(s) && choca(caja, s)) {
+      p.golpeaA.add(s);
+      if (s.congelado > 0) matarSerpiente(s, true); else danarSerpiente(s, 1);
+    }
+    if (tragando === 0 && s.vivo && choca(p, s)) {
+      if (p.vy > 0 && p.y + p.h - s.y < 16) { p.vy = -10; sfx('pisoton'); }       // sobre su lomo estás a salvo
+      else if (s.congelado === 0 && p.invulnerable === 0) { tragando = 55; s.comiendo = 55; sfx('tragar'); }
+    }
+  }
 
-  // Meta
-  if (meta && choca(jugador, meta)) { estado = 'gano'; puntos += 1000; }
+  // --- Bolas de fuego y hielo ---
+  for (const b of balas) {
+    b.vida--; b.giro += 0.4;
+    b.vy = Math.min(b.vy + 0.35, 8);
+    moverConColision(b);
+    if (b.enSuelo) b.vy = b.tipo === 'fuego' ? -5 : -3;
+    if (b.chocoPared || b.y > FILAS * T + 50) b.vida = 0;
+    if (Math.random() < .5) particulas.push({ x: b.x + 6, y: b.y + 6, vx: 0, vy: 0, vida: 10, color: b.tipo === 'fuego' ? '#ff9800' : '#bfeaff', tam: 3, grav: 0 });
+    for (const e of enemigos) if (e.vivo && b.vida > 0 && choca(b, e)) {
+      b.vida = 0;
+      if (b.tipo === 'fuego') { matarCaminante(e, false); sfx('pisoton'); }
+      else { e.congelado = 600; chispas(e.x + 14, e.y + 14, 10, '#bfeaff', 3); sfx('hielo'); }
+    }
+    for (const s of serpientes) if (s.vivo && b.vida > 0 && choca(b, s)) {
+      b.vida = 0;
+      if (b.tipo === 'fuego') { s.congelado = 0; danarSerpiente(s, 1); }
+      else { s.congelado = 300; chispas(s.x + s.w / 2, s.y + 28, 14, '#bfeaff', 4); sfx('hielo'); }
+    }
+  }
+  balas = balas.filter(b => b.vida > 0);
 
-  camara = Math.max(0, Math.min(jugador.x - W / 2, COLS * T - W));
+  // --- Objetos, monedas, meta ---
+  for (const it of items) {
+    if (it.subir > 0) { it.subir -= 1.5; it.y -= 1.5; }
+    if (it.tomado || !choca(p, it)) continue;
+    it.tomado = true; sfx('poder'); puntos += 200;
+    if (it.tipo === 'f') poder = 'fuego'; else if (it.tipo === 'i') poder = 'hielo'; else vidas++;
+    chispas(p.x + 12, p.y + 10, 14, '#fff', 4);
+  }
+  items = items.filter(i => !i.tomado);
+  for (const m of monedasVivas) if (!m.tomada && choca(p, m)) { m.tomada = true; puntos += 50; nMonedas++; sfx('moneda'); chispas(m.x + 8, m.y + 8, 5, '#ffd700', 2); }
+  if (tragando === 0 && choca(p, META)) {
+    estado = 'gano'; puntos += 2000; musicaOn = false; sfx('gana');
+    for (let i = 0; i < 80; i++) chispas(camara + Math.random() * W, Math.random() * 150, 1, ['#ffd700','#ff4f9a','#4fc3f7','#7bd36b'][i % 4], 2, 0.1);
+  }
+
+  for (const pa of particulas) { pa.x += pa.vx; pa.y += pa.vy; pa.vy += pa.grav; pa.vida--; }
+  particulas = particulas.filter(pa => pa.vida > 0);
+  for (const k in rebote) if (--rebote[k] <= 0) delete rebote[k];
+
+  const objetivo = Math.max(0, Math.min(p.x - W / 2 + 20, COLS * T - W));
+  camara += (objetivo - camara) * 0.15;
 }
 
-// ---------- 5. DIBUJO ----------
+// ---------- 7. DIBUJO ----------
 function texto(t, x, y, tam = 20, color = '#fff', alinea = 'left') {
-  ctx.font = `bold ${tam}px "Courier New", monospace`;
-  ctx.textAlign = alinea;
+  ctx.font = `bold ${tam}px "Courier New", monospace`; ctx.textAlign = alinea;
   ctx.fillStyle = '#000'; ctx.fillText(t, x + 2, y + 2);
   ctx.fillStyle = color;  ctx.fillText(t, x, y);
 }
+function sprite(cv, x, y, esc, volteado) {
+  ctx.save();
+  if (volteado) { ctx.translate(x + cv.width * esc, y); ctx.scale(-esc, esc); }
+  else { ctx.translate(x, y); ctx.scale(esc, esc); }
+  ctx.drawImage(cv, 0, 0); ctx.restore();
+}
+function redondo(x, y, w, h, r, color) {
+  ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); ctx.fill();
+}
 
-function dibujarPersonaje(x, y, w, h, gorro, mirando) {
-  ctx.fillStyle = '#f8c89a'; ctx.fillRect(x + 4, y + 2, w - 8, 12);        // cara
-  ctx.fillStyle = gorro;     ctx.fillRect(x + 2, y, w - 4, 6);             // gorra
-  ctx.fillRect(x + (mirando > 0 ? w - 8 : 0), y + 4, 8, 3);                // visera
-  ctx.fillStyle = '#000';    ctx.fillRect(x + (mirando > 0 ? w - 10 : 6), y + 8, 3, 3);   // ojo
-  ctx.fillStyle = gorro;     ctx.fillRect(x + 2, y + 14, w - 4, 8);        // camiseta
-  ctx.fillStyle = '#2a4bd7'; ctx.fillRect(x + 2, y + 22, w - 4, h - 22);   // pantalón
+let cieloGrad = null;
+function dibujarFondo(cam) {
+  if (!cieloGrad) { cieloGrad = ctx.createLinearGradient(0, 0, 0, H); cieloGrad.addColorStop(0, '#3a86e8'); cieloGrad.addColorStop(1, '#bfe6ff'); }
+  ctx.fillStyle = cieloGrad; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#fff3a8'; ctx.beginPath(); ctx.arc(680, 100, 36, 0, 7); ctx.fill();
+  ctx.fillStyle = '#ffe34d'; ctx.beginPath(); ctx.arc(680, 100, 28, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.92)';
+  for (let i = 0; i < 9; i++) {
+    const nx = (((i * 290 - cam * 0.25) % (W + 300)) + W + 300) % (W + 300) - 150, ny = 70 + (i * 37) % 90;
+    [[0,0,26],[28,-10,32],[60,0,26],[30,8,28]].forEach(([dx, dy, r]) => { ctx.beginPath(); ctx.arc(nx + dx, ny + dy, r, 0, 7); ctx.fill(); });
+  }
+  [[0.15, '#6cc3a0', 150, 90], [0.35, '#3fa66a', 110, 60]].forEach(([vel, col, base, alto]) => {
+    ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, H);
+    for (let x = 0; x <= W; x += 10) ctx.lineTo(x, H - base - Math.sin((x + cam * vel) * 0.012) * alto * 0.5 - Math.sin((x + cam * vel) * 0.031) * alto * 0.2);
+    ctx.lineTo(W, H); ctx.fill();
+  });
+}
+
+function dibujarNivel() {
+  const c0 = Math.max(0, Math.floor(camara / T)), c1 = Math.min(COLS - 1, c0 + Math.ceil(W / T) + 1);
+  for (let r = 0; r < FILAS; r++) for (let c = c0; c <= c1; c++) {
+    const ch = mapa[r][c]; if (ch === ' ') continue;
+    const k = r + ',' + c, dy = rebote[k] ? -Math.sin(rebote[k] / 8 * Math.PI) * 8 : 0, x = c * T, y = r * T + dy;
+    if (ch === '#') ctx.drawImage(r >= 12 ? (r === 12 ? TILE_PASTO : TILE_TIERRA) : TILE_LADRILLO, x, y);
+    else {
+      ctx.drawImage(usados[k] ? TILE_USADO : TILE_PREGUNTA, x, y);
+      if (!usados[k]) texto('?', x + 16, y + 24, 22, '#fff', 'center');
+    }
+  }
+}
+
+function dibujarMoneda(m) {
+  const ancho = Math.abs(Math.cos(reloj * 0.08 + m.x)) * 7 + 1;
+  ctx.fillStyle = '#b8860b'; ctx.beginPath(); ctx.ellipse(m.x + 8, m.y + 8, ancho + 1, 9, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.ellipse(m.x + 8, m.y + 8, ancho, 8, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fff3a0'; ctx.fillRect(m.x + 8 - ancho / 2, m.y + 4, Math.max(1, ancho / 3), 8);
+}
+
+function dibujarItem(it) {
+  const x = it.x, y = it.y + Math.sin(reloj * 0.1) * 2;
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(x + 12, y + 12, 17, 0, 7); ctx.fill();
+  if (it.tipo === 'f') {                         // flor de fuego
+    ctx.fillStyle = '#2e7d32'; ctx.fillRect(x + 10, y + 12, 4, 12);
+    [['#ff5722', 0, 8], ['#ff5722', 16, 8], ['#ff5722', 8, 0], ['#ff9800', 8, 14]].forEach(([c, dx, dy]) => { ctx.fillStyle = c; ctx.fillRect(x + dx, y + dy, 8, 8); });
+    ctx.fillStyle = '#ffeb3b'; ctx.fillRect(x + 8, y + 8, 8, 8);
+  } else if (it.tipo === 'i') {                  // cristal de hielo
+    ctx.fillStyle = '#4fc3f7'; ctx.beginPath(); ctx.moveTo(x + 12, y); ctx.lineTo(x + 22, y + 12); ctx.lineTo(x + 12, y + 24); ctx.lineTo(x + 2, y + 12); ctx.fill();
+    ctx.fillStyle = '#e1f5fe'; ctx.beginPath(); ctx.moveTo(x + 12, y + 3); ctx.lineTo(x + 17, y + 12); ctx.lineTo(x + 12, y + 12); ctx.fill();
+  } else {                                       // corazón
+    ctx.fillStyle = '#e91e63'; ctx.beginPath(); ctx.arc(x + 7, y + 9, 7, 0, 7); ctx.arc(x + 17, y + 9, 7, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x, y + 12); ctx.lineTo(x + 24, y + 12); ctx.lineTo(x + 12, y + 24); ctx.fill();
+  }
+}
+
+function dibujarCaminante(e) {
+  const frame = Math.floor(reloj / 10) % 2;
+  sprite(spritesEnemigo[e.congelado > 0 ? 0 : frame], e.x - 4, e.y - 6, 3, (e.vx || e.ultimoVx) > 0);
+  if (e.congelado > 0) {
+    ctx.fillStyle = 'rgba(150,225,255,.6)'; ctx.fillRect(e.x - 3, e.y - 5, 34, 33);
+    ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(e.x, e.y - 2, 4, 14); ctx.fillRect(e.x, e.y - 2, 12, 3);
+  }
+}
+
+function dibujarSerpiente(s) {
+  const hielo = s.congelado > 0;
+  ctx.save(); ctx.translate(s.x + s.w / 2, s.y + s.h); ctx.scale(s.dir, 1);
+  const n = 8, t = hielo ? 0 : reloj * 0.14;
+  const col = i => hielo ? (i % 2 ? '#cfefff' : '#a5dcf5') : s.destello > 0 && s.destello % 4 < 2 ? '#fff' : (i % 2 ? '#3aa845' : '#2c8a3a');
+  for (let i = 0; i < n; i++) {
+    const u = i / (n - 1), x = -s.w / 2 + 14 + u * (s.w - 44), r = 9 + u * 8;
+    const y = -r - 2 - Math.sin(t + i * 0.9) * 6 * (1 - u * 0.5);
+    ctx.fillStyle = col(i); ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.fillStyle = hielo ? '#e8f8ff' : '#d7e8a0'; ctx.beginPath(); ctx.ellipse(x, y + r * 0.45, r * 0.8, r * 0.4, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = hielo ? '#7fc4e8' : '#1d5e28'; ctx.beginPath(); ctx.arc(x, y - r * 0.35, r * 0.35, 0, 7); ctx.fill();
+  }
+  // cabeza
+  const hx = s.w / 2 - 22, hy = -22 - Math.sin(t + 7 * 0.9) * 3, abre = s.boca / 10;
+  ctx.fillStyle = col(1); ctx.beginPath(); ctx.ellipse(hx, hy, 24, 17, 0, 0, 7); ctx.fill();
+  if (abre > 0.05) {                              // boca abierta
+    ctx.fillStyle = '#6a0d1a'; ctx.beginPath(); ctx.moveTo(hx + 2, hy + 2); ctx.lineTo(hx + 30, hy - 10 * abre - 2); ctx.lineTo(hx + 30, hy + 16 * abre + 4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#fff';
+    [[hx + 14, hy - 3 * abre - 1, 1], [hx + 22, hy - 7 * abre - 1, 1], [hx + 14, hy + 8 * abre, -1], [hx + 22, hy + 12 * abre, -1]].forEach(([fx, fy, sg]) => { ctx.beginPath(); ctx.moveTo(fx - 3, fy); ctx.lineTo(fx + 3, fy); ctx.lineTo(fx, fy + sg * 7); ctx.fill(); });
+  } else {
+    ctx.fillStyle = '#144d1e'; ctx.fillRect(hx + 4, hy + 5, 22, 2);
+    if (!hielo && Math.floor(reloj / 12) % 2) { ctx.fillStyle = '#e53935'; ctx.fillRect(hx + 26, hy + 5, 10, 2); ctx.fillRect(hx + 34, hy + 2, 4, 2); ctx.fillRect(hx + 34, hy + 7, 4, 2); }
+  }
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(hx + 8, hy - 8, 7, 0, 7); ctx.fill();
+  ctx.fillStyle = hielo ? '#7fc4e8' : '#ffd600'; ctx.beginPath(); ctx.arc(hx + 9, hy - 8, 5, 0, 7); ctx.fill();
+  ctx.fillStyle = '#000'; ctx.fillRect(hx + 8, hy - 13, 3, 10);
+  ctx.fillStyle = '#144d1e'; ctx.fillRect(hx + 4, hy - 17, 11, 3);
+  ctx.restore();
+  for (let i = 0; i < s.hpMax; i++) { ctx.fillStyle = i < s.hp ? '#e53935' : '#333'; ctx.fillRect(s.x + s.w / 2 - s.hpMax * 8 + i * 16, s.y - 16, 13, 7); }
+}
+
+function dibujarJugador() {
+  const p = jugador;
+  if (tragando > 0 && tragando < 40) return;                    // ya se lo tragó
+  if (p.invulnerable > 0 && Math.floor(p.invulnerable / 4) % 2) return;
+  if (poder) {
+    ctx.fillStyle = poder === 'fuego' ? 'rgba(255,140,0,.35)' : 'rgba(120,210,255,.4)';
+    ctx.beginPath(); ctx.arc(p.x + 12, p.y + 20, 28 + Math.sin(reloj * 0.2) * 2, 0, 7); ctx.fill();
+  }
+  let frame = 0;
+  if (!p.enSuelo || p.patada > 0) frame = 3; else if (p.vx) frame = 1 + Math.floor(p.pasos / 14) % 2;
+  sprite(spritesJ[frame], p.x - 6, p.y + p.h - 42, 3, p.mirando < 0);
+  if (p.patada > 0) {                                           // pierna estirada + estela
+    const d = p.mirando, fx = d > 0 ? p.x + p.w - 2 : p.x - 16;
+    ctx.fillStyle = personaje.pal.P; ctx.fillRect(fx, p.y + p.h - 14, 16, 8);
+    ctx.fillStyle = personaje.pal.O; ctx.fillRect(d > 0 ? fx + 10 : fx, p.y + p.h - 14, 8, 10);
+    ctx.fillStyle = `rgba(255,255,255,${p.patada / 20})`; ctx.fillRect(d > 0 ? fx + 14 : fx - 16, p.y + p.h - 22, 16, 3); ctx.fillRect(d > 0 ? fx + 14 : fx - 16, p.y + p.h - 8, 20, 3);
+  }
+}
+
+function dibujarBala(b) {
+  if (b.tipo === 'fuego') {
+    ctx.fillStyle = '#ff5722'; ctx.beginPath(); ctx.arc(b.x + 6, b.y + 6, 8, 0, 7); ctx.fill();
+    ctx.fillStyle = '#ffb300'; ctx.beginPath(); ctx.arc(b.x + 6, b.y + 6, 5, 0, 7); ctx.fill();
+    ctx.fillStyle = '#fff59d'; ctx.beginPath(); ctx.arc(b.x + 6, b.y + 6, 2.5, 0, 7); ctx.fill();
+  } else {
+    ctx.save(); ctx.translate(b.x + 6, b.y + 6); ctx.rotate(b.giro);
+    ctx.fillStyle = '#4fc3f7'; ctx.fillRect(-7, -7, 14, 14); ctx.fillStyle = '#e1f5fe'; ctx.fillRect(-4, -4, 5, 5); ctx.restore();
+  }
+}
+
+function dibujarPatron() {
+  const x = META.x, y = META.y, t = reloj * 0.05;
+  ctx.fillStyle = '#6d6d7a'; ctx.fillRect(x + 90, y - 100, 140, 212);                  // castillo
+  for (let i = 0; i < 5; i++) ctx.fillRect(x + 90 + i * 30, y - 116, 20, 16);
+  ctx.fillStyle = '#3b3b48'; ctx.fillRect(x + 140, y + 20, 40, 92); ctx.fillStyle = '#ffd54f'; ctx.fillRect(x + 110, y - 60, 16, 24); ctx.fillRect(x + 190, y - 60, 16, 24);
+  for (let i = 0; i < 8; i++) { const a = t + i * 0.8; ctx.fillStyle = 'rgba(190,60,255,.7)'; ctx.fillRect(x + 40 + Math.cos(a) * 52, y + 56 + Math.sin(a) * 52, 6, 6); }   // hechizo
+  ctx.fillStyle = '#5e2a91'; ctx.fillRect(x + 8, y + 24, 64, 88);                      // el Patrón
+  ctx.fillStyle = '#7b3fb5'; ctx.fillRect(x + 12, y + 28, 56, 80);
+  ctx.fillStyle = '#e8e0f0'; ctx.fillRect(x + 4, y + 16, 8, 16); ctx.fillRect(x + 68, y + 16, 8, 16);
+  ctx.fillStyle = '#ff1744'; ctx.fillRect(x + 20, y + 44, 12, 10); ctx.fillRect(x + 48, y + 44, 12, 10);
+  ctx.fillStyle = '#fff'; for (let i = 0; i < 4; i++) ctx.fillRect(x + 22 + i * 10, y + 70, 6, 10);
+  ctx.fillStyle = '#2b1a3d'; ctx.fillRect(x + 22, y + 62, 36, 8);
+  texto('¡EL PATRÓN!', x + 40, y - 8, 14, '#ffd700', 'center');
 }
 
 function dibujarJuego() {
-  // fondo
-  ctx.fillStyle = '#5c94fc'; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = 'rgba(255,255,255,.9)';
-  for (let i = 0; i < 8; i++) {                        // nubes con efecto de profundidad
-    const nx = ((i * 330 - camara * 0.3) % (W + 200) + W + 200) % (W + 200) - 100;
-    ctx.fillRect(nx, 50 + (i % 3) * 30, 80, 24); ctx.fillRect(nx + 15, 38 + (i % 3) * 30, 50, 16);
-  }
-  ctx.save(); ctx.translate(-Math.floor(camara), 0);
-
-  // bloques
-  for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) {
-    const ch = MAPA[r][c];
-    if (ch === '#') {
-      ctx.fillStyle = r >= 12 ? '#b5651d' : '#c84c0c'; ctx.fillRect(c * T, r * T, T, T);
-      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(c * T, r * T + T - 3, T, 3); ctx.fillRect(c * T + T - 3, r * T, 3, T);
-      if (r === 12) { ctx.fillStyle = '#3cb043'; ctx.fillRect(c * T, r * T, T, 6); }
-    } else if (ch === '?') {
-      ctx.fillStyle = '#f8b800'; ctx.fillRect(c * T, r * T, T, T);
-      texto('?', c * T + T / 2, r * T + 24, 22, '#fff', 'center');
-    }
-  }
-  // monedas
-  for (const m of monedas) if (!m.tomada) {
-    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.ellipse(m.x + 8, m.y + 8, 7, 8, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = '#c9a400'; ctx.fillRect(m.x + 6, m.y + 3, 3, 10);
-  }
-  // meta: el Patrón hechizado
-  if (meta) {
-    ctx.fillStyle = '#ddd'; ctx.fillRect(meta.x + 14, meta.y, 4, meta.h);
-    ctx.fillStyle = '#7b2fbf'; ctx.fillRect(meta.x - 40, meta.y + meta.h - 70, 54, 70);   // el Patrón (monstruo)
-    ctx.fillStyle = '#ff0'; ctx.fillRect(meta.x - 30, meta.y + meta.h - 60, 8, 8); ctx.fillRect(meta.x - 12, meta.y + meta.h - 60, 8, 8);
-    ctx.fillStyle = '#e33'; ctx.fillRect(meta.x - 28, meta.y + meta.h - 38, 30, 6);
-    texto('¡Patrón!', meta.x - 13, meta.y + meta.h - 80, 14, '#fff', 'center');
-  }
-  // enemigos
-  for (const e of enemigos) {
-    if (e.vivo) {
-      ctx.fillStyle = '#6b2fa0'; ctx.fillRect(e.x, e.y + 4, e.w, e.h - 4);
-      ctx.fillStyle = '#fff'; ctx.fillRect(e.x + 5, e.y + 9, 7, 7); ctx.fillRect(e.x + 16, e.y + 9, 7, 7);
-      ctx.fillStyle = '#000'; ctx.fillRect(e.x + 8, e.y + 12, 3, 4); ctx.fillRect(e.x + 17, e.y + 12, 3, 4);
-    } else if (e.aplastado > 0) {
-      ctx.fillStyle = '#6b2fa0'; ctx.fillRect(e.x, e.y + e.h - 8, e.w, 8);
-    }
-  }
-  // Lichilón
-  dibujarPersonaje(jugador.x, jugador.y, jugador.w, jugador.h, '#e32222', jugador.mirando);
+  dibujarFondo(camara);
+  ctx.save(); ctx.translate(-Math.round(camara), 0);
+  dibujarNivel();
+  dibujarPatron();
+  for (const m of monedasVivas) if (!m.tomada) dibujarMoneda(m);
+  for (const it of items) dibujarItem(it);
+  for (const e of enemigos) if (e.vivo) dibujarCaminante(e);
+  for (const s of serpientes) if (s.vivo) dibujarSerpiente(s);
+  for (const b of balas) dibujarBala(b);
+  dibujarJugador();
+  for (const pa of particulas) { ctx.globalAlpha = Math.min(1, pa.vida / 15); ctx.fillStyle = pa.color; ctx.fillRect(pa.x, pa.y, pa.tam, pa.tam); }
+  ctx.globalAlpha = 1;
   ctx.restore();
+  dibujarMarcador();
+}
 
-  // marcador
-  texto('LICHILÓN', 20, 28, 18);          texto(String(puntos).padStart(6, '0'), 20, 50, 18);
-  texto('VIDAS x' + vidas, W - 20, 28, 18, '#fff', 'right');
+function dibujarMarcador() {
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, 0, W, 62);
+  sprite(spritesJ[0], 10, 8, 2.4, false);
+  texto(personaje.nombre, 50, 24, 16); texto(String(puntos).padStart(6, '0'), 50, 46, 18, '#ffd700');
+  ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(250, 36, 9, 0, 7); ctx.fill();
+  texto('x' + nMonedas, 266, 43, 18);
+  for (let i = 0; i < vidas; i++) { const x = W - 36 - i * 28; ctx.fillStyle = '#e91e63'; ctx.beginPath(); ctx.arc(x + 6, 24, 6, 0, 7); ctx.arc(x + 16, 24, 6, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(x, 27); ctx.lineTo(x + 22, 27); ctx.lineTo(x + 11, 40); ctx.fill(); }
+  texto(poder ? (poder === 'fuego' ? 'PODER: FUEGO  (X)' : 'PODER: HIELO  (X)') : 'Patear: Z   Poder: X', W / 2 + 40, 28, 14, poder === 'fuego' ? '#ffab40' : poder ? '#80d8ff' : '#ddd', 'center');
+  if (silencio) texto('SIN SONIDO (M)', W / 2 + 40, 50, 12, '#fff', 'center');
 }
 
 function pantallaTexto(titulo, lineas, color) {
-  ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(0, 0, W, H);
-  texto(titulo, W / 2, 120, 38, color, 'center');
-  lineas.forEach((l, i) => texto(l, W / 2, 180 + i * 28, 18, '#fff', 'center'));
+  ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(0, 0, W, H);
+  texto(titulo, W / 2, 130, 40, color, 'center');
+  lineas.forEach((l, i) => texto(l, W / 2, 190 + i * 28, 18, '#fff', 'center'));
+}
+
+const TARJETA = i => ({ x: 40 + i * 252, y: 150, w: 228, h: 250 });
+function dibujarSeleccion() {
+  dibujarFondo(reloj * 1.2);
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(0, 0, W, H);
+  texto('LICHILÓN Y EL PATRÓN', W / 2, 54, 38, '#ffd700', 'center');
+  texto('La bruja hechizó al Patrón. ¡Hay que salvarlo!', W / 2, 88, 16, '#fff', 'center');
+  texto('Elige tu personaje', W / 2, 128, 20, '#fff', 'center');
+  PERSONAJES.forEach((pj, i) => {
+    const t = TARJETA(i), sel = i === seleccion, dy = sel ? -Math.abs(Math.sin(reloj * 0.1)) * 6 : 0;
+    if (sel) redondo(t.x - 4, t.y - 4 + dy, t.w + 8, t.h + 8, 14, '#ffd700');
+    redondo(t.x, t.y + dy, t.w, t.h, 12, sel ? '#2b3a67' : 'rgba(20,24,50,.82)');
+    sprite(spritesPersonaje[i][sel ? 1 + Math.floor(reloj / 8) % 2 : 0], t.x + t.w / 2 - 36, t.y + 12 + dy, 6, false);
+    texto(pj.nombre, t.x + t.w / 2, t.y + 124 + dy, 18, sel ? '#ffd700' : '#fff', 'center');
+    pj.desc.forEach((l, k) => texto(l, t.x + t.w / 2, t.y + 148 + k * 18 + dy, 14, '#cfd8ff', 'center'));
+    [['Velocidad', 'vel'], ['Salto', 'salto'], ['Caída suave', 'caida']].forEach(([nombre, k], j) => {
+      texto(nombre, t.x + 12, t.y + 196 + j * 18 + dy, 12, '#fff');
+      for (let b = 0; b < 5; b++) { ctx.fillStyle = b < pj.stats[k] ? '#7bd36b' : '#3a3f5c'; ctx.fillRect(t.x + 120 + b * 20, t.y + 186 + j * 18 + dy, 16, 10); }
+    });
+  });
+  texto('← →  elegir        ENTER / ESPACIO  jugar        M  sonido', W / 2, 428, 15, '#fff', 'center');
 }
 
 function dibujar() {
-  if (estado === 'titulo') {
-    ctx.fillStyle = '#5c94fc'; ctx.fillRect(0, 0, W, H);
-    pantallaTexto('LICHILÓN Y EL PATRÓN', [
-      'La bruja malvada hechizó al Patrón y lo volvió un monstruo.',
-      'Lichilón, Julián Chón y Ofi Lofi deben salvarlo.',
-      '',
-      'Flechas / A D: moverse     Espacio / W: saltar',
-      'Control: palanca + botón A',
-      '',
-      'Pisa a los secuaces de la bruja desde arriba.',
-      '',
-      'Presiona ENTER, ESPACIO o botón + para empezar',
-    ], '#ffd700');
-    return;
-  }
+  if (estado === 'elegir') { dibujarSeleccion(); return; }
   dibujarJuego();
   if (estado === 'perdio') pantallaTexto('¡GAME OVER!', ['La bruja se rió...', 'Puntos: ' + puntos, '', 'Presiona ENTER para intentarlo otra vez'], '#ff5555');
   if (estado === 'gano')   pantallaTexto('¡LO SALVASTE!', ['El hechizo se rompió y el Patrón volvió a ser papá.', 'Puntos: ' + puntos, '', 'Presiona ENTER para jugar otra vez'], '#55ff55');
 }
 
-function ciclo() { actualizar(); dibujar(); requestAnimationFrame(ciclo); }
-cargarNivel();
-canvas.addEventListener('pointerdown', presionarInicio);
+// ---------- 8. CICLO PRINCIPAL ----------
+function menuControl() {
+  const e = pad.edge;
+  if (estado === 'elegir') {
+    if (pulso('ArrowLeft', 'KeyA') || e[14] || e[100]) { elegirPersonaje((seleccion + 2) % 3); sfx('menu'); }
+    if (pulso('ArrowRight', 'KeyD') || e[15] || e[101]) { elegirPersonaje((seleccion + 1) % 3); sfx('menu'); }
+    if (pulso('Enter', 'Space') || e[0] || e[1] || e[9]) { sfx('menu'); nuevoJuego(); }
+  } else if (estado !== 'jugando') {
+    if (pulso('Enter', 'Space') || e[0] || e[1] || e[9]) { sfx('menu'); estado = 'elegir'; }
+  }
+}
+canvas.addEventListener('pointerdown', ev => {
+  audio();
+  const r = canvas.getBoundingClientRect(), x = (ev.clientX - r.left) * W / r.width, y = (ev.clientY - r.top) * H / r.height;
+  if (estado === 'elegir') {
+    PERSONAJES.forEach((_, i) => { const t = TARJETA(i); if (x > t.x && x < t.x + t.w && y > t.y && y < t.y + t.h) { if (seleccion === i) nuevoJuego(); else { elegirPersonaje(i); sfx('menu'); } } });
+  } else if (estado !== 'jugando') estado = 'elegir';
+});
+
+function ciclo() { actualizarPad(); menuControl(); actualizar(); dibujar(); requestAnimationFrame(ciclo); }
 ciclo();
 </script>
 </body>
