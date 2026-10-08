@@ -14,5 +14,5 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Power-ups: hielo, botas de resorte (15 s) y escudo amarillo (absorbe un golpe).
 - Kit Kats: 3 = 1 vida (máximo 5). Al perder una vida te quedas donde estás; sin vidas, vuelves al inicio del nivel.
 - Logros: hay 3 personajes secretos que aparecen bloqueados (todavía no están hechos).
-- Dibujos al estilo de caricaturas antiguas (contornos gruesos, guantes blancos, ojos de pastel) con efecto de película antigua opcional.
+- Dibujos de caricatura moderna: colores planos, contorno delgado, cabezotas con ojotes, formas unidas y pelo de una sola pieza (efecto de película antigua opcional en Ajustes).
 - Si no se oye nada: Ajustes > Sonido compatible = Sí (usa archivos de audio generados con código).
