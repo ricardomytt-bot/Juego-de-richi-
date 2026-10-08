@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 0.7
+//  LICHILÓN Y EL PATRÓN  -  Versión 0.8
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -65,13 +65,13 @@ const BOTAS_DURACION = 900;                       // 15 segundos
 const PERSONAJES = [
   { id: 'lichi', nombre: 'LICHILÓN', estilo: 'lichi', vel: 3.4, salto: 13.6, caida: 1.0, maxCaida: 15, voz: 215,
     desc: ['Buen saltador y', 'bastante resistente.'], stats: { vel: 3, salto: 4, caida: 3 },
-    piel: '#ffdcb8', piel2: '#f0b48a', pelo: ['#ffe36b', '#e9a923'], camisa: ['#4fc96a', '#2a9a45'], pantalon: '#3d6fd8', zapato: '#f4f1e8', mejilla: '#ff7a73' },
+    piel: '#fbe3c4', piel2: '#dcb48e', pelo: ['#f2d25a', '#c9982b'], camisa: ['#3f9a58', '#2a6c3e'], pantalon: '#3a58a6', zapato: '#8a5f2c', mejilla: '#d8403a' },
   { id: 'julian', nombre: 'JULIÁN CHÓN', estilo: 'julian', vel: 4.1, salto: 12.2, caida: 1.0, maxCaida: 15, voz: 190,
     desc: ['El más rápido,', 'pero salta menos.'], stats: { vel: 4, salto: 2, caida: 3 },
-    piel: '#f7cb9d', piel2: '#e4a672', pelo: ['#a8683a', '#6e4021'], camisa: ['#ffe655', '#f0b414'], pantalon: '#2f4f93', zapato: '#e0483a', mejilla: '#f26b5a' },
+    piel: '#f3cfa4', piel2: '#d6a676', pelo: ['#9a6035', '#64391c'], camisa: ['#e6b52e', '#b98618'], pantalon: '#2b3e72', zapato: '#8f3a2c', mejilla: '#d8403a' },
   { id: 'sofi', nombre: 'SOFI LOFI', estilo: 'sofi', vel: 3.7, salto: 13.2, caida: 0.7, maxCaida: 7.5, voz: 330,
     desc: ['Cae más suave', 'que los demás.'], stats: { vel: 3, salto: 3, caida: 4 },
-    piel: '#ffdcb8', piel2: '#f0b48a', pelo: ['#ffee75', '#f0c22a'], camisa: ['#ff9ac7', '#ee5498'], pantalon: '#8e63d8', zapato: '#b04bd6', mejilla: '#ff6f86' },
+    piel: '#fbe3c4', piel2: '#dcb48e', pelo: ['#f4dc62', '#cfa52b'], camisa: ['#df6f9e', '#b24a78'], pantalon: '#6f56b0', zapato: '#7a4a2c', mejilla: '#d8403a' },
   { id: 'sec1', nombre: '???', pendiente: true, logro: 'patron',     pista: 'Derrota al Patrón' },
   { id: 'sec2', nombre: '???', pendiente: true, logro: 'choco30',    pista: 'Recoge 30 Kit Kats' },
   { id: 'sec3', nombre: '???', pendiente: true, logro: 'serpientes', pista: 'Derrota 8 serpientes' },
@@ -451,30 +451,32 @@ function tubo(g, x0, y0, x1, y1, ancho, color, comba = 0) {   // brazo/pierna de
   trazoTubo(g, x0, y0, x1, y1, comba); g.strokeStyle = NEGRO; g.lineWidth = ancho + GR * 2; g.stroke();
   trazoTubo(g, x0, y0, x1, y1, comba); g.strokeStyle = color; g.lineWidth = ancho; g.stroke();
 }
-function guante(g, x, y, rot = 0, k = 1, color = '#fff') {
+function guante(g, x, y, rot = 0, k = 1, color = '#fff') {   // guante hinchado de dibujo animado antiguo
   g.save(); g.translate(x, y); g.rotate(rot); g.scale(k, k); g.lineJoin = 'round';
   g.fillStyle = color; g.strokeStyle = NEGRO; g.lineWidth = GR;
-  g.beginPath(); g.ellipse(0, 0, 6.2, 5.4, 0, 0, 7); g.fill(); g.stroke();
-  g.beginPath(); g.ellipse(-0.5, -5.2, 2.7, 3.4, -0.5, 0, 7); g.fill(); g.stroke();
-  g.beginPath(); g.ellipse(0, 0, 6.2, 5.4, 0, 0, 7); g.fill();
-  g.fillStyle = 'rgba(90,90,150,.25)'; g.beginPath(); g.ellipse(1.4, 2.3, 4.2, 2.2, 0, 0, 7); g.fill();
-  g.strokeStyle = NEGRO; g.lineWidth = 1.3; g.beginPath(); for (let i = 0; i < 3; i++) { g.moveTo(1.6 + i * 1.9, -1.6); g.lineTo(1.6 + i * 1.9, 1.6); } g.stroke();
+  [[3.4, -4.6, 3.5], [5.8, -0.6, 3.6], [4.8, 3.9, 3.4]].forEach(([dx, dy, r]) => { g.beginPath(); g.arc(dx, dy, r, 0, 7); g.fill(); g.stroke(); });
+  g.beginPath(); g.ellipse(-0.5, 0, 6.8, 6.4, 0, 0, 7); g.fill(); g.stroke();
+  g.beginPath(); g.ellipse(-3, -6, 2.9, 3.5, -0.5, 0, 7); g.fill(); g.stroke();
+  g.beginPath(); g.ellipse(-0.5, 0, 6.8, 6.4, 0, 0, 7); g.fill();
+  trazoRedondo(g, -10.8, -4.8, 5.4, 9.6, 2); g.fill(); g.stroke();                                   // manguito
+  g.fillStyle = 'rgba(80,80,140,.22)'; g.beginPath(); g.ellipse(0.4, 3.6, 5.2, 2.8, 0, 0, 7); g.fill();
+  g.strokeStyle = NEGRO; g.lineWidth = 1.4; g.beginPath(); for (let i = 0; i < 3; i++) { g.moveTo(1.2 + i * 2, -3.4); g.lineTo(1.4 + i * 2, 0.4); } g.stroke();
   g.restore();
 }
-function calzado(g, fx, fy, color, botas, k = 1) {
+function calzado(g, fx, fy, color, botas, k = 1) {            // zapatote redondo con suela clara
   g.save(); g.translate(fx, fy); g.scale(k, k); g.lineJoin = 'round';
-  if (botas) {                                              // resorte debajo de la bota
+  if (botas) {
     g.strokeStyle = NEGRO; g.lineWidth = 4.8; g.beginPath(); g.moveTo(-1, -7); for (let i = 0; i < 5; i++) g.lineTo(i % 2 ? -3 : 5, -6 + i * 1.2); g.stroke();
     g.strokeStyle = '#d6dae6'; g.lineWidth = 2; g.stroke(); g.translate(0, -6);
   }
-  g.fillStyle = '#fff'; g.strokeStyle = NEGRO; g.lineWidth = GR;
-  g.beginPath(); g.ellipse(-0.5, -10, 4.6, 3, 0, 0, 7); g.fill(); g.stroke();                      // calcetín
-  g.fillStyle = botas ? '#ff8a1f' : color;
-  g.beginPath(); g.moveTo(-8.5, 0.8); g.quadraticCurveTo(-10, -9, -3.6, -10); g.quadraticCurveTo(2, -11.4, 6.5, -8.4); g.quadraticCurveTo(14.4, -6.4, 13.6, -1); g.quadraticCurveTo(12.8, 1.2, 9.6, 1.2); g.closePath(); g.fill();
-  g.save(); g.clip(); g.fillStyle = '#fff'; g.fillRect(-12, -3.4, 30, 4.6); g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(-12, -9.2, 10, 12); g.restore();
+  g.fillStyle = '#f4efe2'; g.strokeStyle = NEGRO; g.lineWidth = GR;
+  g.beginPath(); g.ellipse(-0.5, -11, 4.6, 3, 0, 0, 7); g.fill(); g.stroke();                       // calcetín
+  g.fillStyle = botas ? '#e88a2a' : color;
+  g.beginPath(); g.moveTo(-9, 0.9); g.quadraticCurveTo(-11, -9, -4, -11); g.quadraticCurveTo(3, -12.4, 8, -9.4); g.quadraticCurveTo(18, -7.6, 17, -1); g.quadraticCurveTo(16, 1.3, 12, 1.3); g.closePath(); g.fill();
+  g.save(); g.clip(); g.fillStyle = '#f1e6c8'; g.fillRect(-14, -3.8, 36, 5.4); g.fillStyle = 'rgba(40,30,60,.22)'; g.fillRect(-14, -12, 11, 16); g.restore();
   g.stroke();
-  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(6, -6.4, 3.6, 1.5, 0.2, 0, 7); g.fill();
-  g.strokeStyle = NEGRO; g.lineWidth = 1.5; g.beginPath(); g.moveTo(-1, -10.2); g.quadraticCurveTo(1, -6.5, 5, -7.6); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,.5)'; g.beginPath(); g.ellipse(8, -6.8, 4.2, 1.7, 0.2, 0, 7); g.fill();
+  g.strokeStyle = NEGRO; g.lineWidth = 1.6; g.beginPath(); g.moveTo(-1, -11); g.quadraticCurveTo(1.5, -6.6, 6.4, -8); g.moveTo(-9, -3.8); g.lineTo(16.6, -3.8); g.stroke();
   g.restore();
 }
 function ojoPie(g, x, y, rx, ry, parp, mira = 0) {            // ojo negro con un "pedazo de pastel" blanco
@@ -489,95 +491,97 @@ function sonrisa(g, x, y, w, h, lengua = true) {
   g.stroke(); g.restore();
 }
 
-// Cabezas de los niños
-function cabezaCartoon(g, pj, cy, t, abierta) {
-  const parp = (t % 230) < 7, p0 = pj.pelo[0], p1 = pj.pelo[1];
-  g.lineJoin = 'round'; g.lineWidth = GR; g.strokeStyle = NEGRO;
+// Cabezas de los niños: cabezota redonda (radio 21), ojo de pastel, un ojo cortado por el borde, mejilla roja y bocota
+function cabezaTaza(g, pj, t, abierta) {
+  const R = 21, parp = (t % 230) < 7, p0 = pj.pelo[0];
+  g.lineJoin = 'round'; g.strokeStyle = NEGRO; g.lineWidth = GR; g.lineCap = 'round';
+  const cab = () => { g.beginPath(); g.arc(0, 0, R, 0, 7); };
+  const bloque = fn => { g.save(); g.scale(1.36, 1.36); g.lineWidth = GR / 1.36; fn(); g.restore(); };
   if (pj.estilo === 'sofi') {                                // rizos de atrás
-    g.fillStyle = p0; for (let i = 0; i < 12; i++) { const a = Math.PI * 0.82 + i * (Math.PI * 1.36 / 11); g.beginPath(); g.arc(Math.cos(a) * 15.5, cy + Math.sin(a) * 15.5 - 1, 6.6, 0, 7); g.fill(); g.stroke(); }
-    [[-17, cy + 4], [-17.5, cy + 12], [-14, cy + 19], [16, cy + 4], [16.8, cy + 12], [13.6, cy + 19]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 5.8, 0, 7); g.fill(); g.stroke(); });
+    g.fillStyle = p0; for (let i = 0; i < 12; i++) { const a = Math.PI * 0.82 + i * (Math.PI * 1.36 / 11); g.beginPath(); g.arc(Math.cos(a) * 21.5, Math.sin(a) * 21.5 - 1, 8.8, 0, 7); g.fill(); g.stroke(); }
+    [[-23, 6], [-23.5, 17], [-19, 26], [22, 6], [23, 17], [18.5, 26]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 7.8, 0, 7); g.fill(); g.stroke(); });
   }
-  g.fillStyle = pj.piel; g.beginPath(); g.arc(-14.6, cy + 3, 4.2, 0, 7); g.fill(); g.stroke();   // oreja
-  g.fillStyle = pj.piel2; g.beginPath(); g.arc(0, cy, 15.4, 0, 7); g.fill();
-  g.save(); g.clip(); g.fillStyle = pj.piel; g.beginPath(); g.arc(-2.8, cy - 2.6, 14.8, 0, 7); g.fill(); g.restore();
-  g.beginPath(); g.arc(0, cy, 15.4, 0, 7); g.stroke();
-  g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 2; g.beginPath(); g.arc(0, cy, 12, Math.PI * 1.12, Math.PI * 1.34); g.stroke(); g.strokeStyle = NEGRO; g.lineWidth = GR;
-  g.fillStyle = pj.piel; g.beginPath(); g.ellipse(15.2, cy + 4.4, 2.8, 2.4, 0, 0, 7); g.fill(); g.lineWidth = GR * 0.7; g.stroke(); g.lineWidth = GR;   // nariz
+  g.fillStyle = pj.piel2; cab(); g.fill();                                                   // cabeza con sombra a la derecha
+  g.save(); cab(); g.clip(); g.fillStyle = pj.piel; g.beginPath(); g.arc(-3.8, -3.6, R - 0.4, 0, 7); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(-10, -11, 5.6, 8.4, -0.55, 0, 7); g.fill(); g.restore();      // brillo grande
+  cab(); g.stroke();
+  // pelo de adelante
   g.fillStyle = p0;
-  if (pj.estilo === 'julian') {                              // picos despeinados
-    [[-10, cy - 12, -9, cy - 28, -1, cy - 15], [-4, cy - 14, 3, cy - 31, 10, cy - 14], [6, cy - 14, 16, cy - 26, 16, cy - 8]].forEach(([a, b, c, d, e, f]) => { g.beginPath(); g.moveTo(a, b); g.lineTo(c, d); g.lineTo(e, f); g.closePath(); g.fill(); g.stroke(); });
-    g.beginPath(); g.arc(0, cy - 1, 16.2, Math.PI * 0.94, Math.PI * 2.06);
-    [[16, cy - 3], [12, cy - 8.4], [8, cy - 3.4], [3.6, cy - 9.4], [-0.6, cy - 4], [-5, cy - 9], [-9.4, cy - 4], [-16, cy - 5]].forEach(([x, y]) => g.lineTo(x, y)); g.closePath(); g.fill(); g.stroke();
-  } else if (pj.estilo === 'lichi') {                        // güero con un gran copete
-    g.beginPath(); g.moveTo(-4, cy - 14); g.bezierCurveTo(-6, cy - 29, 11, cy - 34, 17, cy - 22); g.bezierCurveTo(11, cy - 24, 6, cy - 20, 7, cy - 13); g.closePath(); g.fill(); g.stroke();
-    g.beginPath(); g.arc(0, cy - 1, 16.2, Math.PI * 0.94, Math.PI * 2.06); g.lineTo(15.6, cy - 6);
-    g.bezierCurveTo(11.5, cy - 5, 8, cy - 12, 2, cy - 9); g.bezierCurveTo(-3, cy - 6, -7, cy - 11, -10, cy - 7); g.quadraticCurveTo(-13.4, cy - 4, -16.2, cy - 3); g.closePath(); g.fill(); g.stroke();
-    g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 2.2; g.beginPath(); g.arc(-1, cy - 3, 11.5, Math.PI * 1.15, Math.PI * 1.45); g.stroke();
-  }
+  if (pj.estilo === 'julian') bloque(() => {                 // picos despeinados
+    [[-10, -12, -9, -28, -1.5, -15], [-4, -14, 3, -31, 10, -14], [6, -14, 16, -26, 16, -8]].forEach(([a, b, c, d, e, f]) => { g.beginPath(); g.moveTo(a, b); g.lineTo(c, d); g.lineTo(e, f); g.closePath(); g.fill(); g.stroke(); });
+    g.beginPath(); g.arc(0, -1, 16.2, Math.PI * 0.94, Math.PI * 2.06);
+    [[16, -3], [12, -8.4], [8, -3.4], [3.6, -9.4], [-0.6, -4], [-5, -9], [-9.4, -4], [-16, -5]].forEach(([x, y]) => g.lineTo(x, y)); g.closePath(); g.fill(); g.stroke();
+  });
+  else if (pj.estilo === 'lichi') bloque(() => {            // güero con un gran copete
+    g.beginPath(); g.moveTo(-4, -14); g.bezierCurveTo(-6, -29, 11, -34, 17, -22); g.bezierCurveTo(11, -24, 6, -20, 7, -13); g.closePath(); g.fill(); g.stroke();
+    g.beginPath(); g.arc(0, -1, 16.2, Math.PI * 0.94, Math.PI * 2.06); g.lineTo(15.6, -6);
+    g.bezierCurveTo(11.5, -5, 8, -12, 2, -9); g.bezierCurveTo(-3, -6, -7, -11, -10, -7); g.quadraticCurveTo(-13.4, -4, -16.2, -3); g.closePath(); g.fill(); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2.4; g.beginPath(); g.arc(-1, -3, 11.5, Math.PI * 1.15, Math.PI * 1.45); g.stroke();
+  });
   // cara
-  ojoPie(g, 3.4, cy + 0.6, 3.1, 5.6, parp); ojoPie(g, 11.4, cy + 0.6, 3.1, 5.6, parp);
-  g.fillStyle = pj.mejilla; g.beginPath(); g.arc(2.6, cy + 9, 3, 0, 7); g.fill();
-  if (abierta) sonrisa(g, 9, cy + 8, 10.5, 6.6); else sonrisa(g, 9, cy + 8.4, 8.6, 3.6);
+  g.save(); cab(); g.clip(); ojoPie(g, 17.6, 1, 4.6, 8, parp); g.restore();
+  ojoPie(g, 5.4, 1, 4.7, 8.2, parp);
+  g.fillStyle = pj.mejilla; g.strokeStyle = NEGRO; g.lineWidth = 1.8; g.beginPath(); g.ellipse(14.6, 11, 4.6, 3, 0.1, 0, 7); g.fill(); g.stroke();   // mejilla roja
+  g.lineWidth = GR;
+  sonrisa(g, 1.2, 10.6, abierta ? 22 : 17, abierta ? 11 : 7.6);
   if (pj.estilo === 'sofi') {                                // flequillo de rizos y moño rosa
     g.fillStyle = p0; g.strokeStyle = NEGRO; g.lineWidth = GR;
-    [[11.6, cy - 10], [5.6, cy - 14], [-1, cy - 15], [-7.4, cy - 12.4], [-12.4, cy - 7]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 5.6, 0, 7); g.fill(); g.stroke(); });
-    g.fillStyle = '#ff4f9a'; [-1, 1].forEach(s => { g.beginPath(); g.ellipse(-3 + s * 7, cy - 21, 7.2, 4.6, s * -0.5, 0, 7); g.fill(); g.stroke(); });
-    g.beginPath(); g.arc(-3, cy - 21, 3.2, 0, 7); g.fill(); g.stroke();
-    g.fillStyle = 'rgba(255,255,255,.5)'; g.beginPath(); g.ellipse(-8, cy - 22.6, 2.4, 1.2, -0.5, 0, 7); g.fill();
+    [[15.8, -14], [8, -19.5], [-1.4, -21], [-10, -17.5], [-17, -9.5]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 7.6, 0, 7); g.fill(); g.stroke(); });
+    g.fillStyle = '#d94a8a'; [-1, 1].forEach(s => { g.beginPath(); g.ellipse(-4 + s * 9.6, -29, 9.6, 6.2, s * -0.5, 0, 7); g.fill(); g.stroke(); });
+    g.beginPath(); g.arc(-4, -29, 4.2, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = 'rgba(255,255,255,.5)'; g.beginPath(); g.ellipse(-11, -31, 3, 1.6, -0.5, 0, 7); g.fill();
   }
 }
 function brazoCartoon(g, pj, hx, hy, ang, lado) {
-  const L = 15, ex = hx + Math.sin(ang) * L, ey = hy + Math.cos(ang) * L;
-  tubo(g, hx, hy, ex, ey, 3.8, pj.piel, lado * 3);
-  guante(g, ex, ey, ang * 0.45, 1.2);
+  const L = 17, ex = hx + Math.sin(ang) * L, ey = hy + Math.cos(ang) * L;
+  tubo(g, hx, hy, ex, ey, 4.2, pj.camisa[0], lado * 3);
+  guante(g, ex, ey, 1.25 - ang * 0.35, 1.3);
 }
 function piernaCartoon(g, pj, hx, hy, pie, botas) {
-  const lift = botas ? 6 : 0;
-  tubo(g, hx, hy, pie.x - 0.5, pie.y - lift - 10, 4.4, pj.piel, -2.6);
-  calzado(g, pie.x, pie.y, pj.zapato, botas);
+  const lift = botas ? 7 : 0;
+  tubo(g, hx, hy, pie.x - 0.5, pie.y - lift - 12, 3.4, pj.piel, -2.4);
+  calzado(g, pie.x, pie.y, pj.zapato, botas, 1.18);
 }
 function torsoCartoon(g, pj) {
   g.lineJoin = 'round'; g.fillStyle = pj.camisa[0]; g.strokeStyle = NEGRO; g.lineWidth = GR;
-  const tr = () => { g.beginPath(); g.moveTo(-9.6, -34.5); g.quadraticCurveTo(0, -37.5, 9.6, -34.5); g.lineTo(11, -22); g.quadraticCurveTo(0, -19, -11, -22); g.closePath(); };
-  tr(); g.fill(); g.save(); tr(); g.clip(); g.fillStyle = pj.camisa[1]; g.beginPath(); g.moveTo(3, -40); g.lineTo(14, -40); g.lineTo(14, -16); g.lineTo(0, -16); g.closePath(); g.fill(); g.restore();
+  const tr = () => { g.beginPath(); g.moveTo(-9.5, -46); g.quadraticCurveTo(0, -49.5, 9.5, -46); g.lineTo(10.5, -35); g.quadraticCurveTo(0, -31.6, -10.5, -35); g.closePath(); };
+  tr(); g.fill(); g.save(); tr(); g.clip(); g.fillStyle = pj.camisa[1]; g.beginPath(); g.moveTo(2, -52); g.lineTo(14, -52); g.lineTo(14, -28); g.lineTo(0, -28); g.closePath(); g.fill(); g.restore();
   tr(); g.stroke();
-  g.fillStyle = '#fff';
-  if (pj.estilo === 'sofi') { g.beginPath(); g.arc(-2, -28.5, 2.4, 0, 7); g.arc(2, -28.5, 2.4, 0, 7); g.fill(); g.beginPath(); g.moveTo(-4.3, -27.8); g.lineTo(4.3, -27.8); g.lineTo(0, -23); g.fill(); }
-  else if (pj.estilo === 'julian') { g.fillStyle = 'rgba(160,100,0,.45)'; g.fillRect(-9, -31, 18, 2.4); g.fillRect(-9.5, -26, 19, 2.4); }
-  else { g.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 1.9 : 4.2, a = -Math.PI / 2 + i * Math.PI / 5; g.lineTo(Math.cos(a) * r, -28 + Math.sin(a) * r); } g.fill(); }
-  g.fillStyle = '#fff'; g.strokeStyle = NEGRO; g.lineWidth = GR * 0.8;                                  // cuello blanco redondo
-  [-1, 1].forEach(s => { g.beginPath(); g.ellipse(s * 3.6, -35.6, 4.4, 2.8, s * 0.35, 0, 7); g.fill(); g.stroke(); });
+  g.fillStyle = '#f4efe2'; g.strokeStyle = NEGRO; g.lineWidth = GR * 0.8;
+  if (pj.estilo === 'sofi') { g.fillStyle = '#fff'; g.beginPath(); g.arc(-2, -41, 2.4, 0, 7); g.arc(2, -41, 2.4, 0, 7); g.fill(); g.beginPath(); g.moveTo(-4.3, -40.2); g.lineTo(4.3, -40.2); g.lineTo(0, -35.6); g.fill(); }
+  else if (pj.estilo === 'julian') { g.fillStyle = 'rgba(120,70,0,.5)'; g.fillRect(-9, -43.5, 18, 2.4); g.fillRect(-9.6, -38.4, 19, 2.4); }
+  else { g.fillStyle = '#fff'; g.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 1.8 : 4, a = -Math.PI / 2 + i * Math.PI / 5; g.lineTo(Math.cos(a) * r, -40.5 + Math.sin(a) * r); } g.fill(); }
 }
-function calzonCartoon(g, pj) {
+function calzonCartoon(g, pj) {                              // shorts anchos con la orilla rota (o faldita)
   g.lineJoin = 'round'; g.fillStyle = pj.pantalon; g.strokeStyle = NEGRO; g.lineWidth = GR;
   g.beginPath();
   if (pj.estilo === 'sofi') {
-    g.moveTo(-9.5, -23); g.lineTo(9.5, -23); g.lineTo(15.5, -16); for (let i = 0; i < 4; i++) g.quadraticCurveTo(11.6 - i * 7.75, -12.4, 7.75 - i * 7.75, -16); g.lineTo(-15.5, -16); g.closePath();
+    g.moveTo(-10, -36); g.lineTo(10, -36); g.lineTo(18, -24); for (let i = 0; i < 4; i++) g.quadraticCurveTo(13.5 - i * 9, -19.4, 9 - i * 9, -24); g.lineTo(-18, -24); g.closePath();
   } else {
-    g.moveTo(-10.6, -23); g.lineTo(10.6, -23); g.lineTo(11.6, -17.5); for (let i = 0; i < 5; i++) { const xx = 11.6 - i * 4.64; g.lineTo(xx - 2.32, -13.8); g.lineTo(xx - 4.64, -17.5); } g.closePath();
+    g.moveTo(-11, -36); g.lineTo(11, -36); g.lineTo(14, -26); for (let i = 0; i < 6; i++) { const xx = 14 - i * 4.67; g.lineTo(xx - 2.3, -22 + (i % 2) * 1.4); g.lineTo(xx - 4.67, -26); } g.closePath();
   }
-  g.fill(); g.save(); g.clip(); g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(3, -24, 14, 16); g.restore(); g.stroke();
-  g.fillStyle = 'rgba(255,255,255,.3)'; g.beginPath(); g.ellipse(-5, -20, 2.4, 1.2, 0, 0, 7); g.fill();
+  g.fill(); g.save(); g.clip(); g.fillStyle = 'rgba(30,20,60,.22)'; g.fillRect(3, -38, 18, 20); g.restore(); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,.28)'; g.beginPath(); g.ellipse(-6, -32, 3, 1.5, 0, 0, 7); g.fill();
 }
 function dibujarNino(g, pj, x, y, esc, dir, pose) {
   const t = pose.t || 0, st = pose.estado, ph = pose.fase || 0, s = Math.sin(ph), c = Math.cos(ph);
-  let bob = 0, aF = 0.3, aT = -0.3, pieT = { x: -5, y: 0 }, pieF = { x: 5.8, y: 0 }, abierta = false, inclina = 0;
-  if (st === 'camina') { pieF = { x: 5.8 + s * 8, y: -Math.max(0, c) * 5.5 }; pieT = { x: -5 - s * 8, y: -Math.max(0, -c) * 5.5 }; bob = -Math.abs(c) * 2.6; aF = -s * 1.0; aT = s * 1.0; inclina = s * 0.05 + 0.04; }
-  else if (st === 'salta') { pieF = { x: 11, y: -9 }; pieT = { x: -8, y: -4 }; aF = 2.7; aT = 2.3; abierta = true; }
-  else if (st === 'patea') { pieF = { x: 24, y: -16 }; pieT = { x: -5, y: 0 }; aF = -1.1; aT = 1.4; abierta = true; }
-  else { bob = Math.sin(t * 0.08) * 0.8; aF = 0.32 + Math.sin(t * 0.08) * 0.07; aT = -0.32; }
+  let bob = 0, aF = 0.3, aT = -0.3, pieT = { x: -6, y: 0 }, pieF = { x: 7, y: 0 }, abierta = false, inclina = 0;
+  if (st === 'camina') { pieF = { x: 7 + s * 9, y: -Math.max(0, c) * 6 }; pieT = { x: -6 - s * 9, y: -Math.max(0, -c) * 6 }; bob = -Math.abs(c) * 3; aF = -s * 1.0; aT = s * 1.0; inclina = s * 0.05 + 0.04; }
+  else if (st === 'salta') { pieF = { x: 13, y: -10 }; pieT = { x: -10, y: -5 }; aF = 2.7; aT = 2.3; abierta = true; }
+  else if (st === 'patea') { pieF = { x: 30, y: -18 }; pieT = { x: -6, y: 0 }; aF = -1.1; aT = 1.4; abierta = true; }
+  else { bob = Math.sin(t * 0.08) * 0.9; aF = 0.66 + Math.sin(t * 0.08) * 0.07; aT = -0.66; }
   let sx = 1, sy = 1;
   if (st === 'salta') { const k = Math.max(-1, Math.min(1, (pose.vy || 0) / 12)); sy = 1 - k * 0.09; sx = 1 + k * 0.07; }
-  const botas = !!pose.botas, cy = -50;
+  const botas = !!pose.botas;
   g.save(); g.translate(x, y); g.scale(dir * esc * sx, esc * sy); g.lineJoin = 'round'; g.lineCap = 'round';
-  if (!pose.aire) { g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(1, 1.5, 16, 3.6, 0, 0, 7); g.fill(); }
-  piernaCartoon(g, pj, -4.8, -23 + bob * 0.5, pieT, botas);
-  piernaCartoon(g, pj, 4.8, -23 + bob * 0.5, pieF, botas);
-  g.save(); g.translate(0, bob); g.translate(0, -22); g.rotate(inclina); g.translate(0, 22);
-  brazoCartoon(g, pj, -8.8, -33, aT, -1);
+  if (!pose.aire) { g.fillStyle = 'rgba(40,30,50,.28)'; g.beginPath(); g.ellipse(2, 1.8, 20, 4.2, 0, 0, 7); g.fill(); }
+  piernaCartoon(g, pj, -5.4, -27 + bob * 0.5, pieT, botas);
+  piernaCartoon(g, pj, 5.4, -27 + bob * 0.5, pieF, botas);
+  g.save(); g.translate(0, bob); g.translate(0, -28); g.rotate(inclina); g.translate(0, 28);
+  brazoCartoon(g, pj, -9.6, -43, aT, -1);
   torsoCartoon(g, pj); calzonCartoon(g, pj);
-  cabezaCartoon(g, pj, cy, t, abierta);
-  brazoCartoon(g, pj, 8.8, -33, aF, 1);
+  g.save(); g.translate(0, -62); g.rotate(-inclina * 0.8); cabezaTaza(g, pj, t, abierta); g.restore();
+  brazoCartoon(g, pj, 9.6, -43, aF, 1);
   g.restore(); g.restore();
 }
 
@@ -1109,7 +1113,7 @@ let vidas = VIDAS_INICIO, puntos = 0, puntosNivel = 0, vidasPerdidasNivel = 0, n
 let poder = null, botas = 0, escudo = false, temblor = 0, banner = 0, usados = {}, rebote = {};
 let escarabajos = [], murcielagos = [], serpientes = [], items = [], balas = [], particulas = [], chocosVivos = [], pinchosLista = [], tragando = 0;
 let jefe = null, proyJ = [], ultimo = { x: 64, y: 340 };
-const jugador = { x: 0, y: 0, w: 26, h: 44, vx: 0, vy: 0, enSuelo: false, mirando: 1, patada: 0, invulnerable: 0, enfriamiento: 0, pasos: 0, empuje: 0, golpeaA: new Set() };
+const jugador = { x: 0, y: 0, w: 26, h: 54, vx: 0, vy: 0, enSuelo: false, mirando: 1, patada: 0, invulnerable: 0, enfriamiento: 0, pasos: 0, empuje: 0, golpeaA: new Set() };
 
 function irA(e) {
   estado = e; estadoT = 0; ui.foco = 0; for (const k in pulsos) delete pulsos[k];
@@ -1138,7 +1142,7 @@ function cargarNivel(n) {
   const pat = N.jefe === 'patron';
   jefe = { tipo: N.jefe, x: (COLS - 5) * T, y: 12 * T - 78, w: 46, h: 78, vx: 0, vy: 0, hp: pat ? 6 : 8, hpMax: pat ? 6 : 8, vivo: true, estadoJ: 'dormido',
     fase: 'camina', timer: 60, ciclo: 0, invul: 0, aturdido: 0, congelado: 0, dir: -1, t: 0, cargaDir: -1, muerte: 0, cayendo: false, saltoDir: 1 };
-  jugador.x = 2 * T; jugador.y = 12 * T - 44; jugador.vx = jugador.vy = 0; jugador.empuje = 0; jugador.patada = 0; jugador.invulnerable = 120;
+  jugador.x = 2 * T; jugador.y = 12 * T - 54; jugador.vx = jugador.vy = 0; jugador.empuje = 0; jugador.patada = 0; jugador.invulnerable = 120;
   ultimo = { x: jugador.x, y: jugador.y };
   camara = 0; banner = 170;
 }
@@ -1513,7 +1517,7 @@ function dibujarJugador() {
   const cx = p.x + p.w / 2, cy = p.y + p.h / 2;
   if (poder) resplandor(ctx, cx, cy, 40, 'rgba(150,225,255,.6)');
   const estadoP = p.patada > 0 ? 'patea' : !p.enSuelo ? 'salta' : p.vx ? 'camina' : 'quieto';
-  dibujarNino(ctx, personaje, cx, p.y + p.h, 0.88, p.mirando, { estado: estadoP, fase: p.pasos * 0.2, t: reloj, aire: !p.enSuelo, botas: botas > 0, vy: p.vy });
+  dibujarNino(ctx, personaje, cx, p.y + p.h, 0.68, p.mirando, { estado: estadoP, fase: p.pasos * 0.2, t: reloj, aire: !p.enSuelo, botas: botas > 0, vy: p.vy });
   if (p.patada > 0) {
     const d = p.mirando, a = p.patada / 14;
     ctx.strokeStyle = `rgba(255,255,255,${a * 0.8})`; ctx.lineWidth = 3; ctx.lineCap = 'round';
@@ -1674,7 +1678,7 @@ function dibujarMenu() {
   uiBoton('LOGROS', bx, 292, 300, 40, () => irA('logros'), 'dorado', 17);
   uiBoton('AJUSTES', bx, 338, 300, 40, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
-  texto('Versión 0.7', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 0.8', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -1780,7 +1784,10 @@ function capaVintage() {
   ctx.save();
   ctx.globalAlpha = 0.34; const ox = -Math.floor(Math.random() * 64), oy = -Math.floor(Math.random() * 64);
   for (let x = ox; x < W; x += 64) for (let y = oy; y < H; y += 64) ctx.drawImage(GRANO, x, y, 64, 64);
-  ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(255,214,150,0.07)'; ctx.fillRect(0, 0, W, H);
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = 'rgba(128,128,128,0.34)'; ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgba(255,236,204,0.55)'; ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = 'rgba(255,214,150,0.06)'; ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = `rgba(0,0,0,${0.015 + Math.random() * 0.03})`; ctx.fillRect(0, 0, W, H);
   if (Math.random() < 0.05) { ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1; const sx = Math.random() * W; ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx + Math.random() * 6 - 3, H); ctx.stroke(); }
   ctx.restore();
