@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 0.4
+//  LICHILÓN Y EL PATRÓN  -  Versión 0.7
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -79,7 +79,8 @@ const PERSONAJES = [
 
 // ---------- AJUSTES Y DATOS GUARDADOS ----------
 const CLAVE_GUARDADO = 'lichilon_departamentos_v1';
-const AJ_DEFECTO = { musica: 0.6, efectos: 0.8, texto: 1, temblor: true, botones: 'auto', compatible: false, pelicula: true };
+const ES_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const AJ_DEFECTO = { musica: 0.6, efectos: 0.8, texto: 1, temblor: true, botones: 'auto', compatible: ES_IOS, pelicula: true };
 const datos = { ajustes: { ...AJ_DEFECTO }, logros: {}, stats: {}, mejor: 0 };
 try {
   const j = JSON.parse(localStorage.getItem(CLAVE_GUARDADO) || 'null');
@@ -528,7 +529,7 @@ function cabezaCartoon(g, pj, cy, t, abierta) {
 function brazoCartoon(g, pj, hx, hy, ang, lado) {
   const L = 15, ex = hx + Math.sin(ang) * L, ey = hy + Math.cos(ang) * L;
   tubo(g, hx, hy, ex, ey, 3.8, pj.piel, lado * 3);
-  guante(g, ex, ey, ang * 0.45, 1);
+  guante(g, ex, ey, ang * 0.45, 1.2);
 }
 function piernaCartoon(g, pj, hx, hy, pie, botas) {
   const lift = botas ? 6 : 0;
@@ -551,9 +552,9 @@ function calzonCartoon(g, pj) {
   g.lineJoin = 'round'; g.fillStyle = pj.pantalon; g.strokeStyle = NEGRO; g.lineWidth = GR;
   g.beginPath();
   if (pj.estilo === 'sofi') {
-    g.moveTo(-9.5, -23); g.lineTo(9.5, -23); g.lineTo(15.5, -12); for (let i = 0; i < 4; i++) g.quadraticCurveTo(11.6 - i * 7.75, -8.4, 7.75 - i * 7.75, -12); g.lineTo(-15.5, -12); g.closePath();
+    g.moveTo(-9.5, -23); g.lineTo(9.5, -23); g.lineTo(15.5, -16); for (let i = 0; i < 4; i++) g.quadraticCurveTo(11.6 - i * 7.75, -12.4, 7.75 - i * 7.75, -16); g.lineTo(-15.5, -16); g.closePath();
   } else {
-    g.moveTo(-10.6, -23); g.lineTo(10.6, -23); g.lineTo(11.6, -13); for (let i = 0; i < 5; i++) { const xx = 11.6 - i * 4.64; g.lineTo(xx - 2.32, -9.6); g.lineTo(xx - 4.64, -13); } g.closePath();
+    g.moveTo(-10.6, -23); g.lineTo(10.6, -23); g.lineTo(11.6, -17.5); for (let i = 0; i < 5; i++) { const xx = 11.6 - i * 4.64; g.lineTo(xx - 2.32, -13.8); g.lineTo(xx - 4.64, -17.5); } g.closePath();
   }
   g.fill(); g.save(); g.clip(); g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(3, -24, 14, 16); g.restore(); g.stroke();
   g.fillStyle = 'rgba(255,255,255,.3)'; g.beginPath(); g.ellipse(-5, -20, 2.4, 1.2, 0, 0, 7); g.fill();
@@ -1512,7 +1513,7 @@ function dibujarJugador() {
   const cx = p.x + p.w / 2, cy = p.y + p.h / 2;
   if (poder) resplandor(ctx, cx, cy, 40, 'rgba(150,225,255,.6)');
   const estadoP = p.patada > 0 ? 'patea' : !p.enSuelo ? 'salta' : p.vx ? 'camina' : 'quieto';
-  dibujarNino(ctx, personaje, cx, p.y + p.h, 0.74, p.mirando, { estado: estadoP, fase: p.pasos * 0.2, t: reloj, aire: !p.enSuelo, botas: botas > 0, vy: p.vy });
+  dibujarNino(ctx, personaje, cx, p.y + p.h, 0.88, p.mirando, { estado: estadoP, fase: p.pasos * 0.2, t: reloj, aire: !p.enSuelo, botas: botas > 0, vy: p.vy });
   if (p.patada > 0) {
     const d = p.mirando, a = p.patada / 14;
     ctx.strokeStyle = `rgba(255,255,255,${a * 0.8})`; ctx.lineWidth = 3; ctx.lineCap = 'round';
@@ -1673,6 +1674,8 @@ function dibujarMenu() {
   uiBoton('LOGROS', bx, 292, 300, 40, () => irA('logros'), 'dorado', 17);
   uiBoton('AJUSTES', bx, 338, 300, 40, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
+  texto('Versión 0.7', W - 10, H - 10, 11, '#fff', 'right');
+  if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
   ctx.fillStyle = es === 'toca' ? 'rgba(230,60,50,' + (0.7 + Math.sin(reloj * 0.15) * 0.2) + ')' : 'rgba(20,16,50,.65)'; trazoRedondo(ctx, 8, H - 44, es === 'toca' ? 330 : 240, 36, 18); ctx.fill();
