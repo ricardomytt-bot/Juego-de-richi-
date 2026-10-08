@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Lichilón y el Patrón</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #111; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; }
+  canvas { background: #5c94fc; image-rendering: pixelated; max-width: 100vw; max-height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="juego" width="800" height="450"></canvas>
+<script>
+// ============================================================
+//  LICHILÓN Y EL PATRÓN  -  Versión 0.1
+//  Todo el juego está en este archivo. Se divide en partes:
+//   1. Configuración   2. Controles   3. Nivel   4. Reglas   5. Dibujo
+// ============================================================
+
+const canvas = document.getElementById('juego');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const T = 32;                         // tamaño de cada bloque (tile)
+
+// ---------- 1. CONFIGURACIÓN (cambia estos números y mira qué pasa) ----------
+const GRAVEDAD   = 0.6;
+const VEL_CAMINAR = 3.2;
+const FUERZA_SALTO = 13.5;
+const VIDAS_INICIO = 3;
+
+// ---------- 2. CONTROLES ----------
+// Teclado: flechas o A/D para moverse, espacio / W / flecha arriba para saltar.
+// Control (Switch, Xbox, PS...): palanca o cruceta para moverse, botón A o B para saltar.
+const teclas = {};
+addEventListener('keydown', e => {
+  teclas[e.code] = true;
+  if (['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+  if (e.code === 'Enter' || e.code === 'Space') presionarInicio();
+});
+addEventListener('keyup', e => teclas[e.code] = false);
+
+function leerControles() {
+  let izq = teclas.ArrowLeft || teclas.KeyA;
+  let der = teclas.ArrowRight || teclas.KeyD;
+  let salto = teclas.Space || teclas.ArrowUp || teclas.KeyW;
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (const p of pads) {
+    if (!p) continue;
+    if (p.axes[0] < -0.4 || (p.buttons[14] && p.buttons[14].pressed)) izq = true;
+    if (p.axes[0] >  0.4 || (p.buttons[15] && p.buttons[15].pressed)) der = true;
+    if ((p.buttons[0] && p.buttons[0].pressed) || (p.buttons[1] && p.buttons[1].pressed)) salto = true;
+    if (p.buttons[9] && p.buttons[9].pressed) presionarInicio();
+  }
+  return { izq, der, salto };
+}
+
+// ---------- 3. NIVEL ----------
+// # = bloque   ? = bloque de moneda   o = moneda   e = enemigo (secuaz de la bruja)
+// P = inicio de Lichilón   F = meta (donde está el Patrón hechizado)
+const MAPA = [
+"                                                                                    ",
+"                                                                                    ",
+"                                                                                    ",
+"                                                                                    ",
+"                      ooo                                                           ",
+"                     #####                         ooo                              ",
+"              ?                        o         ########                           ",
+"                                      ###                                           ",
+"      o  o                    e                      o  o      e                    ",
+"     ####                  ######      ##        ###########  ####                  ",
+"                                                                                    ",
+"  P          e        ###           e        ###               e                F   ",
+"##############   ##########   #####################   ##############################",
+"##############   ##########   #####################   ##############################",
+];
+
+const FILAS = MAPA.length, COLS = MAPA[0].length;
+const bloques = [];   // matriz de sólidos
+let monedas = [], enemigos = [], meta = null, inicio = {x: 64, y: 300};
+
+function cargarNivel() {
+  monedas = []; enemigos = []; meta = null;
+  for (let r = 0; r < FILAS; r++) {
+    bloques[r] = [];
+    for (let c = 0; c < COLS; c++) {
+      const ch = MAPA[r][c] || ' ';
+      bloques[r][c] = (ch === '#' || ch === '?');
+      const x = c * T, y = r * T;
+      if (ch === 'o') monedas.push({x: x + 8, y: y + 8, w: 16, h: 16, tomada: false});
+      if (ch === 'e') enemigos.push({x, y, w: 28, h: 28, vx: -1, vy: 0, vivo: true, aplastado: 0});
+      if (ch === 'P') inicio = {x, y};
+      if (ch === 'F' && !meta) meta = {x, y: y - 4 * T, w: T, h: 5 * T};
+    }
+  }
+}
+
+// ---------- 4. REGLAS DEL JUEGO ----------
+let estado = 'titulo';      // titulo | jugando | perdio | gano
+let vidas = VIDAS_INICIO, puntos = 0, camara = 0, tiempoMensaje = 0;
+const jugador = { x: 0, y: 0, w: 24, h: 30, vx: 0, vy: 0, enSuelo: false, mirando: 1 };
+
+function reiniciarPosicion() {
+  jugador.x = inicio.x; jugador.y = inicio.y;
+  jugador.vx = jugador.vy = 0; camara = 0;
+}
+function nuevoJuego() {
+  vidas = VIDAS_INICIO; puntos = 0;
+  cargarNivel(); reiniciarPosicion(); estado = 'jugando';
+}
+function presionarInicio() {
+  if (estado !== 'jugando') nuevoJuego();
+}
+
+const choca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+const hayBloque = (px, py) => {
+  const c = Math.floor(px / T), r = Math.floor(py / T);
+  if (c < 0 || c >= COLS) return true;
+  if (r < 0 || r >= FILAS) return false;
+  return bloques[r][c];
+};
+
+// Mueve un objeto y lo frena contra los bloques (primero en X y luego en Y).
+function moverConColision(o) {
+  o.x += o.vx;
+  if (o.vx !== 0) {
+    const lado = o.vx > 0 ? o.x + o.w : o.x;
+    if (hayBloque(lado, o.y + 2) || hayBloque(lado, o.y + o.h - 2)) {
+      o.x = o.vx > 0 ? Math.floor(lado / T) * T - o.w : (Math.floor(lado / T) + 1) * T;
+      o.chocoPared = true;
+    }
+  }
+  o.y += o.vy; o.enSuelo = false;
+  const bordeX = [o.x + 2, o.x + o.w - 2];
+  if (o.vy >= 0) {
+    const pie = o.y + o.h;
+    if (bordeX.some(px => hayBloque(px, pie))) {
+      o.y = Math.floor(pie / T) * T - o.h; o.vy = 0; o.enSuelo = true;
+    }
+  } else if (bordeX.some(px => hayBloque(px, o.y))) {
+    o.y = (Math.floor(o.y / T) + 1) * T; o.vy = 0;
+  }
+}
+
+function perderVida() {
+  vidas--;
+  if (vidas <= 0) { estado = 'perdio'; return; }
+  reiniciarPosicion();
+}
+
+function actualizar() {
+  if (estado !== 'jugando') return;
+  const ctrl = leerControles();
+
+  // Lichilón
+  jugador.vx = (ctrl.der ? VEL_CAMINAR : 0) - (ctrl.izq ? VEL_CAMINAR : 0);
+  if (jugador.vx) jugador.mirando = Math.sign(jugador.vx);
+  if (ctrl.salto && jugador.enSuelo) { jugador.vy = -FUERZA_SALTO; jugador.enSuelo = false; }
+  if (!ctrl.salto && jugador.vy < -4) jugador.vy = -4;   // salto corto si sueltas el botón
+  jugador.vy = Math.min(jugador.vy + GRAVEDAD, 15);
+  moverConColision(jugador);
+  if (jugador.y > FILAS * T + 100) perderVida();         // se cayó al hoyo
+
+  // Enemigos
+  for (const e of enemigos) {
+    if (!e.vivo) { if (e.aplastado > 0) e.aplastado--; continue; }
+    e.chocoPared = false;
+    e.vy = Math.min(e.vy + GRAVEDAD, 15);
+    const antes = e.x;
+    moverConColision(e);
+    // Da la vuelta si choca o llega al borde de una plataforma
+    const adelante = e.vx > 0 ? e.x + e.w + 2 : e.x - 2;
+    if (e.chocoPared || (e.enSuelo && !hayBloque(adelante, e.y + e.h + 4))) { e.vx *= -1; e.x = antes; }
+    if (choca(jugador, e)) {
+      if (jugador.vy > 0 && jugador.y + jugador.h - e.y < 18) {   // pisotón
+        e.vivo = false; e.aplastado = 20; jugador.vy = -9; puntos += 100;
+      } else { perderVida(); break; }
+    }
+  }
+
+  // Monedas
+  for (const m of monedas) if (!m.tomada && choca(jugador, m)) { m.tomada = true; puntos += 50; }
+
+  // Meta
+  if (meta && choca(jugador, meta)) { estado = 'gano'; puntos += 1000; }
+
+  camara = Math.max(0, Math.min(jugador.x - W / 2, COLS * T - W));
+}
+
+// ---------- 5. DIBUJO ----------
+function texto(t, x, y, tam = 20, color = '#fff', alinea = 'left') {
+  ctx.font = `bold ${tam}px "Courier New", monospace`;
+  ctx.textAlign = alinea;
+  ctx.fillStyle = '#000'; ctx.fillText(t, x + 2, y + 2);
+  ctx.fillStyle = color;  ctx.fillText(t, x, y);
+}
+
+function dibujarPersonaje(x, y, w, h, gorro, mirando) {
+  ctx.fillStyle = '#f8c89a'; ctx.fillRect(x + 4, y + 2, w - 8, 12);        // cara
+  ctx.fillStyle = gorro;     ctx.fillRect(x + 2, y, w - 4, 6);             // gorra
+  ctx.fillRect(x + (mirando > 0 ? w - 8 : 0), y + 4, 8, 3);                // visera
+  ctx.fillStyle = '#000';    ctx.fillRect(x + (mirando > 0 ? w - 10 : 6), y + 8, 3, 3);   // ojo
+  ctx.fillStyle = gorro;     ctx.fillRect(x + 2, y + 14, w - 4, 8);        // camiseta
+  ctx.fillStyle = '#2a4bd7'; ctx.fillRect(x + 2, y + 22, w - 4, h - 22);   // pantalón
+}
+
+function dibujarJuego() {
+  // fondo
+  ctx.fillStyle = '#5c94fc'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(255,255,255,.9)';
+  for (let i = 0; i < 8; i++) {                        // nubes con efecto de profundidad
+    const nx = ((i * 330 - camara * 0.3) % (W + 200) + W + 200) % (W + 200) - 100;
+    ctx.fillRect(nx, 50 + (i % 3) * 30, 80, 24); ctx.fillRect(nx + 15, 38 + (i % 3) * 30, 50, 16);
+  }
+  ctx.save(); ctx.translate(-Math.floor(camara), 0);
+
+  // bloques
+  for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) {
+    const ch = MAPA[r][c];
+    if (ch === '#') {
+      ctx.fillStyle = r >= 12 ? '#b5651d' : '#c84c0c'; ctx.fillRect(c * T, r * T, T, T);
+      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(c * T, r * T + T - 3, T, 3); ctx.fillRect(c * T + T - 3, r * T, 3, T);
+      if (r === 12) { ctx.fillStyle = '#3cb043'; ctx.fillRect(c * T, r * T, T, 6); }
+    } else if (ch === '?') {
+      ctx.fillStyle = '#f8b800'; ctx.fillRect(c * T, r * T, T, T);
+      texto('?', c * T + T / 2, r * T + 24, 22, '#fff', 'center');
+    }
+  }
+  // monedas
+  for (const m of monedas) if (!m.tomada) {
+    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.ellipse(m.x + 8, m.y + 8, 7, 8, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#c9a400'; ctx.fillRect(m.x + 6, m.y + 3, 3, 10);
+  }
+  // meta: el Patrón hechizado
+  if (meta) {
+    ctx.fillStyle = '#ddd'; ctx.fillRect(meta.x + 14, meta.y, 4, meta.h);
+    ctx.fillStyle = '#7b2fbf'; ctx.fillRect(meta.x - 40, meta.y + meta.h - 70, 54, 70);   // el Patrón (monstruo)
+    ctx.fillStyle = '#ff0'; ctx.fillRect(meta.x - 30, meta.y + meta.h - 60, 8, 8); ctx.fillRect(meta.x - 12, meta.y + meta.h - 60, 8, 8);
+    ctx.fillStyle = '#e33'; ctx.fillRect(meta.x - 28, meta.y + meta.h - 38, 30, 6);
+    texto('¡Patrón!', meta.x - 13, meta.y + meta.h - 80, 14, '#fff', 'center');
+  }
+  // enemigos
+  for (const e of enemigos) {
+    if (e.vivo) {
+      ctx.fillStyle = '#6b2fa0'; ctx.fillRect(e.x, e.y + 4, e.w, e.h - 4);
+      ctx.fillStyle = '#fff'; ctx.fillRect(e.x + 5, e.y + 9, 7, 7); ctx.fillRect(e.x + 16, e.y + 9, 7, 7);
+      ctx.fillStyle = '#000'; ctx.fillRect(e.x + 8, e.y + 12, 3, 4); ctx.fillRect(e.x + 17, e.y + 12, 3, 4);
+    } else if (e.aplastado > 0) {
+      ctx.fillStyle = '#6b2fa0'; ctx.fillRect(e.x, e.y + e.h - 8, e.w, 8);
+    }
+  }
+  // Lichilón
+  dibujarPersonaje(jugador.x, jugador.y, jugador.w, jugador.h, '#e32222', jugador.mirando);
+  ctx.restore();
+
+  // marcador
+  texto('LICHILÓN', 20, 28, 18);          texto(String(puntos).padStart(6, '0'), 20, 50, 18);
+  texto('VIDAS x' + vidas, W - 20, 28, 18, '#fff', 'right');
+}
+
+function pantallaTexto(titulo, lineas, color) {
+  ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(0, 0, W, H);
+  texto(titulo, W / 2, 120, 38, color, 'center');
+  lineas.forEach((l, i) => texto(l, W / 2, 180 + i * 28, 18, '#fff', 'center'));
+}
+
+function dibujar() {
+  if (estado === 'titulo') {
+    ctx.fillStyle = '#5c94fc'; ctx.fillRect(0, 0, W, H);
+    pantallaTexto('LICHILÓN Y EL PATRÓN', [
+      'La bruja malvada hechizó al Patrón y lo volvió un monstruo.',
+      'Lichilón, Julián Chón y Ofi Lofi deben salvarlo.',
+      '',
+      'Flechas / A D: moverse     Espacio / W: saltar',
+      'Control: palanca + botón A',
+      '',
+      'Pisa a los secuaces de la bruja desde arriba.',
+      '',
+      'Presiona ENTER, ESPACIO o botón + para empezar',
+    ], '#ffd700');
+    return;
+  }
+  dibujarJuego();
+  if (estado === 'perdio') pantallaTexto('¡GAME OVER!', ['La bruja se rió...', 'Puntos: ' + puntos, '', 'Presiona ENTER para intentarlo otra vez'], '#ff5555');
+  if (estado === 'gano')   pantallaTexto('¡LO SALVASTE!', ['El hechizo se rompió y el Patrón volvió a ser papá.', 'Puntos: ' + puntos, '', 'Presiona ENTER para jugar otra vez'], '#55ff55');
+}
+
+function ciclo() { actualizar(); dibujar(); requestAnimationFrame(ciclo); }
+cargarNivel();
+canvas.addEventListener('pointerdown', presionarInicio);
+ciclo();
+</script>
+</body>
+</html>
