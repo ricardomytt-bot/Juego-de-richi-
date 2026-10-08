@@ -14,7 +14,7 @@
   #tactil button {
     position: absolute; pointer-events: auto; touch-action: none; -webkit-tap-highlight-color: transparent;
     border-radius: 50%; border: 3px solid rgba(255,255,255,.75); color: #fff; font: bold 15px "Trebuchet MS", sans-serif;
-    background: rgba(20,24,60,.38); text-shadow: 0 2px 3px rgba(0,0,0,.7); backdrop-filter: blur(2px);
+    background: rgba(20,24,60,.38); text-shadow: 0 2px 3px rgba(0,0,0,.7);
     display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; padding: 0;
   }
   #tactil button.on { background: rgba(255,255,255,.5); transform: scale(.94); }
@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 1.0
+//  LICHILÓN Y EL PATRÓN  -  Versión 1.1
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -54,7 +54,7 @@ const canvas = document.getElementById('juego');
 let ctx = canvas.getContext('2d'); const ctxReal = ctx;
 const W = 800, H = 450;                           // tamaño "lógico" del juego
 const MOVIL = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-const ESC = MOVIL ? 1.15 : 1.6;                   // resolución real del dibujo (más baja en celular para que vaya fluido)
+let ESC = MOVIL ? 1.0 : 1.3;                      // resolución real del dibujo (cambia con la calidad gráfica)
 canvas.width = Math.round(W * ESC); canvas.height = Math.round(H * ESC);
 const T = 32;                                     // tamaño de cada bloque
 const FILAS = 14;
@@ -68,8 +68,8 @@ const PERSONAJES = [
   { id: 'lichi', nombre: 'LICHILÓN', estilo: 'lichi', vel: 3.4, salto: 13.6, caida: 1.0, maxCaida: 15, voz: 215,
     desc: ['Buen saltador y', 'bastante resistente.'], stats: { vel: 3, salto: 4, caida: 3 },
     piel: '#fbe3c4', piel2: '#dcb48e', pelo: ['#f2d25a', '#c9982b'], camisa: ['#3f9a58', '#2a6c3e'], pantalon: '#3a58a6', zapato: '#8a5f2c', mejilla: '#d8403a', mod: { piel: '#ffd7b3', pelo: '#f7d94c', cejas: '#d49a12', camisa: '#46c466', detalle: '#ffffff', pantalon: '#3d6fd8', zapato: '#f2f0e6', iris: '#1e88e5' } },
-  { id: 'julian', nombre: 'JULIÁN CHÓN', estilo: 'julian', vel: 4.1, salto: 12.2, caida: 1.0, maxCaida: 15, voz: 190,
-    desc: ['El más rápido,', 'pero salta menos.'], stats: { vel: 4, salto: 2, caida: 3 },
+  { id: 'julian', nombre: 'JULIÁN CHÓN', estilo: 'julian', vel: 4.4, salto: 13.2, caida: 1.0, maxCaida: 15, voz: 190,
+    desc: ['El más rápido,', 'con buen salto.'], stats: { vel: 4, salto: 3, caida: 3 },
     piel: '#f3cfa4', piel2: '#d6a676', pelo: ['#9a6035', '#64391c'], camisa: ['#e6b52e', '#b98618'], pantalon: '#2b3e72', zapato: '#8f3a2c', mejilla: '#d8403a', mod: { piel: '#f4c79a', pelo: '#7a4a2a', cejas: '#5a3218', camisa: '#ffd93b', detalle: '#e0a800', pantalon: '#2f5aa8', zapato: '#e0483a', iris: '#8a5a24' } },
   { id: 'sofi', nombre: 'SOFI LOFI', estilo: 'sofi', vel: 3.7, salto: 13.2, caida: 0.7, maxCaida: 7.5, voz: 330,
     desc: ['Cae más suave', 'que los demás.'], stats: { vel: 3, salto: 3, caida: 4 },
@@ -82,7 +82,7 @@ const PERSONAJES = [
 // ---------- AJUSTES Y DATOS GUARDADOS ----------
 const CLAVE_GUARDADO = 'lichilon_departamentos_v1';
 const ES_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const AJ_DEFECTO = { musica: 0.6, efectos: 0.8, texto: 1, temblor: true, botones: 'auto', compatible: ES_IOS, pelicula: false };
+const AJ_DEFECTO = { musica: 0.6, efectos: 0.8, texto: 1, temblor: true, botones: 'auto', compatible: ES_IOS, efectoPelicula: false, calidad: MOVIL ? 1 : 2, fps: false };
 const datos = { ajustes: { ...AJ_DEFECTO }, logros: {}, stats: {}, mejor: 0 };
 try {
   const j = JSON.parse(localStorage.getItem(CLAVE_GUARDADO) || 'null');
@@ -91,7 +91,7 @@ try {
 function guardarDatos() { try { localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datos)); return true; } catch (e) { return false; } }
 let aj = { ...datos.ajustes };                              // ajustes en uso (se pueden mover sin guardar)
 function guardarAjustes() { datos.ajustes = { ...aj }; return guardarDatos(); }
-function descartarAjustes() { aj = { ...datos.ajustes }; aplicarVolumen(); }
+function descartarAjustes() { aj = { ...datos.ajustes }; aplicarVolumen(); if (typeof calidad !== 'undefined' && aj.calidad !== calidad) aplicarCalidad(aj.calidad); }
 
 // ---------- 2. SONIDOS Y MÚSICA (todo se fabrica con código, no hay archivos) ----------
 // Hay dos formas de reproducirlo, por si un dispositivo bloquea una de ellas:
@@ -124,16 +124,19 @@ function aplicarVolumen() {
   if (audioMusicaEl) audioMusicaEl.volume = silencio ? 0 : Math.min(1, aj.musica);
 }
 // Desbloquea el audio con cualquier toque o tecla (los navegadores, sobre todo en celular, lo exigen)
+let audioOk = false;
 function desbloquearAudio() {
+  if (audioOk) { if (musicaAltPend) musicaAltPend(); return; }
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
   const a = audio();
   if (a) { try { const b = a.createBuffer(1, 1, 22050), s = a.createBufferSource(); s.buffer = b; s.connect(a.destination); s.start(0); } catch (e) {} }
   try {                                                      // truco para que el iPhone/iPad no lo silencie con el switch de timbre
     if (!silencioEl) { silencioURL = silencioURL || wavUrl(new Float32Array(2205)); silencioEl = new Audio(silencioURL); silencioEl.loop = true; silencioEl.volume = 0.02; }
-    silencioEl.play().catch(() => {});
+    silencioEl.play().then(() => { if (usarAlt()) audioOk = true; }).catch(() => {});
   } catch (e) {}
   if (musicaAltPend) musicaAltPend();
   intentosAudio++;
+  if (audioCtx && audioCtx.state === 'running') audioOk = true;
   setTimeout(() => { if ((!audioCtx || audioCtx.state !== 'running') && !respaldoAuto && intentosAudio >= 2) { respaldoAuto = true; reiniciarMusica(); } }, 900);
 }
 ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'click', 'keydown'].forEach(ev => addEventListener(ev, desbloquearAudio, { passive: true }));
@@ -327,8 +330,8 @@ function sfxAlt(n) {
   if (silencio || aj.efectos <= 0) return;
   let url = cacheSfx[n];
   if (!url) { let ev; grabando = []; try { SONIDOS[n](); } finally { ev = grabando; grabando = null; } url = cacheSfx[n] = wavUrl(renderSfx(ev)); }
-  const pool = poolSfx[n] || (poolSfx[n] = { a: [new Audio(url), new Audio(url), new Audio(url)], i: 0 });
-  const a = pool.a[pool.i = (pool.i + 1) % 3]; a.volume = Math.min(1, aj.efectos); try { a.currentTime = 0; } catch (e) {} a.play().catch(() => {});
+  const pool = poolSfx[n] || (poolSfx[n] = { a: [new Audio(url), new Audio(url)], i: 0 });
+  const a = pool.a[pool.i = (pool.i + 1) % 2]; a.volume = Math.min(1, aj.efectos); try { a.currentTime = 0; } catch (e) {} a.play().catch(() => {});
 }
 function renderMusica(nombre, listo) {
   const p = PISTAS[nombre], total = p.acordes.length * 8;
@@ -759,7 +762,11 @@ function dibujarChoco(g, m) {
   g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(-14, -7, 22, 1.8);
   g.restore();
 }
-function resplandor(g, x, y, r, c) { const b = g.createRadialGradient(x, y, 2, x, y, r); b.addColorStop(0, c); b.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = b; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
+function resplandor(g, x, y, r, c) {                  // el brillo se dibuja una vez y luego solo se copia
+  const k = r + c; let sp = GLOW[k];
+  if (!sp) { sp = crearCanvas(Math.ceil(2 * r * ESC), Math.ceil(2 * r * ESC)); const gg = sp.getContext('2d'); gg.scale(ESC, ESC); const bb = gg.createRadialGradient(r, r, 2, r, r, r); bb.addColorStop(0, c); bb.addColorStop(1, 'rgba(255,255,255,0)'); gg.fillStyle = bb; gg.beginPath(); gg.arc(r, r, r, 0, 7); gg.fill(); GLOW[k] = sp; }
+  g.drawImage(sp, x - r, y - r, 2 * r, 2 * r);
+}
 function dibujarCristal(g, x, y) {
   resplandor(g, x + 12, y + 12, 24, 'rgba(160,230,255,.7)');
   g.fillStyle = grad(g, x, y, x + 24, y + 24, [[0, '#e6fbff'], [0.5, '#5ec8f7'], [1, '#2a82d6']]); g.strokeStyle = NEGRO; g.lineWidth = 2.4;
@@ -918,57 +925,105 @@ function dibujarCielo(tema) {
     for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.moveTo(660, 95); ctx.lineTo(660 - 420 + i * 120, H); ctx.lineTo(660 - 420 + i * 120 + 50, H); ctx.fill(); } ctx.restore();
   }
 }
-// Fondo con capas ya dibujadas: se preparan UNA sola vez (por eso el juego va fluido) y luego solo se mueven
-const CAPAS = {};
+let calidad = 1, GLOW = {}; const retrato = { c: null, t: -99, id: '' };
+// Fondo con capas ya dibujadas: se preparan UNA sola vez, en pedacitos chicos (1024 px), y luego solo se mueven
+const CAPAS = {}, PW = 1024;
+let LIGERO = false;                                          // calidad baja: menos adornos
 function nuevaCapa(w, h) { const c = crearCanvas(Math.ceil(w * ESC), Math.ceil(h * ESC)); const g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, 0, 0); return [c, g]; }
-function prepararCapas(tema) {
-  const tarde = tema === 'tarde', C = {}, MAXC = 160 * T, base = 392; let g;
-  [C.cielo, g] = nuevaCapa(W, H); ctx = g; dibujarCielo(tema); ctx = ctxReal;
-  C.nubes = [];                                              // nubes (se dibujan una vez cada una)
-  for (let i = 0; i < 8; i++) {
-    const k = 0.8 + (i % 3) * 0.25, [c, gg] = nuevaCapa(130 * k, 90 * k), cols = tarde ? [['#c2587a', 5], ['#ffb089', 0]] : [['#cfe0f5', 5], ['#fff', 0]];
-    cols.forEach(([col, dy]) => { gg.fillStyle = col; [[0, 0, 24], [28, -10, 30], [58, -2, 25], [34, 6, 22], [-14, 6, 18]].forEach(([dx, dyy, r]) => { gg.beginPath(); gg.arc(32 * k + dx * k, 42 * k + (dyy + dy) * k, r * k, 0, 7); gg.fill(); }); });
-    C.nubes.push({ c, k });
+function capaPartida(anchoLog, dibujar) {                    // una franja larga dividida en pedazos
+  const n = Math.ceil(anchoLog * ESC / PW), trozos = [];
+  for (let i = 0; i < n; i++) {
+    const c = crearCanvas(PW, Math.ceil(H * ESC)), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, -i * PW, 0);
+    dibujar(g, i * PW / ESC - 120, (i + 1) * PW / ESC + 120); trozos.push(c);
   }
-  const wl = MAXC * 0.07 + W + 1700; [C.lejos, g] = nuevaCapa(wl, H);
-  if (tarde) { for (let i = -1; i < 6; i++) mansion(g, i * 330 + 40, base, 140 + (i & 1) * 40, 100 + ((i + 3) % 3) * 30, '#4a2a62', '#ffcf6a'); }
-  else for (let k = 0; k * 1500 + 500 < wl; k++) catedral(g, k * 1500 + 500, base, '#a7bde6');
-  const ws = MAXC * 0.12 + W + 20; [C.selva, g] = nuevaCapa(ws, H);
-  g.fillStyle = tarde ? '#3a2358' : '#8fc7a0'; g.beginPath(); g.moveTo(0, H);
-  for (let x = 0; x <= ws + 10; x += 10) g.lineTo(x, base - 22 - Math.abs(Math.sin(x * 0.03)) * 30 - Math.sin(x * 0.11) * 6);
-  g.lineTo(ws, H); g.fill();
-  const wf = MAXC * 0.3 + W + 400; [C.fach, g] = nuevaCapa(wf, H);
-  const haze = { color: tarde ? 'rgba(120,50,110,.28)' : 'rgba(180,215,245,.22)', noche: tarde };
-  for (const f of FACH) if (f.x + 200 < wf) fachada(g, f, f.x + 200, base + 6, haze);
-  const wa = MAXC * 0.52 + W + 300; [C.arboles, g] = nuevaCapa(wa, H);
-  for (let i = 0; i * 250 < wa; i++) {
-    const sx = i * 250 + azar(i) * 90;
-    if (!tarde && i % 5 === 2) flamboyan(g, sx, 410, 0.9); else palma(g, sx, 412, 120 + azar(i + 3) * 60, (azar(i + 6) - 0.5) * 50, tarde ? '#25683a' : null);
-  }
-  [C.bruma, g] = nuevaCapa(W, H - 330);
-  const br = g.createLinearGradient(0, 0, 0, H - 330); br.addColorStop(0, 'rgba(255,255,255,0)'); br.addColorStop(1, tarde ? 'rgba(90,40,100,.35)' : 'rgba(255,255,255,.3)'); g.fillStyle = br; g.fillRect(0, 0, W, H - 330);
-  CAPAS[tema] = C;
+  return trozos;
 }
-const VIG = (function () {                                   // viñeta (oscurecido de las esquinas) ya dibujada
+function pintarCapa(trozos, x) {                             // x lógico; todo alineado a pixeles enteros (sin costuras y muy rápido)
+  const base = Math.round(x * ESC);
+  for (let i = 0; i < trozos.length; i++) { const px = base + i * PW; if (px + PW < 0 || px > canvas.width) continue; ctx.drawImage(trozos[i], px / ESC, 0, PW / ESC, H); }
+}
+function pasosCapas(tema, C) {                               // cada paso dibuja una capa (así se pueden repartir en el tiempo)
+  const tarde = tema === 'tarde', MAXC = 160 * T, base = 392;
+  return [
+    () => { const [c, g] = nuevaCapa(W, H); ctx = g; dibujarCielo(tema); ctx = ctxReal; C.cielo = c; },
+    () => {
+      C.nubes = [];
+      for (let i = 0; i < 8; i++) {
+        const k = 0.8 + (i % 3) * 0.25, [c, gg] = nuevaCapa(130 * k, 90 * k), cols = tarde ? [['#c2587a', 5], ['#ffb089', 0]] : [['#cfe0f5', 5], ['#fff', 0]];
+        cols.forEach(([col, dy]) => { gg.fillStyle = col; [[0, 0, 24], [28, -10, 30], [58, -2, 25], [34, 6, 22], [-14, 6, 18]].forEach(([dx, dyy, r]) => { gg.beginPath(); gg.arc(32 * k + dx * k, 42 * k + (dyy + dy) * k, r * k, 0, 7); gg.fill(); }); });
+        C.nubes.push({ c, k });
+      }
+    },
+    () => { C.lejos = capaPartida(MAXC * 0.07 + W + 1700, (g, x0, x1) => {
+      if (tarde) { for (let i = -1; i < 6; i++) { const mx = i * 330 + 40; if (mx + 200 > x0 && mx < x1) mansion(g, mx, base, 140 + (i & 1) * 40, 100 + ((i + 3) % 3) * 30, '#4a2a62', '#ffcf6a'); } }
+      else for (let k = 0; k * 1500 + 500 < x1; k++) { const cx = k * 1500 + 500; if (cx + 220 > x0) catedral(g, cx, base, '#a7bde6'); }
+    }); },
+    () => { C.selva = capaPartida(MAXC * 0.12 + W + 20, (g, x0, x1) => {
+      g.fillStyle = tarde ? '#3a2358' : '#8fc7a0'; g.beginPath(); const xa = Math.floor(x0 / 10) * 10; g.moveTo(xa, H);
+      for (let x = xa; x <= x1 + 10; x += 10) g.lineTo(x, base - 22 - Math.abs(Math.sin(x * 0.03)) * 30 - Math.sin(x * 0.11) * 6);
+      g.lineTo(x1 + 10, H); g.fill();
+    }); },
+    () => { C.fach = capaPartida(MAXC * 0.3 + W + 400, (g, x0, x1) => {
+      const haze = { color: tarde ? 'rgba(120,50,110,.28)' : 'rgba(180,215,245,.22)', noche: tarde };
+      for (const f of FACH) { const fx = f.x + 200; if (fx + f.w > x0 && fx < x1) fachada(g, f, fx, base + 6, haze); }
+    }); },
+    () => { C.arboles = capaPartida(MAXC * 0.52 + W + 300, (g, x0, x1) => {
+      for (let i = 0; i * 250 < x1 + 200; i++) {
+        const sx = i * 250 + azar(i) * 90; if (sx + 130 < x0 || sx - 130 > x1) continue;
+        if (!tarde && i % 5 === 2) flamboyan(g, sx, 410, 0.9); else palma(g, sx, 412, 120 + azar(i + 3) * 60, (azar(i + 6) - 0.5) * 50, tarde ? '#25683a' : null);
+      }
+    }); },
+    () => {
+      const [c, g] = nuevaCapa(W, H - 330);
+      const br = g.createLinearGradient(0, 0, 0, H - 330); br.addColorStop(0, 'rgba(255,255,255,0)'); br.addColorStop(1, tarde ? 'rgba(90,40,100,.35)' : 'rgba(255,255,255,.3)'); g.fillStyle = br; g.fillRect(0, 0, W, H - 330);
+      C.bruma = c; C.listo = true;
+    },
+  ];
+}
+function prepararCapas(tema) {                               // todo de una vez
+  const C = CAPAS[tema] || (CAPAS[tema] = {}); if (C.listo) return; pasosCapas(tema, C).forEach(f => f());
+}
+function prepararCapasPoco(tema) {                           // repartido en el tiempo, para no trabar el juego
+  if (CAPAS[tema]) return; const C = CAPAS[tema] = {}, pasos = pasosCapas(tema, C); let i = 0;
+  const sig = () => { if (C.listo || !CAPAS[tema] || CAPAS[tema] !== C) return; pasos[i++](); if (i < pasos.length) setTimeout(sig, 40); }; setTimeout(sig, 40);
+}
+let VIG = null;
+function crearVig() {                                        // viñeta (oscurecido de las esquinas) ya dibujada
   const [c, g] = nuevaCapa(W, H); const v = g.createRadialGradient(W / 2, H / 2, H * 0.55, W / 2, H / 2, H * 1.0);
   v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(10,5,25,.32)'); g.fillStyle = v; g.fillRect(0, 0, W, H); return c;
-})();
+}
 function dibujarFondo(cam, tema) {
-  if (!CAPAS[tema]) prepararCapas(tema);
+  if (!CAPAS[tema] || !CAPAS[tema].listo) { if (CAPAS[tema]) delete CAPAS[tema]; prepararCapas(tema); }
   const C = CAPAS[tema], maxCam = 160 * T - W;
   if (cam > maxCam) { const p = maxCam * 2, m = cam % p; cam = m > maxCam ? p - m : m; }
-  const dw = c => c.width / ESC, al = v => Math.round(v * ESC) / ESC;      // posiciones alineadas a pixeles: así dibujar es rapidísimo
   ctx.drawImage(C.cielo, 0, 0, W, H);
-  C.nubes.forEach(({ c, k }, i) => { const nx = (((i * 310 - cam * 0.2 + reloj * 0.06) % (W + 360)) + W + 360) % (W + 360) - 180, ny = 40 + (i * 53) % 110; ctx.drawImage(c, nx - 32 * k, ny - 42 * k, 130 * k, 90 * k); });
-  ctx.strokeStyle = tema === 'tarde' ? '#2a1a3a' : '#33405a'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
-  for (const p of pajaros) { const px = (((p.x + reloj * p.v - cam * 0.1) % (W + 100)) + W + 100) % (W + 100) - 50, py = p.y + Math.sin(reloj * 0.03 + p.x) * 8, al = Math.sin(reloj * 0.25 + p.x) * 4;
-    ctx.beginPath(); ctx.moveTo(px - 7, py - al); ctx.quadraticCurveTo(px - 3, py - 3 - al * 0.3, px, py); ctx.quadraticCurveTo(px + 3, py - 3 - al * 0.3, px + 7, py - al); ctx.stroke(); }
-  ctx.drawImage(C.lejos, al(-cam * 0.07), 0, dw(C.lejos), H);
-  ctx.drawImage(C.selva, al(-cam * 0.12), 0, dw(C.selva), H);
-  ctx.drawImage(C.fach, al(-cam * 0.3 - 200), 0, dw(C.fach), H);
-  ctx.drawImage(C.arboles, al(-cam * 0.52), 0, dw(C.arboles), H);
+  if (!LIGERO) {
+    C.nubes.forEach(({ c, k }, i) => { const nx = (((i * 310 - cam * 0.2 + reloj * 0.06) % (W + 360)) + W + 360) % (W + 360) - 180, ny = 40 + (i * 53) % 110; ctx.drawImage(c, nx - 32 * k, ny - 42 * k, 130 * k, 90 * k); });
+    ctx.strokeStyle = tema === 'tarde' ? '#2a1a3a' : '#33405a'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+    for (const p of pajaros) { const px = (((p.x + reloj * p.v - cam * 0.1) % (W + 100)) + W + 100) % (W + 100) - 50, py = p.y + Math.sin(reloj * 0.03 + p.x) * 8, al = Math.sin(reloj * 0.25 + p.x) * 4;
+      ctx.beginPath(); ctx.moveTo(px - 7, py - al); ctx.quadraticCurveTo(px - 3, py - 3 - al * 0.3, px, py); ctx.quadraticCurveTo(px + 3, py - 3 - al * 0.3, px + 7, py - al); ctx.stroke(); }
+  }
+  pintarCapa(C.lejos, -cam * 0.07); pintarCapa(C.selva, -cam * 0.12); pintarCapa(C.fach, -cam * 0.3 - 200); pintarCapa(C.arboles, -cam * 0.52);
   ctx.drawImage(C.bruma, 0, 330, W, H - 330);
 }
+// Calidad gráfica: 0 baja, 1 media, 2 alta
+function aplicarCalidad(q) {
+  calidad = Math.max(0, Math.min(2, q)); ESC = MOVIL ? [0.85, 1.0, 1.15][calidad] : [1.0, 1.3, 1.6][calidad]; LIGERO = calidad === 0;
+  canvas.width = Math.round(W * ESC); canvas.height = Math.round(H * ESC);
+  for (const k in CAPAS) delete CAPAS[k]; GLOW = {}; retrato.c = null; VIG = crearVig(); prepararCapas(tema === 'tarde' ? 'tarde' : 'dia');
+}
+// Mariposas de día y luciérnagas al atardecer (adorno, se apaga en calidad baja)
+function dibujarAmbiente(cam, tarde) {
+  if (LIGERO) return;
+  for (let i = 0; i < 5; i++) {
+    const x = ((i * 211 + reloj * (0.35 + (i % 3) * 0.15) - cam * 0.85) % (W + 80) + W + 80) % (W + 80) - 40, y = 230 + (i * 47) % 100 + Math.sin(reloj * 0.04 + i * 2) * 26;
+    if (tarde) { const a = 0.45 + 0.4 * Math.sin(reloj * 0.07 + i * 1.7); ctx.globalAlpha = a; resplandor(ctx, x, y, 12, 'rgba(255,235,130,.95)'); ctx.globalAlpha = 1; ctx.fillStyle = '#fff6b0'; ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 7); ctx.fill(); }
+    else { const f = Math.abs(Math.sin(reloj * 0.35 + i)) * 4 + 1.5, c = ['#ff9ad0', '#ffd34d', '#8fd3ff', '#ffffff', '#ff9a5c'][i];
+      ctx.fillStyle = c; ctx.strokeStyle = NEGRO; ctx.lineWidth = 1; [-1, 1].forEach(s => { ctx.beginPath(); ctx.ellipse(x + s * f * 0.9, y - 1, f, 3.4, s * 0.5, 0, 7); ctx.fill(); ctx.stroke(); });
+      ctx.fillStyle = NEGRO; ctx.fillRect(x - 0.7, y - 3, 1.4, 6); }
+  }
+}
+
 
 
 // Decoración de la calle (en el mundo, siempre en el mismo lugar)
@@ -1192,9 +1247,10 @@ function moverConColision(o) {
 }
 
 function chispas(x, y, n, color, vel = 3, grav = 0.15) {
+  if (LIGERO) n = Math.min(n, 4);
   for (let i = 0; i < n; i++) particulas.push({ x, y, vx: (Math.random() - .5) * vel * 2, vy: (Math.random() - .8) * vel * 2, vida: 25 + Math.random() * 20, color, tam: 1.5 + Math.random() * 2.5, grav });
 }
-function polvo(x, y, n) { for (let i = 0; i < n; i++) particulas.push({ x: x + (Math.random() - .5) * 10, y, vx: (Math.random() - .5) * 1.6, vy: -Math.random() * 0.8, vida: 16 + Math.random() * 8, color: '#e8dcc0', tam: 2 + Math.random() * 1.5, grav: -0.01 }); }
+function polvo(x, y, n) { if (LIGERO) return; for (let i = 0; i < n; i++) particulas.push({ x: x + (Math.random() - .5) * 10, y, vx: (Math.random() - .5) * 1.6, vy: -Math.random() * 0.8, vida: 16 + Math.random() * 8, color: '#e8dcc0', tam: 2 + Math.random() * 1.5, grav: -0.01 }); }
 
 // Perder una vida: te quedas donde estás (con un empujoncito y unos segundos a salvo). Sin vidas, vuelves al inicio del nivel.
 function perderVida(empuje = 0) {
@@ -1535,7 +1591,7 @@ function dibujarJugador() {
 function dibujarNivel() {
   const c0 = Math.max(0, Math.floor(camara / T)), c1 = Math.min(COLS - 1, c0 + Math.ceil(W / T) + 1);
   const tarde = tema === 'tarde';
-  for (const d of decoraciones) if (d.x > camara - 50 && d.x < camara + W + 50) dibujarDecoracion(d, tarde);
+  if (!LIGERO) for (const d of decoraciones) if (d.x > camara - 50 && d.x < camara + W + 50) dibujarDecoracion(d, tarde);
   for (let c = c0; c <= c1; c++) if (mapa[12][c] === ' ') {                             // zanjas
     const gr = ctx.createLinearGradient(0, 12 * T, 0, H); gr.addColorStop(0, '#2a1d14'); gr.addColorStop(1, '#0c0806'); ctx.fillStyle = gr; ctx.fillRect(c * T, 12 * T, T + 0.5, H - 12 * T + 40);
     if (mapa[12][c - 1] === '#') { ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(c * T, 12 * T, 6, 100); }
@@ -1553,9 +1609,12 @@ function dibujarNivel() {
 function dibujarMarcador() {
   ctx.fillStyle = 'rgba(25,20,60,.58)'; trazoRedondo(ctx, 6, 6, W - 12, 52, 14); ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.5; ctx.stroke();
-  ctx.save(); ctx.beginPath(); ctx.arc(32, 32, 22, 0, 7); ctx.clip();
-  ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(0, 0, 70, 70);
-  dibujarNino(ctx, personaje, 32, 62, 0.6, 1, { estado: 'quieto', t: reloj }); ctx.restore();
+  if (!retrato.c || retrato.id !== personaje.id || reloj - retrato.t >= 10) {            // el retrato se redibuja pocas veces
+    if (!retrato.c) retrato.c = crearCanvas(Math.ceil(44 * ESC), Math.ceil(44 * ESC));
+    const rg = retrato.c.getContext('2d'); rg.setTransform(ESC, 0, 0, ESC, 0, 0); rg.clearRect(0, 0, 44, 44); rg.save(); rg.beginPath(); rg.arc(22, 22, 22, 0, 7); rg.clip();
+    rg.fillStyle = 'rgba(255,255,255,.18)'; rg.fillRect(0, 0, 44, 44); dibujarNino(rg, personaje, 22, 52, 0.6, 1, { estado: 'quieto', t: reloj }); rg.restore(); retrato.t = reloj; retrato.id = personaje.id;
+  }
+  ctx.drawImage(retrato.c, 10, 10, 44, 44);
   ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(32, 32, 22, 0, 7); ctx.stroke();
   texto(personaje.nombre, 62, 27, 14); texto(String(puntos).padStart(6, '0'), 62, 49, 17, '#ffd700');
   dibujarChoco(ctx, { x: 176, y: 20, w: 24, h: 16 });
@@ -1591,7 +1650,7 @@ function dibujarAvisos() {
   });
 }
 function dibujarJuego() {
-  dibujarFondo(camara, tema);
+  dibujarFondo(camara, tema); dibujarAmbiente(camara, tema === 'tarde');
   const sacudir = aj.temblor && temblor > 0, sx = sacudir ? (Math.random() - 0.5) * temblor * 0.6 : 0, sy = sacudir ? (Math.random() - 0.5) * temblor * 0.5 : 0;
   ctx.save(); ctx.translate(-Math.round(camara * ESC) / ESC + sx, sy);
   dibujarEdificioFinal(arenaX, tema === 'tarde');
@@ -1690,21 +1749,23 @@ function dibujarMenu() {
 }
 function dibujarAjustes() {
   dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.45)'; ctx.fillRect(0, 0, W, H);
-  panelVidrio(100, 18, 600, 414);
-  texto('AJUSTES', W / 2, 54, 28, '#ffd43b', 'center');
+  panelVidrio(100, 4, 600, 442);
+  texto('AJUSTES', W / 2, 34, 24, '#ffd43b', 'center');
   const cerrar = () => { descartarAjustes(); irA(ajustesVolver); };
   const x = 140, w = 520;
-  uiSlider('Volumen de la música', x, 66, w, () => aj.musica, v => { aj.musica = v; aplicarVolumen(); }, v => Math.round(v * 100) + '%');
-  uiSlider('Volumen de los efectos de sonido', x, 112, w, () => aj.efectos, v => { aj.efectos = v; aplicarVolumen(); }, v => Math.round(v * 100) + '%', () => sfx('choco'));
-  uiSlider('Velocidad del texto', x, 158, w, () => aj.texto / 2, v => { aj.texto = Math.round(v * 2); }, v => ['Lenta', 'Normal', 'Rápida'][Math.round(v * 2)]);
+  uiSlider('Volumen de la música', x, 44, w, () => aj.musica, v => { aj.musica = v; aplicarVolumen(); }, v => Math.round(v * 100) + '%');
+  uiSlider('Volumen de los efectos de sonido', x, 86, w, () => aj.efectos, v => { aj.efectos = v; aplicarVolumen(); }, v => Math.round(v * 100) + '%', () => sfx('choco'));
+  uiSlider('Velocidad del texto', x, 128, w, () => aj.texto / 2, v => { aj.texto = Math.round(v * 2); }, v => ['Lenta', 'Normal', 'Rápida'][Math.round(v * 2)]);
   ui.rects[ui.rects.length - 1].discreto = 2; ui.rects[ui.rects.length - 1].paso = 0.5;
-  uiToggle('Sacudida de pantalla', x, 210, w, aj.temblor ? 'Sí' : 'No', () => { aj.temblor = !aj.temblor; });
-  uiToggle('Efecto de película antigua', x, 250, w, aj.pelicula ? 'Sí' : 'No', () => { aj.pelicula = !aj.pelicula; });
-  uiToggle('Botones en pantalla', x, 290, w, { auto: 'Automático', siempre: 'Siempre', nunca: 'Nunca' }[aj.botones], () => { aj.botones = { auto: 'siempre', siempre: 'nunca', nunca: 'auto' }[aj.botones]; });
-  uiToggle('Sonido compatible (si no se oye)', x, 330, w, aj.compatible ? 'Sí' : 'No', () => { aj.compatible = !aj.compatible; reiniciarMusica(); });
-  uiBoton('PROBAR SONIDO', 130, 376, 210, 42, () => { desbloquearAudio(); sfx('logro'); setTimeout(() => sfx('ouch'), 700); }, 'azul', 17);
-  uiBoton('GUARDAR AJUSTES', 360, 376, 250, 42, () => { const ok = guardarAjustes(); ajustesGuardado = 150; avisos.push({ t: 0, titulo: ok ? '¡LISTO!' : 'AVISO', txt: ok ? 'Ajustes guardados' : 'Este navegador no deja guardar', sub: ok ? 'Se usarán siempre que entres al juego' : 'Pero siguen activos mientras juegas' }); sfx('vida'); }, 'verde', 18);
-  uiCerrar(cerrar, 100 + 600 - 50, 24);
+  uiToggle('Sacudida de pantalla', x, 178, w, aj.temblor ? 'Sí' : 'No', () => { aj.temblor = !aj.temblor; });
+  uiToggle('Efecto de película antigua', x, 214, w, aj.efectoPelicula ? 'Sí' : 'No', () => { aj.efectoPelicula = !aj.efectoPelicula; });
+  uiToggle('Botones en pantalla', x, 250, w, { auto: 'Automático', siempre: 'Siempre', nunca: 'Nunca' }[aj.botones], () => { aj.botones = { auto: 'siempre', siempre: 'nunca', nunca: 'auto' }[aj.botones]; });
+  uiToggle('Sonido compatible (si no se oye)', x, 286, w, aj.compatible ? 'Sí' : 'No', () => { aj.compatible = !aj.compatible; reiniciarMusica(); });
+  uiToggle('Calidad gráfica (si va trabado)', x, 322, w, ['Baja', 'Media', 'Alta'][calidad], () => { const q = (calidad + 2) % 3; aj.calidad = q; aplicarCalidad(q); });
+  uiToggle('Mostrar cuadros por segundo', x, 358, w, aj.fps ? 'Sí' : 'No', () => { aj.fps = !aj.fps; });
+  uiBoton('PROBAR SONIDO', 130, 400, 210, 38, () => { desbloquearAudio(); sfx('logro'); setTimeout(() => sfx('ouch'), 700); }, 'azul', 16);
+  uiBoton('GUARDAR AJUSTES', 360, 400, 250, 38, () => { const ok = guardarAjustes(); ajustesGuardado = 150; avisos.push({ t: 0, titulo: ok ? '¡LISTO!' : 'AVISO', txt: ok ? 'Ajustes guardados' : 'Este navegador no deja guardar', sub: ok ? 'Se usarán siempre que entres al juego' : 'Pero siguen activos mientras juegas' }); sfx('vida'); }, 'verde', 17);
+  uiCerrar(cerrar, 100 + 600 - 50, 8);
 }
 function dibujarLogros() {
   dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.45)'; ctx.fillRect(0, 0, W, H);
@@ -1781,7 +1842,7 @@ function dibujarPausa() {
 const GRANO = crearCanvas(64, 64);
 (function () { const g = GRANO.getContext('2d'), d = g.createImageData(64, 64); for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() < 0.5 ? 0 : 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = Math.random() < 0.4 ? Math.floor(25 + Math.random() * 70) : 0; } g.putImageData(d, 0, 0); })();
 function capaVintage() {
-  if (!aj.pelicula) return;
+  if (!aj.efectoPelicula || LIGERO) return;
   ctx.save();
   ctx.globalAlpha = 0.34; const ox = -Math.floor(Math.random() * 64), oy = -Math.floor(Math.random() * 64);
   for (let x = ox; x < W; x += 64) for (let y = oy; y < H; y += 64) ctx.drawImage(GRANO, x, y, 64, 64);
@@ -1810,6 +1871,7 @@ function dibujar() {
     if (estado === 'gano') dibujarPanelFin('¡DEPARTAMENTO GRATIS!', ['Derrotaste al Patrón y a la Patrona.', 'Los tres hermanos ya tienen su departamento.', 'Puntos: ' + puntos], '#6bff8a', [['MENÚ PRINCIPAL', () => irA('menu'), 'verde']]);
   }
   capaVintage();
+  if (aj.fps) texto(fpsMostrado + ' FPS · calidad ' + ['baja', 'media', 'alta'][calidad], W / 2, H - 6, 11, '#fff', 'center');
   dibujarAvisos();
 }
 
@@ -1865,20 +1927,27 @@ addEventListener('pointerup', () => { ui.arr = null; });
 
 const domTactil = document.getElementById('tactil'), domGirar = document.getElementById('girar');
 cargarNivel(0); irA('menu');
-let ultimoT = 0, acum = 0;
+let ultimoT = 0, acum = 0, dibCont = 0, fpsT0 = 0, fpsMostrado = 60, fpsBajos = 0, domVis = null, domGir = null;
 function ciclo(ts) {
-  if (!ultimoT) ultimoT = ts || performance.now();
-  let dt = (ts || performance.now()) - ultimoT; ultimoT = ts || performance.now(); if (dt > 100) dt = 100; acum += dt;
+  const ahora = ts || performance.now();
+  if (!ultimoT) { ultimoT = ahora; fpsT0 = ahora; }
+  let dt = ahora - ultimoT; ultimoT = ahora; if (dt > 100) dt = 100; acum += dt;
   const PASO = 1000 / 60; let pasos = 0;
   while (acum >= PASO - 0.5 && pasos < 3) { actualizarPad(); menuControl(); actualizar(); acum -= PASO; pasos++; }   // el juego corre igual en pantallas de 60 y de 120 Hz
-  if (pasos > 0 || !ciclo.dibujado) { dibujar(); ciclo.dibujado = true; }
-  const verBotones = botonesVisibles() && estado === 'jugando';
-  domTactil.style.display = verBotones ? 'block' : 'none';
-  domGirar.classList.toggle('on', botonesVisibles());
+  if (pasos > 0 || !ciclo.dibujado) { dibujar(); ciclo.dibujado = true; dibCont++; }
+  if (ahora - fpsT0 >= 1000) {                                     // si va lento, baja la calidad sola
+    fpsMostrado = Math.round(dibCont * 1000 / (ahora - fpsT0)); dibCont = 0; fpsT0 = ahora;
+    fpsBajos = (!document.hidden && ahora > 5000 && estado !== 'ajustes' && fpsMostrado < 42) ? fpsBajos + 1 : 0;
+    if (fpsBajos >= 3 && calidad > 0) { fpsBajos = 0; aplicarCalidad(calidad - 1); avisos.push({ t: 0, titulo: 'CALIDAD AJUSTADA', txt: 'Bajé la calidad gráfica', sub: 'Para que vaya más fluido. Cámbiala en Ajustes.' }); }
+  }
+  const verBotones = botonesVisibles() && estado === 'jugando', gir = botonesVisibles();
+  if (verBotones !== domVis) { domTactil.style.display = verBotones ? 'block' : 'none'; domVis = verBotones; }
+  if (gir !== domGir) { domGirar.classList.toggle('on', gir); domGir = gir; }
   if (!verBotones) for (const k in tactil) tactil[k] = false;
   requestAnimationFrame(ciclo);
 }
-prepararCapas('dia'); setTimeout(() => prepararCapas('tarde'), 800);
+aplicarCalidad(aj.calidad);
+setTimeout(() => { if (!CAPAS.tarde) prepararCapasPoco('tarde'); }, 4000);
 requestAnimationFrame(ciclo);
 </script>
 </body>
