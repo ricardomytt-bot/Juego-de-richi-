@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 2.7
+//  LICHILÓN Y EL PATRÓN  -  Versión 2.8
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -83,14 +83,34 @@ const PERSONAJES = [
 const CLAVE_GUARDADO = 'lichilon_departamentos_v2', CLAVE_VIEJA = 'lichilon_departamentos_v1';   // v2 = partida nueva (el progreso anterior se borró a propósito)
 const ES_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const AJ_DEFECTO = { musica: 0.6, efectos: 0.8, texto: 1, temblor: true, botones: 'auto', compatible: ES_IOS, efectoPelicula: false, calidad: MOVIL ? 1 : 2, fps: false };
-const datos = { ajustes: { ...AJ_DEFECTO }, logros: {}, stats: {}, mejor: 0, prog: {}, intro: false, monedas: 0, tienda: {} };
+const datos = { ajustes: { ...AJ_DEFECTO }, nombre: 'Jugador 1', logros: {}, stats: {}, mejor: 0, prog: {}, intro: true, monedas: 0, tienda: {}, creado: 0 };
+// ---------- Perfiles: hasta 4 partidas guardadas; los ajustes (volumen, calidad...) son de todos ----------
+const CLAVE_PERFILES = 'lichilon_perfiles_v1';
+const perfilNuevo = nombre => ({ nombre, logros: {}, stats: {}, mejor: 0, prog: {}, intro: true, monedas: 0, tienda: {}, creado: Date.now() });
+let perfiles = [null, null, null, null], perfilActual = 0;
+function cargarPerfil(i) {
+  const p = perfiles[i]; datos.nombre = p.nombre || 'Jugador ' + (i + 1); datos.logros = p.logros || {}; datos.stats = p.stats || {}; datos.mejor = p.mejor || 0; datos.prog = p.prog || {}; datos.monedas = p.monedas || 0; datos.tienda = p.tienda || {}; datos.intro = true; datos.creado = p.creado || Date.now();
+}
 try {
-  const vieja = localStorage.getItem(CLAVE_VIEJA);
-  if (vieja && !localStorage.getItem(CLAVE_GUARDADO)) { try { const v = JSON.parse(vieja); if (v && v.ajustes) Object.assign(datos.ajustes, v.ajustes); } catch (e) {} localStorage.removeItem(CLAVE_VIEJA); }   // solo se conservan los ajustes (volumen, calidad...)
-  const j = JSON.parse(localStorage.getItem(CLAVE_GUARDADO) || 'null');
-  if (j) { Object.assign(datos.ajustes, j.ajustes || {}); datos.logros = j.logros || {}; datos.stats = j.stats || {}; datos.mejor = j.mejor || 0; datos.prog = j.prog || {}; datos.monedas = j.monedas || 0; datos.tienda = j.tienda || {}; datos.intro = !!j.intro || (datos.stats.partidas > 0); }
-} catch (e) {}
-function guardarDatos() { try { localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datos)); return true; } catch (e) { return false; } }
+  let g = JSON.parse(localStorage.getItem(CLAVE_PERFILES) || 'null');
+  if (!g) {                                                  // primera vez con perfiles: la partida que había pasa a ser el Perfil 1
+    const v = JSON.parse(localStorage.getItem(CLAVE_GUARDADO) || 'null');
+    g = { actual: 0, ajustes: (v && v.ajustes) || {}, perfiles: [v ? { nombre: 'Jugador 1', logros: v.logros, stats: v.stats, mejor: v.mejor, prog: v.prog, monedas: v.monedas, tienda: v.tienda } : perfilNuevo('Jugador 1'), null, null, null] };
+  }
+  Object.assign(datos.ajustes, g.ajustes || {});
+  perfiles = [0, 1, 2, 3].map(i => (g.perfiles && g.perfiles[i]) || null);
+  perfilActual = perfiles[g.actual] ? g.actual : Math.max(0, perfiles.findIndex(p => p));
+  if (!perfiles[perfilActual]) perfiles[perfilActual] = perfilNuevo('Jugador 1');
+  cargarPerfil(perfilActual);
+} catch (e) { perfiles[0] = perfilNuevo('Jugador 1'); perfilActual = 0; cargarPerfil(0); }
+function guardarDatos() {
+  try {
+    perfiles[perfilActual] = { nombre: datos.nombre, logros: datos.logros, stats: datos.stats, mejor: datos.mejor, prog: datos.prog, intro: true, monedas: datos.monedas, tienda: datos.tienda, creado: datos.creado };
+    localStorage.setItem(CLAVE_PERFILES, JSON.stringify({ actual: perfilActual, ajustes: datos.ajustes, perfiles })); return true;
+  } catch (e) { return false; }
+}
+function cambiarPerfil(i) { guardarDatos(); perfilActual = i; cargarPerfil(i); guardarDatos(); avisos = []; }
+const NOMBRES_PERFIL = ['Jugador 1', 'Jugador 2', 'Jugador 3', 'Jugador 4', 'Lichilón', 'Julián', 'Sofi', 'Familia', 'Campeón', 'Yucateco', 'Explorador', 'Superhéroe'];
 let aj = { ...datos.ajustes };                              // ajustes en uso (se pueden mover sin guardar)
 function guardarAjustes() { datos.ajustes = { ...aj }; return guardarDatos(); }
 function descartarAjustes() { aj = { ...datos.ajustes }; aplicarVolumen(); if (typeof calidad !== 'undefined' && aj.calidad !== calidad) aplicarCalidad(aj.calidad); }
@@ -658,15 +678,15 @@ function dibujarEscarabajo(g, e, t, parpO) {
   const dir = (e.vx || e.ultimoVx || -1) > 0 ? 1 : -1, cong = e.congelado > 0, parp = parpO !== undefined ? parpO : (t % 200) < 6;
   g.save(); g.translate(e.x + e.w / 2, e.y + e.h); g.scale(dir * 1.1, 1.1); g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = GM;
   g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(0, 0, 18, 3, 0, 0, 7); g.fill();
-  for (let i = 0; i < 3; i++) { const bx = -9 + i * 9, m = cong ? 0 : Math.sin(t * 0.35 + i * 2.1) * 4; tuboF(g, bx, -8, bx + m, -2, 2.6, '#4a2380', -1); g.fillStyle = '#ffd54a'; g.beginPath(); g.ellipse(bx + m + 1.4, -1.4, 4.2, 2.4, 0, 0, 7); g.fill(); g.stroke(); }
-  g.fillStyle = '#8c43d6'; g.beginPath(); g.moveTo(-18, -6); g.bezierCurveTo(-22, -32, 8, -36, 19, -22); g.bezierCurveTo(26, -14, 22, -5, 12, -4); g.quadraticCurveTo(-3, -2, -18, -6); g.closePath(); g.fill(); g.stroke();   // cuerpo de una pieza
-  g.fillStyle = '#ff6ad5'; g.lineWidth = 1.6; [[-11, -19, 3.2], [-3, -25, 2.8], [-8, -11, 2.6]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.stroke(); });
-  g.lineWidth = GM; ojoMod(g, 11, -17, 5.4, '#ffd54a', '#8c43d6', parp); ojoMod(g, 20.4, -15.4, 4.8, '#ffd54a', '#8c43d6', parp);
-  barra(g, 10, -25.6, 8, 2.8, 0.4, '#3a1a66'); barra(g, 21, -23.6, 7, 2.8, -0.4, '#3a1a66');
+  for (let i = 0; i < 3; i++) { const bx = -9 + i * 9, m = cong ? 0 : Math.sin(t * 0.35 + i * 2.1) * 4; tuboF(g, bx, -8, bx + m, -2, 2.6, '#3a1414', -1); g.fillStyle = '#ffd54a'; g.beginPath(); g.ellipse(bx + m + 1.4, -1.4, 4.2, 2.4, 0, 0, 7); g.fill(); g.stroke(); }
+  g.fillStyle = '#e0322b'; g.beginPath(); g.moveTo(-18, -6); g.bezierCurveTo(-22, -32, 8, -36, 19, -22); g.bezierCurveTo(26, -14, 22, -5, 12, -4); g.quadraticCurveTo(-3, -2, -18, -6); g.closePath(); g.fill(); g.stroke();   // cuerpo de una pieza
+  g.fillStyle = '#1e1e28'; g.lineWidth = 1.6; [[-11, -19, 3.2], [-3, -25, 2.8], [-8, -11, 2.6]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.stroke(); });
+  g.lineWidth = GM; ojoMod(g, 11, -17, 5.4, '#ffd54a', '#e0322b', parp); ojoMod(g, 20.4, -15.4, 4.8, '#ffd54a', '#e0322b', parp);
+  barra(g, 10, -25.6, 8, 2.8, 0.4, '#4a1010'); barra(g, 21, -23.6, 7, 2.8, -0.4, '#4a1010');
   g.lineWidth = 1.8; g.beginPath(); g.moveTo(11, -7.4); g.quadraticCurveTo(16, -5, 21, -8); g.stroke();
   g.fillStyle = '#fff'; g.lineWidth = 1.3; g.beginPath(); g.moveTo(16.5, -6.4); g.lineTo(18.6, -2.6); g.lineTo(20, -6.8); g.closePath(); g.fill(); g.stroke();
   g.lineWidth = 1.8; g.beginPath(); g.moveTo(5, -31); g.quadraticCurveTo(2, -40, -3, -41); g.moveTo(11, -33); g.quadraticCurveTo(13, -42, 19, -42); g.stroke();
-  g.fillStyle = '#ff6ad5'; [[-3, -41], [19, -42]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 2.6, 0, 7); g.fill(); g.stroke(); });
+  g.fillStyle = '#1e1e28'; [[-3, -41], [19, -42]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 2.6, 0, 7); g.fill(); g.stroke(); });
   g.restore();
   if (cong) hielo(g, e.x - 2, e.y - 8, e.w + 6, e.h + 8);
 }
@@ -1091,7 +1111,7 @@ function mansion(g, x, base, w, h, color, luz) {            // siluetas del Pase
   for (let i = 0; i < 4; i++) g.fillRect(x + 8 + i * (w - 24) / 3, base - h + 8, 7, h - 8);
   g.fillStyle = luz; for (let i = 0; i < 3; i++) { g.fillRect(x + 14 + i * (w - 30) / 2.2, base - h * 0.62, 10, 16); }
 }
-const pajaros = [0, 1, 2, 3].map(i => ({ x: i * 260, y: 60 + i * 28, v: 0.4 + i * 0.12 }));
+const pajaros = [0, 1].map(i => ({ x: i * 260, y: 60 + i * 28, v: 0.4 + i * 0.12 }));
 
 function dibujarCielo(tema) {
   if (tema === 'playa') { cieloPlaya(); return; }
@@ -1124,6 +1144,10 @@ let calidad = 1, GLOW = {}; const retrato = { c: null, t: -99, id: '' };
 const CAPAS = {}, PW = 1024;
 let LIGERO = false;                                          // calidad baja: menos adornos
 function nuevaCapa(w, h) { const c = crearCanvas(Math.ceil(w * ESC), Math.ceil(h * ESC)); const g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, 0, 0); return [c, g]; }
+function velo(trozos, color) {                              // aclara la capa (como neblina): lo lejano se ve más suave y lo importante resalta
+  trozos.forEach(c => { const g = c.getContext('2d'); g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = color; g.fillRect(0, 0, c.width, c.height); g.restore(); });
+  return trozos;
+}
 function capaPartida(anchoLog, dibujar) {                    // una franja larga dividida en pedazos
   const n = Math.ceil(anchoLog * ESC / PW), trozos = [];
   for (let i = 0; i < n; i++) {
@@ -1142,13 +1166,13 @@ function pasosCapas(tema, C) {                               // cada paso dibuja
     () => { const [c, g] = nuevaCapa(W, H); ctx = g; dibujarCielo(tema); ctx = ctxReal; C.cielo = c; },
     () => {
       C.nubes = [];
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < 5; i++) {
         const k = 0.8 + (i % 3) * 0.25, [c, gg] = nuevaCapa(130 * k, 90 * k), cols = tarde ? [['#c2587a', 5], ['#ffb089', 0]] : [['#cfe0f5', 5], ['#fff', 0]];
         cols.forEach(([col, dy]) => { gg.fillStyle = col; [[0, 0, 24], [28, -10, 30], [58, -2, 25], [34, 6, 22], [-14, 6, 18]].forEach(([dx, dyy, r]) => { gg.beginPath(); gg.arc(32 * k + dx * k, 42 * k + (dyy + dy) * k, r * k, 0, 7); gg.fill(); }); });
         C.nubes.push({ c, k });
       }
     },
-    () => { C.lejos = capaPartida(MAXC * 0.07 + W + 1700, (g, x0, x1) => {
+    () => { C.lejos = velo(capaPartida(MAXC * 0.07 + W + 1700, (g, x0, x1) => {
       if (playa) lejosPlaya(g, x0, x1);
       else if (chi) lejosChichen(g, x0, x1);
       else if (tarde) {
@@ -1156,8 +1180,8 @@ function pasosCapas(tema, C) {                               // cada paso dibuja
         for (let i = -1; i < 6; i++) { const mx = i * 330 + 40; if (mx + 200 > x0 && mx < x1 && Math.abs(mx + 100 - 560) > 190) mansion(g, mx, base, 140 + (i & 1) * 40, 100 + ((i + 3) % 3) * 30, '#4a2a62', '#ffcf6a'); }
       }
       else for (let k = 0; k * 1500 + 500 < x1; k++) { const cx = k * 1500 + 500; if (cx + 220 > x0) catedral(g, cx, base, '#a7bde6'); }
-    }); },
-    () => { C.selva = capaPartida(MAXC * 0.12 + W + 20, (g, x0, x1) => {
+    }), tarde ? 'rgba(255,175,150,.30)' : 'rgba(255,255,255,.32)'); },
+    () => { C.selva = velo(capaPartida(MAXC * 0.12 + W + 20, (g, x0, x1) => {
       const xa = Math.floor(x0 / 10) * 10;
       if (playa) {                                                                                  // dunas de arena (el mar sigue debajo)
         g.fillStyle = '#f0d9a0'; g.beginPath(); g.moveTo(xa, 398);
@@ -1173,11 +1197,11 @@ function pasosCapas(tema, C) {                               // cada paso dibuja
         for (let x = xa; x <= x1 + 10; x += 10) g.lineTo(x, base - 22 - Math.abs(Math.sin(x * 0.03)) * 30 - Math.sin(x * 0.11) * 6);
         g.lineTo(x1 + 10, H); g.fill();
       }
-    }); },
-    () => { C.fach = capaPartida(MAXC * 0.3 + W + 400, (g, x0, x1) => {
+    }), tarde ? 'rgba(255,175,150,.2)' : 'rgba(255,255,255,.22)'); },
+    () => { C.fach = velo(capaPartida(MAXC * 0.3 + W + 400, (g, x0, x1) => {
       const haze = { color: tarde ? 'rgba(120,50,110,.22)' : (playa ? 'rgba(255,255,255,.10)' : (chi ? 'rgba(200,235,210,.14)' : 'rgba(180,215,245,.22)')), noche: tarde };
       for (const f of FACH) { const fx = f.x + 200; if (fx + f.w > x0 && fx < x1) { if (playa) casaPlaya(g, f, fx, base + 6, haze); else if (chi) ruinaMaya(g, f, fx, base + 6, haze); else if (tarde) mansionPaseo(g, f, fx, base + 6, haze); else fachada(g, f, fx, base + 6, haze); } }
-    }); },
+    }), tarde ? 'rgba(255,175,150,.10)' : 'rgba(255,255,255,.12)'); },
     () => { C.arboles = capaPartida(MAXC * 0.52 + W + 300, (g, x0, x1) => {
       for (let i = 0; i * 250 < x1 + 200; i++) {
         const sx = i * 250 + azar(i) * 90; if (sx + 130 < x0 || sx - 130 > x1) continue;
@@ -1227,16 +1251,7 @@ function aplicarCalidad(q) {
   for (const k in CAPAS) delete CAPAS[k]; GLOW = {}; SPR = {}; TER.ch = []; HUD.c = null; FIN = null; retrato.c = null; VIG = crearVig(); prepararCapas(tema === 'tarde' || tema === 'playa' || tema === 'chichen' ? tema : 'dia');
 }
 // Mariposas de día y luciérnagas al atardecer (adorno, se apaga en calidad baja)
-function dibujarAmbiente(cam, tarde) {
-  if (LIGERO) return;
-  for (let i = 0; i < 5; i++) {
-    const x = ((i * 211 + reloj * (0.35 + (i % 3) * 0.15) - cam * 0.85) % (W + 80) + W + 80) % (W + 80) - 40, y = 230 + (i * 47) % 100 + Math.sin(reloj * 0.04 + i * 2) * 26;
-    if (tarde) { const a = 0.45 + 0.4 * Math.sin(reloj * 0.07 + i * 1.7); ctx.globalAlpha = a; resplandor(ctx, x, y, 12, 'rgba(255,235,130,.95)'); ctx.globalAlpha = 1; ctx.fillStyle = '#fff6b0'; ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 7); ctx.fill(); }
-    else { const f = Math.abs(Math.sin(reloj * 0.35 + i)) * 4 + 1.5, c = ['#ff9ad0', '#ffd34d', '#8fd3ff', '#ffffff', '#ff9a5c'][i];
-      ctx.fillStyle = c; ctx.strokeStyle = NEGRO; ctx.lineWidth = 1; [-1, 1].forEach(s => { ctx.beginPath(); ctx.ellipse(x + s * f * 0.9, y - 1, f, 3.4, s * 0.5, 0, 7); ctx.fill(); ctx.stroke(); });
-      ctx.fillStyle = NEGRO; ctx.fillRect(x - 0.7, y - 3, 1.4, 6); }
-  }
-}
+function dibujarAmbiente() {}                                 // (sin mariposas ni luciérnagas: el nivel se ve más limpio y corre mejor)
 
 
 
@@ -1532,7 +1547,7 @@ let decoraciones = [];
 function crearDecoraciones() {
   decoraciones = []; let ultima = -9;
   for (let c = 2; c < COLS - 2; c++) {
-    if (mapa[12][c] !== '#' || mapa[11][c] !== ' ' || c - ultima < 3 || mapa[8][c] !== ' ' || mapa[9][c] !== ' ' || mapa[10][c] !== ' ') continue;
+    if (mapa[12][c] !== '#' || mapa[11][c] !== ' ' || c - ultima < 5 || mapa[8][c] !== ' ' || mapa[9][c] !== ' ' || mapa[10][c] !== ' ') continue;
     if (mapa[11][c - 1] === '^' || mapa[11][c + 1] === '^') continue;
     const r = azar(c * 3.7 + nivelActual * 17);
     let tipo = null;
@@ -1754,7 +1769,7 @@ function irA(e) {
   if (e === 'logros') logroY = 0;
   if (e === 'cine') { cineI = 0; cineT0 = 0; cineVisPrev = 0; cineJefe = false; }
   if (e === 'niveles') { NIVELES.forEach(N => prepararCapasPoco(N.tema)); const k = NIVELES.findIndex((_, i) => !nivelHecho(i)); ui.foco = k < 0 ? 0 : k; }
-  if (e === 'menu' || e === 'personajes' || e === 'niveles' || e === 'tienda' || e === 'logros' || e === 'intro' || e === 'cine' || (e === 'ajustes' && ajustesVolver === 'menu')) musica('menu');
+  if (e === 'menu' || e === 'personajes' || e === 'niveles' || e === 'tienda' || e === 'perfil' || e === 'logros' || e === 'intro' || e === 'cine' || (e === 'ajustes' && ajustesVolver === 'menu')) musica('menu');
   if (e !== 'jugando') guardarDatos();
 }
 function musicaDelNivel() { musica(NIVELES[nivelActual].musica); }
@@ -2204,6 +2219,7 @@ function actualizar() {
     if (estado === 'cine') actualizarCine();
     return;
   }
+  if (reloj % 60 === 0) datos.stats.segundos = (datos.stats.segundos || 0) + 1;
   if (pulso('Escape', 'KeyP') || pad.edge[9]) { irA('pausa'); return; }
   const ctrl = leerControles();
   const p = jugador, pj = personaje;
@@ -2513,7 +2529,6 @@ function dibujarJuego() {
   ctx.globalAlpha = 1;
   ctx.restore();
   if (tema === 'tarde') { ctx.fillStyle = 'rgba(255,120,60,.10)'; ctx.fillRect(0, 0, W, H); }
-  if (!LIGERO) ctx.drawImage(VIG, 0, 0, W, H);
   if (estado === 'jugando') dibujarMarcador();
   if (estado === 'jugando' && jefe && jefe.tipo === 'kukulkan' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡PATEA LOS FUEGOS PARA DEVOLVÉRSELOS!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
   if (banner > 0 && estado === 'jugando') {
@@ -2579,14 +2594,15 @@ function dibujarMenu() {
   ctx.fillStyle = '#d32f2f'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2 - 190, 112); ctx.lineTo(W / 2 + 190, 112); ctx.lineTo(W / 2 + 205, 139); ctx.lineTo(W / 2 + 190, 166); ctx.lineTo(W / 2 - 190, 166); ctx.lineTo(W / 2 - 205, 139); ctx.closePath(); ctx.fill(); ctx.stroke();
   texto('y los Departamentos', W / 2, 150, 29, '#fff', 'center');
   const bx = W / 2 - 150;
-  uiBoton('COMENZAR EL JUEGO', bx, 180, 300, 44, () => { modoPers = 'elegir'; irA('personajes'); }, 'verde', 20);
-  uiBoton('VER PERSONAJES', bx, 230, 300, 36, () => { modoPers = 'ver'; irA('personajes'); }, 'azul', 17);
-  uiBoton('LOGROS', bx, 270, 300, 36, () => irA('logros'), 'dorado', 17);
-  uiBoton('TIENDA', bx, 310, 300, 36, () => irA('tienda'), 'rojo', 17);
-  uiBoton('AJUSTES', bx, 350, 300, 36, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
-  texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
+  uiBoton('COMENZAR EL JUEGO', bx, 168, 300, 40, () => { modoPers = 'elegir'; irA('personajes'); }, 'verde', 19);
+  uiBoton('VER PERSONAJES', bx, 212, 300, 33, () => { modoPers = 'ver'; irA('personajes'); }, 'azul', 16);
+  uiBoton('LOGROS', bx, 249, 300, 33, () => irA('logros'), 'dorado', 16);
+  uiBoton('TIENDA', bx, 286, 300, 33, () => irA('tienda'), 'rojo', 16);
+  uiBoton('PERFIL', bx, 323, 300, 33, () => irA('perfil'), 'azul', 16);
+  uiBoton('AJUSTES', bx, 360, 300, 33, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 16);
+  texto('👤 ' + datos.nombre, W - 14, 30, 15, '#ffe27a', 'right');
   dibujarMoneda(ctx, 26, 26, 11, true); texto(String(datos.monedas), 44, 33, 18, '#ffd700');
-  texto('Versión 2.7', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 2.8', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -2676,6 +2692,49 @@ function dibujarPersonajes() {
   if (modoPers === 'elegir') uiBoton('¡JUGAR!', W / 2 - 110, 372, 220, 48, () => { if (libre) nuevaPartidaDesdeMenu(); else sfx('golpe'); }, libre ? 'verde' : 'gris', 22);
   else texto('← →  cambiar personaje', W / 2, 400, 15, '#fff', 'center');
   uiCerrar(() => irA('menu'), W - 58, 14);
+}
+// ---------- Pantalla de perfil ----------
+let perfilMsg = { t0: -999, txt: '', col: '#fff' }, perfilBorrar = { i: -1, t0: -999 };
+const tiempoTxt = seg => { seg = seg || 0; const h = Math.floor(seg / 3600), m = Math.floor(seg % 3600 / 60); return h ? h + ' h ' + m + ' min' : m + ' min'; };
+function resumenPerfil(p) { return { niveles: Object.keys(p.prog || {}).filter(k => p.prog[k]).length, logros: LOGROS.filter(L => (p.logros || {})[L.id]).length, objetos: OBJETOS.filter(o => (p.tienda || {})[o.id]).length }; }
+function dibujarPerfil() {
+  dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.62)'; ctx.fillRect(0, 0, W, H);
+  texto('PERFIL', W / 2, 46, 32, '#ffd43b', 'center');
+  const R = resumenPerfil(datos), st = datos.stats;
+  panelVidrio(20, 62, 380, 360);
+  texto(datos.nombre, 40, 100, 26, '#ffe27a'); texto('Perfil ' + (perfilActual + 1) + ' de 4', 40, 120, 12, '#cfd8ff', 'left', true);
+  const filas = [['Monedas', datos.monedas], ['Mejor puntaje', datos.mejor], ['Niveles completados', R.niveles + ' / ' + NIVELES.length], ['Logros', R.logros + ' / ' + LOGROS.length], ['Objetos de la tienda', R.objetos + ' / ' + OBJETOS.length],
+    ['Kit Kats recogidos', st.chocos || 0], ['Enemigos derrotados', st.enemigos || 0], ['Patadas acertadas', st.patadas || 0], ['Fuegos devueltos', st.fuegos || 0], ['Tiempo jugado', tiempoTxt(st.segundos)]];
+  filas.forEach(([k, v], i) => { const y = 148 + i * 24; if (i % 2 === 0) { ctx.fillStyle = 'rgba(255,255,255,.06)'; trazoRedondo(ctx, 30, y - 17, 360, 22, 8); ctx.fill(); } texto(k, 40, y, 14, '#fff', 'left', true); texto(String(v), 380, y, 14, '#ffd700', 'right'); });
+  const ib = ui.rects.length; ui.rects.push({ tipo: 'boton', x: 40, y: 390, w: 340, h: 26, accion: () => { const k = NOMBRES_PERFIL.indexOf(datos.nombre); datos.nombre = NOMBRES_PERFIL[(k + 1) % NOMBRES_PERFIL.length]; guardarDatos(); sfx('clic'); } });
+  pill(40, 390, 340, 26, COLB.azul, ui.foco === ib && !ui.sinTeclado); texto('CAMBIAR NOMBRE ↻', 210, 408, 14, '#fff', 'center');
+  panelVidrio(412, 62, 368, 360); texto('TUS PERFILES (máximo 4)', 596, 88, 15, '#ffd43b', 'center');
+  const cuantos = perfiles.filter(p => p).length;
+  perfiles.forEach((p, i) => {
+    const x = 424, y = 100 + i * 80, w = 344, h = 72, act = i === perfilActual;
+    ctx.fillStyle = act ? 'rgba(255,215,0,.16)' : 'rgba(255,255,255,.07)'; trazoRedondo(ctx, x, y, w, h, 12); ctx.fill(); ctx.strokeStyle = act ? '#ffd700' : 'rgba(255,255,255,.25)'; ctx.lineWidth = act ? 2.4 : 1.4; ctx.stroke();
+    ctx.fillStyle = act ? '#ffd700' : '#3a3f5c'; ctx.beginPath(); ctx.arc(x + 28, y + 36, 18, 0, 7); ctx.fill(); texto(String(i + 1), x + 28, y + 44, 22, act ? '#6a4300' : '#cfd8ff', 'center');
+    const im = ui.rects.length; ui.rects.push({ tipo: 'boton', x, y, w: p ? w - 56 : w, h, accion: () => {
+      if (!p) { perfiles[i] = perfilNuevo('Jugador ' + (i + 1)); cambiarPerfil(i); perfilMsg = { t0: estadoT, txt: '¡Perfil ' + (i + 1) + ' creado! Partida nueva.', col: '#7bd36b' }; sfx('vida'); }
+      else if (!act) { cambiarPerfil(i); perfilMsg = { t0: estadoT, txt: 'Ahora juegas con ' + datos.nombre, col: '#7bd36b' }; sfx('menu'); }
+      else { perfilMsg = { t0: estadoT, txt: 'Este es tu perfil actual', col: '#cfd8ff' }; sfx('clic'); } } });
+    const f = ui.foco === im && !ui.sinTeclado; if (f) { ctx.strokeStyle = '#fff1a0'; ctx.lineWidth = 3; trazoRedondo(ctx, x, y, w, h, 12); ctx.stroke(); }
+    if (p) {
+      const q = act ? { nombre: datos.nombre, monedas: datos.monedas, ...R } : { nombre: p.nombre, monedas: p.monedas || 0, ...resumenPerfil(p) };
+      texto(q.nombre, x + 56, y + 28, 17, act ? '#ffe27a' : '#fff'); dibujarMoneda(ctx, x + 62, y + 48, 7, true); texto(q.monedas + '   ·   Niveles ' + q.niveles + '/' + NIVELES.length + '   ·   Logros ' + q.logros, x + 74, y + 53, 11.5, '#cfd8ff', 'left', true);
+      texto(act ? '★ ACTUAL' : 'TOCA PARA JUGAR', x + 56, y + 68, 10, act ? '#ffd700' : '#7bd36b', 'left', true);
+      if (cuantos > 1) {
+        const ibr = ui.rects.length; ui.rects.push({ tipo: 'boton', x: x + w - 52, y: y + 10, w: 44, h: 52, accion: () => {
+          if (perfilBorrar.i === i && estadoT - perfilBorrar.t0 < 200) { perfiles[i] = null; if (i === perfilActual) { perfilActual = perfiles.findIndex(pp => pp); cargarPerfil(perfilActual); } guardarDatos(); perfilBorrar.i = -1; perfilMsg = { t0: estadoT, txt: 'Perfil borrado', col: '#ff9a9a' }; sfx('golpe'); }
+          else { perfilBorrar = { i, t0: estadoT }; perfilMsg = { t0: estadoT, txt: 'Toca otra vez 🗑 para borrar el perfil ' + (i + 1) + ' (no se puede deshacer)', col: '#ff9a9a' }; sfx('clic'); } } });
+        const conf = perfilBorrar.i === i && estadoT - perfilBorrar.t0 < 200, fb = ui.foco === ibr && !ui.sinTeclado;
+        ctx.fillStyle = conf ? '#d32f2f' : 'rgba(0,0,0,.35)'; trazoRedondo(ctx, x + w - 52, y + 10, 44, 52, 10); ctx.fill(); if (fb) { ctx.strokeStyle = '#fff1a0'; ctx.lineWidth = 3; ctx.stroke(); }
+        texto('🗑', x + w - 30, y + 44, 22, '#fff', 'center', true);
+      }
+    } else { texto('+ NUEVA PARTIDA', x + 56, y + 42, 18, '#7bd36b'); }
+  });
+  if (estadoT - perfilMsg.t0 < 220) texto(perfilMsg.txt, W / 2, 442, 14, perfilMsg.col, 'center');
+  uiCerrar(() => irA('menu'), W - 58, 8);
 }
 // ---------- Tienda: objetos especiales que se compran con monedas y se usan siempre ----------
 const OBJETOS = [
@@ -2881,6 +2940,7 @@ function dibujar() {
   else if (estado === 'personajes') dibujarPersonajes();
   else if (estado === 'niveles') dibujarNiveles();
   else if (estado === 'tienda') dibujarTienda();
+  else if (estado === 'perfil') dibujarPerfil();
   else if (estado === 'logros') dibujarLogros();
   else if (estado === 'ajustes') dibujarAjustes();
   else if (estado === 'intro') dibujarIntro();
@@ -2973,7 +3033,7 @@ function ciclo(ts) {
   if (ahora - fpsT0 >= 1000) {                                     // si va lento, baja la calidad sola
     fpsMostrado = Math.round(dibCont * 1000 / (ahora - fpsT0)); dibCont = 0; fpsT0 = ahora;
     const trab = trabN ? trabAcum / trabN : 0; trabAcum = 0; trabN = 0; trabMostrado = trab;
-    fpsBajos = (!document.hidden && ahora > 5000 && estado !== 'ajustes' && fpsMostrado < 42 && trab > 11) ? fpsBajos + 1 : 0;   // si el trabajo es poco pero hay pocos fps, el sistema limita (ahorro de batería): bajar la calidad no ayuda
+    fpsBajos = (!document.hidden && ahora > 5000 && estado !== 'ajustes' && fpsMostrado < 42) ? fpsBajos + 1 : 0;   // si va lento, baja la calidad sola
     if (fpsBajos >= 3 && calidad > 0) { fpsBajos = 0; aplicarCalidad(calidad - 1); avisos.push({ t: 0, titulo: 'CALIDAD AJUSTADA', txt: 'Bajé la calidad gráfica', sub: 'Para que vaya más fluido. Cámbiala en Ajustes.' }); }
   }
   const verBotones = botonesVisibles() && estado === 'jugando', gir = botonesVisibles();

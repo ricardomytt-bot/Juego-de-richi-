@@ -25,3 +25,5 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Antes de cada nivel hay una cinemática con diálogos del personaje y del jefe, con voces inventadas (piiitos por letra, como en Animal Crossing). Se puede saltar con SALTAR.
 - Monedas: los jefes sueltan monedas (5, 8, 10 y 15) y los logros dan monedas de premio. Se guardan en el celular y se gastan en la TIENDA del menú principal (bola eléctrica, escudo dorado, imán de Kit Kats, corazón extra, cristal de hielo y doble salto).
 - Logros: 8 logros difíciles con premio en monedas.
+- Perfiles: hasta 4 partidas guardadas (menú PERFIL) con todos tus datos; los ajustes son compartidos.
+- Los escarabajos ahora son mariquitas rojas. Sin mariposas ni luciérnagas; fondos más claros y limpios.
