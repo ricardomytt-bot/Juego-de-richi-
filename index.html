@@ -377,7 +377,7 @@ function pedirSfx(k) {                                     // fabrica un sonido 
   if (pendSfx[k] || cacheSfx[k]) return; pendSfx[k] = true;
   const f = SONIDOS[k] || (k.startsWith('ouch') ? () => voz(+k.slice(4)) : null); if (!f) return;
   let ev; grabando = []; try { f(); } finally { ev = grabando; grabando = null; }
-  trabajoAudio({ tipo: 's', ev }, buf => { const url = cacheSfx[k] = urlDeBuffer(buf); poolSfx[k] = { a: [new Audio(url), new Audio(url)], i: 0 }; }, () => { cacheSfx[k] = wavUrl(renderSfx(ev)); });
+  trabajoAudio({ tipo: 's', ev }, buf => { cacheSfx[k] = urlDeBuffer(buf); }, () => { cacheSfx[k] = wavUrl(renderSfx(ev)); });
 }
 let sfxPrecargado = false;
 function precargarSfx() {                                  // todos los sonidos se preparan al principio, uno por uno
@@ -3103,7 +3103,7 @@ function ciclo(ts) {
   if (ahora - fpsT0 >= 1000) {                                     // si va lento, baja la calidad sola
     fpsMostrado = Math.round(dibCont * 1000 / (ahora - fpsT0)); dibCont = 0; fpsT0 = ahora;
     const trab = trabN ? trabAcum / trabN : 0; trabAcum = 0; trabN = 0; trabMostrado = trab;
-    fpsBajos = (!document.hidden && ahora > 5000 && estado !== 'ajustes' && fpsMostrado < 42 && reloj - ultimaCarga > 500) ? fpsBajos + 1 : 0;   // si va lento, baja la calidad sola (no cuenta los primeros segundos de un nivel, cuando todo se está preparando)
+    fpsBajos = (!document.hidden && ahora > 5000 && estado !== 'ajustes' && fpsMostrado < 42 && reloj - ultimaCarga > 90) ? fpsBajos + 1 : 0;   // si va lento, baja la calidad sola (no cuenta los primeros segundos de un nivel, cuando todo se está preparando)
     if (fpsBajos >= 3 && calidad > 0) { fpsBajos = 0; aplicarCalidad(calidad - 1); avisos.push({ t: 0, titulo: 'CALIDAD AJUSTADA', txt: 'Bajé la calidad gráfica', sub: 'Para que vaya más fluido. Cámbiala en Ajustes.' }); }
   }
   const verBotones = botonesVisibles() && estado === 'jugando', gir = botonesVisibles();
