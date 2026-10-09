@@ -40,3 +40,9 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Los logros ya no dan monedas solos: se **reclaman** en LOGROS (botón RECLAMAR; en el menú aparece un globito rojo con los pendientes).
 - Economía rebalanceada: jefes dan 10/15/20/30 monedas; logros 25–50 (suman 295). Las habilidades cuestan 40–90 (suman 360).
 - La TIENDA ahora es **HABILIDADES**: Imán (40), Capa planeadora (50), Zapatos veloces (50), Dash (60, botón DASH / Shift), Savia vital (70, corazón azul extra por nivel), Doble salto (90). Lo que se compró de la tienda anterior (bola eléctrica, escudo, corazón, hielo) se devuelve en monedas.
+
+## Versión 3.4 — Mundo 2: Baja California (nivel 5: La Bufadora)
+- Historia: los hermanos viajan a Baja California, pero el Patrón compró todos los hoteles y no quiere hospedarlos. Hay que vencer a su gente para conseguir cuarto y monedas.
+- Selector de mundos (flechas ◀ ▶ en la pantalla de niveles). Mundo 2 se desbloquea al pasar Chichén Itzá (en modo prueba está todo abierto). Próximos niveles: Los Cabos, Frontera de Tijuana y un nivel icónico.
+- Nivel 5 "La Bufadora" (Ensenada): tema nuevo (acantilados, cardones, mar), hotel al final y jefe **El Chalán** (10 de vida) con tres ataques: lluvia de rocas (con sombra que avisa dónde caen), escupitajo de vapor y géiseres de La Bufadora. El vapor de los géiseres **quema**: pierdes una vida cada 10 s durante 30 s, y solo se quita tomando la **gota de agua fresca** que aparece en la arena.
+- Cinemáticas con música nueva "de suspenso" (grave, muy bajita, pocas notas). La música del nivel también es nueva.
