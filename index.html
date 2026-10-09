@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 2.0
+//  LICHILÓN Y EL PATRÓN  -  Versión 2.1
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -83,10 +83,10 @@ const PERSONAJES = [
 const CLAVE_GUARDADO = 'lichilon_departamentos_v1';
 const ES_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const AJ_DEFECTO = { musica: 0.6, efectos: 0.8, texto: 1, temblor: true, botones: 'auto', compatible: ES_IOS, efectoPelicula: false, calidad: MOVIL ? 1 : 2, fps: false };
-const datos = { ajustes: { ...AJ_DEFECTO }, logros: {}, stats: {}, mejor: 0, prog: {}, intro: false };
+const datos = { ajustes: { ...AJ_DEFECTO }, logros: {}, stats: {}, mejor: 0, prog: {}, intro: false, monedas: 0 };
 try {
   const j = JSON.parse(localStorage.getItem(CLAVE_GUARDADO) || 'null');
-  if (j) { Object.assign(datos.ajustes, j.ajustes || {}); datos.logros = j.logros || {}; datos.stats = j.stats || {}; datos.mejor = j.mejor || 0; datos.prog = j.prog || {}; datos.intro = !!j.intro || (datos.stats.partidas > 0); }
+  if (j) { Object.assign(datos.ajustes, j.ajustes || {}); datos.logros = j.logros || {}; datos.stats = j.stats || {}; datos.mejor = j.mejor || 0; datos.prog = j.prog || {}; datos.monedas = j.monedas || 0; datos.intro = !!j.intro || (datos.stats.partidas > 0); }
 } catch (e) {}
 function guardarDatos() { try { localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datos)); return true; } catch (e) { return false; } }
 let aj = { ...datos.ajustes };                              // ajustes en uso (se pueden mover sin guardar)
@@ -119,9 +119,10 @@ function crearBuses() {
   const rb = a.createBuffer(1, a.sampleRate, a.sampleRate), rd = rb.getChannelData(0); for (let i = 0; i < rd.length; i++) rd[i] = Math.random() * 2 - 1; bufRuido = rb;
   aplicarVolumen();
 }
+let bajaMusica = 1;                                          // en las cinemáticas la música se baja para que se oigan mejor los diálogos
 function aplicarVolumen() {
-  if (audioCtx && master) { master.gain.value = silencio ? 0 : 1.8; busSfx.gain.value = aj.efectos; busMusica.gain.value = aj.musica; }
-  if (audioMusicaEl) audioMusicaEl.volume = silencio ? 0 : Math.min(1, aj.musica);
+  if (audioCtx && master) { master.gain.value = silencio ? 0 : 1.8; busSfx.gain.value = aj.efectos; busMusica.gain.value = aj.musica * bajaMusica; }
+  if (audioMusicaEl) audioMusicaEl.volume = silencio ? 0 : Math.min(1, aj.musica * bajaMusica);
 }
 // Desbloquea el audio con cualquier toque o tecla (los navegadores, sobre todo en celular, lo exigen)
 let audioOk = false;
@@ -202,6 +203,7 @@ const SONIDOS = {
   menu:    () => tono(660, 880, 0.08, 'triangle', 0.08),
   clic:    () => tono(500, 700, 0.06, 'triangle', 0.07),
   bloque:  () => tono(160, 100, 0.09, 'triangle', 0.1),
+  moneda:  () => { tono(1319, 1568, 0.07, 'square', 0.05); tono(1760, 2093, 0.14, 'triangle', 0.07, 0.06); },
 };
 // Voces: cada letra que se "dice" hace un piipito corto; el tono cambia según la letra y la voz de cada personaje
 const HABLAS = [{ b: 430, t: 'triangle', v: 0.09 }, { b: 340, t: 'triangle', v: 0.09 }, { b: 560, t: 'triangle', v: 0.09 }, { b: 135, t: 'sawtooth', v: 0.06 }, { b: 400, t: 'square', v: 0.045 }, { b: 210, t: 'triangle', v: 0.11 }, { b: 78, t: 'sawtooth', v: 0.1 }];
@@ -380,7 +382,7 @@ function musicaAlt(nombre) {
     if (nombreMusica !== nombre) return;
     if (!audioMusicaEl) audioMusicaEl = new Audio();
     if (audioMusicaEl.src !== url) audioMusicaEl.src = url;
-    audioMusicaEl.loop = true; audioMusicaEl.volume = silencio ? 0 : Math.min(1, aj.musica);
+    audioMusicaEl.loop = true; audioMusicaEl.volume = silencio ? 0 : Math.min(1, aj.musica * bajaMusica);
     const pr = audioMusicaEl.play(); musicaAltPend = null;
     if (pr) pr.catch(() => { musicaAltPend = () => { if (nombreMusica === nombre) audioMusicaEl.play().then(() => { musicaAltPend = null; }).catch(() => {}); }; });
   };
@@ -1677,7 +1679,7 @@ const jugador = { x: 0, y: 0, w: 26, h: 54, vx: 0, vy: 0, enSuelo: false, mirand
 
 let nivelElegido = 0, prerenderJefe = false, cineI = 0, cineT0 = 0, cineVisPrev = 0, cineJefe = false;
 function irA(e) {
-  estado = e; estadoT = 0; ui.foco = 0; for (const k in pulsos) delete pulsos[k];
+  estado = e; estadoT = 0; ui.foco = 0; const bm = e === 'cine' ? 0.35 : 1; if (bm !== bajaMusica) { bajaMusica = bm; aplicarVolumen(); } for (const k in pulsos) delete pulsos[k];
   if (e === 'logros') logroY = 0;
   if (e === 'cine') { cineI = 0; cineT0 = 0; cineVisPrev = 0; cineJefe = false; }
   if (e === 'niveles') { NIVELES.forEach(N => prepararCapasPoco(N.tema)); const k = NIVELES.findIndex((_, i) => !nivelHecho(i)); ui.foco = k < 0 ? 0 : k; }
@@ -1697,7 +1699,7 @@ function cargarNivel(n) {
   crearDecoraciones();
   pinchosLista = [];
   for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) if (mapa[r][c] === '^') pinchosLista.push({ x: c * T + 9, y: r * T + 14, w: T - 18, h: T - 14 });
-  usados = {}; rebote = {}; items = []; balas = []; particulas = []; proyJ = []; pinchosJ = []; explos = []; tragando = 0;
+  usados = {}; rebote = {}; items = []; balas = []; particulas = []; proyJ = []; pinchosJ = []; explos = []; monedasJ = []; monedasGanadas = 0; tragando = 0;
   poder = null; botas = 0; escudo = false; puntosNivel = puntos; vidasPerdidasNivel = 0;
   chocosVivos = chocosDef.map(([c, r]) => ({ x: c * T + 4, y: r * T + 8, w: 24, h: 16, tomado: false }));
   escarabajos = escarabajosDef.map(c => ({ x: c * T, y: 12 * T - 24, w: 30, h: 24, vx: -1.2, vy: 0, vivo: true, congelado: 0, ultimoVx: -1, dirP: -1 }));
@@ -1842,7 +1844,7 @@ function danarJefe(j, n) {
   if (j.hp <= 0) {
     j.vivo = false; j.muerte = 0; j.vx = 0; puntos += 3000; proyJ = []; pinchosJ = []; temblor = 24; sfx('rugido'); musica(null);
     chispas(j.x + j.w / 2, j.y + 36, 70, '#ffd700', 7); chispas(j.x + j.w / 2, j.y + 36, 40, '#ff6fa8', 6);
-    registrar(j.tipo); if (vidasPerdidasNivel === 0) registrar('intocable');
+    registrar(j.tipo); if (vidasPerdidasNivel === 0) registrar('intocable'); soltarMonedas(j);
   } else j.aturdido = Math.max(j.aturdido, 24);
 }
 function lanzarProy(j, tipo) {
@@ -1907,6 +1909,33 @@ function iaPlayero(j) {
     case 'aire':  j.vx = j.saltoDir * 2.6; if (j.vy > 0) j.cayendo = true; break;
   }
 }
+// ---------- Monedas: los jefes sueltan monedas al caer; se recogen y se guardan ----------
+let monedasJ = [], monedasGanadas = 0;
+const MONEDAS_JEFE = { patron: 10, patrona: 15, playero: 20, kukulkan: 30 };
+function soltarMonedas(j) {
+  const n = MONEDAS_JEFE[j.tipo] || 10, cx = j.x + j.w / 2, cy = j.y + 24;
+  for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + (i / (n - 1 || 1) - 0.5) * 2.2 + (Math.random() - 0.5) * 0.3, v = 5 + Math.random() * 4; monedasJ.push({ x: cx - 9, y: cy - 9, w: 18, h: 18, vx: Math.cos(a) * v * 0.9, vy: Math.sin(a) * v - 2, t: Math.random() * 6, tomada: false, rebotes: 0 }); }
+}
+function actualizarMonedas(p) {
+  const jm = jefe && !jefe.vivo ? jefe.muerte : 0;
+  for (const m of monedasJ) {
+    if (m.tomada) continue; m.t += 0.25;
+    if (jm >= 330) { const dx = p.x + 13 - (m.x + 9), dy = p.y + 27 - (m.y + 9), d = Math.hypot(dx, dy) || 1, v = Math.min(14, 4 + (jm - 330) * 0.15); m.x += dx / d * v; m.y += dy / d * v; }   // si tardas, vuelan hacia ti
+    else {
+      m.vy += 0.5; m.x += m.vx; m.y += m.vy; m.vx *= 0.99;
+      if (hayBloque(m.x + 9, m.y + 18) && m.vy > 0) { m.y = Math.floor((m.y + 18) / T) * T - 18; m.vy = Math.abs(m.vy) > 3 ? -m.vy * 0.45 : 0; m.vx *= 0.8; }
+      if (m.x < arenaX + 16) { m.x = arenaX + 16; m.vx = Math.abs(m.vx); } if (m.x > COLS * T - 34) { m.x = COLS * T - 34; m.vx = -Math.abs(m.vx); }
+    }
+    if (choca(p, { x: m.x - 4, y: m.y - 4, w: m.w + 8, h: m.h + 8 })) { m.tomada = true; monedasGanadas++; datos.monedas++; sfx('moneda'); chispas(m.x + 9, m.y + 9, 5, '#ffe14d', 2.5, 0.05); }
+  }
+  if (monedasJ.length && monedasJ.every(m => m.tomada)) { guardarDatos(); monedasJ = []; }
+}
+function dibujarMoneda(g, x, y, r = 9) {                   // la moneda dorada (la misma del marcador)
+  const c = Math.cos(x * 0 + y * 0 + reloj * 0.1); g.save(); g.translate(x, y); g.scale(Math.max(0.18, Math.abs(c)), 1); g.lineJoin = 'round';
+  g.fillStyle = grad(g, -r, -r, r, r, [[0, '#fff3a0'], [0.5, '#ffd21f'], [1, '#d99200']]); g.strokeStyle = NEGRO; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill(); g.stroke();
+  g.strokeStyle = 'rgba(160,100,0,.7)'; g.lineWidth = 1.6; g.beginPath(); g.arc(0, 0, r * 0.62, 0, 7); g.stroke(); g.fillStyle = 'rgba(160,100,0,.7)'; g.fillRect(-1.3, -r * 0.35, 2.6, r * 0.7);
+  g.restore();
+}
 function finDeJefe() {
   datos.mejor = Math.max(datos.mejor, puntos); datos.prog[nivelActual] = true;
   if (nivelActual + 1 < NIVELES.length) { irA('nivelok'); sfx('gana'); }
@@ -1959,7 +1988,7 @@ function dibujarRayo(g, j) {
 }
 function actualizarKukulkan(p) {
   const j = jefe;
-  if (!j.vivo) { j.muerte++; if (j.muerte === 110) finDeJefe(); return; }
+  if (!j.vivo) { j.muerte++; if (j.muerte >= 110 && (monedasJ.every(m => m.tomada) || j.muerte >= 520)) finDeJefe(); return; }
   if (j.estadoJ === 'dormido') { if (p.x > arenaX + 100) { j.estadoJ = 'activo'; sfx('rugido'); temblor = 24; j.timer = 210; j.baja = 0; j.t = 0; j.tip = 460; musica('jefe'); } return; }
   j.t++; if (j.invul > 0) j.invul--; if (j.flash > 0) j.flash--; if (j.tip > 0) j.tip--;
   if (j.baja < 1) { j.baja = Math.min(1, j.baja + 1 / 170); if (j.t % 28 === 0) temblor = Math.max(temblor, 6); }
@@ -1984,7 +2013,7 @@ function actualizarJefe(p, pata, pisando) {
   if (j.tipo === 'kukulkan') { actualizarKukulkan(p); return; }
   if (!j.vivo) {
     j.muerte++; j.vy = Math.min(j.vy + GRAVEDAD, 15); j.vx = 0; moverConColision(j);
-    if (j.muerte === 110) finDeJefe();
+    if (j.muerte >= 110 && (monedasJ.every(m => m.tomada) || j.muerte >= 520)) finDeJefe();
     return;
   }
   if (j.estadoJ === 'dormido') { if (p.x > arenaX + 100) { j.estadoJ = 'activo'; sfx('rugido'); temblor = 20; j.timer = 60; musica('jefe'); } return; }
@@ -2195,6 +2224,7 @@ function actualizar() {
 
   actualizarJefe(p, pata, pisando); if (estado !== 'jugando') return;
   actualizarProyectiles(p, pata); if (estado !== 'jugando') return;
+  actualizarMonedas(p);
 
   // --- Objetos y Kit Kats ---
   for (const it of items) {
@@ -2285,6 +2315,7 @@ function dibujarMarcador() {
   casilla(!!poder, () => { ctx.save(); ctx.translate(px + 18, 32); ctx.scale(0.6, 0.6); dibujarCristal(ctx, -12, -12); ctx.restore(); }, '#9be4ff');
   casilla(escudo, () => dibujarEscudoIcono(ctx, px + 8, 19, 0.7), '#ffd93b');
   casilla(botas > 0, () => { ctx.save(); ctx.translate(px + 18, 32); ctx.scale(0.62, 0.62); dibujarIconoBotas(ctx, -12, -12); ctx.restore(); if (botas > 0) { ctx.fillStyle = '#ffae4d'; ctx.fillRect(px + 4, 46, 28 * botas / BOTAS_DURACION, 3); } }, '#ffae4d');
+  dibujarMoneda(ctx, 494, 32, 10); texto(String(datos.monedas), 510, 38, 17, '#ffd700');
   for (let i = 0; i < VIDAS_MAX; i++) corazon(W - 28 - (VIDAS_MAX - 1 - i) * 30 - 10, 14, 22, i < vidas ? '#ff3d7f' : 'rgba(255,255,255,.2)', i < vidas ? '#7a0a3a' : 'rgba(255,255,255,.35)');
   texto(NIVELES[nivelActual].nombre, W - 92, 53, 11, '#cfd8ff', 'center');
   if (silencio) texto('SIN SONIDO (M)', W - 190, 53, 10, '#fff', 'center');
@@ -2323,6 +2354,7 @@ function dibujarJuego() {
   if (jefe && jefe.tipo !== 'kukulkan' && (jefe.vivo || jefe.muerte < 100)) { if (!jefe.vivo) ctx.globalAlpha = Math.max(0, 1 - jefe.muerte / 100); dibujarJefe(ctx, jefe, reloj); ctx.globalAlpha = 1; }
   if (jefe && !jefe.vivo && jefe.tipo === 'playero') dibujarLlave(ctx, jefe.x + jefe.w / 2, jefe.y + 6 - Math.min(jefe.muerte, 90) * 0.9, 1.5, Math.sin(reloj * 0.1) * 0.4);
   if (jefe && !jefe.vivo && jefe.tipo === 'kukulkan') { const Hk = cabezaKuku(jefe); dibujarLlave(ctx, Hk.x, Math.min(352, Hk.y + 30 + jefe.muerte * jefe.muerte * 0.04), 1.5, Math.sin(reloj * 0.1) * 0.4); }
+  for (const m of monedasJ) if (!m.tomada) { resplandor(ctx, m.x + 9, m.y + 9, 20, 'rgba(255,220,80,.5)'); dibujarMoneda(ctx, m.x + 9, m.y + 9); }
   for (const e of pinchosJ) dibujarEspina(ctx, e);
   for (const q of proyJ) dibujarProyectil(ctx, q);
   for (const x of explos) dibujarExplosion(ctx, x);
@@ -2404,7 +2436,8 @@ function dibujarMenu() {
   uiBoton('LOGROS', bx, 292, 300, 40, () => irA('logros'), 'dorado', 17);
   uiBoton('AJUSTES', bx, 338, 300, 40, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
-  texto('Versión 2.0', W - 10, H - 10, 11, '#fff', 'right');
+  dibujarMoneda(ctx, 26, 26, 11); texto(String(datos.monedas), 44, 33, 18, '#ffd700');
+  texto('Versión 2.1', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -2509,6 +2542,7 @@ function miniNivel(t, x, y, w, h) {                         // una miniatura del
 }
 function dibujarNiveles() {
   dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.55)'; ctx.fillRect(0, 0, W, H);
+  dibujarMoneda(ctx, 30, 30, 11); texto(String(datos.monedas), 48, 37, 18, '#ffd700');
   texto('MUNDO 1', W / 2, 36, 15, '#cfd8ff', 'center'); texto('YUCATÁN', W / 2, 72, 34, '#ffd43b', 'center');
   NIVELES.forEach((N, i) => {
     const t = NIV_CARD(i), idx = ui.rects.length; ui.rects.push({ tipo: 'boton', x: t.x, y: t.y, w: t.w, h: t.h, accion: () => elegirNivel(i) });
@@ -2541,12 +2575,13 @@ function dibujarNiveles() {
 function nuevaPartidaDesdeMenu() { personaje = PERSONAJES[seleccion]; irA('niveles'); }
 // ---------- Cinemática antes de cada nivel ----------
 const QUIEN = { patron: { nombre: 'EL PATRÓN', col: '#ff9a7a', h: 3 }, patrona: { nombre: 'LA PATRONA', col: '#ff9ad0', h: 4 }, playero: { nombre: 'EL PLAYERO', col: '#ffd34d', h: 5 }, kukulkan: { nombre: 'KUKULKÁN', col: '#6bff8a', h: 6 } };
-const cineVel = () => VEL_TEXTO() * 0.6;
+const cineVel = () => VEL_TEXTO() * 1.15;
+let cineUltBlip = -9;
 const cineLinea = () => NIVELES[nivelElegido].cine[cineI];
 function cineQuien(q) { return q === 'p' ? { nombre: personaje.nombre.toUpperCase(), col: '#ffe27a', h: Math.max(0, PERSONAJES.indexOf(personaje)) } : QUIEN[q]; }
 function actualizarCine() {
   const L = cineLinea(), vis = Math.floor((estadoT - cineT0) * cineVel()), tope = Math.min(L[1].length, vis);
-  for (let k = cineVisPrev; k < tope; k++) { const ch = L[1][k]; if (/[A-Za-zÁÉÍÓÚáéíóúñÑ]/.test(ch) && k % 2 === 0) hablar(cineQuien(L[0]).h, ch); }
+  for (let k = cineVisPrev; k < tope; k++) { const ch = L[1][k]; if (/[A-Za-zÁÉÍÓÚáéíóúñÑ]/.test(ch) && estadoT - cineUltBlip >= 4) { cineUltBlip = estadoT; hablar(cineQuien(L[0]).h, ch); } }
   cineVisPrev = Math.max(cineVisPrev, tope);
 }
 function avanzarCine() {
@@ -2639,8 +2674,8 @@ function dibujar() {
     dibujarJuego();
     if (estado === 'pausa') dibujarPausa();
     if (estado === 'perdio') dibujarPanelFin('¡GAME OVER!', ['Perdiste todas tus vidas.', 'Empiezas de nuevo desde el inicio del nivel.', 'Puntos: ' + puntos], '#ff6b6b', [['REINTENTAR EL NIVEL', reiniciarNivel, 'verde'], ['ELEGIR NIVEL', () => irA('niveles'), 'azul'], ['MENÚ PRINCIPAL', () => irA('menu'), 'gris']]);
-    if (estado === 'nivelok') { const F = NIVELES[nivelActual].fin; dibujarPanelFin(F.titulo, F.lineas.concat('Puntos: ' + puntos), '#6bff8a', [['SIGUIENTE NIVEL', siguienteNivel, 'verde'], ['ELEGIR NIVEL', () => irA('niveles'), 'azul']]); }
-    if (estado === 'gano') { const F = NIVELES[nivelActual].fin; dibujarPanelFin(F.titulo, F.lineas.concat('Puntos: ' + puntos), '#6bff8a', [['ELEGIR NIVEL', () => irA('niveles'), 'verde'], ['MENÚ PRINCIPAL', () => irA('menu'), 'gris']]); }
+    if (estado === 'nivelok') { const F = NIVELES[nivelActual].fin; dibujarPanelFin(F.titulo, F.lineas.concat('Puntos: ' + puntos, 'Monedas: +' + monedasGanadas + '   (tienes ' + datos.monedas + ')'), '#6bff8a', [['SIGUIENTE NIVEL', siguienteNivel, 'verde'], ['ELEGIR NIVEL', () => irA('niveles'), 'azul']]); }
+    if (estado === 'gano') { const F = NIVELES[nivelActual].fin; dibujarPanelFin(F.titulo, F.lineas.concat('Puntos: ' + puntos, 'Monedas: +' + monedasGanadas + '   (tienes ' + datos.monedas + ')'), '#6bff8a', [['ELEGIR NIVEL', () => irA('niveles'), 'verde'], ['MENÚ PRINCIPAL', () => irA('menu'), 'gris']]); }
   }
   capaVintage();
   if (aj.fps) texto(fpsMostrado + ' FPS · calidad ' + ['baja', 'media', 'alta'][calidad], W / 2, H - 6, 11, '#fff', 'center');
