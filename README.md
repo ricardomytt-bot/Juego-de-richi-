@@ -34,3 +34,9 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 ## Versión 3.2
 - Menos trabas: los sonidos y la música del modo compatible se fabrican en un hilo aparte (Worker) y se precargan; el fondo y el terreno se preparan por partes; la calidad automática no baja durante los primeros segundos de un nivel.
 - Kukulkán más difícil (3 fuegos, solo uno bueno; más vida; rayo doble). Pequeño pulido gráfico (sombras en cielo y suelo).
+
+## Versión 3.3
+- Botones de mover (◀ ▶) un poco más grandes.
+- Los logros ya no dan monedas solos: se **reclaman** en LOGROS (botón RECLAMAR; en el menú aparece un globito rojo con los pendientes).
+- Economía rebalanceada: jefes dan 10/15/20/30 monedas; logros 25–50 (suman 295). Las habilidades cuestan 40–90 (suman 360).
+- La TIENDA ahora es **HABILIDADES**: Imán (40), Capa planeadora (50), Zapatos veloces (50), Dash (60, botón DASH / Shift), Savia vital (70, corazón azul extra por nivel), Doble salto (90). Lo que se compró de la tienda anterior (bola eléctrica, escudo, corazón, hielo) se devuelve en monedas.
