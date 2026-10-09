@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 1.5
+//  LICHILÓN Y EL PATRÓN  -  Versión 1.6
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -2149,7 +2149,7 @@ function actualizar() {
   particulas = particulas.filter(pa => pa.vida > 0);
   for (const k in rebote) if (--rebote[k] <= 0) delete rebote[k];
 
-  const objetivo = Math.max(0, Math.min(p.x - W / 2 + 20, COLS * T - W));
+  const objetivo = Math.max(jefe && jefe.estadoJ === 'activo' ? arenaX : 0, Math.min(p.x - W / 2 + 20, COLS * T - W));   // en la pelea contra el jefe la cámara se queda fija: el borde izquierdo de la pantalla es la pared
   camara += (objetivo - camara) * 0.15;
 }
 
@@ -2340,7 +2340,7 @@ function dibujarMenu() {
   uiBoton('LOGROS', bx, 292, 300, 40, () => irA('logros'), 'dorado', 17);
   uiBoton('AJUSTES', bx, 338, 300, 40, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
-  texto('Versión 1.5', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 1.6', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
