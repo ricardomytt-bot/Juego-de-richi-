@@ -23,3 +23,5 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Dibujos de caricatura moderna: colores planos, contorno delgado, cabezotas con ojotes, formas unidas y pelo de una sola pieza (efecto de película antigua opcional en Ajustes).
 - Si no se oye nada: Ajustes > Sonido compatible = Sí (usa archivos de audio generados con código).
 - Antes de cada nivel hay una cinemática con diálogos del personaje y del jefe, con voces inventadas (piiitos por letra, como en Animal Crossing). Se puede saltar con SALTAR.
+- Monedas: los jefes sueltan monedas (5, 8, 10 y 15) y los logros dan monedas de premio. Se guardan en el celular y se gastan en la TIENDA del menú principal (bola eléctrica, escudo dorado, imán de Kit Kats, corazón extra, cristal de hielo y doble salto).
+- Logros: 8 logros difíciles con premio en monedas.

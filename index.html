@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 2.4
+//  LICHILÓN Y EL PATRÓN  -  Versión 2.5
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -83,10 +83,10 @@ const PERSONAJES = [
 const CLAVE_GUARDADO = 'lichilon_departamentos_v1';
 const ES_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const AJ_DEFECTO = { musica: 0.6, efectos: 0.8, texto: 1, temblor: true, botones: 'auto', compatible: ES_IOS, efectoPelicula: false, calidad: MOVIL ? 1 : 2, fps: false };
-const datos = { ajustes: { ...AJ_DEFECTO }, logros: {}, stats: {}, mejor: 0, prog: {}, intro: false, monedas: 0 };
+const datos = { ajustes: { ...AJ_DEFECTO }, logros: {}, stats: {}, mejor: 0, prog: {}, intro: false, monedas: 0, tienda: {} };
 try {
   const j = JSON.parse(localStorage.getItem(CLAVE_GUARDADO) || 'null');
-  if (j) { Object.assign(datos.ajustes, j.ajustes || {}); datos.logros = j.logros || {}; datos.stats = j.stats || {}; datos.mejor = j.mejor || 0; datos.prog = j.prog || {}; datos.monedas = j.monedas || 0; datos.intro = !!j.intro || (datos.stats.partidas > 0); }
+  if (j) { Object.assign(datos.ajustes, j.ajustes || {}); datos.logros = j.logros || {}; datos.stats = j.stats || {}; datos.mejor = j.mejor || 0; datos.prog = j.prog || {}; datos.monedas = j.monedas || 0; datos.tienda = j.tienda || {}; datos.intro = !!j.intro || (datos.stats.partidas > 0); }
 } catch (e) {}
 function guardarDatos() { try { localStorage.setItem(CLAVE_GUARDADO, JSON.stringify(datos)); return true; } catch (e) { return false; } }
 let aj = { ...datos.ajustes };                              // ajustes en uso (se pueden mover sin guardar)
@@ -446,6 +446,7 @@ function leerControles() {
     salto: teclas.Space || teclas.ArrowUp || teclas.KeyW || h[0] || h[1] || tactil.salto,
     patada: pulso('KeyZ', 'KeyK', 'TactilPatada') || e[2],
     poder: pulso('KeyX', 'KeyJ') || e[3] || e[5] || e[7] || tactil.poder,
+    rayo: pulso('KeyC'),
   };
 }
 
@@ -1714,20 +1715,14 @@ const solido = ch => ch === '#' || ch === 'c' || ch === 'b' || ch === 'e';
 
 // ---------- LOGROS ----------
 const LOGROS = [
-  { id: 'primer',    nombre: 'Primer bocado',    desc: 'Recoge tu primer Kit Kat',          stat: 'chocos',     meta: 1 },
-  { id: 'choco30',   nombre: 'Chocoadicto',      desc: 'Recoge 30 Kit Kats',                stat: 'chocos',     meta: 30, premio: 'sec2' },
-  { id: 'aplasta',   nombre: 'Aplasta-bichos',   desc: 'Derrota 25 enemigos',               stat: 'enemigos',   meta: 25 },
-  { id: 'serpientes', nombre: 'Cazaserpientes',  desc: 'Derrota 8 serpientes',              stat: 'serpientes', meta: 8,  premio: 'sec3' },
-  { id: 'congela',   nombre: 'Congelador',       desc: 'Congela 15 enemigos',               stat: 'congelados', meta: 15 },
-  { id: 'escudo',    nombre: 'Escudo de oro',    desc: 'Aguanta 5 golpes con el escudo',    stat: 'escudos',    meta: 5 },
-  { id: 'botas',     nombre: 'Resortes',         desc: 'Recoge 4 botas de resorte',         stat: 'botas',      meta: 4 },
-  { id: 'patadas',   nombre: 'Pateador',         desc: 'Acierta 30 patadas',                stat: 'patadas',    meta: 30 },
-  { id: 'patron',    nombre: 'Adiós, Patrón',    desc: 'Derrota al Patrón',                 stat: 'patron',     meta: 1,  premio: 'sec1' },
-  { id: 'patrona',   nombre: 'Adiós, Patrona',   desc: 'Derrota a la Patrona',              stat: 'patrona',    meta: 1 },
-  { id: 'playero',   nombre: 'Adiós, Playero',   desc: 'Derrota al Playero',                stat: 'playero',    meta: 1 },
-  { id: 'kukulkan',  nombre: 'Adiós, Kukulkán', desc: 'Derrota a Kukulkán',               stat: 'kukulkan',   meta: 1 },
-  { id: 'intocable', nombre: 'Intocable',        desc: 'Termina un nivel sin perder vidas', stat: 'intocable',  meta: 1 },
-  { id: 'vidas5',    nombre: 'Corazón fuerte',   desc: 'Llega a 5 vidas',                   stat: 'vidas5',     meta: 1 },
+  { id: 'patron',     nombre: 'Patrón sin rasguños', desc: 'Derrota al Patrón sin perder ninguna vida', stat: 'patronSin',    meta: 1,   premio: 'sec1', monedas: 30 },
+  { id: 'choco30',    nombre: 'Chocoadicto',         desc: 'Recoge 150 Kit Kats',                       stat: 'chocos',       meta: 150, premio: 'sec2', monedas: 40 },
+  { id: 'serpientes', nombre: 'Cazaserpientes',      desc: 'Derrota 40 serpientes',                     stat: 'serpientes',   meta: 40,  premio: 'sec3', monedas: 40 },
+  { id: 'patadas',    nombre: 'Pateador experto',    desc: 'Acierta 200 patadas',                       stat: 'patadas',      meta: 200, monedas: 35 },
+  { id: 'reflector',  nombre: 'Reflector',           desc: 'Devuelve 30 fuegos a Kukulkán',             stat: 'fuegos',       meta: 30,  monedas: 45 },
+  { id: 'intocable',  nombre: 'Intocable',           desc: 'Vence a 3 jefes sin perder vidas',          stat: 'intocable',    meta: 3,   monedas: 50 },
+  { id: 'kukulkan',   nombre: 'Héroe de Yucatán',    desc: 'Derrota a Kukulkán',                        stat: 'kukulkan',     meta: 1,   monedas: 60 },
+  { id: 'ricos',      nombre: 'Millonario',          desc: 'Junta 300 monedas en total',                stat: 'monedasTotal', meta: 300, monedas: 60 },
 ];
 let avisos = [];
 const nombreDe = id => (PERSONAJES.find(p => p.id === id) || {}).nombre || '';
@@ -1736,8 +1731,8 @@ function registrar(k, n = 1) { datos.stats[k] = (datos.stats[k] || 0) + n; revis
 function revisarLogros() {
   for (const L of LOGROS) {
     if (datos.logros[L.id] || (datos.stats[L.stat] || 0) < L.meta) continue;
-    datos.logros[L.id] = true; sfx('logro'); guardarDatos();
-    avisos.push({ t: 0, titulo: '¡LOGRO DESBLOQUEADO!', txt: L.nombre, sub: L.premio ? 'Personaje secreto desbloqueado (¡muy pronto!)' : L.desc });
+    datos.logros[L.id] = true; datos.monedas += L.monedas || 0; datos.stats.monedasTotal = (datos.stats.monedasTotal || 0) + (L.monedas || 0); sfx('logro'); guardarDatos();
+    avisos.push({ t: 0, titulo: '¡LOGRO DESBLOQUEADO!', txt: L.nombre, sub: '+' + (L.monedas || 0) + ' monedas' + (L.premio ? '  ·  ¡personaje secreto!' : '') });
   }
 }
 
@@ -1745,6 +1740,7 @@ function revisarLogros() {
 let estado = 'menu', estadoT = 0, ajustesVolver = 'menu', modoPers = 'elegir', ajustesGuardado = 0;
 let seleccion = 0, personaje = PERSONAJES[0], nivelActual = 0, arenaX = 0, tema = 'dia';
 let vidas = VIDAS_INICIO, puntos = 0, puntosNivel = 0, vidasPerdidasNivel = 0, nChocos = 0, progChoco = 0, camara = 0, reloj = 0;
+let cargaRayo = 0, rayosVis = [];
 let poder = null, botas = 0, escudo = false, temblor = 0, banner = 0, usados = {}, rebote = {};
 let escarabajos = [], murcielagos = [], serpientes = [], items = [], balas = [], particulas = [], chocosVivos = [], pinchosLista = [], tragando = 0;
 let jefe = null, proyJ = [], ultimo = { x: 64, y: 340 }, pinchosJ = [], explos = [];
@@ -1756,7 +1752,7 @@ function irA(e) {
   if (e === 'logros') logroY = 0;
   if (e === 'cine') { cineI = 0; cineT0 = 0; cineVisPrev = 0; cineJefe = false; }
   if (e === 'niveles') { NIVELES.forEach(N => prepararCapasPoco(N.tema)); const k = NIVELES.findIndex((_, i) => !nivelHecho(i)); ui.foco = k < 0 ? 0 : k; }
-  if (e === 'menu' || e === 'personajes' || e === 'niveles' || e === 'logros' || e === 'intro' || e === 'cine' || (e === 'ajustes' && ajustesVolver === 'menu')) musica('menu');
+  if (e === 'menu' || e === 'personajes' || e === 'niveles' || e === 'tienda' || e === 'logros' || e === 'intro' || e === 'cine' || (e === 'ajustes' && ajustesVolver === 'menu')) musica('menu');
   if (e !== 'jugando') guardarDatos();
 }
 function musicaDelNivel() { musica(NIVELES[nivelActual].musica); }
@@ -1774,7 +1770,7 @@ function cargarNivel(n) {
   pinchosLista = [];
   for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) if (mapa[r][c] === '^') pinchosLista.push({ x: c * T + 9, y: r * T + 14, w: T - 18, h: T - 14 });
   usados = {}; rebote = {}; items = []; balas = []; particulas = []; proyJ = []; pinchosJ = []; explos = []; monedasJ = []; monedasGanadas = 0; tragando = 0;
-  poder = null; botas = 0; escudo = false; puntosNivel = puntos; vidasPerdidasNivel = 0;
+  poder = tiene('hielo') ? 'hielo' : null; botas = 0; escudo = tiene('escudo'); cargaRayo = tiene('rayo') ? 1 : 0; rayosVis = []; puntosNivel = puntos; vidasPerdidasNivel = 0;
   chocosVivos = chocosDef.map(([c, r]) => ({ x: c * T + 4, y: r * T + 8, w: 24, h: 16, tomado: false }));
   escarabajos = escarabajosDef.map(c => ({ x: c * T, y: 12 * T - 24, w: 30, h: 24, vx: -1.2, vy: 0, vivo: true, congelado: 0, ultimoVx: -1, dirP: -1 }));
   murcielagos = murcielagosDef.map(([c, r]) => ({ x0: c * T, y0: r * T, x: c * T, y: r * T, w: 26, h: 22, t: Math.floor(Math.random() * 100), dir: 1, vivo: true, congelado: 0, px: 0, py: 0, pique: 0, espera: 90 }));
@@ -1790,7 +1786,7 @@ function cargarNivel(n) {
   if (usarAlt() && !cacheMusica.jefe && !prerenderJefe) { prerenderJefe = true; setTimeout(() => renderMusica('jefe', url => { cacheMusica.jefe = url; }), 3000); }   // la música del jefe se prepara con tiempo
 }
 function nuevoJuego() {
-  vidas = VIDAS_INICIO; puntos = 0; nChocos = 0; progChoco = 0; datos.intro = true;
+  vidas = vidasInicio(); puntos = 0; nChocos = 0; progChoco = 0; datos.intro = true;
   cargarNivel(nivelElegido); irA('jugando'); musicaDelNivel(); registrar('partidas');
 }
 const nivelHecho = i => !!datos.prog[i];
@@ -1824,7 +1820,7 @@ function precalentar() {
 function elegirNivel(n) { if (nivelBloqueado(n)) { sfx('golpe'); return; } nivelElegido = n; cineSigue = false; sfx('menu'); irA('cine'); precalentar(); }
 function empezarTrasCine() { if (cineSigue) { cineSigue = false; cargarNivel(nivelElegido); irA('jugando'); musicaDelNivel(); } else nuevoJuego(); }
 function reiniciarNivel() {                                  // al perder todas las vidas: de vuelta al inicio del nivel
-  vidas = VIDAS_INICIO; puntos = puntosNivel; progChoco = 0;
+  vidas = vidasInicio(); puntos = puntosNivel; progChoco = 0;
   cargarNivel(nivelActual); irA('jugando'); musicaDelNivel();
 }
 function siguienteNivel() { nivelElegido = nivelActual + 1; cineSigue = true; irA('cine'); precalentar(); }
@@ -1903,6 +1899,19 @@ function abrirBloque(c, r) {
   chispas(c * T + 16, r * T, 8, '#ffe27a', 2.5);
   sfx('bloque');
 }
+function usarRayo() {                                       // la bola eléctrica de la tienda: fulmina a los 3 monstruos más cercanos (una vez por nivel)
+  const p = jugador; if (cargaRayo <= 0 || p.enfriamiento > 0 || tragando > 0) return;
+  p.enfriamiento = 30; const cx = p.x + 13, cy = p.y + 24;
+  const obj = [...escarabajos, ...murcielagos, ...serpientes].filter(e => e.vivo && Math.abs(e.x + e.w / 2 - cx) < 520 && Math.abs(e.y - cy) < 320).sort((a, b) => Math.hypot(a.x - cx, a.y - cy) - Math.hypot(b.x - cx, b.y - cy)).slice(0, 3);
+  if (!obj.length) { sfx('golpe'); return; }
+  cargaRayo--;
+  obj.forEach(e => {
+    const ex = e.x + e.w / 2, ey = e.y + e.h / 2, pts = [[cx, cy]]; for (let k = 1; k < 7; k++) pts.push([cx + (ex - cx) * k / 7 + (Math.random() - 0.5) * 26, cy + (ey - cy) * k / 7 + (Math.random() - 0.5) * 26]); pts.push([ex, ey]);
+    rayosVis.push({ pts, t: 0 }); e.vivo = false; puntos += 150; registrar('enemigos'); if (e.golpes !== undefined) registrar('serpientes');
+    chispas(ex, ey, 20, '#bff3ff', 5); chispas(ex, ey, 10, '#fff', 4);
+  });
+  sfx('rompe'); sfx('hielo'); temblor = Math.max(temblor, 8);
+}
 function dispararPoder() {
   if (!poder || balas.length >= 3 || jugador.enfriamiento > 0) return;
   jugador.enfriamiento = 16;
@@ -1944,7 +1953,7 @@ function danarJefe(j, n) {
   if (j.hp <= 0) {
     j.vivo = false; j.muerte = 0; j.vx = 0; puntos += 3000; proyJ = []; pinchosJ = []; temblor = 24; sfx('rugido'); musica(null);
     chispas(j.x + j.w / 2, j.y + 36, 70, '#ffd700', 7); chispas(j.x + j.w / 2, j.y + 36, 40, '#ff6fa8', 6);
-    registrar(j.tipo); if (vidasPerdidasNivel === 0) registrar('intocable'); soltarMonedas(j);
+    registrar(j.tipo); if (vidasPerdidasNivel === 0) { registrar('intocable'); if (j.tipo === 'patron') registrar('patronSin'); } soltarMonedas(j);
   } else j.aturdido = Math.max(j.aturdido, 24);
 }
 function lanzarProy(j, tipo) {
@@ -2011,7 +2020,7 @@ function iaPlayero(j) {
 }
 // ---------- Monedas: los jefes sueltan monedas al caer; se recogen y se guardan ----------
 let monedasJ = [], monedasGanadas = 0;
-const MONEDAS_JEFE = { patron: 10, patrona: 15, playero: 20, kukulkan: 30 };
+const MONEDAS_JEFE = { patron: 5, patrona: 8, playero: 10, kukulkan: 15 };
 function soltarMonedas(j) {
   const n = MONEDAS_JEFE[j.tipo] || 10, cx = j.x + j.w / 2, cy = j.y + 24;
   for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + (i / (n - 1 || 1) - 0.5) * 2.2 + (Math.random() - 0.5) * 0.3, v = 5 + Math.random() * 4; monedasJ.push({ x: cx - 9, y: cy - 9, w: 18, h: 18, vx: Math.cos(a) * v * 0.9, vy: Math.sin(a) * v - 2, t: Math.random() * 6, tomada: false, rebotes: 0 }); }
@@ -2026,7 +2035,7 @@ function actualizarMonedas(p) {
       if (hayBloque(m.x + 9, m.y + 18) && m.vy > 0) { m.y = Math.floor((m.y + 18) / T) * T - 18; m.vy = Math.abs(m.vy) > 3 ? -m.vy * 0.45 : 0; m.vx *= 0.8; }
       if (m.x < arenaX + 16) { m.x = arenaX + 16; m.vx = Math.abs(m.vx); } if (m.x > COLS * T - 34) { m.x = COLS * T - 34; m.vx = -Math.abs(m.vx); }
     }
-    if (choca(p, { x: m.x - 4, y: m.y - 4, w: m.w + 8, h: m.h + 8 })) { m.tomada = true; monedasGanadas++; datos.monedas++; sfx('moneda'); chispas(m.x + 9, m.y + 9, 5, '#ffe14d', 2.5, 0.05); }
+    if (choca(p, { x: m.x - 4, y: m.y - 4, w: m.w + 8, h: m.h + 8 })) { m.tomada = true; monedasGanadas++; datos.monedas++; sfx('moneda'); registrar('monedasTotal'); chispas(m.x + 9, m.y + 9, 5, '#ffe14d', 2.5, 0.05); }
   }
   if (monedasJ.length && monedasJ.every(m => m.tomada)) { guardarDatos(); monedasJ = []; }
 }
@@ -2150,7 +2159,7 @@ function actualizarProyectiles(p, pata) {
         if (d < 58 && jefe.vivo && jefe.invul <= 0) { q.vida = 0; danarJefe(jefe, 1); jefe.flash = 24; chispas(H.x, H.y, 26, '#ffb13b', 6); chispas(H.x, H.y, 14, '#bff3ff', 5); }
       } else {
         const zonaPatada = p.patada > 0 ? { x: p.mirando > 0 ? p.x - 6 : p.x - 56, y: p.y - 8, w: 88, h: p.h + 16 } : null;      // mientras pateas, el fuego que te toca (o casi) se devuelve, nunca te daña
-        if (zonaPatada && choca(zonaPatada, q)) { q.devuelto = true; q.vida = 700; sfx('patada'); sfx('hielo'); chispas(cq, cy, 14, '#bff3ff', 5); puntos += 100; registrar('patadas'); }
+        if (zonaPatada && choca(zonaPatada, q)) { q.devuelto = true; q.vida = 700; sfx('patada'); sfx('hielo'); chispas(cq, cy, 14, '#bff3ff', 5); puntos += 100; registrar('patadas'); registrar('fuegos'); }
         else if (tragando === 0 && choca(p, q)) { q.vida = 0; chispas(cq, cy, 16, '#ff9a3a', 5); recibirGolpe(true, (q.vx >= 0 ? 1 : -1) * 5); }
         else if (hayBloque(cq, cy) || q.y > FILAS * T) { q.vida = 0; chispas(cq, cy, 10, '#ff9a3a', 3); }
         for (const b of balas) if (b.vida > 0 && choca(b, q)) { b.vida = 0; q.vida = 0; chispas(cq, cy, 10, '#bfeaff', 3); sfx('hielo'); }
@@ -2208,10 +2217,13 @@ function actualizar() {
     const dirIn = (ctrl.der ? 1 : 0) - (ctrl.izq ? 1 : 0);
     p.vx = dirIn * pj.vel + p.empuje; p.empuje *= 0.85; if (Math.abs(p.empuje) < 0.1) p.empuje = 0;
     if (dirIn) { p.mirando = dirIn; p.pasos += Math.abs(dirIn * pj.vel); }
+    const saltoNuevo = ctrl.salto && !p.saltoPrev, estabaEnSuelo = p.enSuelo; p.saltoPrev = ctrl.salto; if (p.enSuelo) p.dobleUsado = false;
     if (ctrl.salto && p.enSuelo) { p.vy = -pj.salto * (botas > 0 ? 1.38 : 1); p.enSuelo = false; sfx(botas > 0 ? 'resorte' : 'salto'); polvo(p.x + 13, p.y + p.h, 4); }
+    else if (saltoNuevo && !estabaEnSuelo && tiene('doble') && !p.dobleUsado) { p.dobleUsado = true; p.vy = -pj.salto * 0.85; sfx('salto'); chispas(p.x + 13, p.y + p.h, 10, '#fff', 3); polvo(p.x + 13, p.y + p.h, 5); }
     if (!ctrl.salto && p.vy < -4) p.vy = -4;
     if (ctrl.patada && p.patada === 0) { p.patada = 14; p.golpeaA = new Set(); sfx('patada'); }
-    if (ctrl.poder) dispararPoder();
+    if (ctrl.poder) { if (poder) dispararPoder(); else usarRayo(); }
+    if (ctrl.rayo) usarRayo();
     const vyAntes = p.vy;
     p.vy = Math.min(p.vy + GRAVEDAD * (p.vy > 0 ? pj.caida : 1), pj.maxCaida);
     moverConColision(p);
@@ -2336,7 +2348,11 @@ function actualizar() {
     else { escudo = true; sfx('escudo'); chispas(p.x + 13, p.y + 20, 18, '#ffd93b', 4); }
   }
   items = items.filter(i => !i.tomado);
-  for (const m of chocosVivos) if (!m.tomado && choca(p, m)) tomarChoco(m);
+  for (const m of chocosVivos) if (!m.tomado) {
+    if (tiene('iman')) { const dx = p.x + 13 - (m.x + 12), dy = p.y + 24 - (m.y + 8), d = Math.hypot(dx, dy); if (d < 150 && d > 1) { const v = Math.min(5, 1.5 + (150 - d) * 0.05); m.x += dx / d * v; m.y += dy / d * v; } }
+    if (choca(p, m)) tomarChoco(m);
+  }
+  for (const r of rayosVis) r.t++; rayosVis = rayosVis.filter(r => r.t < 16);
 
   for (const pa of particulas) { pa.x += pa.vx; pa.y += pa.vy; pa.vy += pa.grav; pa.vida--; }
   particulas = particulas.filter(pa => pa.vida > 0);
@@ -2433,7 +2449,8 @@ function pintarMarcador() {
   casilla(!!poder, () => { ctx.save(); ctx.translate(px + 18, 32); ctx.scale(0.6, 0.6); dibujarCristal(ctx, -12, -12); ctx.restore(); }, '#9be4ff');
   casilla(escudo, () => dibujarEscudoIcono(ctx, px + 8, 19, 0.7), '#ffd93b');
   casilla(botas > 0, () => { ctx.save(); ctx.translate(px + 18, 32); ctx.scale(0.62, 0.62); dibujarIconoBotas(ctx, -12, -12); ctx.restore(); if (botas > 0) { ctx.fillStyle = '#ffae4d'; ctx.fillRect(px + 4, 46, 28 * botas / BOTAS_DURACION, 3); } }, '#ffae4d');
-  dibujarMoneda(ctx, 494, 32, 10, true); texto(String(datos.monedas), 510, 38, 17, '#ffd700');
+  if (tiene('rayo')) casilla(cargaRayo > 0, () => iconoRayo(ctx, px + 18, 32, 0.5), '#7fd3ff');
+  dibujarMoneda(ctx, px + 24, 32, 10, true); texto(String(datos.monedas), px + 40, 38, 17, '#ffd700');
   for (let i = 0; i < VIDAS_MAX; i++) corazon(W - 28 - (VIDAS_MAX - 1 - i) * 30 - 10, 14, 22, i < vidas ? '#ff3d7f' : 'rgba(255,255,255,.2)', i < vidas ? '#7a0a3a' : 'rgba(255,255,255,.35)');
   texto(NIVELES[nivelActual].nombre, W - 92, 53, 11, '#cfd8ff', 'center');
   if (silencio) texto('SIN SONIDO (M)', W - 190, 53, 10, '#fff', 'center');
@@ -2450,7 +2467,7 @@ function pintarMarcador() {
 }
 function dibujarMarcador() {                                // el marcador se redibuja solo cuando algo cambia
   const hp = jefe && jefe.vivo && jefe.estadoJ === 'activo' ? jefe.hp : -1;
-  const key = [puntos, personaje.id, progChoco, vidas, poder ? 1 : 0, escudo ? 1 : 0, botas > 0 ? Math.ceil(botas / 10) : 0, datos.monedas, silencio ? 1 : 0, nivelActual, hp, jefe ? jefe.tipo : '', ESC].join('|');
+  const key = [puntos, personaje.id, progChoco, vidas, poder ? 1 : 0, escudo ? 1 : 0, botas > 0 ? Math.ceil(botas / 10) : 0, datos.monedas, silencio ? 1 : 0, nivelActual, hp, jefe ? jefe.tipo : '', cargaRayo, tiene('rayo') ? 1 : 0, ESC].join('|');
   if (!HUD.c || HUD.key !== key) {
     const c = HUD.c || (HUD.c = crearCanvas(Math.ceil(W * ESC), Math.ceil(100 * ESC))), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, 0, 0); g.clearRect(0, 0, W, 100);
     const prev = ctx; ctx = g; try { pintarMarcador(); } finally { ctx = prev; }
@@ -2483,6 +2500,7 @@ function dibujarJuego() {
   if (jefe && !jefe.vivo && jefe.tipo === 'playero') dibujarLlave(ctx, jefe.x + jefe.w / 2, jefe.y + 6 - Math.min(jefe.muerte, 90) * 0.9, 1.5, Math.sin(reloj * 0.1) * 0.4);
   if (jefe && !jefe.vivo && jefe.tipo === 'kukulkan') { const Hk = cabezaKuku(jefe); dibujarLlave(ctx, Hk.x, Math.min(352, Hk.y + 30 + jefe.muerte * jefe.muerte * 0.04), 1.5, Math.sin(reloj * 0.1) * 0.4); }
   for (const m of monedasJ) if (!m.tomada) { resplandor(ctx, m.x + 9, m.y + 9, 20, 'rgba(255,220,80,.5)'); dibujarMoneda(ctx, m.x + 9, m.y + 9); }
+  for (const r of rayosVis) { ctx.lineJoin = 'round'; ctx.lineCap = 'round'; [[10, 'rgba(120,200,255,.5)'], [4, '#bff3ff'], [1.6, '#fff']].forEach(([w, c]) => { ctx.strokeStyle = c; ctx.lineWidth = w; ctx.globalAlpha = 1 - r.t / 16; ctx.beginPath(); r.pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.stroke(); }); ctx.globalAlpha = 1; }
   for (const e of pinchosJ) dibujarEspina(ctx, e);
   for (const q of proyJ) dibujarProyectil(ctx, q);
   for (const x of explos) dibujarExplosion(ctx, x);
@@ -2559,13 +2577,14 @@ function dibujarMenu() {
   ctx.fillStyle = '#d32f2f'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2 - 190, 112); ctx.lineTo(W / 2 + 190, 112); ctx.lineTo(W / 2 + 205, 139); ctx.lineTo(W / 2 + 190, 166); ctx.lineTo(W / 2 - 190, 166); ctx.lineTo(W / 2 - 205, 139); ctx.closePath(); ctx.fill(); ctx.stroke();
   texto('y los Departamentos', W / 2, 150, 29, '#fff', 'center');
   const bx = W / 2 - 150;
-  uiBoton('COMENZAR EL JUEGO', bx, 192, 300, 46, () => { modoPers = 'elegir'; irA('personajes'); }, 'verde', 20);
-  uiBoton('VER PERSONAJES', bx, 246, 300, 40, () => { modoPers = 'ver'; irA('personajes'); }, 'azul', 17);
-  uiBoton('LOGROS', bx, 292, 300, 40, () => irA('logros'), 'dorado', 17);
-  uiBoton('AJUSTES', bx, 338, 300, 40, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
+  uiBoton('COMENZAR EL JUEGO', bx, 180, 300, 44, () => { modoPers = 'elegir'; irA('personajes'); }, 'verde', 20);
+  uiBoton('VER PERSONAJES', bx, 230, 300, 36, () => { modoPers = 'ver'; irA('personajes'); }, 'azul', 17);
+  uiBoton('LOGROS', bx, 270, 300, 36, () => irA('logros'), 'dorado', 17);
+  uiBoton('TIENDA', bx, 310, 300, 36, () => irA('tienda'), 'rojo', 17);
+  uiBoton('AJUSTES', bx, 350, 300, 36, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
-  dibujarMoneda(ctx, 26, 26, 11); texto(String(datos.monedas), 44, 33, 18, '#ffd700');
-  texto('Versión 2.4', W - 10, H - 10, 11, '#fff', 'right');
+  dibujarMoneda(ctx, 26, 26, 11, true); texto(String(datos.monedas), 44, 33, 18, '#ffd700');
+  texto('Versión 2.5', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -2602,7 +2621,7 @@ function dibujarLogros() {
   dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.45)'; ctx.fillRect(0, 0, W, H);
   panelVidrio(20, 12, 760, 426);
   const hechos = LOGROS.filter(L => datos.logros[L.id]).length;
-  texto('LOGROS', W / 2, 52, 30, '#ffd43b', 'center'); texto(hechos + ' / ' + LOGROS.length, W / 2, 74, 14, '#fff', 'center');
+  texto('LOGROS', W / 2, 52, 30, '#ffd43b', 'center'); texto(hechos + ' / ' + LOGROS.length, W / 2, 74, 14, '#fff', 'center'); texto('🎁 = personaje secreto', 44, 74, 11, '#cfd8ff', 'left', true);
   moverLogros(logroY);
   const max = logroMax(), trackY = LOGRO_TOP - 2, trackH = LOGRO_VIS + 2;
   if (max > 0) ui.rects.push({ tipo: 'scroll', x: 758, y: trackY - 4, w: 28, h: trackH + 8, sinFoco: true, mover: yy => moverLogros((yy - trackY - 20) / (trackH - 40) * max) });
@@ -2613,8 +2632,8 @@ function dibujarLogros() {
     ctx.fillStyle = ok ? 'rgba(255,215,0,.18)' : 'rgba(255,255,255,.07)'; trazoRedondo(ctx, x, y, 360, 50, 12); ctx.fill(); ctx.strokeStyle = ok ? '#ffd700' : 'rgba(255,255,255,.2)'; ctx.lineWidth = 1.6; ctx.stroke();
     ctx.fillStyle = ok ? '#ffd700' : '#3a3f5c'; ctx.beginPath(); ctx.arc(x + 26, y + 25, 17, 0, 7); ctx.fill();
     texto(ok ? '★' : '🔒', x + 26, y + 33, ok ? 22 : 16, ok ? '#a86b00' : '#aab', 'center', true);
-    texto(L.nombre, x + 52, y + 19, 15, ok ? '#ffe27a' : '#fff'); texto(L.desc, x + 52, y + 34, 11, '#cfd8ff', 'left', true);
-    if (L.premio) { ctx.fillStyle = ok ? '#2fa83a' : '#7a3a8e'; trazoRedondo(ctx, x + 236, y + 6, 118, 18, 9); ctx.fill(); texto(ok ? '✔ Personaje secreto' : '🎁 Personaje secreto', x + 295, y + 19, 10, '#fff', 'center', true); }
+    texto(L.nombre + (L.premio ? ' 🎁' : ''), x + 52, y + 19, 15, ok ? '#ffe27a' : '#fff'); texto(L.desc, x + 52, y + 34, 11, '#cfd8ff', 'left', true);
+    dibujarMoneda(ctx, x + 318, y + 16, 8, true); texto('+' + L.monedas, x + 352, y + 22, 13, ok ? '#7bd36b' : '#ffd700', 'right');
     if (!ok) { ctx.fillStyle = 'rgba(0,0,0,.4)'; trazoRedondo(ctx, x + 52, y + 40, 250, 6, 3); ctx.fill(); ctx.fillStyle = '#7bd36b'; if (v > 0) { trazoRedondo(ctx, x + 52, y + 40, Math.max(6, 250 * v / L.meta), 6, 3); ctx.fill(); } texto(v + '/' + L.meta, x + 310, y + 46, 10, '#fff', 'left', true); }
   });
   ctx.restore();
@@ -2656,6 +2675,71 @@ function dibujarPersonajes() {
   else texto('← →  cambiar personaje', W / 2, 400, 15, '#fff', 'center');
   uiCerrar(() => irA('menu'), W - 58, 14);
 }
+// ---------- Tienda: objetos especiales que se compran con monedas y se usan siempre ----------
+const OBJETOS = [
+  { id: 'rayo',    nombre: 'Bola eléctrica',   precio: 100, desc: 'Empiezas cada nivel con 1 rayo. Usa el botón PODER (si no tienes hielo) y fulmina a los 3 monstruos más cercanos. Una vez por nivel.' },
+  { id: 'escudo',  nombre: 'Escudo dorado',    precio: 120, desc: 'Empiezas cada nivel con el escudo amarillo puesto, que absorbe un golpe.' },
+  { id: 'iman',    nombre: 'Imán de Kit Kats', precio: 80,  desc: 'Los Kit Kats que están cerca de ti vuelan solos hasta tus manos.' },
+  { id: 'corazon', nombre: 'Corazón extra',    precio: 110, desc: 'Empiezas cada partida con 4 vidas en vez de 3.' },
+  { id: 'hielo',   nombre: 'Cristal de hielo', precio: 90,  desc: 'Empiezas cada nivel con el poder de hielo ya listo para lanzar.' },
+  { id: 'doble',   nombre: 'Doble salto',      precio: 150, desc: 'Puedes saltar una vez más en el aire. ¡Llegas a lugares muy altos!' },
+];
+const tiene = id => !!datos.tienda[id];
+const vidasInicio = () => VIDAS_INICIO + (tiene('corazon') ? 1 : 0);
+let tiendaMsg = { t0: -999, txt: '', col: '#fff' };
+function iconoRayo(g, x, y, esc = 1) {
+  g.save(); g.translate(x, y); g.scale(esc * 1.6, esc * 1.6); resplandor(g, 0, 0, 26, 'rgba(120,210,255,.8)');
+  g.fillStyle = grad(g, -12, -12, 12, 12, [[0, '#e8f9ff'], [0.5, '#4fb8ff'], [1, '#2a62d6']]); g.strokeStyle = NEGRO; g.lineWidth = 2.2; g.beginPath(); g.arc(0, 0, 13, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = '#ffe14d'; g.strokeStyle = NEGRO; g.lineWidth = 1.6; g.beginPath(); g.moveTo(3, -10); g.lineTo(-6, 1.5); g.lineTo(-0.5, 1.5); g.lineTo(-3, 10); g.lineTo(6.5, -2); g.lineTo(1, -2); g.closePath(); g.fill(); g.stroke();
+  g.restore();
+}
+function iconoObjeto(g, id, x, y) {                          // dibujo grande de cada objeto (centrado en x,y)
+  if (id === 'rayo') iconoRayo(g, x, y, 1.15);
+  else if (id === 'escudo') { g.save(); g.translate(x, y); g.scale(1.8, 1.8); dibujarEscudoIcono(g, -12, -13, 1); g.restore(); }
+  else if (id === 'hielo') { g.save(); g.translate(x, y); g.scale(1.9, 1.9); dibujarCristal(g, -12, -12); g.restore(); }
+  else if (id === 'corazon') { corazon(x - 20, y - 18, 40, '#ff3d7f', '#7a0a3a'); texto('+1', x + 19, y + 17, 15, '#fff', 'center'); }
+  else if (id === 'iman') {
+    g.save(); g.translate(x, y + 4); g.lineCap = 'butt';
+    g.strokeStyle = NEGRO; g.lineWidth = 17; g.beginPath(); g.arc(0, 0, 15, Math.PI, 0); g.lineTo(15, 14); g.moveTo(-15, 0); g.lineTo(-15, 14); g.stroke();
+    g.strokeStyle = '#e8352e'; g.lineWidth = 12; g.beginPath(); g.arc(0, 0, 15, Math.PI, Math.PI * 1.5); g.moveTo(-15, 0); g.lineTo(-15, 12); g.stroke();
+    g.strokeStyle = '#2a7bd9'; g.beginPath(); g.arc(0, 0, 15, Math.PI * 1.5, 0); g.lineTo(15, 12); g.stroke();
+    g.fillStyle = '#e8eef5'; g.fillRect(-21, 10, 12, 8); g.fillRect(9, 10, 12, 8);
+    g.restore(); dibujarChoco(g, { x: x - 12, y: y + 14, w: 24, h: 16 });
+  } else if (id === 'doble') {
+    g.save(); g.translate(x, y); g.scale(1.7, 1.7); dibujarIconoBotas(g, -12, -8); g.restore();
+    g.save(); g.strokeStyle = NEGRO; g.lineWidth = 6; g.lineCap = 'round'; g.lineJoin = 'round'; [0, 1].forEach(k => { g.beginPath(); g.moveTo(x - 12, y - 16 - k * 9); g.lineTo(x, y - 24 - k * 9); g.lineTo(x + 12, y - 16 - k * 9); g.stroke(); });
+    g.strokeStyle = '#7fe3ff'; g.lineWidth = 3; [0, 1].forEach(k => { g.beginPath(); g.moveTo(x - 12, y - 16 - k * 9); g.lineTo(x, y - 24 - k * 9); g.lineTo(x + 12, y - 16 - k * 9); g.stroke(); }); g.restore();
+  }
+}
+function comprarObjeto(o) {
+  tiendaMsg.t0 = estadoT;
+  if (tiene(o.id)) { tiendaMsg.txt = 'Ya tienes ' + o.nombre; tiendaMsg.col = '#cfd8ff'; sfx('clic'); return; }
+  if (datos.monedas < o.precio) { tiendaMsg.txt = 'Te faltan ' + (o.precio - datos.monedas) + ' monedas para ' + o.nombre; tiendaMsg.col = '#ff9a9a'; sfx('golpe'); return; }
+  datos.monedas -= o.precio; datos.tienda[o.id] = true; guardarDatos(); sfx('vida'); sfx('moneda'); tiendaMsg.txt = '¡Compraste ' + o.nombre + '! Ya lo tienes siempre.'; tiendaMsg.col = '#7bd36b';
+}
+function dibujarTienda() {
+  dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.62)'; ctx.fillRect(0, 0, W, H);
+  texto('TIENDA', W / 2, 50, 34, '#ffd43b', 'center');
+  dibujarMoneda(ctx, 40, 32, 12, true); texto(String(datos.monedas), 60, 39, 22, '#ffd700');
+  OBJETOS.forEach((o, i) => {
+    const x = 34 + (i % 3) * 248, y = 68 + Math.floor(i / 3) * 170, w = 236, h = 160, idx = ui.rects.length, mio = tiene(o.id), alcanza = datos.monedas >= o.precio;
+    ui.rects.push({ tipo: 'boton', x, y, w, h, accion: () => comprarObjeto(o) });
+    const f = ui.foco === idx && !ui.sinTeclado;
+    if (f) { ctx.fillStyle = '#ffd700'; trazoRedondo(ctx, x - 3, y - 3, w + 6, h + 6, 17); ctx.fill(); }
+    ctx.fillStyle = f ? '#2b3a67' : 'rgba(20,24,56,.93)'; trazoRedondo(ctx, x, y, w, h, 14); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.08)'; trazoRedondo(ctx, x + 8, y + 8, 56, 52, 12); ctx.fill();
+    iconoObjeto(ctx, o.id, x + 36, y + 36);
+    texto(o.nombre, x + 72, y + 30, o.nombre.length > 15 ? 14 : 16, mio ? '#7bd36b' : '#ffe27a');
+    texto(mio ? 'Lo tienes' : 'Objeto especial', x + 72, y + 50, 11, '#cfd8ff', 'left', true);
+    envolver(o.desc, w - 20, 11.5).forEach((l, k) => texto(l, x + 10, y + 78 + k * 14, 11.5, '#fff', 'left', true));
+    const py = y + h - 32;
+    if (mio) { ctx.fillStyle = '#2fa83a'; trazoRedondo(ctx, x + 10, py, w - 20, 24, 12); ctx.fill(); texto('✔ TUYO', x + w / 2, py + 17, 14, '#fff', 'center'); }
+    else { ctx.fillStyle = alcanza ? '#e8a200' : '#4a4f6c'; trazoRedondo(ctx, x + 10, py, w - 20, 24, 12); ctx.fill(); dibujarMoneda(ctx, x + 36, py + 12, 8, true); texto(o.precio + '  ·  ' + (alcanza ? 'COMPRAR' : 'faltan ' + (o.precio - datos.monedas)), x + w / 2 + 12, py + 17, 13, '#fff', 'center'); }
+  });
+  if (estadoT - tiendaMsg.t0 < 170) texto(tiendaMsg.txt, W / 2, 428, 17, tiendaMsg.col, 'center');
+  else texto('Los objetos que compras se activan solos en cada partida.', W / 2, 428, 13, '#cfd8ff', 'center', true);
+  uiCerrar(() => irA('menu'), W - 58, 8);
+}
 // Elegir el nivel (por estados de México; el primer mundo es Yucatán)
 const NIV_CARD = i => ({ x: 30 + i * 188, y: 92, w: 176, h: 232 });
 function miniNivel(t, x, y, w, h) {                         // una miniatura del escenario, hecha con las mismas capas del juego
@@ -2670,7 +2754,7 @@ function miniNivel(t, x, y, w, h) {                         // una miniatura del
 }
 function dibujarNiveles() {
   dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.55)'; ctx.fillRect(0, 0, W, H);
-  dibujarMoneda(ctx, 30, 30, 11); texto(String(datos.monedas), 48, 37, 18, '#ffd700');
+  dibujarMoneda(ctx, 30, 30, 11, true); texto(String(datos.monedas), 48, 37, 18, '#ffd700');
   texto('MUNDO 1', W / 2, 36, 15, '#cfd8ff', 'center'); texto('YUCATÁN', W / 2, 72, 34, '#ffd43b', 'center');
   NIVELES.forEach((N, i) => {
     const t = NIV_CARD(i), idx = ui.rects.length; ui.rects.push({ tipo: 'boton', x: t.x, y: t.y, w: t.w, h: t.h, accion: () => elegirNivel(i) });
@@ -2794,6 +2878,7 @@ function dibujar() {
   if (estado === 'menu') dibujarMenu();
   else if (estado === 'personajes') dibujarPersonajes();
   else if (estado === 'niveles') dibujarNiveles();
+  else if (estado === 'tienda') dibujarTienda();
   else if (estado === 'logros') dibujarLogros();
   else if (estado === 'ajustes') dibujarAjustes();
   else if (estado === 'intro') dibujarIntro();
@@ -2837,9 +2922,10 @@ function menuControl() {
   const n = ui.rects.filter(r => !r.sinFoco).length, lista = ui.rects.filter(r => !r.sinFoco);
   if (!n) return;
   if (ui.foco >= n) ui.foco = n - 1;
-  if (pulso('ArrowDown', 'KeyS') || e[13] || e[103]) { ui.foco = (ui.foco + 1) % n; sfx('clic'); }
-  if (pulso('ArrowUp', 'KeyW') || e[12] || e[102]) { ui.foco = (ui.foco + n - 1) % n; sfx('clic'); }
+  if (pulso('ArrowDown', 'KeyS') || e[13] || e[103]) { ui.foco = estado === 'tienda' ? Math.min(n - 1, ui.foco + 3) : (ui.foco + 1) % n; sfx('clic'); }
+  if (pulso('ArrowUp', 'KeyW') || e[12] || e[102]) { ui.foco = estado === 'tienda' ? Math.max(0, ui.foco - 3) : (ui.foco + n - 1) % n; sfx('clic'); }
   const izq = pulso('ArrowLeft', 'KeyA') || e[14] || e[100], der = pulso('ArrowRight', 'KeyD') || e[15] || e[101];
+  if (estado === 'tienda' && (izq || der)) { ui.foco = Math.max(0, Math.min(n - 1, ui.foco + (der ? 1 : -1))); sfx('clic'); }
   if (estado === 'niveles' && (izq || der)) { const k = NIVELES.length; ui.foco = ui.foco >= k ? 0 : (ui.foco + (der ? 1 : k - 1)) % k; sfx('clic'); }
   const r = lista[ui.foco];
   if (r.tipo === 'slider') { if (izq) { r.set(pasoUI(r.get() - r.paso)); sfx('clic'); if (r.suelta) r.suelta(); } if (der) { r.set(pasoUI(r.get() + r.paso)); sfx('clic'); if (r.suelta) r.suelta(); } }
