@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 1.9
+//  LICHILÓN Y EL PATRÓN  -  Versión 2.0
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -203,6 +203,13 @@ const SONIDOS = {
   clic:    () => tono(500, 700, 0.06, 'triangle', 0.07),
   bloque:  () => tono(160, 100, 0.09, 'triangle', 0.1),
 };
+// Voces: cada letra que se "dice" hace un piipito corto; el tono cambia según la letra y la voz de cada personaje
+const HABLAS = [{ b: 430, t: 'triangle', v: 0.09 }, { b: 340, t: 'triangle', v: 0.09 }, { b: 560, t: 'triangle', v: 0.09 }, { b: 135, t: 'sawtooth', v: 0.06 }, { b: 400, t: 'square', v: 0.045 }, { b: 210, t: 'triangle', v: 0.11 }, { b: 78, t: 'sawtooth', v: 0.1 }];
+HABLAS.forEach((h, i) => [0.82, 0.92, 1.05, 1.2].forEach((r, v) => { SONIDOS['h' + i + '_' + v] = () => tono(h.b * r, h.b * r * (v % 2 ? 1.07 : 0.94), 0.075, h.t, h.v); }));
+function hablar(i, ch) {
+  const k = 'uoaeiúóáéí'.indexOf(ch.toLowerCase()), v = k >= 0 ? k % 4 : (ch.toLowerCase().charCodeAt(0) * 7) % 4;
+  sfx('h' + i + '_' + v);
+}
 function sfx(n) {
   try {
     if (!SONIDOS[n]) return;
@@ -1566,6 +1573,7 @@ const escalera = c0 => { for (let k = 0; k < 3; k++) for (let r = 11 - k; r <= 1
 const NIVELES = [
   { nombre: 'NIVEL 1', lugar: 'Calle 60, Centro de Mérida', corto: ['Calle 60', 'Centro de Mérida'], jefeNombre: 'El Patrón', cols: 150, tema: 'dia', jefe: 'patron', musica: 'calle',
     nota: 'Subió la renta: ¡derrota al Patrón!',
+    cine: [['p', '¡No puede ser! El Patrón y la Patrona subieron la renta otra vez... ¡ya no nos alcanza!'], ['p', 'Si quiero un departamento gratis, tengo que ganarles. ¡Empiezo por la Calle 60!'], ['patron', '¡Jajaja! ¿Gratis? ¡Aquí todo cuesta! ¡Págame la renta o te saco volando!'], ['p', 'Cuidado con los bichos, las serpientes y los pinchos. ¡Y a juntar Kit Kats! ¡Vamos!']],
     fin: { titulo: '¡DERROTASTE AL PATRÓN!', lineas: ['Pero todavía falta la Patrona...', 'Sigue por el Paseo de Montejo al atardecer.'] },
     construir() {
       suelo(0, 13); suelo(17, 28); suelo(32, 50); suelo(54, 70); suelo(74, 100); suelo(104, 121); suelo(125, 149);
@@ -1580,6 +1588,7 @@ const NIVELES = [
     } },
   { nombre: 'NIVEL 2', lugar: 'Paseo de Montejo, al atardecer', corto: ['Paseo de Montejo', 'Al atardecer'], jefeNombre: 'La Patrona', cols: 160, tema: 'tarde', jefe: 'patrona', musica: 'tarde',
     nota: '¡Ahora le toca a la Patrona!',
+    cine: [['p', '¡Lo logré! El Patrón ya no nos molesta... pero la Patrona sigue en el Paseo de Montejo.'], ['patrona', '¡Ay, qué chamaco tan atrevido! ¡Mis bombas harán explotar tus sueños de departamento gratis!'], ['p', 'Cuidado con los círculos rojos. Y si puedo... ¡les devuelvo las bombas de una patada!']],
     fin: { titulo: '¡DERROTASTE A LA PATRONA!', lineas: ['¡Ya casi tienes tu departamento gratis!', 'Pero... ¡alguien se robó la llave!', 'Sigue la pista hasta la playa de Progreso.'] },
     construir() {
       suelo(0, 11); suelo(15, 26); suelo(30, 45); suelo(49, 64); suelo(68, 90); suelo(94, 112); suelo(116, 131); suelo(135, 159);
@@ -1595,6 +1604,7 @@ const NIVELES = [
     } },
   { nombre: 'NIVEL 3', lugar: 'De visita a la playa, Progreso', corto: ['De visita a la playa', 'Progreso, Yucatán'], jefeNombre: 'El Playero', cols: 170, tema: 'playa', jefe: 'playero', musica: 'playa',
     nota: 'El Playero se robó la llave del departamento',
+    cine: [['p', '¡Ya ganamos el departamento! Pero... espera... ¡alguien se robó la llave!'], ['p', 'Dicen que un señor de la playa de Progreso la tiene. ¡Directo al Muelle Fiscal!'], ['playero', '¡Esta llave brillante ahora es mía! Si la quieres, ¡tendrás que surfear conmigo!'], ['p', 'Hay que esquivar sus embestidas y saltar los pinchos de coral. ¡Allá voy!']],
     fin: { titulo: '¡RECUPERASTE LA LLAVE!', lineas: ['Derrotaste al Playero y la llave volvió a casa.', 'Para celebrar, los hermanos visitan Chichén Itzá...', '¡pero algo se mueve en la pirámide!'] },
     construir() {
       suelo(0, 13); suelo(17, 30); suelo(34, 48); suelo(52, 66); suelo(70, 92); suelo(97, 114); suelo(118, 134); suelo(138, 169);
@@ -1610,6 +1620,7 @@ const NIVELES = [
     } },
   { nombre: 'NIVEL 4', lugar: 'Chichén Itzá, Yucatán', corto: ['Chichén Itzá', 'La pirámide de Kukulkán'], jefeNombre: 'Kukulkán', cols: 172, tema: 'chichen', jefe: 'kukulkan', musica: 'chichen',
     nota: 'Kukulkán bajó de la pirámide y se comió la llave',
+    cine: [['p', '¡Qué bonito es Chichén Itzá! ¡Miren esa pirámide tan enorme!'], ['p', 'Esperen... ¿por qué se está moviendo la serpiente de la escalinata?'], ['kukulkan', '¡¡Grrrr!! ¡Esa llave brillante se ve deliciosa! ¡Ñam!'], ['p', '¡Se comió la llave! Para ganarle tengo que patear sus fuegos y devolvérselos. ¡Vamos!']],
     fin: { titulo: '¡KUKULKÁN ESCUPIÓ LA LLAVE!', lineas: ['Le devolviste sus propios fuegos.', 'La llave volvió con los hermanos...', '¡y ahora sí, a casa!'] },
     construir() {
       suelo(0, 12); suelo(16, 29); suelo(33, 47); suelo(51, 66); suelo(70, 92); suelo(96, 115); suelo(119, 134); suelo(138, 171);
@@ -1664,12 +1675,13 @@ let escarabajos = [], murcielagos = [], serpientes = [], items = [], balas = [],
 let jefe = null, proyJ = [], ultimo = { x: 64, y: 340 }, pinchosJ = [], explos = [];
 const jugador = { x: 0, y: 0, w: 26, h: 54, vx: 0, vy: 0, enSuelo: false, mirando: 1, patada: 0, invulnerable: 0, enfriamiento: 0, pasos: 0, empuje: 0, golpeaA: new Set() };
 
-let nivelElegido = 0, prerenderJefe = false;
+let nivelElegido = 0, prerenderJefe = false, cineI = 0, cineT0 = 0, cineVisPrev = 0, cineJefe = false;
 function irA(e) {
   estado = e; estadoT = 0; ui.foco = 0; for (const k in pulsos) delete pulsos[k];
   if (e === 'logros') logroY = 0;
+  if (e === 'cine') { cineI = 0; cineT0 = 0; cineVisPrev = 0; cineJefe = false; }
   if (e === 'niveles') { NIVELES.forEach(N => prepararCapasPoco(N.tema)); const k = NIVELES.findIndex((_, i) => !nivelHecho(i)); ui.foco = k < 0 ? 0 : k; }
-  if (e === 'menu' || e === 'personajes' || e === 'niveles' || e === 'logros' || e === 'intro' || (e === 'ajustes' && ajustesVolver === 'menu')) musica('menu');
+  if (e === 'menu' || e === 'personajes' || e === 'niveles' || e === 'logros' || e === 'intro' || e === 'cine' || (e === 'ajustes' && ajustesVolver === 'menu')) musica('menu');
   if (e !== 'jugando') guardarDatos();
 }
 function musicaDelNivel() { musica(NIVELES[nivelActual].musica); }
@@ -1707,12 +1719,14 @@ function nuevoJuego() {
 }
 const nivelHecho = i => !!datos.prog[i];
 const nivelBloqueado = i => i > 0 && !nivelHecho(i - 1);
-function elegirNivel(n) { if (nivelBloqueado(n)) { sfx('golpe'); return; } nivelElegido = n; if (datos.intro) { sfx('menu'); nuevoJuego(); } else irA('intro'); }
+let cineSigue = false;
+function elegirNivel(n) { if (nivelBloqueado(n)) { sfx('golpe'); return; } nivelElegido = n; cineSigue = false; sfx('menu'); irA('cine'); }
+function empezarTrasCine() { if (cineSigue) { cineSigue = false; cargarNivel(nivelElegido); irA('jugando'); musicaDelNivel(); } else nuevoJuego(); }
 function reiniciarNivel() {                                  // al perder todas las vidas: de vuelta al inicio del nivel
   vidas = VIDAS_INICIO; puntos = puntosNivel; progChoco = 0;
   cargarNivel(nivelActual); irA('jugando'); musicaDelNivel();
 }
-function siguienteNivel() { cargarNivel(nivelActual + 1); irA('jugando'); musicaDelNivel(); }
+function siguienteNivel() { nivelElegido = nivelActual + 1; cineSigue = true; irA('cine'); }
 
 const choca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 const hayBloque = (px, py) => {
@@ -2047,6 +2061,7 @@ function actualizar() {
   if (estado !== 'jugando') {
     for (const pa of particulas) { pa.x += pa.vx; pa.y += pa.vy; pa.vy += pa.grav; pa.vida--; }
     particulas = particulas.filter(pa => pa.vida > 0);
+    if (estado === 'cine') actualizarCine();
     return;
   }
   if (pulso('Escape', 'KeyP') || pad.edge[9]) { irA('pausa'); return; }
@@ -2389,7 +2404,7 @@ function dibujarMenu() {
   uiBoton('LOGROS', bx, 292, 300, 40, () => irA('logros'), 'dorado', 17);
   uiBoton('AJUSTES', bx, 338, 300, 40, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
-  texto('Versión 1.9', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 2.0', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -2524,6 +2539,50 @@ function dibujarNiveles() {
   uiCerrar(() => irA('personajes'), W - 58, 14);
 }
 function nuevaPartidaDesdeMenu() { personaje = PERSONAJES[seleccion]; irA('niveles'); }
+// ---------- Cinemática antes de cada nivel ----------
+const QUIEN = { patron: { nombre: 'EL PATRÓN', col: '#ff9a7a', h: 3 }, patrona: { nombre: 'LA PATRONA', col: '#ff9ad0', h: 4 }, playero: { nombre: 'EL PLAYERO', col: '#ffd34d', h: 5 }, kukulkan: { nombre: 'KUKULKÁN', col: '#6bff8a', h: 6 } };
+const cineVel = () => VEL_TEXTO() * 0.6;
+const cineLinea = () => NIVELES[nivelElegido].cine[cineI];
+function cineQuien(q) { return q === 'p' ? { nombre: personaje.nombre.toUpperCase(), col: '#ffe27a', h: Math.max(0, PERSONAJES.indexOf(personaje)) } : QUIEN[q]; }
+function actualizarCine() {
+  const L = cineLinea(), vis = Math.floor((estadoT - cineT0) * cineVel()), tope = Math.min(L[1].length, vis);
+  for (let k = cineVisPrev; k < tope; k++) { const ch = L[1][k]; if (/[A-Za-zÁÉÍÓÚáéíóúñÑ]/.test(ch) && k % 2 === 0) hablar(cineQuien(L[0]).h, ch); }
+  cineVisPrev = Math.max(cineVisPrev, tope);
+}
+function avanzarCine() {
+  const N = NIVELES[nivelElegido], L = cineLinea();
+  if ((estadoT - cineT0) * cineVel() < L[1].length) { cineT0 = estadoT - L[1].length / cineVel() - 1; cineVisPrev = L[1].length; return; }     // primero se muestra todo el texto
+  if (++cineI >= N.cine.length) { sfx('menu'); empezarTrasCine(); } else { cineT0 = estadoT; cineVisPrev = 0; sfx('clic'); }
+}
+function envolver(txt, ancho, tam) {
+  ctx.font = `bold ${tam}px "Trebuchet MS", "Verdana", sans-serif`; const lin = []; let cur = '';
+  for (const w of txt.split(' ')) { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > ancho && cur) { lin.push(cur); cur = w; } else cur = t; }
+  if (cur) lin.push(cur); return lin;
+}
+function dibujarCine() {
+  const N = NIVELES[nivelElegido], L = cineLinea(), q = L[0], info = cineQuien(q), cam = reloj * 0.6, vis = (estadoT - cineT0) * cineVel(), hablando = vis < L[1].length;
+  dibujarFondo(cam, N.tema);
+  const off = cam % T, GT = tilesDe(N.tema); for (let i = -1; i < 27; i++) { ctx.drawImage(GT[0], i * T - off, 12 * T, T + .5, T + .5); ctx.drawImage(GT[1], i * T - off, 13 * T, T + .5, T + .5); }
+  ctx.fillStyle = 'rgba(8,6,30,.25)'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(15,10,45,.78)'; trazoRedondo(ctx, W / 2 - 220, 10, 400, 34, 17); ctx.fill(); texto(N.nombre + ' · ' + N.lugar, W / 2 - 20, 33, 13, '#ffd43b', 'center');
+  const rebote = q === 'p' && hablando ? Math.abs(Math.sin(estadoT * 0.35)) * 4 : 0;
+  dibujarNino(ctx, personaje, 170, 12 * T + 2 - rebote, 1.55, 1, { estado: 'quieto', t: reloj, aire: false });
+  if (q !== 'p' && q !== 'kukulkan') cineJefe = true;
+  if (cineJefe && N.jefe !== 'kukulkan') {
+    const sal = q === 'p' ? 0 : (hablando ? Math.abs(Math.sin(estadoT * 0.35)) * 4 : 0), fj = { tipo: N.jefe, x: 640 - 23, y: 12 * T - 78 - sal, w: 46, h: 78, vx: 0, vy: 0, fase: q === 'p' || !hablando ? 'camina' : 'aviso', dir: -1, cargaDir: -1, invul: 0, aturdido: 0, congelado: 0, hp: 1, muerte: 0, t: 0 };
+    ctx.save(); ctx.translate(640, 12 * T + 2); ctx.scale(1.35, 1.35); ctx.translate(-640, -(12 * T + 2)); dibujarJefe(ctx, fj, reloj); ctx.restore();
+  }
+  panelVidrio(30, 84, 740, 124);
+  ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText(info.nombre).width + 36;
+  ctx.fillStyle = info.col; trazoRedondo(ctx, 48, 62, wn, 30, 15); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+  texto(info.nombre, 48 + wn / 2, 83, 15, '#2a1a40', 'center', true);
+  const lin = envolver(L[1], 690, 21); let resto = Math.floor(vis);
+  lin.forEach((l, i) => { const n = Math.max(0, Math.min(l.length, resto)); resto -= l.length + 1; texto(l.slice(0, n), 56, 124 + i * 28, 21, '#fff'); });
+  if (!hablando) texto('▼', 742, 196 + Math.sin(reloj * 0.2) * 3, 18, '#ffd43b', 'center');
+  texto(tactilActivo ? 'Toca para continuar' : 'ENTER para continuar', W / 2, 438, 14, '#fff', 'center');
+  uiBoton('SALTAR ▶', 612, 10, 112, 34, empezarTrasCine, 'gris', 14);
+  uiCerrar(() => irA('niveles'), W - 58, 6);
+}
 const HISTORIA = ['En la Calle 60 de Mérida, Yucatán, viven tres hermanos:', 'Lichilón, Julián Chón y Sofi Lofi.', '', 'Pero el Patrón y la Patrona, dueños de los departamentos,', '¡les SUBIERON LA RENTA y ya no les alcanza!', '', 'Derrota al Patrón y a la Patrona', 'y gana tu departamento GRATIS.'];
 function dibujarIntro() {
   dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,30,.78)'; ctx.fillRect(0, 0, W, H);
@@ -2575,6 +2634,7 @@ function dibujar() {
   else if (estado === 'logros') dibujarLogros();
   else if (estado === 'ajustes') dibujarAjustes();
   else if (estado === 'intro') dibujarIntro();
+  else if (estado === 'cine') dibujarCine();
   else {
     dibujarJuego();
     if (estado === 'pausa') dibujarPausa();
@@ -2597,6 +2657,11 @@ function menuControl() {
     if (pulso('ArrowRight', 'KeyD') || e[15] || e[101]) { seleccion = (seleccion + 1) % PERSONAJES.length; if (desbloqueado(PERSONAJES[seleccion])) personaje = PERSONAJES[seleccion]; sfx('menu'); }
     if (modoPers === 'elegir' && ok() && desbloqueado(PERSONAJES[seleccion])) { sfx('menu'); nuevaPartidaDesdeMenu(); }
     if (pulso('Escape', 'Backspace') || e[8]) irA('menu');
+    return;
+  }
+  if (estado === 'cine') {
+    if (ok()) avanzarCine();
+    if (pulso('Escape')) irA('niveles');
     return;
   }
   if (estado === 'intro') {
@@ -2625,7 +2690,7 @@ canvas.addEventListener('pointerdown', ev => {
   if (ev.pointerType === 'touch') tactilActivo = true;
   const { x, y } = puntoLogico(ev);
   const i = ui.rects.findIndex(r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
-  if (i < 0) { if (estado === 'intro' && estadoT > 20) { const total = HISTORIA.join('').length; if (estadoT * VEL_TEXTO() < total) estadoT = 99999; else nuevoJuego(); } return; }
+  if (i < 0) { if (estado === 'cine') { avanzarCine(); return; } if (estado === 'intro' && estadoT > 20) { const total = HISTORIA.join('').length; if (estadoT * VEL_TEXTO() < total) estadoT = 99999; else nuevoJuego(); } return; }
   const r = ui.rects[i], lista = ui.rects.filter(q => !q.sinFoco), k = lista.indexOf(r); if (k >= 0) ui.foco = k;
   if (r.tipo === 'slider') { ui.arr = r; fijarSlider(r, x); }
   else if (r.tipo === 'scroll') { ui.arr = r; r.mover(y); }

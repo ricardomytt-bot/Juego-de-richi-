@@ -22,3 +22,4 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Logros: hay 3 personajes secretos que aparecen bloqueados (todavía no están hechos).
 - Dibujos de caricatura moderna: colores planos, contorno delgado, cabezotas con ojotes, formas unidas y pelo de una sola pieza (efecto de película antigua opcional en Ajustes).
 - Si no se oye nada: Ajustes > Sonido compatible = Sí (usa archivos de audio generados con código).
+- Antes de cada nivel hay una cinemática con diálogos del personaje y del jefe, con voces inventadas (piiitos por letra, como en Animal Crossing). Se puede saltar con SALTAR.
