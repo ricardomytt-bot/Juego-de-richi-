@@ -13,17 +13,17 @@
   #tactil { position: fixed; inset: 0; pointer-events: none; display: none; }
   #tactil button {
     position: absolute; pointer-events: auto; touch-action: none; -webkit-tap-highlight-color: transparent;
-    border-radius: 50%; border: 3px solid rgba(255,255,255,.75); color: #fff; font: bold 15px "Trebuchet MS", sans-serif;
-    background: rgba(20,24,60,.38); text-shadow: 0 2px 3px rgba(0,0,0,.7);
+    border-radius: 50%; border: 2px solid rgba(255,255,255,.6); color: #fff; font: bold 10px "Trebuchet MS", sans-serif; letter-spacing: .3px;
+    background: rgba(20,24,60,.30); text-shadow: 0 1px 2px rgba(0,0,0,.7);
     display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; padding: 0;
   }
-  #tactil button.on { background: rgba(255,255,255,.5); transform: scale(.94); }
-  #tactil .ico { font-size: 26px; }
-  #b-izq   { left: 16px;  bottom: 20px; width: 78px; height: 78px; }
-  #b-der   { left: 108px; bottom: 20px; width: 78px; height: 78px; }
-  #b-salto { right: 18px; bottom: 22px; width: 96px; height: 96px; background: rgba(60,180,90,.45); }
-  #b-patada{ right: 130px; bottom: 26px; width: 78px; height: 78px; background: rgba(240,150,40,.45); }
-  #b-poder { right: 50px; bottom: 134px; width: 78px; height: 78px; background: rgba(80,180,255,.5); }
+  #tactil button.on { background: rgba(255,255,255,.45); transform: scale(.93); }
+  #tactil .ico { font-size: 22px; }
+  #b-izq   { left: 14px;  bottom: 16px; width: 66px; height: 66px; }
+  #b-der   { left: 92px;  bottom: 16px; width: 66px; height: 66px; }
+  #b-salto { right: 16px; bottom: 18px; width: 82px; height: 82px; background: rgba(60,180,90,.40); }
+  #b-patada{ right: 110px; bottom: 18px; width: 64px; height: 64px; background: rgba(240,150,40,.40); }
+  #b-poder { right: 30px; bottom: 112px; width: 56px; height: 56px; background: rgba(80,180,255,.42); }
   #girar { position: fixed; inset: 0; background: #0b0b14ee; color: #fff; font: bold 22px "Trebuchet MS", sans-serif;
            display: none; align-items: center; justify-content: center; text-align: center; padding: 30px; z-index: 5; }
   @media (orientation: portrait) { #girar.on { display: flex; } }
@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 2.8
+//  LICHILÓN Y EL PATRÓN  -  Versión 2.9
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -2448,39 +2448,37 @@ function pintarDeco(d, tarde) {
   const sp = sprite('dec|' + d.tipo + '|' + tema + '|' + (tarde ? 1 : 0), 130, 140, 65, 120, gg => { gg.translate(0, -(12 * T + 2)); dibujarDecoracion({ tipo: d.tipo, x: 0 }, tarde); });
   ctx.drawImage(sp.c, d.x - sp.ox, 12 * T + 2 - sp.oy, sp.w, sp.h);
 }
-function pintarMarcador() {
-  ctx.fillStyle = 'rgba(25,20,60,.58)'; trazoRedondo(ctx, 6, 6, W - 12, 52, 14); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.5; ctx.stroke();
+function pintarMarcador() {                                 // marcador limpio: pastillas pequeñas en las esquinas, el centro queda libre
+  const pildora = (x, y, w, h) => { ctx.fillStyle = 'rgba(20,24,56,.62)'; trazoRedondo(ctx, x, y, w, h, h / 2); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1.2; ctx.stroke(); };
+  pildora(8, 8, 172, 46);
   if (!retrato.c || retrato.id !== personaje.id) {            // el retrato se redibuja pocas veces
     if (!retrato.c) retrato.c = crearCanvas(Math.ceil(44 * ESC), Math.ceil(44 * ESC));
     const rg = retrato.c.getContext('2d'); rg.setTransform(ESC, 0, 0, ESC, 0, 0); rg.clearRect(0, 0, 44, 44); rg.save(); rg.beginPath(); rg.arc(22, 22, 22, 0, 7); rg.clip();
     rg.fillStyle = 'rgba(255,255,255,.18)'; rg.fillRect(0, 0, 44, 44); dibujarNino(rg, personaje, 22, 52, 0.6, 1, { estado: 'quieto', t: reloj }); rg.restore(); retrato.t = reloj; retrato.id = personaje.id;
   }
-  ctx.drawImage(retrato.c, 10, 10, 44, 44);
-  ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(32, 32, 22, 0, 7); ctx.stroke();
-  texto(personaje.nombre, 62, 27, 14); texto(String(puntos).padStart(6, '0'), 62, 49, 17, '#ffd700');
-  dibujarChoco(ctx, { x: 176, y: 20, w: 24, h: 16 });
-  for (let i = 0; i < CHOCOS_POR_VIDA; i++) { ctx.fillStyle = i < progChoco ? '#ff4b4b' : 'rgba(255,255,255,.28)'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(224 + i * 15, 31, 5.2, 0, 7); ctx.fill(); ctx.stroke(); }
-  texto('= 1 vida', 272, 36, 11, '#fff');
-  let px = 345;
-  const casilla = (activo, dibujo, col) => { ctx.fillStyle = activo ? 'rgba(255,255,255,.2)' : 'rgba(0,0,0,.22)'; trazoRedondo(ctx, px, 14, 36, 36, 9); ctx.fill(); ctx.strokeStyle = activo ? col : 'rgba(255,255,255,.2)'; ctx.lineWidth = 2; ctx.stroke(); ctx.globalAlpha = activo ? 1 : 0.28; dibujo(); ctx.globalAlpha = 1; px += 42; };
-  casilla(!!poder, () => { ctx.save(); ctx.translate(px + 18, 32); ctx.scale(0.6, 0.6); dibujarCristal(ctx, -12, -12); ctx.restore(); }, '#9be4ff');
-  casilla(escudo, () => dibujarEscudoIcono(ctx, px + 8, 19, 0.7), '#ffd93b');
-  casilla(botas > 0, () => { ctx.save(); ctx.translate(px + 18, 32); ctx.scale(0.62, 0.62); dibujarIconoBotas(ctx, -12, -12); ctx.restore(); if (botas > 0) { ctx.fillStyle = '#ffae4d'; ctx.fillRect(px + 4, 46, 28 * botas / BOTAS_DURACION, 3); } }, '#ffae4d');
-  if (tiene('rayo')) casilla(cargaRayo > 0, () => iconoRayo(ctx, px + 18, 32, 0.5), '#7fd3ff');
-  dibujarMoneda(ctx, px + 24, 32, 10, true); texto(String(datos.monedas), px + 40, 38, 17, '#ffd700');
-  for (let i = 0; i < VIDAS_MAX; i++) corazon(W - 28 - (VIDAS_MAX - 1 - i) * 30 - 10, 14, 22, i < vidas ? '#ff3d7f' : 'rgba(255,255,255,.2)', i < vidas ? '#7a0a3a' : 'rgba(255,255,255,.35)');
-  texto(NIVELES[nivelActual].nombre, W - 92, 53, 11, '#cfd8ff', 'center');
-  if (silencio) texto('SIN SONIDO (M)', W - 190, 53, 10, '#fff', 'center');
-  if (jefe && jefe.vivo && jefe.estadoJ === 'activo') {
-    const bw = 300, bx = W / 2 - bw / 2, by = 66, f = Math.max(0, jefe.hp / jefe.hpMax);
-    ctx.fillStyle = 'rgba(20,10,30,.75)'; trazoRedondo(ctx, bx - 4, by - 4, bw + 8, 24, 10); ctx.fill();
-    ctx.fillStyle = grad(ctx, 0, by, 0, by + 16, [[0, '#ff8a8a'], [1, '#c4161c']]); if (f > 0) { trazoRedondo(ctx, bx, by, Math.max(14, bw * f), 16, 7); ctx.fill(); }
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; trazoRedondo(ctx, bx, by, bw, 16, 7); ctx.stroke();
-    texto({ patron: 'EL PATRÓN', patrona: 'LA PATRONA', playero: 'EL PLAYERO', kukulkan: 'KUKULKÁN' }[jefe.tipo], W / 2, by + 13, 12, '#fff', 'center');
+  ctx.drawImage(retrato.c, 11, 11, 40, 40);
+  ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(31, 31, 20, 0, 7); ctx.stroke();
+  texto(personaje.nombre, 58, 27, 13); texto(String(puntos).padStart(6, '0'), 58, 47, 17, '#ffd700');
+  pildora(8, 60, 112, 26);
+  ctx.save(); ctx.translate(30, 73); ctx.scale(0.72, 0.72); dibujarChoco(ctx, { x: -12, y: -8, w: 24, h: 16 }); ctx.restore();
+  for (let i = 0; i < CHOCOS_POR_VIDA; i++) { ctx.fillStyle = i < progChoco ? '#ff4b4b' : 'rgba(255,255,255,.28)'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(66 + i * 16, 73, 5.2, 0, 7); ctx.fill(); ctx.stroke(); }
+  let px = 128;
+  const chip = (activo, dibujo, col) => { if (!activo) return; ctx.fillStyle = 'rgba(20,24,56,.62)'; ctx.beginPath(); ctx.arc(px + 13, 73, 13, 0, 7); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke(); dibujo(px + 13, 73); px += 31; };
+  chip(!!poder, (x, y) => { ctx.save(); ctx.translate(x, y); ctx.scale(0.5, 0.5); dibujarCristal(ctx, -12, -12); ctx.restore(); }, '#9be4ff');
+  chip(escudo, (x, y) => dibujarEscudoIcono(ctx, x - 7, y - 8, 0.58), '#ffd93b');
+  chip(botas > 0, (x, y) => { ctx.save(); ctx.translate(x, y); ctx.scale(0.5, 0.5); dibujarIconoBotas(ctx, -12, -12); ctx.restore(); ctx.fillStyle = '#ffae4d'; ctx.fillRect(x - 12, 90, 24 * botas / BOTAS_DURACION, 3); }, '#ffae4d');
+  chip(tiene('rayo') && cargaRayo > 0, (x, y) => iconoRayo(ctx, x, y, 0.42), '#7fd3ff');
+  for (let i = 0; i < VIDAS_MAX; i++) corazon(W - 8 - 5 * 24 + i * 24 + 1, 10, 20, i < vidas ? '#ff3d7f' : 'rgba(255,255,255,.2)', i < vidas ? '#7a0a3a' : 'rgba(255,255,255,.35)');
+  pildora(W - 84, 36, 76, 24); dibujarMoneda(ctx, W - 69, 48, 9, true); texto(String(datos.monedas), W - 55, 54, 15, '#ffd700');
+  if (silencio) texto('🔇', W - 104, 54, 15, '#fff', 'center', true);
+  if (jefe && jefe.vivo && jefe.estadoJ === 'activo') {          // barra de vida del jefe, arriba al centro
+    const bw = 270, bx = W / 2 - bw / 2, by = 14, f = Math.max(0, jefe.hp / jefe.hpMax);
+    ctx.fillStyle = 'rgba(20,10,30,.7)'; trazoRedondo(ctx, bx - 4, by - 4, bw + 8, 28, 14); ctx.fill();
+    ctx.fillStyle = grad(ctx, 0, by, 0, by + 20, [[0, '#ff8a8a'], [1, '#c4161c']]); if (f > 0) { trazoRedondo(ctx, bx, by, Math.max(14, bw * f), 20, 10); ctx.fill(); }
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; trazoRedondo(ctx, bx, by, bw, 20, 10); ctx.stroke();
+    texto({ patron: 'EL PATRÓN', patrona: 'LA PATRONA', playero: 'EL PLAYERO', kukulkan: 'KUKULKÁN' }[jefe.tipo], W / 2, by + 15, 12, '#fff', 'center');
   }
-  // botón de pausa
-  ctx.fillStyle = 'rgba(25,20,60,.58)'; ctx.beginPath(); ctx.arc(W - 24, 78, 14, 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = 'rgba(20,24,56,.62)'; ctx.beginPath(); ctx.arc(W - 24, 78, 14, 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.5; ctx.stroke();
   ctx.fillStyle = '#fff'; ctx.fillRect(W - 29, 71, 4, 14); ctx.fillRect(W - 21, 71, 4, 14);
 }
 function dibujarMarcador() {                                // el marcador se redibuja solo cuando algo cambia
@@ -2568,9 +2566,9 @@ function uiSlider(etiqueta, x, y, w, get, set, fmt, suelta) {
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + w * v, y + 32, 11, 0, 7); ctx.fill(); ctx.restore();
   ctx.strokeStyle = f ? '#ffc400' : '#6a7396'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x + w * v, y + 32, 11, 0, 7); ctx.stroke();
 }
-function uiToggle(etiqueta, x, y, w, valorTxt, accion) {
+function uiToggle(etiqueta, x, y, w, valorTxt, accion, pw = 150) {
   const i = ui.rects.length; ui.rects.push({ tipo: 'toggle', x, y, w, h: 38, accion }); const f = ui.foco === i && !ui.sinTeclado;
-  texto(etiqueta, x, y + 25, 16, f ? '#ffe36a' : '#fff'); pill(x + w - 150, y + 2, 150, 34, COLB.azul, f); texto(valorTxt, x + w - 75, y + 25, 15, '#fff', 'center');
+  texto(etiqueta, x, y + 25, pw < 150 ? 15 : 16, f ? '#ffe36a' : '#fff'); pill(x + w - pw, y + 2, pw, 34, COLB.azul, f); texto(valorTxt, x + w - pw / 2, y + 25, 15, '#fff', 'center');
 }
 function panelVidrio(x, y, w, h) {
   ctx.fillStyle = 'rgba(15,10,45,.82)'; trazoRedondo(ctx, x, y, w, h, 20); ctx.fill();
@@ -2594,15 +2592,12 @@ function dibujarMenu() {
   ctx.fillStyle = '#d32f2f'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(W / 2 - 190, 112); ctx.lineTo(W / 2 + 190, 112); ctx.lineTo(W / 2 + 205, 139); ctx.lineTo(W / 2 + 190, 166); ctx.lineTo(W / 2 - 190, 166); ctx.lineTo(W / 2 - 205, 139); ctx.closePath(); ctx.fill(); ctx.stroke();
   texto('y los Departamentos', W / 2, 150, 29, '#fff', 'center');
   const bx = W / 2 - 150;
-  uiBoton('COMENZAR EL JUEGO', bx, 168, 300, 40, () => { modoPers = 'elegir'; irA('personajes'); }, 'verde', 19);
-  uiBoton('VER PERSONAJES', bx, 212, 300, 33, () => { modoPers = 'ver'; irA('personajes'); }, 'azul', 16);
-  uiBoton('LOGROS', bx, 249, 300, 33, () => irA('logros'), 'dorado', 16);
-  uiBoton('TIENDA', bx, 286, 300, 33, () => irA('tienda'), 'rojo', 16);
-  uiBoton('PERFIL', bx, 323, 300, 33, () => irA('perfil'), 'azul', 16);
-  uiBoton('AJUSTES', bx, 360, 300, 33, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 16);
-  texto('👤 ' + datos.nombre, W - 14, 30, 15, '#ffe27a', 'right');
-  dibujarMoneda(ctx, 26, 26, 11, true); texto(String(datos.monedas), 44, 33, 18, '#ffd700');
-  texto('Versión 2.8', W - 10, H - 10, 11, '#fff', 'right');
+  uiBoton('COMENZAR EL JUEGO', W / 2 - 170, 176, 340, 46, () => { modoPers = 'elegir'; irA('personajes'); }, 'verde', 21);
+  [['PERSONAJES', 'azul', () => { modoPers = 'ver'; irA('personajes'); }], ['LOGROS', 'dorado', () => irA('logros')], ['TIENDA', 'rojo', () => irA('tienda')]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 232, 150, 36, f, cc, 15));
+  [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
+  ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
+  ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
+  texto('Versión 2.9', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -2613,23 +2608,28 @@ function dibujarMenu() {
 }
 function dibujarAjustes() {
   dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.45)'; ctx.fillRect(0, 0, W, H);
-  panelVidrio(100, 4, 600, 442);
-  texto('AJUSTES', W / 2, 34, 24, '#ffd43b', 'center');
+  panelVidrio(36, 10, 728, 430);
+  texto('AJUSTES', W / 2, 48, 28, '#ffd43b', 'center');
   const cerrar = () => { descartarAjustes(); irA(ajustesVolver); };
-  const x = 140, w = 520;
-  uiSlider('Volumen de la música', x, 44, w, () => aj.musica, v => { aj.musica = v; aplicarVolumen(); }, v => Math.round(v * 100) + '%');
-  uiSlider('Volumen de los efectos de sonido', x, 86, w, () => aj.efectos, v => { aj.efectos = v; aplicarVolumen(); }, v => Math.round(v * 100) + '%', () => sfx('choco'));
-  uiSlider('Velocidad del texto', x, 128, w, () => aj.texto / 2, v => { aj.texto = Math.round(v * 2); }, v => ['Lenta', 'Normal', 'Rápida'][Math.round(v * 2)]);
+  // columna izquierda: sonido y texto
+  const xl = 70, wl = 300;
+  uiSlider('Música', xl, 74, wl, () => aj.musica, v => { aj.musica = v; aplicarVolumen(); }, v => Math.round(v * 100) + '%');
+  uiSlider('Efectos de sonido', xl, 132, wl, () => aj.efectos, v => { aj.efectos = v; aplicarVolumen(); }, v => Math.round(v * 100) + '%', () => sfx('choco'));
+  uiSlider('Velocidad del texto', xl, 190, wl, () => aj.texto / 2, v => { aj.texto = Math.round(v * 2); }, v => ['Lenta', 'Normal', 'Rápida'][Math.round(v * 2)]);
   ui.rects[ui.rects.length - 1].discreto = 2; ui.rects[ui.rects.length - 1].paso = 0.5;
-  uiToggle('Sacudida de pantalla', x, 178, w, aj.temblor ? 'Sí' : 'No', () => { aj.temblor = !aj.temblor; });
-  uiToggle('Efecto de película antigua', x, 214, w, aj.efectoPelicula ? 'Sí' : 'No', () => { aj.efectoPelicula = !aj.efectoPelicula; });
-  uiToggle('Botones en pantalla', x, 250, w, { auto: 'Automático', siempre: 'Siempre', nunca: 'Nunca' }[aj.botones], () => { aj.botones = { auto: 'siempre', siempre: 'nunca', nunca: 'auto' }[aj.botones]; });
-  uiToggle('Sonido compatible (si no se oye)', x, 286, w, aj.compatible ? 'Sí' : 'No', () => { aj.compatible = !aj.compatible; reiniciarMusica(); });
-  uiToggle('Calidad gráfica (si va trabado)', x, 322, w, ['Baja', 'Media', 'Alta'][calidad], () => { const q = (calidad + 2) % 3; aj.calidad = q; aplicarCalidad(q); });
-  uiToggle('Mostrar cuadros por segundo', x, 358, w, aj.fps ? 'Sí' : 'No', () => { aj.fps = !aj.fps; });
-  uiBoton('PROBAR SONIDO', 130, 400, 210, 38, () => { desbloquearAudio(); sfx('logro'); setTimeout(() => sfx('ouch'), 700); }, 'azul', 16);
-  uiBoton('GUARDAR AJUSTES', 360, 400, 250, 38, () => { const ok = guardarAjustes(); ajustesGuardado = 150; avisos.push({ t: 0, titulo: ok ? '¡LISTO!' : 'AVISO', txt: ok ? 'Ajustes guardados' : 'Este navegador no deja guardar', sub: ok ? 'Se usarán siempre que entres al juego' : 'Pero siguen activos mientras juegas' }); sfx('vida'); }, 'verde', 17);
-  uiCerrar(cerrar, 100 + 600 - 50, 8);
+  uiBoton('PROBAR SONIDO', xl, 256, wl, 38, () => { desbloquearAudio(); sfx('logro'); setTimeout(() => sfx('ouch'), 700); }, 'azul', 16);
+  texto('Si no oyes nada en el iPhone, activa', xl, 322, 12, '#cfd8ff', 'left', true); texto('"Sonido compatible" y quita el silencio', xl, 340, 12, '#cfd8ff', 'left', true); texto('del botón lateral.', xl, 358, 12, '#cfd8ff', 'left', true);
+  // columna derecha: opciones
+  const xr = 410, wr = 330, pw = 118;
+  uiToggle('Sacudida de pantalla', xr, 72, wr, aj.temblor ? 'Sí' : 'No', () => { aj.temblor = !aj.temblor; }, pw);
+  uiToggle('Película antigua', xr, 116, wr, aj.efectoPelicula ? 'Sí' : 'No', () => { aj.efectoPelicula = !aj.efectoPelicula; }, pw);
+  uiToggle('Botones en pantalla', xr, 160, wr, { auto: 'Automático', siempre: 'Siempre', nunca: 'Nunca' }[aj.botones], () => { aj.botones = { auto: 'siempre', siempre: 'nunca', nunca: 'auto' }[aj.botones]; }, pw);
+  uiToggle('Sonido compatible', xr, 204, wr, aj.compatible ? 'Sí' : 'No', () => { aj.compatible = !aj.compatible; reiniciarMusica(); }, pw);
+  uiToggle('Calidad gráfica', xr, 248, wr, ['Baja', 'Media', 'Alta'][calidad], () => { const q = (calidad + 2) % 3; aj.calidad = q; aplicarCalidad(q); }, pw);
+  uiToggle('Mostrar FPS', xr, 292, wr, aj.fps ? 'Sí' : 'No', () => { aj.fps = !aj.fps; }, pw);
+  texto('Si va trabado, baja la calidad gráfica.', xr, 352, 12, '#cfd8ff', 'left', true);
+  uiBoton('GUARDAR AJUSTES', 250, 374, 300, 46, () => { const ok = guardarAjustes(); ajustesGuardado = 150; avisos.push({ t: 0, titulo: ok ? '¡LISTO!' : 'AVISO', txt: ok ? 'Ajustes guardados' : 'Este navegador no deja guardar', sub: ok ? 'Se usarán siempre que entres al juego' : 'Pero siguen activos mientras juegas' }); sfx('vida'); }, 'verde', 17);
+  uiCerrar(cerrar, 36 + 728 - 48, 14);
 }
 let logroY = 0;
 const LOGRO_TOP = 86, LOGRO_VIS = 346, LOGRO_FILA = 56;
