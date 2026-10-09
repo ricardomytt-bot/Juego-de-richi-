@@ -7,7 +7,10 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 - Menú principal: Comenzar el juego, Ver personajes, Logros y Ajustes (volumen de música y efectos,
   velocidad del texto, sacudida de pantalla, botones en pantalla). Los ajustes se guardan en el navegador.
+- Al empezar eliges personaje y luego el nivel, organizado por estados de México (Mundo 1: Yucatán).
 - Nivel 1: Calle 60 (jefe: el Patrón). Nivel 2: Paseo de Montejo al atardecer (jefa: la Patrona).
+  Nivel 3: De visita a la playa, en Progreso, con el Muelle Fiscal al fondo (jefe: el Playero, que se robó la llave).
+- Los huecos del piso muestran el fondo (la calle o el mar), no negro.
 - Teclado: flechas/A-D mover, espacio/W saltar, Z patear, X poder, P o Esc pausa, M sonido.
 - Control (Switch, Xbox, PS): palanca o cruceta, A/B saltar, Y patear, X poder, + pausa.
 - Celular/tableta: 5 botones táctiles (gira el celular en horizontal).
