@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 2.2
+//  LICHILÓN Y EL PATRÓN  -  Versión 2.3
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -727,11 +727,11 @@ function pintarSerpiente(g, s) {
 }
 
 // --- Los jefes: el Patrón y la Patrona ---
-function dibujarJefe(g, j, t) {
+function dibujarJefeArte(g, j, t, parpO) {
   const patron = j.tipo === 'patron', playero = j.tipo === 'playero', dir = (j.fase === 'carga' ? j.cargaDir : j.dir) || -1;
   const aviso = j.fase === 'aviso', carga = j.fase === 'carga', lanza = j.fase === 'lanza' || j.fase === 'bomba', aire = j.fase === 'aire';
   const caminando = Math.abs(j.vx) > 0.2 && !aire, ph = t * (carga ? 0.5 : 0.26), paso = caminando ? Math.sin(ph) * 8 : 0;
-  const bob = caminando ? -Math.abs(Math.sin(ph)) * 3 : Math.sin(t * 0.07) * 1.2, parp = (t % 240) < 7, enojo = aviso || carga || lanza;
+  const bob = caminando ? -Math.abs(Math.sin(ph)) * 3 : Math.sin(t * 0.07) * 1.2, parp = parpO !== undefined ? parpO : (t % 240) < 7, enojo = aviso || carga || lanza;
   g.save(); g.translate(j.x + j.w / 2 + (aviso ? Math.sin(t * 2) * 1.8 : 0), j.y + j.h); g.scale(dir * 0.86, 0.86); g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = GM * 1.3;
   if (j.invul > 0 && Math.floor(j.invul / 4) % 2) g.globalAlpha = 0.45;
   if (carga) g.rotate(0.14);
@@ -821,6 +821,18 @@ function dibujarExplosion(g, x) {
   g.save(); g.globalAlpha = a * 0.9; g.fillStyle = '#ffd34d'; g.beginPath(); g.arc(x.x, x.y, r * 0.8, 0, 7); g.fill();
   g.fillStyle = '#ff7a2e'; g.beginPath(); g.arc(x.x, x.y, r * 0.55, 0, 7); g.fill(); g.fillStyle = '#fff6c0'; g.beginPath(); g.arc(x.x, x.y, r * 0.28, 0, 7); g.fill();
   g.globalAlpha = a; g.strokeStyle = '#fff'; g.lineWidth = 4 * a + 1; g.beginPath(); g.arc(x.x, x.y, r, 0, 7); g.stroke(); g.restore();
+}
+function dibujarJefe(g, j, t) {                             // el jefe se dibuja una vez por cada pose y luego se copia
+  const aire = j.fase === 'aire', caminando = Math.abs(j.vx) > 0.2 && !aire, rate = j.fase === 'carga' ? 0.5 : 0.26, parp = (t % 240) < 7;
+  let bin, tq;
+  if (caminando) { const b = Math.floor(((t * rate) % TAU) / TAU * 12); bin = 'w' + b; tq = b * TAU / 12 / rate; } else { const b = Math.floor((t % 90) / 10); bin = 'i' + b; tq = b * 10; }
+  const sp = sprite(['jefe', j.tipo, j.fase, bin, parp ? 1 : 0].join('|'), 180, 190, 90, 172,
+    gg => dibujarJefeArte(gg, { tipo: j.tipo, x: -j.w / 2, y: -j.h, w: j.w, h: j.h, vx: caminando ? 1 : 0, fase: j.fase, dir: 1, cargaDir: 1, invul: 0, aturdido: 0, congelado: 0 }, tq, parp));
+  g.save(); g.translate(j.x + j.w / 2, j.y + j.h); g.scale((j.fase === 'carga' ? j.cargaDir : j.dir) || -1, 1);
+  if (j.invul > 0 && Math.floor(j.invul / 4) % 2) g.globalAlpha *= 0.45;
+  g.drawImage(sp.c, -sp.ox, -sp.oy, sp.w, sp.h); g.restore();
+  if (j.aturdido > 0) { g.fillStyle = '#ffe14d'; g.strokeStyle = NEGRO; g.lineWidth = 1.6; for (let i = 0; i < 4; i++) { const a = t * 0.15 + i * 1.57; g.beginPath(); g.arc(j.x + j.w / 2 + Math.cos(a) * 22, j.y - 18 + Math.sin(a) * 6, 3.6, 0, 7); g.fill(); g.stroke(); } }
+  if (j.congelado > 0) hielo(g, j.x - 8, j.y - 24, j.w + 16, j.h + 26);
 }
 function dibujarProyectil(g, q) {
   if (q.tipo === 'bomba' && q.aterrizo) {                    // el círculo que avisa hasta dónde llega la explosión
@@ -1468,23 +1480,10 @@ function cabezaKuku(j) {                                           // dónde est
   if (u < 1) { const k = (u - 0.55) / 0.45, e = k * k * (3 - 2 * k); return { x: px + 14 + (j.hx - (px + 14)) * e, y: 374 + (j.hy - 374) * e - Math.sin(k * Math.PI) * 50 }; }
   return { x: j.hx, y: j.hy };
 }
-function dibujarKukulkan(g, j) {                                   // la serpiente emplumada (está al fondo, no se le puede tocar)
-  if (j.tipo !== 'kukulkan' || j.estadoJ === 'dormido') return;
-  const t = j.t, H = cabezaKuku(j), P0 = { x: arenaX + 400, y: 104 };
-  g.save(); g.globalAlpha = j.vivo ? 1 : Math.max(0, 1 - j.muerte / 100); g.lineJoin = 'round'; g.lineCap = 'round';
-  const dx = H.x - P0.x, dy = H.y - P0.y, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, amp = 62 * Math.min(1, L / 180), N = 36, pts = [];
-  for (let i = 0; i < N; i++) {
-    const u = i / (N - 1), env = Math.pow(Math.max(0, Math.sin(Math.PI * u)), 0.8), w = Math.sin(u * 8.5 - t * 0.07) * amp * env;
-    pts.push({ x: P0.x + dx * u + nx * w, y: P0.y + dy * u + ny * w + Math.sin(Math.PI * u) * 18, u, r: 5 + 13 * Math.pow(u, 0.7) });
-  }
-  pts.forEach(q => { g.fillStyle = NEGRO; g.beginPath(); g.arc(q.x, q.y, q.r + 2.6, 0, 7); g.fill(); });
-  pts.forEach((q, i) => { g.fillStyle = i % 2 ? '#26a653' : '#2fbf60'; g.beginPath(); g.arc(q.x, q.y, q.r, 0, 7); g.fill(); });
-  pts.forEach(q => { g.fillStyle = '#ffd93b'; g.beginPath(); g.arc(q.x, q.y + q.r * 0.42, q.r * 0.46, 0, 7); g.fill(); });
-  pts.forEach((q, i) => { if (i % 3 || i < 3) return; g.fillStyle = ['#e8352e', '#1fc2c9', '#ffd93b'][(i / 3) % 3]; g.strokeStyle = NEGRO; g.lineWidth = 1.6; g.beginPath(); g.moveTo(q.x - 6, q.y - q.r * 0.8); g.lineTo(q.x, q.y - q.r - 13); g.lineTo(q.x + 6, q.y - q.r * 0.8); g.closePath(); g.fill(); g.stroke(); });
-  g.save(); g.translate(H.x, H.y); g.rotate(Math.sin(t * 0.05) * 0.07); g.scale(1.25, 1.25); g.strokeStyle = NEGRO;
+function dibujarCabezaKuku(g, abre) {
+  g.save(); g.scale(1.25, 1.25); g.strokeStyle = NEGRO; g.lineJoin = 'round'; g.lineCap = 'round';
   const cols = ['#1fc2c9', '#e8352e', '#ffd93b', '#2fcf6a', '#ffd93b', '#e8352e', '#1fc2c9'];
   for (let i = 0; i < 7; i++) { const L2 = 58 - Math.abs(i - 3) * 5; g.save(); g.translate(0, -18); g.rotate((i - 3) * 0.36); g.fillStyle = cols[i]; g.lineWidth = 2.2; g.beginPath(); g.ellipse(0, -L2 / 2 - 6, 8, L2 / 2, 0, 0, 7); g.fill(); g.stroke(); g.restore(); }
-  const abre = j.boca * 16;
   g.fillStyle = '#2a9f55'; g.lineWidth = 3; g.beginPath(); g.ellipse(0, 27 + abre, 28, 11, 0, 0, 7); g.fill(); g.stroke();
   g.fillStyle = grad(g, 0, -34, 0, 24, [[0, '#46d46f'], [1, '#1f8f4c']]); g.beginPath(); g.ellipse(0, -6, 40, 28, 0, 0, 7); g.fill(); g.stroke();
   g.fillStyle = '#1fc2c9'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, -30); g.lineTo(9, -19); g.lineTo(0, -9); g.lineTo(-9, -19); g.closePath(); g.fill(); g.stroke();
@@ -1494,6 +1493,28 @@ function dibujarKukulkan(g, j) {                                   // la serpien
   g.fillStyle = '#12301c'; [-8, 8].forEach(nx2 => { g.beginPath(); g.ellipse(nx2, 8, 2.4, 3.4, 0, 0, 7); g.fill(); });
   ojoMod(g, -17, -12, 10, '#ffb300', '#2fae5a', false); ojoMod(g, 17, -12, 10, '#ffb300', '#2fae5a', false);
   barra(g, -18, -26, 18, 5.5, 0.38, '#14532d'); barra(g, 18, -26, 18, 5.5, -0.38, '#14532d');
+  g.restore();
+}
+function dibujarKukulkan(g, j) {                                   // la serpiente emplumada (está al fondo, no se le puede tocar)
+  if (j.tipo !== 'kukulkan' || j.estadoJ === 'dormido') return;
+  const t = j.t, H = cabezaKuku(j), P0 = { x: arenaX + 400, y: 104 };
+  g.save(); g.globalAlpha = j.vivo ? 1 : Math.max(0, 1 - j.muerte / 100); g.lineJoin = 'round'; g.lineCap = 'round';
+  const dx = H.x - P0.x, dy = H.y - P0.y, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L, amp = 62 * Math.min(1, L / 180), N = 36, pts = [];
+  for (let i = 0; i < N; i++) {
+    const u = i / (N - 1), env = Math.pow(Math.max(0, Math.sin(Math.PI * u)), 0.8), w = Math.sin(u * 8.5 - t * 0.07) * amp * env;
+    pts.push({ x: P0.x + dx * u + nx * w, y: P0.y + dy * u + ny * w + Math.sin(Math.PI * u) * 18, u, r: 5 + 13 * Math.pow(u, 0.7) });
+  }
+  pts.forEach((q, i) => { const sp = sprite('kso|' + i, 76, 80, 38, 48, gg => { gg.fillStyle = NEGRO; gg.beginPath(); gg.arc(0, 0, q.r + 2.6, 0, 7); gg.fill(); }); g.drawImage(sp.c, q.x - sp.ox, q.y - sp.oy, sp.w, sp.h); });
+  pts.forEach((q, i) => {
+    const sp = sprite('ksf|' + i, 76, 80, 38, 48, gg => {
+      gg.fillStyle = i % 2 ? '#26a653' : '#2fbf60'; gg.beginPath(); gg.arc(0, 0, q.r, 0, 7); gg.fill();
+      gg.fillStyle = '#ffd93b'; gg.beginPath(); gg.arc(0, q.r * 0.42, q.r * 0.46, 0, 7); gg.fill();
+      if (i % 3 === 0 && i >= 3) { gg.fillStyle = ['#e8352e', '#1fc2c9', '#ffd93b'][(i / 3) % 3]; gg.strokeStyle = NEGRO; gg.lineWidth = 1.6; gg.beginPath(); gg.moveTo(-6, -q.r * 0.8); gg.lineTo(0, -q.r - 13); gg.lineTo(6, -q.r * 0.8); gg.closePath(); gg.fill(); gg.stroke(); }
+    });
+    g.drawImage(sp.c, q.x - sp.ox, q.y - sp.oy, sp.w, sp.h);
+  });
+  const bb = Math.round(j.boca * 8), sph = sprite('kh|' + bb, 170, 210, 85, 120, gg => dibujarCabezaKuku(gg, bb / 8 * 16));
+  g.save(); g.translate(H.x, H.y); g.rotate(Math.sin(t * 0.05) * 0.07); g.drawImage(sph.c, -sph.ox, -sph.oy, sph.w, sph.h); g.scale(1.25, 1.25);
   if (j.flash > 0) { g.globalAlpha *= Math.min(1, j.flash / 14) * 0.7; g.fillStyle = '#fff'; g.beginPath(); g.ellipse(0, -6, 40, 28, 0, 0, 7); g.fill(); }
   g.restore(); g.restore();
 }
@@ -1748,7 +1769,7 @@ function cargarNivel(n) {
   chocosDef = []; escarabajosDef = []; murcielagosDef = []; serpientesDef = [];
   N.construir();
   sol = mapa.map(f => f.map(solido));
-  prepararTerreno();
+  prepararTerreno(); for (const k in SPR) if (k.startsWith('jefe|')) delete SPR[k];
   crearDecoraciones();
   pinchosLista = [];
   for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) if (mapa[r][c] === '^') pinchosLista.push({ x: c * T + 9, y: r * T + 14, w: T - 18, h: T - 14 });
@@ -2371,7 +2392,7 @@ function pintarDeco(d, tarde) {
 function pintarMarcador() {
   ctx.fillStyle = 'rgba(25,20,60,.58)'; trazoRedondo(ctx, 6, 6, W - 12, 52, 14); ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.5; ctx.stroke();
-  if (!retrato.c || retrato.id !== personaje.id || reloj - retrato.t >= 10) {            // el retrato se redibuja pocas veces
+  if (!retrato.c || retrato.id !== personaje.id) {            // el retrato se redibuja pocas veces
     if (!retrato.c) retrato.c = crearCanvas(Math.ceil(44 * ESC), Math.ceil(44 * ESC));
     const rg = retrato.c.getContext('2d'); rg.setTransform(ESC, 0, 0, ESC, 0, 0); rg.clearRect(0, 0, 44, 44); rg.save(); rg.beginPath(); rg.arc(22, 22, 22, 0, 7); rg.clip();
     rg.fillStyle = 'rgba(255,255,255,.18)'; rg.fillRect(0, 0, 44, 44); dibujarNino(rg, personaje, 22, 52, 0.6, 1, { estado: 'quieto', t: reloj }); rg.restore(); retrato.t = reloj; retrato.id = personaje.id;
@@ -2404,7 +2425,7 @@ function pintarMarcador() {
 }
 function dibujarMarcador() {                                // el marcador se redibuja solo cuando algo cambia
   const hp = jefe && jefe.vivo && jefe.estadoJ === 'activo' ? jefe.hp : -1;
-  const key = [puntos, personaje.id, progChoco, vidas, poder ? 1 : 0, escudo ? 1 : 0, botas > 0 ? Math.ceil(botas / 10) : 0, datos.monedas, silencio ? 1 : 0, nivelActual, hp, jefe ? jefe.tipo : '', Math.floor(reloj / 10), ESC].join('|');
+  const key = [puntos, personaje.id, progChoco, vidas, poder ? 1 : 0, escudo ? 1 : 0, botas > 0 ? Math.ceil(botas / 10) : 0, datos.monedas, silencio ? 1 : 0, nivelActual, hp, jefe ? jefe.tipo : '', ESC].join('|');
   if (!HUD.c || HUD.key !== key) {
     const c = HUD.c || (HUD.c = crearCanvas(Math.ceil(W * ESC), Math.ceil(100 * ESC))), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, 0, 0); g.clearRect(0, 0, W, 100);
     const prev = ctx; ctx = g; try { pintarMarcador(); } finally { ctx = prev; }
@@ -2449,11 +2470,11 @@ function dibujarJuego() {
   if (tema === 'tarde') { ctx.fillStyle = 'rgba(255,120,60,.10)'; ctx.fillRect(0, 0, W, H); }
   if (!LIGERO) ctx.drawImage(VIG, 0, 0, W, H);
   if (estado === 'jugando') dibujarMarcador();
-  if (estado === 'jugando' && jefe && jefe.tipo === 'kukulkan' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); texto('¡PATEA LOS FUEGOS PARA DEVOLVÉRSELOS!', W / 2, 424, 20, '#ffd43b', 'center'); ctx.globalAlpha = 1; }
+  if (estado === 'jugando' && jefe && jefe.tipo === 'kukulkan' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡PATEA LOS FUEGOS PARA DEVOLVÉRSELOS!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
   if (banner > 0 && estado === 'jugando') {
     const a = Math.min(1, banner / 30, (170 - banner) / 20), N = NIVELES[nivelActual]; ctx.globalAlpha = a;
-    ctx.fillStyle = 'rgba(15,10,40,.7)'; trazoRedondo(ctx, W / 2 - 230, 130, 460, 112, 16); ctx.fill();
-    texto(N.nombre, W / 2, 168, 30, '#ffd700', 'center'); texto(N.lugar, W / 2, 196, 17, '#fff', 'center'); texto(N.nota, W / 2, 226, 14, '#ffd9a0', 'center'); ctx.globalAlpha = 1;
+    const spb = sprite('ban|' + nivelActual, 470, 130, 0, 0, gg => { gg.translate(-(W / 2 - 235), -125); ctx.fillStyle = 'rgba(15,10,40,.7)'; trazoRedondo(ctx, W / 2 - 230, 130, 460, 112, 16); ctx.fill(); texto(N.nombre, W / 2, 168, 30, '#ffd700', 'center'); texto(N.lugar, W / 2, 196, 17, '#fff', 'center'); texto(N.nota, W / 2, 226, 14, '#ffd9a0', 'center'); });
+    ctx.drawImage(spb.c, W / 2 - 235, 125, spb.w, spb.h); ctx.globalAlpha = 1;
   }
 }
 
@@ -2519,7 +2540,7 @@ function dibujarMenu() {
   uiBoton('AJUSTES', bx, 338, 300, 40, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
   dibujarMoneda(ctx, 26, 26, 11); texto(String(datos.monedas), 44, 33, 18, '#ffd700');
-  texto('Versión 2.2', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 2.3', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
