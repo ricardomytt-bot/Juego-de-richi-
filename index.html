@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 1.4
+//  LICHILÓN Y EL PATRÓN  -  Versión 1.5
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -1605,7 +1605,7 @@ const NIVELES = [
       plat(79, 83, 8); caja(81, 8, 'b'); chocos(80, 82, 7);
       escarabajo(99, 105); pinchos(102, 103); plat(104, 108, 9); caja(106, 9, 'c'); chocos(105, 107, 8); murcielago(103, 7); serpiente(111);   // 6
       escarabajo(120, 128); pinchos(123, 124); pinchos(129, 129); chocos(125, 127, 10); serpiente(132);   // 7
-      caja(147, 8, 'e'); caja(158, 8, 'c'); chocos(152, 154, 10);                                      // arena del Playero
+      caja(147, 8, 'e'); caja(158, 8, 'e'); chocos(152, 154, 10);                                      // arena del Playero
     } },
   { nombre: 'NIVEL 4', lugar: 'Chichén Itzá, Yucatán', corto: ['Chichén Itzá', 'La pirámide de Kukulkán'], jefeNombre: 'Kukulkán', cols: 172, tema: 'chichen', jefe: 'kukulkan', musica: 'chichen',
     nota: 'Kukulkán bajó de la pirámide y se comió la llave',
@@ -1690,7 +1690,7 @@ function cargarNivel(n) {
   murcielagos = murcielagosDef.map(([c, r]) => ({ x0: c * T, y0: r * T, x: c * T, y: r * T, w: 26, h: 22, t: Math.floor(Math.random() * 100), dir: 1, vivo: true, congelado: 0, px: 0, py: 0, pique: 0, espera: 90 }));
   serpientes = serpientesDef.map(c => ({ x: c * T, y: 12 * T - 38, w: 76, h: 38, vx: -1.7, vy: 0, dir: -1, golpes: 0, vivo: true,
     congelado: 0, destello: 0, enfria: 0, boca: 0, comiendo: 0, aturdida: 0 }));
-  const hpJ = { patron: 6, patrona: 8, playero: 10, kukulkan: 8 }[N.jefe];
+  const hpJ = { patron: 6, patrona: 8, playero: 7, kukulkan: 8 }[N.jefe];
   jefe = { tipo: N.jefe, x: (COLS - 5) * T, y: 12 * T - 78, w: 46, h: 78, vx: 0, vy: 0, hp: hpJ, hpMax: hpJ, vivo: true, estadoJ: 'dormido',
     fase: 'camina', timer: 60, ciclo: 0, invul: 0, aturdido: 0, congelado: 0, dir: -1, t: 0, cargaDir: -1, muerte: 0, cayendo: false, saltoDir: 1 };
   if (N.jefe === 'kukulkan') Object.assign(jefe, { w: 60, h: 60, cx: arenaX + 400, hx: arenaX + 400, hy: 190, baja: 0, boca: 0, flash: 0, tip: 0 });
@@ -1860,7 +1860,7 @@ function iaPatrona(j) {
 // Pinchos de coral del Playero: salen del suelo en ola cuando cae de su salto (si te tocan, pierdes DOS vidas)
 function espinas(j) {
   const cx = j.x + j.w / 2;
-  for (let k = 0; k < 9; k++) [-1, 1].forEach(sg => { const x = cx + sg * (36 + k * 38); if (hayBloque(x, 12 * T + 2) && x > arenaX + 10 && x < COLS * T - 10) pinchosJ.push({ x, esp: k * 6 + 4, t: 0 }); });
+  for (let k = 0; k < 6; k++) [-1, 1].forEach(sg => { const x = cx + sg * (46 + k * 50); if (hayBloque(x, 12 * T + 2) && x > arenaX + 10 && x < COLS * T - 10) pinchosJ.push({ x, esp: k * 9 + 16, t: 0 }); });
   sfx('pincho');
 }
 const alturaEspina = e => e.t < 8 ? 34 * e.t / 8 : (e.t < 50 ? 34 : 34 * (62 - e.t) / 12);
@@ -1879,15 +1879,15 @@ function empujon(dir) {                                      // el empujón del 
 }
 function iaPlayero(j) {
   switch (j.fase) {
-    case 'camina': j.vx = j.dir * 1.8; if (--j.timer <= 0) {
-      const k = j.ciclo++ % 3;
-      if (k === 2 && j.enSuelo) { j.fase = 'aire'; j.vy = -13; j.saltoDir = j.dir; j.cayendo = false; sfx('salto'); }
-      else if (k === 1) { j.fase = 'aviso'; j.timer = 38; }
+    case 'camina': j.vx = j.dir * 1.5; if (--j.timer <= 0) {
+      const k = j.ciclo++ % 4;
+      if (k === 3 && j.enSuelo) { j.fase = 'aire'; j.vy = -13; j.saltoDir = j.dir; j.cayendo = false; sfx('salto'); }
+      else if (k === 1) { j.fase = 'aviso'; j.timer = 56; }
       else { j.fase = 'lanza'; j.timer = 60; } } break;
-    case 'lanza': j.vx = 0; j.timer--; if (j.timer === 44 || j.timer === 30 || j.timer === 16) lanzarProy(j, 'coco'); if (j.timer <= 0) { j.fase = 'camina'; j.timer = 60; } break;
-    case 'aviso': j.vx = 0; if (--j.timer <= 0) { j.fase = 'carga'; j.timer = 58; j.cargaDir = j.dir; sfx('rugido'); } break;
-    case 'carga': j.vx = j.cargaDir * 4.6; if (--j.timer <= 0) { j.fase = 'camina'; j.timer = 80; } break;
-    case 'aire':  j.vx = j.saltoDir * 3.1; if (j.vy > 0) j.cayendo = true; break;
+    case 'lanza': j.vx = 0; j.timer--; if (j.timer === 40 || j.timer === 22) lanzarProy(j, 'coco'); if (j.timer <= 0) { j.fase = 'camina'; j.timer = 85; } break;
+    case 'aviso': j.vx = 0; if (--j.timer <= 0) { j.fase = 'carga'; j.timer = 52; j.cargaDir = j.dir; sfx('rugido'); } break;
+    case 'carga': j.vx = j.cargaDir * 3.8; if (--j.timer <= 0) { j.fase = 'camina'; j.timer = 100; } break;
+    case 'aire':  j.vx = j.saltoDir * 2.6; if (j.vy > 0) j.cayendo = true; break;
   }
 }
 function finDeJefe() {
@@ -2340,7 +2340,7 @@ function dibujarMenu() {
   uiBoton('LOGROS', bx, 292, 300, 40, () => irA('logros'), 'dorado', 17);
   uiBoton('AJUSTES', bx, 338, 300, 40, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
-  texto('Versión 1.4', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 1.5', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
