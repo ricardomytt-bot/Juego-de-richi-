@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 2.3
+//  LICHILÓN Y EL PATRÓN  -  Versión 2.4
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -1769,7 +1769,7 @@ function cargarNivel(n) {
   chocosDef = []; escarabajosDef = []; murcielagosDef = []; serpientesDef = [];
   N.construir();
   sol = mapa.map(f => f.map(solido));
-  prepararTerreno(); for (const k in SPR) if (k.startsWith('jefe|')) delete SPR[k];
+  prepararTerreno(); for (const k in SPR) if (k.startsWith('jefe|') && k.split('|')[1] !== N.jefe) delete SPR[k];   // se libera memoria de otros jefes
   crearDecoraciones();
   pinchosLista = [];
   for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) if (mapa[r][c] === '^') pinchosLista.push({ x: c * T + 9, y: r * T + 14, w: T - 18, h: T - 14 });
@@ -1796,13 +1796,38 @@ function nuevoJuego() {
 const nivelHecho = i => !!datos.prog[i];
 const nivelBloqueado = i => i > 0 && !nivelHecho(i - 1);
 let cineSigue = false;
-function elegirNivel(n) { if (nivelBloqueado(n)) { sfx('golpe'); return; } nivelElegido = n; cineSigue = false; sfx('menu'); irA('cine'); }
+// Prepara los dibujos que se van a necesitar (mientras lees la cinemática), para que no haya tirones al jugar
+function precalentar() {
+  const mudo = crearCanvas(2, 2).getContext('2d'), tareas = [], pj = personaje, rel0 = () => reloj;
+  [1, -1].forEach(d => {
+    for (let b = 0; b < 16; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'camina', fase: b * TAU / 16 + 0.01, t: 100, aire: false, botas: false, vy: 0 }));
+    for (let b = 0; b < 10; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'quieto', t: b / 10 * TAU / 0.08 + 0.5, aire: false, botas: false, vy: 0 }));
+    for (let b = -3; b <= 3; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'salta', t: 100, aire: true, botas: false, vy: b * 4 }));
+    tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'patea', t: 100, aire: false, botas: false, vy: 0 }));
+  });
+  const conRel = (v, f) => () => { const r = reloj; reloj = v; try { f(); } finally { reloj = r; } };
+  for (let b = 0; b < 12; b++) {
+    tareas.push(conRel(b / 12 * TAU / 0.35 + 0.1, () => pintarEscarabajo(mudo, { x: 0, y: 0, w: 30, h: 24, vx: 1, congelado: 0 })));
+    tareas.push(conRel(b / 12 * TAU / 0.4 + 0.1, () => pintarMurcielago(mudo, { x: 0, y: 0, w: 26, h: 22, dir: 1, congelado: 0 })));
+  }
+  for (let b = 0; b < 14; b++) for (const vx of [1, 0]) tareas.push(conRel(b / 14 * TAU / (vx ? 0.3 : 0.14) + 0.1, () => pintarSerpiente(mudo, { x: 0, y: 0, w: 76, h: 38, vx, dir: 1, congelado: 0, destello: 0, boca: 0, golpes: 0 })));
+  tareas.push(() => dibujarChoco(mudo, { x: 0, y: 0, w: 24, h: 16 })); tareas.push(() => dibujarPincho(mudo, 0, 0));
+  const N = NIVELES[nivelElegido];
+  if (N && N.jefe !== 'kukulkan') {
+    const fj = (fase, vx) => ({ tipo: N.jefe, x: 0, y: 0, w: 46, h: 78, vx, vy: 0, fase, dir: -1, cargaDir: -1, invul: 0, aturdido: 0, congelado: 0 });
+    for (let b = 0; b < 12; b++) { tareas.push(() => dibujarJefe(mudo, fj('camina', 1), b * TAU / 12 / 0.26 + 0.01)); tareas.push(() => dibujarJefe(mudo, fj('carga', 1), b * TAU / 12 / 0.5 + 0.01)); }
+    for (let b = 0; b < 9; b++) for (const f of ['camina', 'lanza', 'aviso', 'aire', 'bomba']) tareas.push(() => dibujarJefe(mudo, fj(f, 0), b * 10 + 1));
+  }
+  let i = 0; const lote = () => { const t0 = performance.now(); while (i < tareas.length && performance.now() - t0 < 6) { try { tareas[i++](); } catch (e) {} } if (i < tareas.length) setTimeout(lote, 24); };
+  setTimeout(lote, 80);
+}
+function elegirNivel(n) { if (nivelBloqueado(n)) { sfx('golpe'); return; } nivelElegido = n; cineSigue = false; sfx('menu'); irA('cine'); precalentar(); }
 function empezarTrasCine() { if (cineSigue) { cineSigue = false; cargarNivel(nivelElegido); irA('jugando'); musicaDelNivel(); } else nuevoJuego(); }
 function reiniciarNivel() {                                  // al perder todas las vidas: de vuelta al inicio del nivel
   vidas = VIDAS_INICIO; puntos = puntosNivel; progChoco = 0;
   cargarNivel(nivelActual); irA('jugando'); musicaDelNivel();
 }
-function siguienteNivel() { nivelElegido = nivelActual + 1; cineSigue = true; irA('cine'); }
+function siguienteNivel() { nivelElegido = nivelActual + 1; cineSigue = true; irA('cine'); precalentar(); }
 
 const choca = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 const hayBloque = (px, py) => {
@@ -2540,7 +2565,7 @@ function dibujarMenu() {
   uiBoton('AJUSTES', bx, 338, 300, 40, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
   dibujarMoneda(ctx, 26, 26, 11); texto(String(datos.monedas), 44, 33, 18, '#ffd700');
-  texto('Versión 2.3', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 2.4', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -2781,7 +2806,7 @@ function dibujar() {
     if (estado === 'gano') { const F = NIVELES[nivelActual].fin; dibujarPanelFin(F.titulo, F.lineas.concat('Puntos: ' + puntos, 'Monedas: +' + monedasGanadas + '   (tienes ' + datos.monedas + ')'), '#6bff8a', [['ELEGIR NIVEL', () => irA('niveles'), 'verde'], ['MENÚ PRINCIPAL', () => irA('menu'), 'gris']]); }
   }
   capaVintage();
-  if (aj.fps) texto(fpsMostrado + ' FPS · calidad ' + ['baja', 'media', 'alta'][calidad], W / 2, H - 6, 11, '#fff', 'center');
+  if (aj.fps) texto(fpsMostrado + ' FPS · ' + trabMostrado.toFixed(1) + ' ms · calidad ' + ['baja', 'media', 'alta'][calidad], W / 2, H - 6, 11, '#fff', 'center');
   dibujarAvisos();
 }
 
@@ -2848,16 +2873,19 @@ addEventListener('pointerup', () => { ui.arr = null; });
 const domTactil = document.getElementById('tactil'), domGirar = document.getElementById('girar');
 cargarNivel(0); irA('menu');
 let ultimoT = 0, acum = 0, dibCont = 0, fpsT0 = 0, fpsMostrado = 60, fpsBajos = 0, domVis = null, domGir = null;
+let trabAcum = 0, trabN = 0, trabMostrado = 0;
 function ciclo(ts) {
   const ahora = ts || performance.now();
   if (!ultimoT) { ultimoT = ahora; fpsT0 = ahora; }
   let dt = ahora - ultimoT; ultimoT = ahora; if (dt > 100) dt = 100; acum += dt;
   const PASO = 1000 / 60; let pasos = 0;
+  const tw0 = performance.now();
   while (acum >= PASO - 0.5 && pasos < 3) { actualizarPad(); menuControl(); actualizar(); acum -= PASO; pasos++; }   // el juego corre igual en pantallas de 60 y de 120 Hz
-  if (pasos > 0 || !ciclo.dibujado) { dibujar(); ciclo.dibujado = true; dibCont++; }
+  if (pasos > 0 || !ciclo.dibujado) { dibujar(); ciclo.dibujado = true; dibCont++; trabAcum += performance.now() - tw0; trabN++; }
   if (ahora - fpsT0 >= 1000) {                                     // si va lento, baja la calidad sola
     fpsMostrado = Math.round(dibCont * 1000 / (ahora - fpsT0)); dibCont = 0; fpsT0 = ahora;
-    fpsBajos = (!document.hidden && ahora > 5000 && estado !== 'ajustes' && fpsMostrado < 42) ? fpsBajos + 1 : 0;
+    const trab = trabN ? trabAcum / trabN : 0; trabAcum = 0; trabN = 0; trabMostrado = trab;
+    fpsBajos = (!document.hidden && ahora > 5000 && estado !== 'ajustes' && fpsMostrado < 42 && trab > 11) ? fpsBajos + 1 : 0;   // si el trabajo es poco pero hay pocos fps, el sistema limita (ahorro de batería): bajar la calidad no ayuda
     if (fpsBajos >= 3 && calidad > 0) { fpsBajos = 0; aplicarCalidad(calidad - 1); avisos.push({ t: 0, titulo: 'CALIDAD AJUSTADA', txt: 'Bajé la calidad gráfica', sub: 'Para que vaya más fluido. Cámbiala en Ajustes.' }); }
   }
   const verBotones = botonesVisibles() && estado === 'jugando', gir = botonesVisibles();
