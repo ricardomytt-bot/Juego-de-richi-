@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 2.6
+//  LICHILÓN Y EL PATRÓN  -  Versión 2.7
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -80,11 +80,13 @@ const PERSONAJES = [
 ];
 
 // ---------- AJUSTES Y DATOS GUARDADOS ----------
-const CLAVE_GUARDADO = 'lichilon_departamentos_v1';
+const CLAVE_GUARDADO = 'lichilon_departamentos_v2', CLAVE_VIEJA = 'lichilon_departamentos_v1';   // v2 = partida nueva (el progreso anterior se borró a propósito)
 const ES_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const AJ_DEFECTO = { musica: 0.6, efectos: 0.8, texto: 1, temblor: true, botones: 'auto', compatible: ES_IOS, efectoPelicula: false, calidad: MOVIL ? 1 : 2, fps: false };
 const datos = { ajustes: { ...AJ_DEFECTO }, logros: {}, stats: {}, mejor: 0, prog: {}, intro: false, monedas: 0, tienda: {} };
 try {
+  const vieja = localStorage.getItem(CLAVE_VIEJA);
+  if (vieja && !localStorage.getItem(CLAVE_GUARDADO)) { try { const v = JSON.parse(vieja); if (v && v.ajustes) Object.assign(datos.ajustes, v.ajustes); } catch (e) {} localStorage.removeItem(CLAVE_VIEJA); }   // solo se conservan los ajustes (volumen, calidad...)
   const j = JSON.parse(localStorage.getItem(CLAVE_GUARDADO) || 'null');
   if (j) { Object.assign(datos.ajustes, j.ajustes || {}); datos.logros = j.logros || {}; datos.stats = j.stats || {}; datos.mejor = j.mejor || 0; datos.prog = j.prog || {}; datos.monedas = j.monedas || 0; datos.tienda = j.tienda || {}; datos.intro = !!j.intro || (datos.stats.partidas > 0); }
 } catch (e) {}
@@ -2584,7 +2586,7 @@ function dibujarMenu() {
   uiBoton('AJUSTES', bx, 350, 300, 36, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
   dibujarMoneda(ctx, 26, 26, 11, true); texto(String(datos.monedas), 44, 33, 18, '#ffd700');
-  texto('Versión 2.6', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 2.7', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
