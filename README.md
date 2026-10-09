@@ -10,6 +10,7 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Al empezar eliges personaje y luego el nivel, organizado por estados de México (Mundo 1: Yucatán).
 - Nivel 1: Calle 60 (jefe: el Patrón). Nivel 2: Paseo de Montejo al atardecer (jefa: la Patrona).
   Nivel 3: De visita a la playa, en Progreso, con el Muelle Fiscal al fondo (jefe: el Playero, que se robó la llave).
+- Nivel 4: Chichén Itzá (Kukulkán baja de la pirámide y se come la llave). Kukulkán está al fondo, no se le puede tocar: solo se le gana pateando de vuelta sus bolas de fuego.
 - Los niveles se abren uno por uno: el 2 al pasar el 1, y el 3 al pasar el 2.
 - Jefes: el Patrón embiste y lanza recibos; la Patrona lanza chanclas, salta y tira bombas (círculo rojo = explosión, quita 2 vidas; si la pateas se la devuelves); el Playero lanza cocos, embiste con la tabla (te empuja) y salta haciendo salir pinchos de coral (quitan 2 vidas).
 - Los huecos del piso muestran el fondo (la calle o el mar), no negro.
