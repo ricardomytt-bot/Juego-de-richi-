@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 2.5
+//  LICHILÓN Y EL PATRÓN  -  Versión 2.6
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -2584,7 +2584,7 @@ function dibujarMenu() {
   uiBoton('AJUSTES', bx, 350, 300, 36, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
   dibujarMoneda(ctx, 26, 26, 11, true); texto(String(datos.monedas), 44, 33, 18, '#ffd700');
-  texto('Versión 2.5', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 2.6', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -2677,12 +2677,12 @@ function dibujarPersonajes() {
 }
 // ---------- Tienda: objetos especiales que se compran con monedas y se usan siempre ----------
 const OBJETOS = [
-  { id: 'rayo',    nombre: 'Bola eléctrica',   precio: 100, desc: 'Empiezas cada nivel con 1 rayo. Usa el botón PODER (si no tienes hielo) y fulmina a los 3 monstruos más cercanos. Una vez por nivel.' },
-  { id: 'escudo',  nombre: 'Escudo dorado',    precio: 120, desc: 'Empiezas cada nivel con el escudo amarillo puesto, que absorbe un golpe.' },
-  { id: 'iman',    nombre: 'Imán de Kit Kats', precio: 80,  desc: 'Los Kit Kats que están cerca de ti vuelan solos hasta tus manos.' },
-  { id: 'corazon', nombre: 'Corazón extra',    precio: 110, desc: 'Empiezas cada partida con 4 vidas en vez de 3.' },
-  { id: 'hielo',   nombre: 'Cristal de hielo', precio: 90,  desc: 'Empiezas cada nivel con el poder de hielo ya listo para lanzar.' },
-  { id: 'doble',   nombre: 'Doble salto',      precio: 150, desc: 'Puedes saltar una vez más en el aire. ¡Llegas a lugares muy altos!' },
+  { id: 'rayo',    nombre: 'Bola eléctrica',   precio: 60, desc: 'Empiezas cada nivel con 1 rayo. Usa el botón PODER (si no tienes hielo) y fulmina a los 3 monstruos más cercanos. Una vez por nivel.' },
+  { id: 'escudo',  nombre: 'Escudo dorado',    precio: 40, desc: 'Empiezas cada nivel con el escudo amarillo puesto, que absorbe un golpe.' },
+  { id: 'iman',    nombre: 'Imán de Kit Kats', precio: 25,  desc: 'Los Kit Kats que están cerca de ti vuelan solos hasta tus manos.' },
+  { id: 'corazon', nombre: 'Corazón extra',    precio: 50, desc: 'Empiezas cada partida con 4 vidas en vez de 3.' },
+  { id: 'hielo',   nombre: 'Cristal de hielo', precio: 30,  desc: 'Empiezas cada nivel con el poder de hielo ya listo para lanzar.' },
+  { id: 'doble',   nombre: 'Doble salto',      precio: 80, desc: 'Puedes saltar una vez más en el aire. ¡Llegas a lugares muy altos!' },
 ];
 const tiene = id => !!datos.tienda[id];
 const vidasInicio = () => VIDAS_INICIO + (tiene('corazon') ? 1 : 0);
