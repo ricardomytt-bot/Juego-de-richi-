@@ -27,5 +27,5 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Logros: 8 logros difíciles con premio en monedas.
 - Perfiles: hasta 4 partidas guardadas (menú PERFIL) con todos tus datos; los ajustes son compartidos.
 - Los escarabajos ahora son mariquitas rojas. Sin mariposas ni luciérnagas; fondos más claros y limpios.
-- Personaje nuevo: El Patrón (se desbloquea al derrotar a Kukulkán). En vez de patada ataca con una embestida corta.
+- Personaje nuevo: Mamá (se desbloquea al derrotar a Kukulkán). Ataca con un súper puño (¡PAM!) con el mismo daño que una patada.
 - MODO_PRUEBA (en index.html): mientras es true todos los niveles están abiertos; en la versión final se cambia a false.
