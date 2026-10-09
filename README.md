@@ -10,7 +10,7 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Al empezar eliges personaje y luego el nivel, organizado por estados de México (Mundo 1: Yucatán).
 - Nivel 1: Calle 60 (jefe: el Patrón). Nivel 2: Paseo de Montejo al atardecer (jefa: la Patrona).
   Nivel 3: De visita a la playa, en Progreso, con el Muelle Fiscal al fondo (jefe: el Playero, que se robó la llave).
-- Nivel 4: Chichén Itzá (Kukulkán baja de la pirámide y se come la llave). Kukulkán está al fondo, no se le puede tocar: solo se le gana pateando de vuelta sus bolas de fuego.
+- Nivel 4: Chichén Itzá (Kukulkán baja de la pirámide y se come la llave). Kukulkán está al fondo, no se le puede tocar: tira 3 fuegos y solo uno (el verde) es el bueno: hay que atacarlo para devolvérselo. Tiene 14 de vida y su rayo es el doble de grande y rápido.
 - Los niveles se abren uno por uno: el 2 al pasar el 1, y el 3 al pasar el 2.
 - Jefes: el Patrón embiste y lanza recibos; la Patrona lanza chanclas, salta y tira bombas (círculo rojo = explosión, quita 2 vidas; si la pateas se la devuelves); el Playero lanza cocos, embiste con la tabla (te empuja) y salta haciendo salir pinchos de coral (quitan 2 vidas).
 - Los huecos del piso muestran el fondo (la calle o el mar), no negro.
@@ -29,3 +29,8 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Los escarabajos ahora son mariquitas rojas. Sin mariposas ni luciérnagas; fondos más claros y limpios.
 - Personaje nuevo: Mamá (se desbloquea al derrotar a Kukulkán). Ataca con un súper puño (¡PAM!) con el mismo daño que una patada.
 - MODO_PRUEBA (en index.html): mientras es true todos los niveles están abiertos; en la versión final se cambia a false.
+
+
+## Versión 3.2
+- Menos trabas: los sonidos y la música del modo compatible se fabrican en un hilo aparte (Worker) y se precargan; el fondo y el terreno se preparan por partes; la calidad automática no baja durante los primeros segundos de un nivel.
+- Kukulkán más difícil (3 fuegos, solo uno bueno; más vida; rayo doble). Pequeño pulido gráfico (sombras en cielo y suelo).

@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.1
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.2
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -239,7 +239,7 @@ function hablar(i, ch) {
 function sfx(n) {
   try {
     if (!SONIDOS[n]) return;
-    if (usarAlt()) { sfxAlt(n); return; }
+    if (usarAlt()) { if (!sfxPrecargado) precargarSfx(); sfxAlt(n); return; }
     SONIDOS[n]();
   } catch (e) {}
 }
@@ -339,14 +339,16 @@ setInterval(() => {
 }, 60);
 
 // --- Modo compatible: un mini sintetizador que crea archivos .wav con código ---
-function wavUrl(mono) {
+function wavBuffer(mono) {
   const n = mono.length, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
   const txt = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
   txt(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); txt(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
   v.setUint32(24, SR, true); v.setUint32(28, SR * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); txt(36, 'data'); v.setUint32(40, n * 2, true);
   for (let i = 0; i < n; i++) { const x = Math.max(-1, Math.min(1, Math.tanh(mono[i] * 1.9))); v.setInt16(44 + i * 2, x * 32000, true); }
-  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+  return buf;
 }
+const urlDeBuffer = buf => URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+function wavUrl(mono) { return urlDeBuffer(wavBuffer(mono)); }
 const onda = (tipo, ph) => tipo === 'sine' ? Math.sin(ph * 6.2832) : tipo === 'square' ? (ph < 0.5 ? 1 : -1) : tipo === 'sawtooth' ? 2 * ph - 1 : 4 * Math.abs(ph - 0.5) - 1;
 function resonador(f, q) {                                 // filtro "paso de banda" sencillo
   const w = 2 * Math.PI * f / SR, al = Math.sin(w) / (2 * q), a0 = 1 + al, b = al / a0, a1 = -2 * Math.cos(w) / a0, a2 = (1 - al) / a0; let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
@@ -370,23 +372,31 @@ function renderSfx(ev) {
   }
   return out;
 }
+const pendSfx = {};
+function pedirSfx(k) {                                     // fabrica un sonido en el obrero (sin trabar el juego)
+  if (pendSfx[k] || cacheSfx[k]) return; pendSfx[k] = true;
+  const f = SONIDOS[k] || (k.startsWith('ouch') ? () => voz(+k.slice(4)) : null); if (!f) return;
+  let ev; grabando = []; try { f(); } finally { ev = grabando; grabando = null; }
+  trabajoAudio({ tipo: 's', ev }, buf => { const url = cacheSfx[k] = urlDeBuffer(buf); poolSfx[k] = { a: [new Audio(url), new Audio(url)], i: 0 }; }, () => { cacheSfx[k] = wavUrl(renderSfx(ev)); });
+}
+let sfxPrecargado = false;
+function precargarSfx() {                                  // todos los sonidos se preparan al principio, uno por uno
+  if (sfxPrecargado) return; sfxPrecargado = true;
+  Object.keys(SONIDOS).filter(n => n !== 'ouch').forEach((n, i) => setTimeout(() => pedirSfx(n), 30 * i));
+  PERSONAJES.filter(p => p.voz).forEach((p, i) => setTimeout(() => pedirSfx('ouch' + p.voz), 30 * (60 + i)));
+}
 function sfxAlt(n) {
   if (silencio || aj.efectos <= 0) return;
-  let url = cacheSfx[n];
-  if (!url) { let ev; grabando = []; try { SONIDOS[n](); } finally { ev = grabando; grabando = null; } url = cacheSfx[n] = wavUrl(renderSfx(ev)); }
-  const pool = poolSfx[n] || (poolSfx[n] = { a: [new Audio(url), new Audio(url)], i: 0 });
+  const k = n === 'ouch' ? 'ouch' + personaje.voz : n, url = cacheSfx[k];
+  if (!url) { pedirSfx(k); return; }                       // todavía se está preparando: solo pasa en los primeros segundos
+  const pool = poolSfx[k] || (poolSfx[k] = { a: [new Audio(url), new Audio(url)], i: 0 });
   const a = pool.a[pool.i = (pool.i + 1) % 2]; a.volume = Math.min(1, aj.efectos); try { a.currentTime = 0; } catch (e) {} a.play().catch(() => {});
 }
-function renderMusica(nombre, listo) {
-  const p = PISTAS[nombre], total = p.acordes.length * 8;
-  grabando = []; let t = 0;
-  try { for (let m = 0; m < total; m++) { paso(p, m, t); t += 60 / p.bpm / 2 * (m % 2 ? 1 - p.sw : 1 + p.sw); } } finally { var ev = grabando; grabando = null; }
-  const N = Math.floor(t * SR), out = new Float32Array(N); let i0 = 0;
-  const poner = (n, val) => { out[((n % N) + N) % N] += val; };
-  const lote = () => {
-    const fin = Math.min(ev.length, i0 + 14);
-    for (; i0 < fin; i0++) {
-      const e = ev[i0], n0 = Math.floor(e.t * SR);
+function precargarMusica(n) { if (n && PISTAS[n]) obtenerMusica(n, () => {}); }
+function sintMusica(ev, N) {                               // la canción completa, de una sola vez (se hace en el obrero)
+  const out = new Float32Array(N), poner = (n, val) => { out[((n % N) + N) % N] += val; };
+  for (let i0 = 0; i0 < ev.length; i0++) {
+    const e = ev[i0], n0 = Math.floor(e.t * SR);
       if (e.k === 'm') { const n = Math.floor(e.dur * SR); for (let i = 0; i < n; i++) { const a = i / SR, env = e.v * Math.exp(-6.5 * i / n) * Math.min(1, a / 0.006); poner(n0 + i, env * (Math.sin(6.2832 * e.f * a) + 0.28 * Math.sin(6.2832 * e.f * 4 * a) + 0.07 * Math.sin(6.2832 * e.f * 9.2 * a))); } }
       else if (e.k === 'b') { const n = Math.floor(e.dur * SR); for (let i = 0; i < n; i++) { const a = i / SR, env = e.v * Math.exp(-4.5 * i / n) * Math.min(1, a / 0.01); poner(n0 + i, env * (Math.sin(6.2832 * e.f * a) + 0.35 * Math.sin(6.2832 * e.f * 2 * a) + 0.6 * Math.sin(3.1416 * e.f * a))); } }
       else if (e.k === 'p') { const n = Math.floor((e.dur + 0.3) * SR); for (let i = 0; i < n; i++) { const a = i / SR, env = e.v * Math.min(1, a / 0.4, (e.dur + 0.3 - a) / 0.3); poner(n0 + i, env * (Math.sin(6.2832 * e.f * a) + Math.sin(6.2832 * e.f * 1.004 * a) + 0.35 * Math.sin(6.2832 * e.f * 2 * a))); } }
@@ -394,10 +404,40 @@ function renderMusica(nombre, listo) {
         if (e.tipo === 'bombo') { const n = Math.floor(0.18 * SR); let ph = 0; for (let i = 0; i < n; i++) { const u = i / SR; ph += (42 + 108 * Math.exp(-u * 30)) / SR; poner(n0 + i, Math.sin(6.2832 * ph) * e.v * Math.exp(-u * 22)); } }
         else { const d = e.tipo === 'caja' ? 0.13 : 0.045, n = Math.floor(d * SR); let lp = 0; for (let i = 0; i < n; i++) { const w = Math.random() * 2 - 1; lp += 0.45 * (w - lp); poner(n0 + i, (w - lp) * e.v * 2.2 * Math.exp(-5 * i / n)); } }
       }
-    }
-    if (i0 < ev.length) setTimeout(lote, 0); else listo(wavUrl(out));
-  };
-  lote();
+  }
+  return out;
+}
+// El "obrero": un hilo aparte que fabrica los sonidos y la música, para que el juego no se trabe mientras se preparan
+let obrero = null, obreroFallo = false, obreroCola = {}, obreroId = 0;
+function crearObrero() {
+  if (obrero || obreroFallo) return obrero;
+  try {
+    const fuente = 'const SR=' + SR + ';\nconst onda=' + onda.toString() + ';\n' + resonador.toString() + '\n' + renderSfx.toString() + '\n' + sintMusica.toString() + '\n' + wavBuffer.toString() +
+      '\nonmessage=function(e){var m=e.data;var mono=m.tipo==="m"?sintMusica(m.ev,m.N):renderSfx(m.ev);var buf=wavBuffer(mono);postMessage({id:m.id,buf:buf},[buf]);};';
+    obrero = new Worker(URL.createObjectURL(new Blob([fuente], { type: 'text/javascript' })));
+    obrero.onmessage = e => { const f = obreroCola[e.data.id]; delete obreroCola[e.data.id]; if (f) f.ok(e.data.buf); };
+    obrero.onerror = () => { obreroFallo = true; const c = obreroCola; obreroCola = {}; obrero = null; for (const k in c) c[k].fallo(); };
+  } catch (e) { obreroFallo = true; obrero = null; }
+  return obrero;
+}
+function trabajoAudio(msg, ok, fallo) {
+  const o = crearObrero(); if (!o) { setTimeout(fallo, 0); return; }
+  const id = ++obreroId; obreroCola[id] = { ok, fallo };
+  try { o.postMessage({ ...msg, id }); } catch (e) { delete obreroCola[id]; setTimeout(fallo, 0); }
+}
+function renderMusica(nombre, listo) {
+  const p = PISTAS[nombre], total = p.acordes.length * 8;
+  grabando = []; let t = 0;
+  try { for (let m = 0; m < total; m++) { paso(p, m, t); t += 60 / p.bpm / 2 * (m % 2 ? 1 - p.sw : 1 + p.sw); } } finally { var ev = grabando; grabando = null; }
+  const N = Math.floor(t * SR);
+  trabajoAudio({ tipo: 'm', ev, N }, buf => listo(urlDeBuffer(buf)), () => listo(wavUrl(sintMusica(ev, N))));
+}
+const pendMus = {};
+function obtenerMusica(nombre, cb) {                       // devuelve la canción ya lista, o la prepara (una sola vez) y avisa cuando termina
+  if (cacheMusica[nombre]) { cb(cacheMusica[nombre]); return; }
+  if (pendMus[nombre]) { pendMus[nombre].push(cb); return; }
+  pendMus[nombre] = [cb];
+  renderMusica(nombre, url => { cacheMusica[nombre] = url; const w = pendMus[nombre]; delete pendMus[nombre]; w.forEach(f => f(url)); });
 }
 function musicaAlt(nombre) {
   if (audioMusicaEl) audioMusicaEl.pause();
@@ -410,7 +450,7 @@ function musicaAlt(nombre) {
     const pr = audioMusicaEl.play(); musicaAltPend = null;
     if (pr) pr.catch(() => { musicaAltPend = () => { if (nombreMusica === nombre) audioMusicaEl.play().then(() => { musicaAltPend = null; }).catch(() => {}); }; });
   };
-  if (cacheMusica[nombre]) arrancar(cacheMusica[nombre]); else renderMusica(nombre, url => { cacheMusica[nombre] = url; arrancar(url); });
+  obtenerMusica(nombre, arrancar);
 }
 
 // ---------- 3. CONTROLES ----------
@@ -881,11 +921,11 @@ function dibujarProyectil(g, q) {
     g.fillStyle = '#d32f2f'; g.font = 'bold 6.4px sans-serif'; g.textAlign = 'center'; g.fillText('RENTA', 0, -2);
     g.fillStyle = '#1b8a2e'; g.font = 'bold 10px sans-serif'; g.fillText('$$$', 0, 7);
   } else if (q.tipo === 'fuego') {
-    const az = q.devuelto;
-    resplandor(g, 0, 0, 32, az ? 'rgba(140,230,255,.8)' : 'rgba(255,150,50,.8)');
-    g.fillStyle = az ? 'rgba(120,220,255,.75)' : 'rgba(255,120,30,.8)';
+    const az = q.devuelto || q.bueno, vd = q.bueno && !q.devuelto;
+    resplandor(g, 0, 0, 32, vd ? 'rgba(90,255,150,.85)' : (az ? 'rgba(140,230,255,.8)' : 'rgba(255,150,50,.8)'));
+    g.fillStyle = vd ? 'rgba(60,230,120,.8)' : (az ? 'rgba(120,220,255,.75)' : 'rgba(255,120,30,.8)');
     g.beginPath(); g.moveTo(0, -12); g.quadraticCurveTo(-26, -9, -46 - Math.sin(reloj * 0.5) * 4, 0); g.quadraticCurveTo(-26, 9, 0, 12); g.closePath(); g.fill();
-    g.fillStyle = az ? '#bff3ff' : '#ff9a2e'; g.beginPath(); g.arc(0, 0, 12, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = vd ? '#7dff9d' : (az ? '#bff3ff' : '#ff9a2e'); g.beginPath(); g.arc(0, 0, 12, 0, 7); g.fill(); g.stroke();
     g.fillStyle = az ? '#fff' : '#ffe14d'; g.beginPath(); g.arc(1, 0, 6.4, 0, 7); g.fill();
   } else if (q.tipo === 'bomba') {
     const parpadea = q.aterrizo && q.mecha < 30 && Math.floor(q.mecha / 3) % 2;
@@ -1175,7 +1215,7 @@ function pintarCapa(trozos, x) {                             // x lógico; todo 
 function pasosCapas(tema, C) {                               // cada paso dibuja una capa (así se pueden repartir en el tiempo)
   const tarde = tema === 'tarde', playa = tema === 'playa', chi = tema === 'chichen', MAXC = 176 * T, base = 392;
   return [
-    () => { const [c, g] = nuevaCapa(W, H); ctx = g; dibujarCielo(tema); ctx = ctxReal; C.cielo = c; },
+    () => { const [c, g] = nuevaCapa(W, H); ctx = g; dibujarCielo(tema); ctx = ctxReal; const sh = g.createLinearGradient(0, 0, 0, 120); sh.addColorStop(0, 'rgba(10,20,70,.20)'); sh.addColorStop(1, 'rgba(10,20,70,0)'); g.fillStyle = sh; g.fillRect(0, 0, W, 120); C.cielo = c; },
     () => {
       C.nubes = [];
       for (let i = 0; i < 5; i++) {
@@ -1242,8 +1282,13 @@ function crearVig() {                                        // viñeta (oscurec
   const [c, g] = nuevaCapa(W, H); const v = g.createRadialGradient(W / 2, H / 2, H * 0.55, W / 2, H / 2, H * 1.0);
   v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(10,5,25,.32)'); g.fillStyle = v; g.fillRect(0, 0, W, H); return c;
 }
+function fondoProvisional(tema) {                           // mientras el fondo se prepara en pedacitos, se ve un degradado
+  const gr = ctx.createLinearGradient(0, 0, 0, H); const col = { tarde: ['#2a2368', '#e8586f', '#ffd98a'], playa: ['#2f93f5', '#daf5ff', '#27b3c6'], chichen: ['#2a78d8', '#7cc8f6', '#e4f6ff'] }[tema] || ['#2f7be0', '#7cc4ff', '#d9f2ff'];
+  gr.addColorStop(0, col[0]); gr.addColorStop(0.6, col[1]); gr.addColorStop(1, col[2]); ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+}
 function dibujarFondo(cam, tema) {
-  if (!CAPAS[tema] || !CAPAS[tema].listo) { if (CAPAS[tema]) delete CAPAS[tema]; prepararCapas(tema); }
+  if (!CAPAS[tema]) prepararCapasPoco(tema);
+  if (!CAPAS[tema].listo) { fondoProvisional(tema); return; }
   const C = CAPAS[tema], maxCam = 176 * T - W;
   if (cam > maxCam) { const p = maxCam * 2, m = cam % p; cam = m > maxCam ? p - m : m; }
   ctx.drawImage(C.cielo, 0, 0, W, H);
@@ -1260,7 +1305,7 @@ function dibujarFondo(cam, tema) {
 function aplicarCalidad(q) {
   calidad = Math.max(0, Math.min(2, q)); ESC = MOVIL ? [0.85, 1.0, 1.15][calidad] : [1.0, 1.3, 1.6][calidad]; LIGERO = calidad === 0;
   canvas.width = Math.round(W * ESC); canvas.height = Math.round(H * ESC);
-  for (const k in CAPAS) delete CAPAS[k]; GLOW = {}; SPR = {}; TER.ch = []; HUD.c = null; FIN = null; retrato.c = null; VIG = crearVig(); prepararCapas(tema === 'tarde' || tema === 'playa' || tema === 'chichen' ? tema : 'dia');
+  for (const k in CAPAS) delete CAPAS[k]; GLOW = {}; SPR = {}; TER.ch = []; HUD.c = null; FIN = null; retrato.c = null; VIG = crearVig(); prepararCapasPoco(tema === 'tarde' || tema === 'playa' || tema === 'chichen' ? tema : 'dia');
 }
 // Mariposas de día y luciérnagas al atardecer (adorno, se apaga en calidad baja)
 function dibujarAmbiente() {}                                 // (sin mariposas ni luciérnagas: el nivel se ve más limpio y corre mejor)
@@ -1725,7 +1770,7 @@ const NIVELES = [
     } },
   { nombre: 'NIVEL 4', lugar: 'Chichén Itzá, Yucatán', corto: ['Chichén Itzá', 'La pirámide de Kukulkán'], jefeNombre: 'Kukulkán', cols: 172, tema: 'chichen', jefe: 'kukulkan', musica: 'chichen',
     nota: 'Kukulkán bajó de la pirámide y se comió la llave',
-    cine: [['p', '¡Qué bonito es Chichén Itzá! ¡Miren esa pirámide tan enorme!'], ['p', 'Esperen... ¿por qué se está moviendo la serpiente de la escalinata?'], ['kukulkan', '¡¡Grrrr!! ¡Esa llave brillante se ve deliciosa! ¡Ñam!'], ['p', '¡Se comió la llave! Para ganarle tengo que atacar sus fuegos y devolvérselos. ¡Vamos!']],
+    cine: [['p', '¡Qué bonito es Chichén Itzá! ¡Miren esa pirámide tan enorme!'], ['p', 'Esperen... ¿por qué se está moviendo la serpiente de la escalinata?'], ['kukulkan', '¡¡Grrrr!! ¡Esa llave brillante se ve deliciosa! ¡Ñam!'], ['p', '¡Se comió la llave! Para ganarle tengo que atacar el fuego verde y devolvérselo. ¡Vamos!']],
     fin: { titulo: '¡KUKULKÁN ESCUPIÓ LA LLAVE!', lineas: ['Le devolviste sus propios fuegos.', 'La llave volvió con los hermanos...', '¡y ahora sí, a casa!'] },
     construir() {
       suelo(0, 12); suelo(16, 29); suelo(33, 47); suelo(51, 66); suelo(70, 92); suelo(96, 115); suelo(119, 134); suelo(138, 171);
@@ -1775,7 +1820,7 @@ let escarabajos = [], murcielagos = [], serpientes = [], items = [], balas = [],
 let jefe = null, proyJ = [], ultimo = { x: 64, y: 340 }, pinchosJ = [], explos = [];
 const jugador = { x: 0, y: 0, w: 26, h: 54, vx: 0, vy: 0, enSuelo: false, mirando: 1, patada: 0, invulnerable: 0, enfriamiento: 0, pasos: 0, empuje: 0, golpeaA: new Set() };
 
-let nivelElegido = 0, prerenderJefe = false, cineI = 0, cineT0 = 0, cineVisPrev = 0, cineJefe = false;
+let ultimaCarga = 0, nivelElegido = 0, cineI = 0, cineT0 = 0, cineVisPrev = 0, cineJefe = false;
 function irA(e) {
   estado = e; estadoT = 0; ui.foco = 0; const bm = e === 'cine' ? 0.35 : 1; if (bm !== bajaMusica) { bajaMusica = bm; aplicarVolumen(); } for (const k in pulsos) delete pulsos[k];
   if (e === 'logros') logroY = 0;
@@ -1794,7 +1839,9 @@ function cargarNivel(n) {
   chocosDef = []; escarabajosDef = []; murcielagosDef = []; serpientesDef = [];
   N.construir();
   sol = mapa.map(f => f.map(solido));
-  prepararTerreno(); for (const k in SPR) if (k.startsWith('jefe|') && k.split('|')[1] !== N.jefe) delete SPR[k];   // se libera memoria de otros jefes
+  prepararTerreno(); ultimaCarga = reloj; for (let k = 0; k <= 1; k++) chunkTerreno(k);
+  { const id = TER.id, total = Math.ceil(COLS * T * ESC / TER_PW); let k = 2; const sig = () => { if (TER.id !== id || k >= total) return; if (!TER.ch[k]) chunkTerreno(k); k++; setTimeout(sig, 70); }; setTimeout(sig, 400); }
+  for (const k in SPR) if (k.startsWith('jefe|') && k.split('|')[1] !== N.jefe) delete SPR[k];   // se libera memoria de otros jefes
   crearDecoraciones();
   pinchosLista = [];
   for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) if (mapa[r][c] === '^') pinchosLista.push({ x: c * T + 9, y: r * T + 14, w: T - 18, h: T - 14 });
@@ -1805,14 +1852,14 @@ function cargarNivel(n) {
   murcielagos = murcielagosDef.map(([c, r]) => ({ x0: c * T, y0: r * T, x: c * T, y: r * T, w: 26, h: 22, t: Math.floor(Math.random() * 100), dir: 1, vivo: true, congelado: 0, px: 0, py: 0, pique: 0, espera: 90 }));
   serpientes = serpientesDef.map(c => ({ x: c * T, y: 12 * T - 38, w: 76, h: 38, vx: -1.7, vy: 0, dir: -1, golpes: 0, vivo: true,
     congelado: 0, destello: 0, enfria: 0, boca: 0, comiendo: 0, aturdida: 0 }));
-  const hpJ = { patron: 6, patrona: 8, playero: 7, kukulkan: 8 }[N.jefe];
+  const hpJ = { patron: 6, patrona: 8, playero: 7, kukulkan: 14 }[N.jefe];
   jefe = { tipo: N.jefe, x: (COLS - 5) * T, y: 12 * T - 78, w: 46, h: 78, vx: 0, vy: 0, hp: hpJ, hpMax: hpJ, vivo: true, estadoJ: 'dormido',
     fase: 'camina', timer: 60, ciclo: 0, invul: 0, aturdido: 0, congelado: 0, dir: -1, t: 0, cargaDir: -1, muerte: 0, cayendo: false, saltoDir: 1 };
   if (N.jefe === 'kukulkan') Object.assign(jefe, { w: 60, h: 60, cx: arenaX + 400, hx: arenaX + 400, hy: 190, baja: 0, boca: 0, flash: 0, tip: 0, cuenta: 0, swv: 0, alt: 190, rayo: null });
   jugador.x = 2 * T; jugador.y = 12 * T - 54; jugador.vx = jugador.vy = 0; jugador.empuje = 0; jugador.patada = 0; jugador.invulnerable = 120;
   ultimo = { x: jugador.x, y: jugador.y };
   camara = 0; banner = 170;
-  if (usarAlt() && !cacheMusica.jefe && !prerenderJefe) { prerenderJefe = true; setTimeout(() => renderMusica('jefe', url => { cacheMusica.jefe = url; }), 3000); }   // la música del jefe se prepara con tiempo
+  if (false) { }   // la música del jefe se prepara con tiempo
 }
 function nuevoJuego() {
   vidas = vidasInicio(); puntos = 0; nChocos = 0; progChoco = 0; datos.intro = true;
@@ -1839,6 +1886,9 @@ function precalentar() {
   for (let b = 0; b < 14; b++) for (const vx of [1, 0]) tareas.push(conRel(b / 14 * TAU / (vx ? 0.3 : 0.14) + 0.1, () => pintarSerpiente(mudo, { x: 0, y: 0, w: 76, h: 38, vx, dir: 1, congelado: 0, destello: 0, boca: 0, golpes: 0 })));
   tareas.push(() => dibujarChoco(mudo, { x: 0, y: 0, w: 24, h: 16 })); tareas.push(() => dibujarPincho(mudo, 0, 0));
   const N = NIVELES[nivelElegido];
+  if (usarAlt()) { precargarMusica(N.musica); precargarMusica('jefe'); pedirSfx('ouch' + personaje.voz); }
+  const TIPOS_DECO = { dia: ['farola', 'bugambilia', 'banca', 'bote', 'letrero', 'maceta'], tarde: ['farola', 'bugambilia', 'banca', 'bote', 'letrero', 'maceta'], playa: ['sombrilla', 'castillo', 'tabla', 'cubeta', 'salvavidas', 'letrero', 'palmita'], chichen: ['estela', 'vasija', 'agave', 'letrero', 'palmita'] }[N.tema] || [];
+  TIPOS_DECO.forEach(tp => tareas.push(() => pintarDeco({ tipo: tp, x: 0 }, N.tema === 'tarde', mudo)));
   if (N && N.jefe !== 'kukulkan') {
     const fj = (fase, vx) => ({ tipo: N.jefe, x: 0, y: 0, w: 46, h: 78, vx, vy: 0, fase, dir: -1, cargaDir: -1, invul: 0, aturdido: 0, congelado: 0 });
     for (let b = 0; b < 12; b++) { tareas.push(() => dibujarJefe(mudo, fj('camina', 1), b * TAU / 12 / 0.26 + 0.01)); tareas.push(() => dibujarJefe(mudo, fj('carga', 1), b * TAU / 12 / 0.5 + 0.01)); }
@@ -2083,13 +2133,10 @@ function finDeJefe() {
   else { irA('gano'); sfx('gana'); for (let i = 0; i < 90; i++) chispas(camara + Math.random() * W, Math.random() * 160, 1, ['#ffd700', '#ff4f9a', '#4fc3f7', '#7bd36b'][i % 4], 2, 0.1); }
 }
 // Kukulkán no es un monstruo con cuerpo: es una serpiente gigante al fondo que escupe fuego. Solo se le gana devolviéndole sus fuegos con un ataque.
-function dispararKuku(j, p) {
-  const H = cabezaKuku(j), mx = H.x, my = H.y + 30, k = j.ciclo++ % 3, vel = 3.0 + (j.hpMax - j.hp) * 0.14, px = p.x + 13, py = p.y + 40;
-  const tiro = (tx, ty, v) => { const dx = tx - mx, dy = ty - my, d = Math.hypot(dx, dy) || 1; proyJ.push({ tipo: 'fuego', x: mx - 13, y: my - 13, w: 26, h: 26, vx: dx / d * v, vy: dy / d * v, grav: 0, rot: 0, vida: 500, devuelto: false }); };
-  if (k === 0) tiro(px, py, vel);
-  else if (k === 1) [-110, 0, 110].forEach(o => tiro(px + o, py, vel * 0.92));
-  else [-55, 55].forEach(o => tiro(px + o, py, vel * 1.15));
-  sfx('lanza'); chispas(mx, my, 10, '#ffb13b', 4);
+function dispararKuku(j, p) {                               // siempre 3 fuegos: solo UNO es el bueno (verde) y ese es el que hay que devolver
+  const H = cabezaKuku(j), mx = H.x, my = H.y + 30, vel = 3.0 + (j.hpMax - j.hp) * 0.1, px = p.x + 13, py = p.y + 40, bueno = Math.floor(Math.random() * 3);
+  [-110, 0, 110].forEach((o, i) => { const dx = px + o - mx, dy = py - my, d = Math.hypot(dx, dy) || 1, v = vel * (i === 1 ? 1 : 0.95); proyJ.push({ tipo: 'fuego', x: mx - 13, y: my - 13, w: 26, h: 26, vx: dx / d * v, vy: dy / d * v, grav: 0, rot: 0, vida: 500, devuelto: false, bueno: i === bueno }); });
+  j.ciclo++; sfx('lanza'); chispas(mx, my, 10, '#ffb13b', 4);
 }
 function rayoGeom(j) {                                     // de la boca de Kukulkán hasta el suelo, en diagonal
   const H = cabezaKuku(j), R = j.rayo, mx = H.x, my = H.y + 34, dx0 = R.tx - mx, dy0 = 12 * T - my, L = Math.hypot(dx0, dy0) || 1;
@@ -2099,14 +2146,14 @@ function actualizarRayo(j, p, R) {
   R.t++;
   const cornerX = arenaX + (R.lado > 0 ? W - 100 : 100);
   j.boca = R.f === 'ir' ? Math.max(0, j.boca - 0.1) : 1;
-  if (R.f === 'ir') { if (R.t >= 90 || (R.t >= 40 && Math.abs(j.hx - cornerX) < 25)) { R.f = 'aviso'; R.t = 0; R.tx = Math.max(arenaX + 40, Math.min(arenaX + W - 40, p.x + 13)); sfx('rugido'); } }
-  else if (R.f === 'aviso') { if (R.t >= 80) { R.f = 'fuego'; R.t = 0; sfx('rugido'); sfx('golpe'); temblor = 14; } }
+  if (R.f === 'ir') { if (R.t >= 45 || (R.t >= 20 && Math.abs(j.hx - cornerX) < 30)) { R.f = 'aviso'; R.t = 0; R.tx = Math.max(arenaX + 40, Math.min(arenaX + W - 40, p.x + 13)); sfx('rugido'); } }
+  else if (R.f === 'aviso') { if (R.t >= 40) { R.f = 'fuego'; R.t = 0; sfx('rugido'); sfx('golpe'); temblor = 14; } }
   else {
     if (R.t % 6 === 0) temblor = Math.max(temblor, 5);
     const g = rayoGeom(j);
     if (tragando === 0) for (const yy of [10, 30, 50]) {
       const px = p.x + 13, py = p.y + yy, tt = Math.max(0, (px - g.mx) * g.dx + (py - g.my) * g.dy), cx = g.mx + g.dx * tt, cy = g.my + g.dy * tt;
-      if (Math.hypot(px - cx, py - cy) < 22) { recibirGolpe(true, (px >= cx ? 1 : -1) * 6, 2); break; }
+      if (Math.hypot(px - cx, py - cy) < 44) { recibirGolpe(true, (px >= cx ? 1 : -1) * 6, 2); break; }
     }
     if (R.t >= 42) { j.rayo = null; j.timer = 95; }
   }
@@ -2116,14 +2163,14 @@ function dibujarRayo(g, j) {
   const k = rayoGeom(j), x2 = k.mx + k.dx * 1500, y2 = k.my + k.dy * 1500;
   g.save(); g.lineCap = 'round';
   if (R.f === 'aviso') {
-    const u = R.t / 80, al = 0.6 + 0.3 * Math.sin(R.t * 0.5);
-    g.setLineDash([14, 10]); g.strokeStyle = 'rgba(255,70,40,' + al + ')'; g.lineWidth = 8 + u * 28; g.beginPath(); g.moveTo(k.mx, k.my); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]);
-    g.fillStyle = 'rgba(255,60,40,' + (0.28 + 0.2 * Math.sin(R.t * 0.5)) + ')'; g.beginPath(); g.ellipse(R.tx, 12 * T - 2, 62, 10, 0, 0, 7); g.fill();
-    texto('!', R.tx, 12 * T - 36, 34, '#ffe14d', 'center');
+    const u = R.t / 40, al = 0.6 + 0.3 * Math.sin(R.t * 0.5);
+    g.setLineDash([14, 10]); g.strokeStyle = 'rgba(255,70,40,' + al + ')'; g.lineWidth = 16 + u * 56; g.beginPath(); g.moveTo(k.mx, k.my); g.lineTo(x2, y2); g.stroke(); g.setLineDash([]);
+    g.fillStyle = 'rgba(255,60,40,' + (0.28 + 0.2 * Math.sin(R.t * 0.5)) + ')'; g.beginPath(); g.ellipse(R.tx, 12 * T - 2, 110, 16, 0, 0, 7); g.fill();
+    texto('!', R.tx, 12 * T - 40, 44, '#ffe14d', 'center');
   } else {
     const f = 1 + Math.sin(R.t * 1.3) * 0.08; g.globalAlpha = Math.max(0, R.t > 34 ? (42 - R.t) / 8 : 1);
-    [[44, 'rgba(255,90,30,.55)'], [30, '#ff8a2e'], [18, '#ffe14d'], [7, '#fff']].forEach(([w, c]) => { g.strokeStyle = c; g.lineWidth = w * f; g.beginPath(); g.moveTo(k.mx, k.my); g.lineTo(x2, y2); g.stroke(); });
-    resplandor(g, k.mx, k.my, 50, 'rgba(255,200,80,.9)');
+    [[88, 'rgba(255,90,30,.55)'], [60, '#ff8a2e'], [36, '#ffe14d'], [14, '#fff']].forEach(([w, c]) => { g.strokeStyle = c; g.lineWidth = w * f; g.beginPath(); g.moveTo(k.mx, k.my); g.lineTo(x2, y2); g.stroke(); });
+    resplandor(g, k.mx, k.my, 90, 'rgba(255,200,80,.9)');
   }
   g.restore();
 }
@@ -2137,7 +2184,7 @@ function actualizarKukulkan(p) {
   const meta = enR ? arenaX + (R.lado > 0 ? W - 100 : 100) : Math.max(arenaX + 190, Math.min(arenaX + W - 190, p.x + 13));
   j.swv += ((enR ? 0 : Math.max(0, Math.min(1, (j.t - 170) / 60))) - j.swv) * 0.05;
   j.alt += ((enR ? 140 : 190) - j.alt) * 0.06;
-  j.cx += (meta - j.cx) * (enR ? 0.07 : 0.012);
+  j.cx += (meta - j.cx) * (enR ? 0.14 : 0.012);
   j.hx = j.cx + Math.sin(j.t * 0.03) * 46 * j.swv; j.hy = j.alt + Math.sin(j.t * 0.045) * 20 * j.swv;
   const H = cabezaKuku(j); j.x = H.x - j.w / 2; j.y = H.y - j.h / 2;
   if (j.baja < 1) return;
@@ -2145,8 +2192,8 @@ function actualizarKukulkan(p) {
   j.timer--;
   j.boca = (j.timer < 30 && j.timer > 0) ? Math.min(1, j.boca + 0.12) : Math.max(0, j.boca - 0.1);
   if (j.timer <= 0) {
-    if (j.cuenta >= (j.hp <= 4 ? 3 : 4)) { j.cuenta = 0; j.rayo = { f: 'ir', t: 0, lado: p.x + 13 < arenaX + W / 2 ? 1 : -1, tx: 0 }; }   // cada tanto: ¡el rayo!
-    else { dispararKuku(j, p); j.cuenta++; j.timer = j.hp <= 4 ? 80 : (j.hp <= 6 ? 100 : 120); }
+    if (j.cuenta >= (j.hp <= 5 ? 3 : 4)) { j.cuenta = 0; j.rayo = { f: 'ir', t: 0, lado: p.x + 13 < arenaX + W / 2 ? 1 : -1, tx: 0 }; }   // cada tanto: ¡el rayo!
+    else { dispararKuku(j, p); j.cuenta++; j.timer = j.hp <= 5 ? 80 : (j.hp <= 9 ? 100 : 120); }
   }
 }
 function actualizarJefe(p, pata, pisando) {
@@ -2191,7 +2238,7 @@ function actualizarProyectiles(p, pata) {
         if (d < 58 && jefe.vivo && jefe.invul <= 0) { q.vida = 0; danarJefe(jefe, 1); jefe.flash = 24; chispas(H.x, H.y, 26, '#ffb13b', 6); chispas(H.x, H.y, 14, '#bff3ff', 5); }
       } else {
         const zonaPatada = p.patada > 0 ? { x: p.mirando > 0 ? p.x - 6 : p.x - 56, y: p.y - 8, w: 88, h: p.h + 16 } : null;      // mientras atacas, el fuego que te toca (o casi) se devuelve, nunca te daña
-        if (zonaPatada && choca(zonaPatada, q)) { q.devuelto = true; q.vida = 700; sfx('patada'); sfx('hielo'); chispas(cq, cy, 14, '#bff3ff', 5); puntos += 100; registrar('patadas'); registrar('fuegos'); }
+        if (q.bueno && zonaPatada && choca(zonaPatada, q)) { q.devuelto = true; q.vida = 700; sfx('patada'); sfx('hielo'); chispas(cq, cy, 14, '#bff3ff', 5); puntos += 100; registrar('patadas'); registrar('fuegos'); }
         else if (tragando === 0 && choca(p, q)) { q.vida = 0; chispas(cq, cy, 16, '#ff9a3a', 5); recibirGolpe(true, (q.vx >= 0 ? 1 : -1) * 5); }
         else if (hayBloque(cq, cy) || q.y > FILAS * T) { q.vida = 0; chispas(cq, cy, 10, '#ff9a3a', 3); }
         for (const b of balas) if (b.vida > 0 && choca(b, q)) { b.vida = 0; q.vida = 0; chispas(cq, cy, 10, '#bfeaff', 3); sfx('hielo'); }
@@ -2450,6 +2497,7 @@ function chunkTerreno(k) {                                  // el piso, los pinc
       const ch = mapa[r][cc];
       if (ch === '^') dibujarPincho(g, cc * T, r * T); else if (ch === '#' && r >= 12) g.drawImage(r === 12 ? GT[0] : GT[1], cc * T, r * T, T + 0.5, T + 0.5);
     }
+    for (let cc = c0; cc <= c1; cc++) if (mapa[12][cc] === '#') { const sh = g.createLinearGradient(0, 12 * T + 12, 0, 12 * T + 30); sh.addColorStop(0, 'rgba(0,0,0,.20)'); sh.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = sh; g.fillRect(cc * T, 12 * T + 12, T + 0.5, 18); }
   } finally { ctx = prev; }
   return (TER.ch[k] = c);
 }
@@ -2465,10 +2513,10 @@ function dibujarNivel() {
     ctx.drawImage(b.ch === '#' ? GT[2] : (usados[k] ? TILE_CAJA_USADA : TILE_CAJA), x, y, T + 0.5, T + 0.5);
   }
 }
-function pintarDeco(d, tarde) {
-  if (d.tipo === 'brasero') { dibujarDecoracion(d, tarde); return; }                     // la llama se mueve
+function pintarDeco(d, tarde, g = ctx) {
+  if (d.tipo === 'brasero') { if (g === ctx) dibujarDecoracion(d, tarde); return; }                     // la llama se mueve
   const sp = sprite('dec|' + d.tipo + '|' + tema + '|' + (tarde ? 1 : 0), 130, 140, 65, 120, gg => { gg.translate(0, -(12 * T + 2)); dibujarDecoracion({ tipo: d.tipo, x: 0 }, tarde); });
-  ctx.drawImage(sp.c, d.x - sp.ox, 12 * T + 2 - sp.oy, sp.w, sp.h);
+  g.drawImage(sp.c, d.x - sp.ox, 12 * T + 2 - sp.oy, sp.w, sp.h);
 }
 function pintarMarcador() {                                 // marcador limpio: pastillas pequeñas en las esquinas, el centro queda libre
   const pildora = (x, y, w, h) => { ctx.fillStyle = 'rgba(20,24,56,.62)'; trazoRedondo(ctx, x, y, w, h, h / 2); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1.2; ctx.stroke(); };
@@ -2550,7 +2598,7 @@ function dibujarJuego() {
   ctx.restore();
   if (tema === 'tarde') { ctx.fillStyle = 'rgba(255,120,60,.10)'; ctx.fillRect(0, 0, W, H); }
   if (estado === 'jugando') dibujarMarcador();
-  if (estado === 'jugando' && jefe && jefe.tipo === 'kukulkan' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡ATACA LOS FUEGOS PARA DEVOLVÉRSELOS!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
+  if (estado === 'jugando' && jefe && jefe.tipo === 'kukulkan' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡ATACA SOLO EL FUEGO VERDE!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
   if (banner > 0 && estado === 'jugando') {
     const a = Math.min(1, banner / 30, (170 - banner) / 20), N = NIVELES[nivelActual]; ctx.globalAlpha = a;
     const spb = sprite('ban|' + nivelActual, 470, 130, 0, 0, gg => { gg.translate(-(W / 2 - 235), -125); ctx.fillStyle = 'rgba(15,10,40,.7)'; trazoRedondo(ctx, W / 2 - 230, 130, 460, 112, 16); ctx.fill(); texto(N.nombre, W / 2, 168, 30, '#ffd700', 'center'); texto(N.lugar, W / 2, 196, 17, '#fff', 'center'); texto(N.nota, W / 2, 226, 14, '#ffd9a0', 'center'); });
@@ -2619,7 +2667,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.1', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.2', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -3055,7 +3103,7 @@ function ciclo(ts) {
   if (ahora - fpsT0 >= 1000) {                                     // si va lento, baja la calidad sola
     fpsMostrado = Math.round(dibCont * 1000 / (ahora - fpsT0)); dibCont = 0; fpsT0 = ahora;
     const trab = trabN ? trabAcum / trabN : 0; trabAcum = 0; trabN = 0; trabMostrado = trab;
-    fpsBajos = (!document.hidden && ahora > 5000 && estado !== 'ajustes' && fpsMostrado < 42) ? fpsBajos + 1 : 0;   // si va lento, baja la calidad sola
+    fpsBajos = (!document.hidden && ahora > 5000 && estado !== 'ajustes' && fpsMostrado < 42 && reloj - ultimaCarga > 500) ? fpsBajos + 1 : 0;   // si va lento, baja la calidad sola (no cuenta los primeros segundos de un nivel, cuando todo se está preparando)
     if (fpsBajos >= 3 && calidad > 0) { fpsBajos = 0; aplicarCalidad(calidad - 1); avisos.push({ t: 0, titulo: 'CALIDAD AJUSTADA', txt: 'Bajé la calidad gráfica', sub: 'Para que vaya más fluido. Cámbiala en Ajustes.' }); }
   }
   const verBotones = botonesVisibles() && estado === 'jugando', gir = botonesVisibles();
