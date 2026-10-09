@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 1.8
+//  LICHILÓN Y EL PATRÓN  -  Versión 1.9
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -270,10 +270,10 @@ const PISTAS = {
     acordes: ACORDES('0m 0m 5m 7M 0m 0m 10M 7M 0m 3M 5m 7M 0m 8M 7M 0m'),
     mel: MEL('12 . 15 . 12 . 10 . | 12 . 10 7 . . 10 . | 17 . 15 . 12 . 15 . | 14 . 11 . 14 . 19 . | 12 . 15 . 17 . 15 12 | 15 . 12 . 10 . 7 . | 17 . 14 . 10 . 14 . | 14 . 11 . 7 . 11 . | 19 . 17 . 15 . 12 . | 15 . 19 . 15 . 10 . | 17 . 20 . 17 . 12 . | 19 . 14 . 11 . 14 . | 12 . 15 . 12 . 10 7 | 15 . 12 . 8 . 12 . | 14 . 11 . 14 . 11 7 | 12 . 7 . 0 . . .'),
   },
-  jefe: {
-    bpm: 150, sw: 0, root: 440, vel: 1.05, pad: false, bajo: [0, 0, null, 0, 0, null, 0, 0], comp: [1, 3, 5, 7], bombo: [0, 2, 4, 6], caja: [2, 6], hat: [0, 1, 2, 3, 4, 5, 6, 7],
-    acordes: ACORDES('0m 8M 10M 7M 0m 8M 10M 7M'),
-    mel: MEL('12 12 . 15 12 . 10 . | 12 12 . 15 12 . 8 . | 14 14 . 17 14 . 10 . | 14 14 . 16 14 . 11 . | 15 . 12 . 15 . 17 . | 17 . 15 . 12 . 8 . | 14 . 17 . 19 . 17 14 | 16 . 14 . 11 . 14 16'),
+  jefe: {                                                    // épica michoacana: cadencia andaluza (La menor), ritmo de son abajeño, melodía de violín que sube hasta el clímax
+    bpm: 140, sw: 0.08, root: 220, vel: 1.12, pad: true, padv: 0.05, oct: -12, bajo: [0, null, 7, 0, null, 7, 0, 7], comp: [1, 3, 4, 6, 7], bombo: [0, 3, 6], caja: [2, 4, 7], hat: [0, 1, 2, 3, 4, 5, 6, 7],
+    acordes: ACORDES('0m 10M 8M 7M 0m 10M 8M 7M 0m 10M 8M 7M 0m 10M 8M 7M'),
+    mel: MEL('12 . 15 . 19 . 24 . | 22 . 19 . 17 . 14 . | 20 . 24 . 27 . 24 20 | 23 . 19 . 23 . 26 . | 24 . 19 . 24 . 27 . | 26 . 22 . 19 . 22 . | 24 . 27 . 24 . 20 . | 23 . 26 . 23 . 19 . | 24 24 27 24 31 . 27 24 | 29 29 26 29 31 . 29 26 | 27 27 24 27 32 . 31 27 | 26 28 29 . 26 . 31 . | 31 29 27 24 27 29 31 . | 29 26 22 26 29 26 22 . | 27 24 20 24 27 31 32 31 | 31 . 26 . 23 . . .'),
   },
 };
 let nombreMusica = null, pistaAct = null, pasoM = 0, proxT = 0;
@@ -288,9 +288,10 @@ function paso(p, m, t) {
   const ct = tipo === 'm' ? [0, 3, 7] : [0, 4, 7], v = p.vel;
   const n = p.mel[(bar * 8 + s) % p.mel.length];
   if (n !== null) marimba(p.root * f(n), t, 0.2 * v, 0.55);
+  if (n !== null && p.oct) marimba(p.root * f(n + p.oct), t, 0.11 * v, 0.7);
   const b = p.bajo[s]; if (b !== null && b !== undefined) bajoNota(p.root / 4 * f(raiz + b), t, 0.3 * v, 0.34);
   if (p.comp.includes(s)) ct.forEach((c, i) => marimba(p.root / 2 * f(raiz + c + (i === 0 ? 12 : 0)), t + i * 0.012, 0.045 * v, 0.28));
-  if (p.pad && s === 0) ct.forEach(c => padNota(p.root / 2 * f(raiz + c), t, 60 / p.bpm * 4, 0.028 * v));
+  if (p.pad && s === 0) ct.forEach(c => padNota(p.root / 2 * f(raiz + c), t, 60 / p.bpm * 4, (p.padv || 0.028) * v));
   if (p.bombo.includes(s)) percusion('bombo', t, 0.5 * v);
   if (p.caja.includes(s)) percusion('caja', t, 0.18 * v);
   if (p.hat.includes(s)) percusion('hat', t, 0.045 * v);
@@ -1663,7 +1664,7 @@ let escarabajos = [], murcielagos = [], serpientes = [], items = [], balas = [],
 let jefe = null, proyJ = [], ultimo = { x: 64, y: 340 }, pinchosJ = [], explos = [];
 const jugador = { x: 0, y: 0, w: 26, h: 54, vx: 0, vy: 0, enSuelo: false, mirando: 1, patada: 0, invulnerable: 0, enfriamiento: 0, pasos: 0, empuje: 0, golpeaA: new Set() };
 
-let nivelElegido = 0;
+let nivelElegido = 0, prerenderJefe = false;
 function irA(e) {
   estado = e; estadoT = 0; ui.foco = 0; for (const k in pulsos) delete pulsos[k];
   if (e === 'logros') logroY = 0;
@@ -1698,6 +1699,7 @@ function cargarNivel(n) {
   jugador.x = 2 * T; jugador.y = 12 * T - 54; jugador.vx = jugador.vy = 0; jugador.empuje = 0; jugador.patada = 0; jugador.invulnerable = 120;
   ultimo = { x: jugador.x, y: jugador.y };
   camara = 0; banner = 170;
+  if (usarAlt() && !cacheMusica.jefe && !prerenderJefe) { prerenderJefe = true; setTimeout(() => renderMusica('jefe', url => { cacheMusica.jefe = url; }), 3000); }   // la música del jefe se prepara con tiempo
 }
 function nuevoJuego() {
   vidas = VIDAS_INICIO; puntos = 0; nChocos = 0; progChoco = 0; datos.intro = true;
@@ -2387,7 +2389,7 @@ function dibujarMenu() {
   uiBoton('LOGROS', bx, 292, 300, 40, () => irA('logros'), 'dorado', 17);
   uiBoton('AJUSTES', bx, 338, 300, 40, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
-  texto('Versión 1.8', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 1.9', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
