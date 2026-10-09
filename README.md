@@ -14,8 +14,8 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Los niveles se abren uno por uno: el 2 al pasar el 1, y el 3 al pasar el 2.
 - Jefes: el Patrón embiste y lanza recibos; la Patrona lanza chanclas, salta y tira bombas (círculo rojo = explosión, quita 2 vidas; si la pateas se la devuelves); el Playero lanza cocos, embiste con la tabla (te empuja) y salta haciendo salir pinchos de coral (quitan 2 vidas).
 - Los huecos del piso muestran el fondo (la calle o el mar), no negro.
-- Teclado: flechas/A-D mover, espacio/W saltar, Z patear, X poder, P o Esc pausa, M sonido.
-- Control (Switch, Xbox, PS): palanca o cruceta, A/B saltar, Y patear, X poder, + pausa.
+- Teclado: flechas/A-D mover, espacio/W saltar, Z atacar, X poder, P o Esc pausa, M sonido.
+- Control (Switch, Xbox, PS): palanca o cruceta, A/B saltar, Y atacar, X poder, + pausa.
 - Celular/tableta: 5 botones táctiles (gira el celular en horizontal).
 - Power-ups: hielo, botas de resorte (15 s) y escudo amarillo (absorbe un golpe).
 - Kit Kats: 3 = 1 vida (máximo 5). Al perder una vida te quedas donde estás; sin vidas, vuelves al inicio del nivel.
@@ -27,3 +27,5 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Logros: 8 logros difíciles con premio en monedas.
 - Perfiles: hasta 4 partidas guardadas (menú PERFIL) con todos tus datos; los ajustes son compartidos.
 - Los escarabajos ahora son mariquitas rojas. Sin mariposas ni luciérnagas; fondos más claros y limpios.
+- Personaje nuevo: El Patrón (se desbloquea al derrotar a Kukulkán). En vez de patada ataca con una embestida corta.
+- MODO_PRUEBA (en index.html): mientras es true todos los niveles están abiertos; en la versión final se cambia a false.

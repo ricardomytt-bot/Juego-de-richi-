@@ -34,14 +34,14 @@
 <div id="tactil">
   <button id="b-izq"><span class="ico">◀</span></button>
   <button id="b-der"><span class="ico">▶</span></button>
-  <button id="b-patada"><span class="ico">🦶</span>PATEAR</button>
+  <button id="b-patada"><span class="ico">👊</span>ATAQUE</button>
   <button id="b-poder"><span class="ico">❄</span>PODER</button>
   <button id="b-salto"><span class="ico">⬆</span>SALTAR</button>
 </div>
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 2.9
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.0
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -74,7 +74,9 @@ const PERSONAJES = [
   { id: 'sofi', nombre: 'SOFI LOFI', estilo: 'sofi', vel: 3.7, salto: 13.2, caida: 0.7, maxCaida: 7.5, voz: 330,
     desc: ['Cae más suave', 'que los demás.'], stats: { vel: 3, salto: 3, caida: 4 },
     piel: '#fbe3c4', piel2: '#dcb48e', pelo: ['#f4dc62', '#cfa52b'], camisa: ['#df6f9e', '#b24a78'], pantalon: '#6f56b0', zapato: '#7a4a2c', mejilla: '#d8403a', mod: { piel: '#ffd7b3', pelo: '#f9df55', cejas: '#d0a21a', camisa: '#ff82b4', detalle: '#ffffff', pantalon: '#8e63d8', zapato: '#b04bd6', iris: '#2fa36b' } },
-  { id: 'sec1', nombre: '???', pendiente: true, logro: 'patron',     pista: 'Derrota al Patrón' },
+  { id: 'patron', nombre: 'EL PATRÓN', estilo: 'patron', vel: 3.0, salto: 12.6, caida: 1.0, maxCaida: 15, voz: 120, ataque: 'embestida', logro: 'kukulkan', pista: 'Derrota a Kukulkán',
+    desc: ['Fuerte y pesado.', 'Ataca con embestida.'], stats: { vel: 2, salto: 2, caida: 3 },
+    piel: '#e8b384', piel2: '#c98f60', pelo: ['#9a9aa6', '#6e6e78'], camisa: ['#fff1c8', '#d8c58a'], pantalon: '#34446c', zapato: '#2a2a30', mejilla: '#d8403a', mod: { piel: '#e8b384', pelo: '#9a9aa6', cejas: '#7e7e88', camisa: '#fff1c8', detalle: '#c9b870', pantalon: '#34446c', zapato: '#2a2a30', iris: '#4a2c14' } },
   { id: 'sec2', nombre: '???', pendiente: true, logro: 'choco30',    pista: 'Recoge 30 Kit Kats' },
   { id: 'sec3', nombre: '???', pendiente: true, logro: 'serpientes', pista: 'Derrota 8 serpientes' },
 ];
@@ -412,8 +414,8 @@ function musicaAlt(nombre) {
 }
 
 // ---------- 3. CONTROLES ----------
-// Teclado: flechas o A/D mover | Espacio, W o ↑ saltar | Z o K patear | X o J poder | P o Esc pausa | M sonido
-// Control (Switch, Xbox, PS): palanca/cruceta mover | A o B saltar | Y patear | X poder | + pausa
+// Teclado: flechas o A/D mover | Espacio, W o ↑ saltar | Z o K atacar | X o J poder | P o Esc pausa | M sonido
+// Control (Switch, Xbox, PS): palanca/cruceta mover | A o B saltar | Y atacar | X poder | + pausa
 // Pantalla táctil: los 5 botones de la pantalla.
 const teclas = {}, pulsos = {}, tactil = {};
 let tactilActivo = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
@@ -611,6 +613,8 @@ function cabezaMod(g, pj, t, abierta, parpO) {
     g.bezierCurveTo(-29, -26, -9, -34, 6, -33); g.bezierCurveTo(23, -32, 29, -15, 23, -3);
     g.bezierCurveTo(21, -8, 19, -11, 15, -13); g.bezierCurveTo(12, -19, 5, -12, 1, -15); g.bezierCurveTo(-3, -19, -11, -11, -15, -14); g.bezierCurveTo(-19, -17, -22, -9, -23, 3);
     g.closePath(); g.fill(); g.stroke();
+  } else if (pj.estilo === 'patron') {                       // canas a los lados (el sombrero va encima)
+    [-1, 1].forEach(sg => { g.beginPath(); g.ellipse(sg * 21, -4, 5.4, 9, sg * 0.2, 0, 7); g.fill(); g.stroke(); });
   } else {                                                   // Sofi: rizos y moño
     [[-17, -15], [-9, -19], [-1, -21], [8, -20], [16, -16], [21, -9]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 7.4, 0, 7); g.fill(); g.stroke(); });
     g.fillStyle = '#ff4f9a'; [-1, 1].forEach(s => { g.beginPath(); g.ellipse(-2 + s * 10, -35, 10, 6.4, s * -0.5, 0, 7); g.fill(); g.stroke(); });
@@ -627,6 +631,12 @@ function cabezaMod(g, pj, t, abierta, parpO) {
     g.fillStyle = '#fff'; g.lineWidth = 1.4; trazoRedondo(g, mx - 3.6, 10.8, 3.5, 4.2, 1); g.fill(); g.stroke(); trazoRedondo(g, mx + 0.1, 10.8, 3.5, 4.2, 1); g.fill(); g.stroke();
     g.lineWidth = GM; abre(); g.stroke();
   } else { g.lineWidth = 2.2; g.beginPath(); g.arc(mx, 8.6, 6.6, 0.28 * Math.PI, 0.72 * Math.PI); g.stroke(); }
+  if (pj.estilo === 'patron') {                              // bigote gris y sombrero de paja
+    g.fillStyle = m.pelo; g.lineWidth = GM; g.beginPath(); g.moveTo(-9, 9); g.quadraticCurveTo(-4, 5, mx, 8); g.quadraticCurveTo(12, 5, 17, 9); g.quadraticCurveTo(12, 14.5, mx, 11.5); g.quadraticCurveTo(-4, 14.5, -9, 9); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#f7e6a8'; g.beginPath(); g.moveTo(-17, -17); g.quadraticCurveTo(-18, -41, 0, -41); g.quadraticCurveTo(18, -41, 17, -17); g.closePath(); g.fill(); g.stroke();
+    g.beginPath(); g.ellipse(0, -17, 33, 8.4, 0, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = '#b02828'; g.beginPath(); g.moveTo(-17.4, -21); g.lineTo(17.4, -21); g.lineTo(17.8, -27.5); g.lineTo(-17.8, -27.5); g.closePath(); g.fill(); g.stroke();
+  }
 }
 function dibujarNino(g, pj, x, y, esc, dir, pose) {
   const m = pj.mod, t = pose.t || 0, st = pose.estado, ph = pose.fase || 0, s = Math.sin(ph), c = Math.cos(ph);
@@ -634,6 +644,7 @@ function dibujarNino(g, pj, x, y, esc, dir, pose) {
   if (st === 'camina') { pieF = { x: 6 + s * 8, y: -Math.max(0, c) * 5 }; pieT = { x: -5.5 - s * 8, y: -Math.max(0, -c) * 5 }; bob = -Math.abs(c) * 2.6; aF = -s * 1.1; aT = s * 1.1; inclina = s * 0.05 + 0.05; }
   else if (st === 'salta') { pieF = { x: 10, y: -8 }; pieT = { x: -9, y: -4 }; aF = 1.5; aT = -1.5; }
   else if (st === 'patea') { pieF = { x: 26, y: -15 }; pieT = { x: -5.5, y: 0 }; aF = -1.1; aT = 1.5; }
+  else if (st === 'embiste') { pieF = { x: 13, y: -3 }; pieT = { x: -11, y: 0 }; aF = -1.7; aT = -1.3; inclina = 0.36; bob = -1.5; }
   else { bob = Math.sin(t * 0.08) * 0.8; aF = 0.55 + Math.sin(t * 0.08) * 0.07; aT = -0.55; abierta = pose.abierta !== undefined ? pose.abierta : (t % 400) > 90; }
   let sx = 1, sy = 1;
   if (st === 'salta') { const k = Math.max(-1, Math.min(1, (pose.vy || 0) / 12)); sy = 1 - k * 0.09; sx = 1 + k * 0.07; }
@@ -1681,7 +1692,7 @@ const NIVELES = [
     } },
   { nombre: 'NIVEL 2', lugar: 'Paseo de Montejo, al atardecer', corto: ['Paseo de Montejo', 'Al atardecer'], jefeNombre: 'La Patrona', cols: 160, tema: 'tarde', jefe: 'patrona', musica: 'tarde',
     nota: '¡Ahora le toca a la Patrona!',
-    cine: [['p', '¡Lo logré! El Patrón ya no nos molesta... pero la Patrona sigue en el Paseo de Montejo.'], ['patrona', '¡Ay, qué chamaco tan atrevido! ¡Mis bombas harán explotar tus sueños de departamento gratis!'], ['p', 'Cuidado con los círculos rojos. Y si puedo... ¡les devuelvo las bombas de una patada!']],
+    cine: [['p', '¡Lo logré! El Patrón ya no nos molesta... pero la Patrona sigue en el Paseo de Montejo.'], ['patrona', '¡Ay, qué chamaco tan atrevido! ¡Mis bombas harán explotar tus sueños de departamento gratis!'], ['p', 'Cuidado con los círculos rojos. Y si puedo... ¡les devuelvo las bombas con un ataque!']],
     fin: { titulo: '¡DERROTASTE A LA PATRONA!', lineas: ['¡Ya casi tienes tu departamento gratis!', 'Pero... ¡alguien se robó la llave!', 'Sigue la pista hasta la playa de Progreso.'] },
     construir() {
       suelo(0, 11); suelo(15, 26); suelo(30, 45); suelo(49, 64); suelo(68, 90); suelo(94, 112); suelo(116, 131); suelo(135, 159);
@@ -1713,7 +1724,7 @@ const NIVELES = [
     } },
   { nombre: 'NIVEL 4', lugar: 'Chichén Itzá, Yucatán', corto: ['Chichén Itzá', 'La pirámide de Kukulkán'], jefeNombre: 'Kukulkán', cols: 172, tema: 'chichen', jefe: 'kukulkan', musica: 'chichen',
     nota: 'Kukulkán bajó de la pirámide y se comió la llave',
-    cine: [['p', '¡Qué bonito es Chichén Itzá! ¡Miren esa pirámide tan enorme!'], ['p', 'Esperen... ¿por qué se está moviendo la serpiente de la escalinata?'], ['kukulkan', '¡¡Grrrr!! ¡Esa llave brillante se ve deliciosa! ¡Ñam!'], ['p', '¡Se comió la llave! Para ganarle tengo que patear sus fuegos y devolvérselos. ¡Vamos!']],
+    cine: [['p', '¡Qué bonito es Chichén Itzá! ¡Miren esa pirámide tan enorme!'], ['p', 'Esperen... ¿por qué se está moviendo la serpiente de la escalinata?'], ['kukulkan', '¡¡Grrrr!! ¡Esa llave brillante se ve deliciosa! ¡Ñam!'], ['p', '¡Se comió la llave! Para ganarle tengo que atacar sus fuegos y devolvérselos. ¡Vamos!']],
     fin: { titulo: '¡KUKULKÁN ESCUPIÓ LA LLAVE!', lineas: ['Le devolviste sus propios fuegos.', 'La llave volvió con los hermanos...', '¡y ahora sí, a casa!'] },
     construir() {
       suelo(0, 12); suelo(16, 29); suelo(33, 47); suelo(51, 66); suelo(70, 92); suelo(96, 115); suelo(119, 134); suelo(138, 171);
@@ -1732,13 +1743,13 @@ const solido = ch => ch === '#' || ch === 'c' || ch === 'b' || ch === 'e';
 
 // ---------- LOGROS ----------
 const LOGROS = [
-  { id: 'patron',     nombre: 'Patrón sin rasguños', desc: 'Derrota al Patrón sin perder ninguna vida', stat: 'patronSin',    meta: 1,   premio: 'sec1', monedas: 30 },
+  { id: 'patron',     nombre: 'Patrón sin rasguños', desc: 'Derrota al Patrón sin perder ninguna vida', stat: 'patronSin',    meta: 1,   monedas: 30 },
   { id: 'choco30',    nombre: 'Chocoadicto',         desc: 'Recoge 150 Kit Kats',                       stat: 'chocos',       meta: 150, premio: 'sec2', monedas: 40 },
   { id: 'serpientes', nombre: 'Cazaserpientes',      desc: 'Derrota 40 serpientes',                     stat: 'serpientes',   meta: 40,  premio: 'sec3', monedas: 40 },
-  { id: 'patadas',    nombre: 'Pateador experto',    desc: 'Acierta 200 patadas',                       stat: 'patadas',      meta: 200, monedas: 35 },
+  { id: 'patadas',    nombre: 'Atacante experto',    desc: 'Acierta 200 ataques',                       stat: 'patadas',      meta: 200, monedas: 35 },
   { id: 'reflector',  nombre: 'Reflector',           desc: 'Devuelve 30 fuegos a Kukulkán',             stat: 'fuegos',       meta: 30,  monedas: 45 },
   { id: 'intocable',  nombre: 'Intocable',           desc: 'Vence a 3 jefes sin perder vidas',          stat: 'intocable',    meta: 3,   monedas: 50 },
-  { id: 'kukulkan',   nombre: 'Héroe de Yucatán',    desc: 'Derrota a Kukulkán',                        stat: 'kukulkan',     meta: 1,   monedas: 60 },
+  { id: 'kukulkan',   nombre: 'Héroe de Yucatán',    desc: 'Derrota a Kukulkán',                        stat: 'kukulkan',     meta: 1,   premio: 'patron', monedas: 60 },
   { id: 'ricos',      nombre: 'Millonario',          desc: 'Junta 300 monedas en total',                stat: 'monedasTotal', meta: 300, monedas: 60 },
 ];
 let avisos = [];
@@ -1807,7 +1818,8 @@ function nuevoJuego() {
   cargarNivel(nivelElegido); irA('jugando'); musicaDelNivel(); registrar('partidas');
 }
 const nivelHecho = i => !!datos.prog[i];
-const nivelBloqueado = i => i > 0 && !nivelHecho(i - 1);
+const MODO_PRUEBA = true;                                   // mientras se prueba el juego: todos los niveles abiertos. En la versión final se cambia a false (los niveles se abren uno por uno)
+const nivelBloqueado = i => !MODO_PRUEBA && i > 0 && !nivelHecho(i - 1);
 let cineSigue = false;
 // Prepara los dibujos que se van a necesitar (mientras lees la cinemática), para que no haya tirones al jugar
 function precalentar() {
@@ -1816,7 +1828,7 @@ function precalentar() {
     for (let b = 0; b < 16; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'camina', fase: b * TAU / 16 + 0.01, t: 100, aire: false, botas: false, vy: 0 }));
     for (let b = 0; b < 10; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'quieto', t: b / 10 * TAU / 0.08 + 0.5, aire: false, botas: false, vy: 0 }));
     for (let b = -3; b <= 3; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'salta', t: 100, aire: true, botas: false, vy: b * 4 }));
-    tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'patea', t: 100, aire: false, botas: false, vy: 0 }));
+    tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: pj.ataque === 'embestida' ? 'embiste' : 'patea', t: 100, aire: false, botas: false, vy: 0 }));
   });
   const conRel = (v, f) => () => { const r = reloj; reloj = v; try { f(); } finally { reloj = r; } };
   for (let b = 0; b < 12; b++) {
@@ -1938,6 +1950,7 @@ function dispararPoder() {
 }
 function cajaPatada() {
   const d = jugador.mirando;
+  if (personaje.ataque === 'embestida') return { x: d > 0 ? jugador.x + jugador.w - 6 : jugador.x - 26, y: jugador.y + 4, w: 32, h: jugador.h - 6 };      // el hombro del Patrón: más alto y más ancho que una patada
   return { x: d > 0 ? jugador.x + jugador.w - 4 : jugador.x - 30, y: jugador.y + jugador.h - 26, w: 34, h: 26 };
 }
 function matar(e, congelado, color) {                    // escarabajos y murciélagos
@@ -2067,7 +2080,7 @@ function finDeJefe() {
   if (nivelActual + 1 < NIVELES.length) { irA('nivelok'); sfx('gana'); }
   else { irA('gano'); sfx('gana'); for (let i = 0; i < 90; i++) chispas(camara + Math.random() * W, Math.random() * 160, 1, ['#ffd700', '#ff4f9a', '#4fc3f7', '#7bd36b'][i % 4], 2, 0.1); }
 }
-// Kukulkán no es un monstruo con cuerpo: es una serpiente gigante al fondo que escupe fuego. Solo se le gana devolviéndole sus fuegos con una patada.
+// Kukulkán no es un monstruo con cuerpo: es una serpiente gigante al fondo que escupe fuego. Solo se le gana devolviéndole sus fuegos con un ataque.
 function dispararKuku(j, p) {
   const H = cabezaKuku(j), mx = H.x, my = H.y + 30, k = j.ciclo++ % 3, vel = 3.0 + (j.hpMax - j.hp) * 0.14, px = p.x + 13, py = p.y + 40;
   const tiro = (tx, ty, v) => { const dx = tx - mx, dy = ty - my, d = Math.hypot(dx, dy) || 1; proyJ.push({ tipo: 'fuego', x: mx - 13, y: my - 13, w: 26, h: 26, vx: dx / d * v, vy: dy / d * v, grav: 0, rot: 0, vida: 500, devuelto: false }); };
@@ -2175,7 +2188,7 @@ function actualizarProyectiles(p, pata) {
         q.vx = dx / d * 7.5; q.vy = dy / d * 7.5;
         if (d < 58 && jefe.vivo && jefe.invul <= 0) { q.vida = 0; danarJefe(jefe, 1); jefe.flash = 24; chispas(H.x, H.y, 26, '#ffb13b', 6); chispas(H.x, H.y, 14, '#bff3ff', 5); }
       } else {
-        const zonaPatada = p.patada > 0 ? { x: p.mirando > 0 ? p.x - 6 : p.x - 56, y: p.y - 8, w: 88, h: p.h + 16 } : null;      // mientras pateas, el fuego que te toca (o casi) se devuelve, nunca te daña
+        const zonaPatada = p.patada > 0 ? { x: p.mirando > 0 ? p.x - 6 : p.x - 56, y: p.y - 8, w: 88, h: p.h + 16 } : null;      // mientras atacas, el fuego que te toca (o casi) se devuelve, nunca te daña
         if (zonaPatada && choca(zonaPatada, q)) { q.devuelto = true; q.vida = 700; sfx('patada'); sfx('hielo'); chispas(cq, cy, 14, '#bff3ff', 5); puntos += 100; registrar('patadas'); registrar('fuegos'); }
         else if (tragando === 0 && choca(p, q)) { q.vida = 0; chispas(cq, cy, 16, '#ff9a3a', 5); recibirGolpe(true, (q.vx >= 0 ? 1 : -1) * 5); }
         else if (hayBloque(cq, cy) || q.y > FILAS * T) { q.vida = 0; chispas(cq, cy, 10, '#ff9a3a', 3); }
@@ -2233,13 +2246,14 @@ function actualizar() {
     if (tragando === 0) { perderVida(0); if (estado !== 'jugando') return; }
   } else {
     const dirIn = (ctrl.der ? 1 : 0) - (ctrl.izq ? 1 : 0);
-    p.vx = dirIn * pj.vel + p.empuje; p.empuje *= 0.85; if (Math.abs(p.empuje) < 0.1) p.empuje = 0;
+    p.vx = dirIn * pj.vel + p.empuje; p.empuje *= 0.85; if (p.embiste > 0) { p.embiste--; p.vx = p.mirando * 7 + p.empuje; }       // la embestida del Patrón: un arranque corto hacia adelante
+     if (Math.abs(p.empuje) < 0.1) p.empuje = 0;
     if (dirIn) { p.mirando = dirIn; p.pasos += Math.abs(dirIn * pj.vel); }
     const saltoNuevo = ctrl.salto && !p.saltoPrev, estabaEnSuelo = p.enSuelo; p.saltoPrev = ctrl.salto; if (p.enSuelo) p.dobleUsado = false;
     if (ctrl.salto && p.enSuelo) { p.vy = -pj.salto * (botas > 0 ? 1.38 : 1); p.enSuelo = false; sfx(botas > 0 ? 'resorte' : 'salto'); polvo(p.x + 13, p.y + p.h, 4); }
     else if (saltoNuevo && !estabaEnSuelo && tiene('doble') && !p.dobleUsado) { p.dobleUsado = true; p.vy = -pj.salto * 0.85; sfx('salto'); chispas(p.x + 13, p.y + p.h, 10, '#fff', 3); polvo(p.x + 13, p.y + p.h, 5); }
     if (!ctrl.salto && p.vy < -4) p.vy = -4;
-    if (ctrl.patada && p.patada === 0) { p.patada = 14; p.golpeaA = new Set(); sfx('patada'); }
+    if (ctrl.patada && p.patada === 0) { if (pj.ataque === 'embestida') { p.patada = 12; p.embiste = 10; } else p.patada = 14; p.golpeaA = new Set(); sfx('patada'); }
     if (ctrl.poder) { if (poder) dispararPoder(); else usarRayo(); }
     if (ctrl.rayo) usarRayo();
     const vyAntes = p.vy;
@@ -2397,9 +2411,12 @@ function dibujarJugador() {
   if (p.invulnerable > 0 && !escudo && Math.floor(p.invulnerable / 4) % 2) return;
   const cx = p.x + p.w / 2, cy = p.y + p.h / 2;
   if (poder) resplandor(ctx, cx, cy, 40, 'rgba(150,225,255,.6)');
-  const estadoP = p.patada > 0 ? 'patea' : !p.enSuelo ? 'salta' : p.vx ? 'camina' : 'quieto';
+  const estadoP = p.patada > 0 ? (personaje.ataque === 'embestida' ? 'embiste' : 'patea') : !p.enSuelo ? 'salta' : p.vx ? 'camina' : 'quieto';
   dibujarNinoCache(ctx, personaje, cx, p.y + p.h, 0.68, p.mirando, { estado: estadoP, fase: p.pasos * 0.2, t: reloj, aire: !p.enSuelo, botas: botas > 0, vy: p.vy });
-  if (p.patada > 0) {
+  if (p.patada > 0 && personaje.ataque === 'embestida') {
+    const d = p.mirando, a = p.patada / 12; ctx.strokeStyle = `rgba(255,255,255,${a * 0.8})`; ctx.lineWidth = 3; ctx.lineCap = 'round';
+    for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(cx - d * (16 + k * 4), p.y + 14 + k * 14); ctx.lineTo(cx - d * (36 + k * 8), p.y + 14 + k * 14); ctx.stroke(); }
+  } else if (p.patada > 0) {
     const d = p.mirando, a = p.patada / 14;
     ctx.strokeStyle = `rgba(255,255,255,${a * 0.8})`; ctx.lineWidth = 3; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.arc(cx, p.y + p.h - 12, 26, d > 0 ? -0.9 : Math.PI - 0.3, d > 0 ? 0.3 : Math.PI + 0.9, d < 0); ctx.stroke();
@@ -2528,7 +2545,7 @@ function dibujarJuego() {
   ctx.restore();
   if (tema === 'tarde') { ctx.fillStyle = 'rgba(255,120,60,.10)'; ctx.fillRect(0, 0, W, H); }
   if (estado === 'jugando') dibujarMarcador();
-  if (estado === 'jugando' && jefe && jefe.tipo === 'kukulkan' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡PATEA LOS FUEGOS PARA DEVOLVÉRSELOS!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
+  if (estado === 'jugando' && jefe && jefe.tipo === 'kukulkan' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡ATACA LOS FUEGOS PARA DEVOLVÉRSELOS!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
   if (banner > 0 && estado === 'jugando') {
     const a = Math.min(1, banner / 30, (170 - banner) / 20), N = NIVELES[nivelActual]; ctx.globalAlpha = a;
     const spb = sprite('ban|' + nivelActual, 470, 130, 0, 0, gg => { gg.translate(-(W / 2 - 235), -125); ctx.fillStyle = 'rgba(15,10,40,.7)'; trazoRedondo(ctx, W / 2 - 230, 130, 460, 112, 16); ctx.fill(); texto(N.nombre, W / 2, 168, 30, '#ffd700', 'center'); texto(N.lugar, W / 2, 196, 17, '#fff', 'center'); texto(N.nota, W / 2, 226, 14, '#ffd9a0', 'center'); });
@@ -2597,7 +2614,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 2.9', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.0', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -2686,7 +2703,7 @@ function dibujarPersonajes() {
   } else {
     const hecho = pj.logro && datos.logros[pj.logro];
     texto('Personaje secreto', 90, 285, 22, '#aab');
-    texto(hecho ? '¡Ya cumpliste el logro! Muy pronto podrás jugar con él.' : 'Muy pronto estará disponible. Pista: ' + pj.pista, 90, 316, 15, '#ffe27a', 'left', true);
+    texto(pj.pendiente ? (hecho ? '¡Ya cumpliste el logro! Muy pronto podrás jugar con él.' : 'Muy pronto estará disponible. Pista: ' + pj.pista) : 'Para desbloquearlo: ' + pj.pista.toLowerCase() + '.', 90, 316, 15, '#ffe27a', 'left', true);
     texto('Revisa la sección de LOGROS para ver tu avance.', 90, 340, 13, '#cfd8ff', 'left', true);
   }
   if (modoPers === 'elegir') uiBoton('¡JUGAR!', W / 2 - 110, 372, 220, 48, () => { if (libre) nuevaPartidaDesdeMenu(); else sfx('golpe'); }, libre ? 'verde' : 'gris', 22);
@@ -2704,7 +2721,7 @@ function dibujarPerfil() {
   panelVidrio(20, 62, 380, 360);
   texto(datos.nombre, 40, 100, 26, '#ffe27a'); texto('Perfil ' + (perfilActual + 1) + ' de 4', 40, 120, 12, '#cfd8ff', 'left', true);
   const filas = [['Monedas', datos.monedas], ['Mejor puntaje', datos.mejor], ['Niveles completados', R.niveles + ' / ' + NIVELES.length], ['Logros', R.logros + ' / ' + LOGROS.length], ['Objetos de la tienda', R.objetos + ' / ' + OBJETOS.length],
-    ['Kit Kats recogidos', st.chocos || 0], ['Enemigos derrotados', st.enemigos || 0], ['Patadas acertadas', st.patadas || 0], ['Fuegos devueltos', st.fuegos || 0], ['Tiempo jugado', tiempoTxt(st.segundos)]];
+    ['Kit Kats recogidos', st.chocos || 0], ['Enemigos derrotados', st.enemigos || 0], ['Ataques acertados', st.patadas || 0], ['Fuegos devueltos', st.fuegos || 0], ['Tiempo jugado', tiempoTxt(st.segundos)]];
   filas.forEach(([k, v], i) => { const y = 148 + i * 24; if (i % 2 === 0) { ctx.fillStyle = 'rgba(255,255,255,.06)'; trazoRedondo(ctx, 30, y - 17, 360, 22, 8); ctx.fill(); } texto(k, 40, y, 14, '#fff', 'left', true); texto(String(v), 380, y, 14, '#ffd700', 'right'); });
   const ib = ui.rects.length; ui.rects.push({ tipo: 'boton', x: 40, y: 390, w: 340, h: 26, accion: () => { const k = NOMBRES_PERFIL.indexOf(datos.nombre); datos.nombre = NOMBRES_PERFIL[(k + 1) % NOMBRES_PERFIL.length]; guardarDatos(); sfx('clic'); } });
   pill(40, 390, 340, 26, COLB.azul, ui.foco === ib && !ui.sinTeclado); texto('CAMBIAR NOMBRE ↻', 210, 408, 14, '#fff', 'center');
