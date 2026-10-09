@@ -41,7 +41,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 1.6
+//  LICHILÓN Y EL PATRÓN  -  Versión 1.7
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -1959,7 +1959,8 @@ function actualizarProyectiles(p, pata) {
         q.vx = dx / d * 7.5; q.vy = dy / d * 7.5;
         if (d < 58 && jefe.vivo && jefe.invul <= 0) { q.vida = 0; danarJefe(jefe, 1); jefe.flash = 24; chispas(H.x, H.y, 26, '#ffb13b', 6); chispas(H.x, H.y, 14, '#bff3ff', 5); }
       } else {
-        if (pata && choca(pata, q)) { q.devuelto = true; q.vida = 700; sfx('patada'); sfx('hielo'); chispas(cq, cy, 14, '#bff3ff', 5); puntos += 100; registrar('patadas'); }
+        const zonaPatada = p.patada > 0 ? { x: p.mirando > 0 ? p.x - 6 : p.x - 56, y: p.y - 8, w: 88, h: p.h + 16 } : null;      // mientras pateas, el fuego que te toca (o casi) se devuelve, nunca te daña
+        if (zonaPatada && choca(zonaPatada, q)) { q.devuelto = true; q.vida = 700; sfx('patada'); sfx('hielo'); chispas(cq, cy, 14, '#bff3ff', 5); puntos += 100; registrar('patadas'); }
         else if (tragando === 0 && choca(p, q)) { q.vida = 0; chispas(cq, cy, 16, '#ff9a3a', 5); recibirGolpe(true, (q.vx >= 0 ? 1 : -1) * 5); }
         else if (hayBloque(cq, cy) || q.y > FILAS * T) { q.vida = 0; chispas(cq, cy, 10, '#ff9a3a', 3); }
         for (const b of balas) if (b.vida > 0 && choca(b, q)) { b.vida = 0; q.vida = 0; chispas(cq, cy, 10, '#bfeaff', 3); sfx('hielo'); }
@@ -2340,7 +2341,7 @@ function dibujarMenu() {
   uiBoton('LOGROS', bx, 292, 300, 40, () => irA('logros'), 'dorado', 17);
   uiBoton('AJUSTES', bx, 338, 300, 40, () => { ajustesVolver = 'menu'; irA('ajustes'); }, 'gris', 17);
   texto('Mejor puntaje: ' + datos.mejor, W / 2, 404, 14, '#fff', 'center');
-  texto('Versión 1.6', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 1.7', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
