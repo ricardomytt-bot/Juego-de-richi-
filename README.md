@@ -76,3 +76,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Versión 3.11
 - Sofi Lofi cae más despacio (caída 0.7→0.55, velocidad máxima de caída 7.5→6).
+
+## Versión 3.12
+- Enemigos de Baja California más bonitos: gaviota redondita con ojotes (como la mariquita); erizo turquesa más grande con ojos enojados (al inflarse: puntas moradas y ojos verde-amarillo, modo venenoso); cangrejo ermitaño con una lata de atún como caparazón.

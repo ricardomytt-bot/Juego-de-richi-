@@ -44,7 +44,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.11
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.12
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -876,78 +876,95 @@ function dibujarSerpiente(g, s, sinBarras, tt, parpO, lenguaO) {
   for (let i = 0; i < need; i++) { g.fillStyle = i < s.golpes ? '#444' : (cong ? '#7fd3ff' : '#ff5252'); g.strokeStyle = NEGRO; g.lineWidth = 1.6; trazoRedondo(g, s.x + s.w / 2 - need * 7 + i * 14, s.y - 17, 11, 7, 2); g.fill(); g.stroke(); }
 }
 
-function dibujarCangrejoSprite(g, est, cong, t) {            // origen: los pies, centrado
-  g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = GM; g.scale(1.1, 1.1);
-  g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(0, 0, 20, 3.4, 0, 0, 7); g.fill();
-  const lata = (cx, cy, w, h, rot) => {
-    g.save(); g.translate(cx, cy); g.rotate(rot); g.fillStyle = cong ? '#cfe9f6' : '#a9bccd'; trazoRedondo(g, -w / 2, -h / 2, w, h, 4); g.fill(); g.stroke();
-    g.fillStyle = '#d83a34'; g.fillRect(-w / 2 + 3, -h / 2 + 4, w - 6, h - 8); g.fillStyle = '#fff'; g.fillRect(-w / 2 + 5, -2, w - 10, 4);
-    g.fillStyle = '#cfd8e0'; g.beginPath(); g.ellipse(-w / 2, 0, 3, h / 2 - 1, 0, 0, 7); g.fill(); g.stroke(); g.fillStyle = 'rgba(255,255,255,.45)'; g.fillRect(-w / 2 + 6, -h / 2 + 1.5, w - 12, 2.2); g.restore(); };
-  if (est === 'lata') {                                       // metido en la lata: solo se ven los ojitos y las pinzas asomando
-    for (let i = 0; i < 2; i++) { g.strokeStyle = '#a23a1a'; g.lineWidth = 3; g.beginPath(); g.moveTo(-9 + i * 18, -3); g.lineTo(-11 + i * 22, 0); g.stroke(); }
-    g.strokeStyle = NEGRO; g.lineWidth = GM; lata(0, -13, 36, 22, 0);
-    g.fillStyle = '#fff'; [-6, 7].forEach(x => { g.beginPath(); g.arc(x, -5, 3, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#000'; g.beginPath(); g.arc(x + 0.8, -5, 1.2, 0, 7); g.fill(); g.fillStyle = '#fff'; });
+function dibujarCangrejoSprite(g, est, cong, t) {            // cangrejo ermitaño: su caparazón es una lata de atún. Origen: los pies, centrado
+  g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = GM; g.scale(1.3, 1.3); g.translate(-8, 0);
+  g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(8, 0, 26, 3.6, 0, 0, 7); g.fill();
+  const piel = cong ? '#bfe3f5' : '#ff7a3d', piel2 = cong ? '#d9f0fb' : '#ff9a58', pata = cong ? '#7fb4d0' : '#c4501c', metal = cong ? '#dff3fb' : '#b9c8d8', metal2 = cong ? '#bfd8e6' : '#8fa3b8';
+  const oculto = est === 'lata', emb = est === 'embiste', cans = est === 'cansado', m = cong || cans || oculto ? 0 : Math.sin(t) * 3;
+  const lata = (cx, cy, w, h, rot) => {                       // la lata de atún acostada: etiqueta roja con pescadito, bordes y brillo
+    g.save(); g.translate(cx, cy); g.rotate(rot);
+    g.fillStyle = metal2; g.beginPath(); g.ellipse(-w / 2, 0, h * 0.2, h / 2, 0, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = metal; trazoRedondo(g, -w / 2, -h / 2, w, h, 3); g.fill(); g.stroke();
+    g.fillStyle = '#e0352e'; g.fillRect(-w / 2 + 4, -h / 2 + 3, w - 8, h - 6); g.lineWidth = 1.3; g.strokeRect(-w / 2 + 4, -h / 2 + 3, w - 8, h - 6); g.lineWidth = GM;
+    g.fillStyle = '#fff'; g.beginPath(); g.ellipse(-1, 0, h * 0.27, h * 0.16, 0, 0, 7); g.fill(); g.lineWidth = 1.2; g.stroke();
+    g.beginPath(); g.moveTo(h * 0.24, 0); g.lineTo(h * 0.4, -h * 0.14); g.lineTo(h * 0.4, h * 0.14); g.closePath(); g.fill(); g.stroke(); g.lineWidth = GM;
+    g.fillStyle = '#e0352e'; g.beginPath(); g.arc(-h * 0.18, -h * 0.05, 0.9, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(40,60,90,.45)'; g.lineWidth = 1.2; [-w / 2 + 3, w / 2 - 3].forEach(x => { g.beginPath(); g.moveTo(x, -h / 2 + 1); g.lineTo(x, h / 2 - 1); g.stroke(); }); g.strokeStyle = NEGRO; g.lineWidth = GM;
+    g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(-w / 2 + 6, -h / 2 + 1, w - 12, 2.2);
+    g.fillStyle = '#2a1a22'; g.beginPath(); g.ellipse(w / 2, 0, h * 0.2, h / 2, 0, 0, 7); g.fill(); g.stroke();      // la boca de la lata
+    g.restore(); };
+  if (oculto) {                                                // escondido: solo se ven los ojitos dentro de la boca de la lata
+    g.strokeStyle = pata; g.lineWidth = 3; [4, 12, 20].forEach(x => { g.beginPath(); g.moveTo(x, -4); g.lineTo(x - 2, 0); g.stroke(); }); g.strokeStyle = NEGRO; g.lineWidth = GM;
+    lata(8, -14, 36, 26, 0);
+    g.fillStyle = '#fff'; g.lineWidth = 1.4; [[26, -19], [26, -10]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 3.2, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#000'; g.beginPath(); g.arc(x + 1, y, 1.3, 0, 7); g.fill(); g.fillStyle = '#fff'; });
     return;
   }
-  const cansado = est === 'cansado', emb = est === 'embiste', m = cong || cansado ? 0 : Math.sin(t) * 3.2;
-  g.strokeStyle = '#a23a1a'; g.lineWidth = 3; for (let i = 0; i < 3; i++) { const bx = -10 + i * 9; g.beginPath(); g.moveTo(bx, -8); g.lineTo(bx - 6 - (cansado ? 4 : 0) + m * (i % 2 ? 1 : -1), 0); g.stroke(); g.beginPath(); g.moveTo(bx + 4, -8); g.lineTo(bx + 10 + (cansado ? 4 : 0) - m * (i % 2 ? 1 : -1), 0); g.stroke(); }
-  g.strokeStyle = NEGRO; g.lineWidth = GM;
-  g.fillStyle = cong ? '#bfe3f5' : '#e8683a'; g.beginPath(); g.ellipse(0, -11, 16, 9.5, 0, 0, 7); g.fill(); g.stroke();
-  [-1, 1].forEach(l => { const ax = l * 17, ay = emb ? -16 : (cansado ? -6 : -20 - Math.abs(m) * 0.4); g.strokeStyle = cong ? '#bfe3f5' : '#e8683a'; g.lineWidth = 5; g.beginPath(); g.moveTo(l * 12, -11); g.lineTo(ax + (emb ? l * 8 : 0), ay); g.stroke(); g.strokeStyle = NEGRO; g.lineWidth = GM;
-    g.fillStyle = cong ? '#bfe3f5' : '#f0814f'; g.beginPath(); g.ellipse(ax + (emb ? l * 10 : 0), ay - 4, 8, 6.5, l * 0.3, 0, 7); g.fill(); g.stroke(); g.beginPath(); g.moveTo(ax + (emb ? l * 10 : 0), ay - 4); g.lineTo(ax + (emb ? l * 10 : 0) + l * 7, ay - 7); g.stroke(); });
-  lata(-2, -19, 26, 14, -0.18);
-  [-1, 1].forEach(l => { g.strokeStyle = cong ? '#bfe3f5' : '#e8683a'; g.lineWidth = 2.6; g.beginPath(); g.moveTo(l * 5, -17); g.lineTo(l * 6, -26); g.stroke(); g.strokeStyle = NEGRO; g.lineWidth = GM;
-    g.fillStyle = '#fff'; g.beginPath(); g.arc(l * 6, -28, 3.8, 0, 7); g.fill(); g.stroke();
-    if (cansado) { g.lineWidth = 1.4; g.beginPath(); g.moveTo(l * 6 - 2, -30); g.lineTo(l * 6 + 2, -26); g.moveTo(l * 6 + 2, -30); g.lineTo(l * 6 - 2, -26); g.stroke(); g.lineWidth = GM; }
-    else { g.fillStyle = '#000'; g.beginPath(); g.arc(l * 6 + 0.8, -28, 1.7, 0, 7); g.fill(); } });
-  if (emb) { g.fillStyle = '#7a1024'; g.beginPath(); g.ellipse(8, -9, 4, 2.6, 0, 0, 7); g.fill(); }
-  if (cansado) { g.fillStyle = '#ffe14d'; g.lineWidth = 1.4; for (let i = 0; i < 3; i++) { const a = t * 0.8 + i * 2.1; g.beginPath(); g.arc(Math.cos(a) * 12, -38 + Math.sin(a) * 3, 2.6, 0, 7); g.fill(); g.stroke(); } }
-  if (cong) hielo(g, -22, -34, 44, 36);
+  g.strokeStyle = pata; g.lineWidth = 3; for (let i = 0; i < 3; i++) { const bx = 8 + i * 8; g.beginPath(); g.moveTo(bx, -6); g.lineTo(bx - 3 + m * (i % 2 ? 1 : -1), 0); g.stroke(); } g.strokeStyle = NEGRO; g.lineWidth = GM;
+  // el cangrejo (atrás de la lata): cuerpo, pinzas y ojos de tallo
+  g.fillStyle = piel; g.beginPath(); g.ellipse(18, -9, 12, 8, 0, 0, 7); g.fill(); g.stroke();
+  [-1, 1].forEach(l => { const ax = 31 + (emb ? 5 : 0), ay = l < 0 ? (emb ? -23 : (cans ? -7 : -20)) : (emb ? -9 : (cans ? -2 : -6));
+    g.strokeStyle = pata; g.lineWidth = 4.6; g.beginPath(); g.moveTo(26, -9); g.lineTo(ax - 3, ay); g.stroke(); g.strokeStyle = NEGRO; g.lineWidth = GM;
+    g.fillStyle = piel2; g.beginPath(); g.ellipse(ax + 1, ay, 8.4, 7, -0.25 * l, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = '#2a1410'; g.beginPath(); g.moveTo(ax + 3, ay - 1); g.lineTo(ax + 11, ay - 5); g.lineTo(ax + 10, ay + 1.6); g.closePath(); g.fill(); g.stroke(); });
+  lata(-4, -19, 30, 22, 0.45);
+  [[20, -28], [29, -26.5]].forEach(([x, y], i) => { g.strokeStyle = pata; g.lineWidth = 2.8; g.beginPath(); g.moveTo(x - 1, -14); g.lineTo(x, y + 3); g.stroke(); g.strokeStyle = NEGRO; g.lineWidth = GM;
+    if (cans) { g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y, 5.2, 0, 7); g.fill(); g.stroke(); g.lineWidth = 1.5; g.beginPath(); g.moveTo(x - 2.4, y - 2.4); g.lineTo(x + 2.4, y + 2.4); g.moveTo(x + 2.4, y - 2.4); g.lineTo(x - 2.4, y + 2.4); g.stroke(); g.lineWidth = GM; }
+    else ojoMod(g, x, y, i ? 4.6 : 5.2, '#ffd54a', piel, false); });
+  g.strokeStyle = NEGRO; g.lineWidth = 1.8; g.beginPath(); if (emb) { g.fillStyle = '#7a1024'; g.ellipse(25, -8, 3.2, 2.2, 0, 0, 7); g.fill(); } else { g.moveTo(21, -7); g.quadraticCurveTo(25, -5, 29, -7.4); } g.stroke();
+  if (cans) { g.fillStyle = '#ffe14d'; g.lineWidth = 1.4; for (let i = 0; i < 3; i++) { const a = t * 0.8 + i * 2.1; g.beginPath(); g.arc(24 + Math.cos(a) * 12, -40 + Math.sin(a) * 3, 2.6, 0, 7); g.fill(); g.stroke(); } }
+  if (cong) hielo(g, -22, -36, 66, 38);
 }
 function pintarCangrejo(g, e) {
   const cong = e.congelado > 0, mov = e.est === 'pasea' || e.est === 'embiste', bin = mov && !cong ? Math.floor(((reloj * 0.3) % TAU) / TAU * 8) : (e.est === 'cansado' ? Math.floor((reloj % 40) / 5) : 0);
-  const sp = sprite('can|' + e.est + '|' + (cong ? 1 : 0) + '|' + bin, 100, 80, 50, 66, gg => dibujarCangrejoSprite(gg, e.est, cong, bin * TAU / 8 / 0.3));
+  const sp = sprite('can|' + e.est + '|' + (cong ? 1 : 0) + '|' + bin, 130, 100, 60, 84, gg => dibujarCangrejoSprite(gg, e.est, cong, bin * TAU / 8 / 0.3));
   g.save(); g.translate(e.x + e.w / 2, e.y + e.h); g.scale(e.dir || -1, 1); g.drawImage(sp.c, -sp.ox, -sp.oy, sp.w, sp.h); g.restore();
 }
-function dibujarErizoSprite(g, lvl, cong, t) {
-  g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = GM; g.scale(1.1, 1.1);
+function dibujarErizoSprite(g, lvl, cong, t) {               // erizo de mar: turquesa llamativo, ojos enojados; al inflarse: puntas moradas y ojos verde-amarillo (¡veneno!)
+  g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = GM; g.scale(1.45, 1.45);
   g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.ellipse(0, 0, 20, 3.4, 0, 0, 7); g.fill();
-  const r = [11.5, 13.5, 16][lvl], cy = -r - 2, L = [9, 13, 18][lvl], n = 16, m = cong ? 0 : Math.sin(t) * 1.6;
-  [-1, 1].forEach(l => { g.fillStyle = '#ff9a3a'; g.beginPath(); g.ellipse(l * 7 + m * l, -1.5, 4.4, 2.6, 0, 0, 7); g.fill(); g.stroke(); });
-  g.strokeStyle = cong ? '#7fc4e8' : '#2a1240'; g.lineWidth = 3;
-  for (let i = 0; i < n; i++) { const a = -Math.PI + (i + 0.5) / n * Math.PI * 2 * (1) ; if (Math.sin(a) > 0.55) continue; g.beginPath(); g.moveTo(Math.cos(a) * (r - 3), cy + Math.sin(a) * (r - 3)); g.lineTo(Math.cos(a) * (r + L * 0.8), cy + Math.sin(a) * (r + L * 0.8)); g.stroke(); }
-  g.strokeStyle = cong ? '#eaf8ff' : '#e6d4ff'; g.lineWidth = 1.2; for (let i = 0; i < n; i++) { const a = -Math.PI + (i + 0.5) / n * Math.PI * 2; if (Math.sin(a) > 0.55) continue; g.beginPath(); g.moveTo(Math.cos(a) * (r + L * 0.45), cy + Math.sin(a) * (r + L * 0.45)); g.lineTo(Math.cos(a) * (r + L * 0.8), cy + Math.sin(a) * (r + L * 0.8)); g.stroke(); }
-  g.strokeStyle = NEGRO; g.lineWidth = GM; g.fillStyle = cong ? '#bfe3f5' : '#7a3da8'; g.beginPath(); g.arc(0, cy, r, 0, 7); g.fill(); g.stroke();
-  g.fillStyle = 'rgba(255,255,255,.22)'; g.beginPath(); g.ellipse(-r * 0.35, cy - r * 0.45, r * 0.3, r * 0.18, -0.6, 0, 7); g.fill();
-  [-1, 1].forEach(l => { g.fillStyle = '#fff'; g.beginPath(); g.arc(l * r * 0.38 + 1, cy - 1, r * 0.3, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#000'; g.beginPath(); g.arc(l * r * 0.38 + 2, cy - 0.5, r * 0.13, 0, 7); g.fill(); });
-  g.lineWidth = 2.4; g.beginPath(); g.moveTo(-r * 0.7, cy - r * 0.48); g.lineTo(-r * 0.12, cy - r * 0.3); g.moveTo(r * 0.7, cy - r * 0.48); g.lineTo(r * 0.12, cy - r * 0.3); g.stroke();
-  g.fillStyle = '#7a1024'; g.beginPath(); g.ellipse(1, cy + r * 0.42, lvl ? 4.4 : 3, lvl ? 3.4 : 1.8, 0, 0, 7); g.fill(); g.stroke();
+  const r = [11.5, 13.5, 15.5][lvl], cy = -r - 2, L = [9, 12, 15][lvl], n = 18, m = cong ? 0 : Math.sin(t) * 1.6, ven = lvl === 2 && !cong;
+  if (ven) resplandor(g, 0, cy, r + 17, 'rgba(176,80,255,.55)');
+  [-1, 1].forEach(l => { g.fillStyle = '#ffb02e'; g.beginPath(); g.ellipse(l * 7 + m * l, -1.5, 4.6, 2.7, 0, 0, 7); g.fill(); g.stroke(); });
+  const espinas = (desde, hasta, col, ancho) => { g.strokeStyle = col; g.lineWidth = ancho; for (let i = 0; i < n; i++) { const a = -Math.PI + (i + 0.5) / n * Math.PI * 2; if (Math.sin(a) > 0.55) continue; g.beginPath(); g.moveTo(Math.cos(a) * (r + L * desde), cy + Math.sin(a) * (r + L * desde)); g.lineTo(Math.cos(a) * (r + L * hasta), cy + Math.sin(a) * (r + L * hasta)); g.stroke(); } };
+  espinas(-0.2, 0.9, NEGRO, 5.2);                                                       // contorno de las espinas
+  espinas(-0.2, 0.9, cong ? '#7fc4e8' : '#0e5a66', 3);                                  // espinas oscuras
+  espinas(0.5, 0.9, cong ? '#eaf8ff' : (ven ? '#b44dff' : '#c8fbff'), 3);              // puntas: moradas cuando está venenoso
+  g.strokeStyle = NEGRO; g.lineWidth = GM; g.fillStyle = cong ? '#bfe3f5' : '#19d9c8'; g.beginPath(); g.arc(0, cy, r, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = cong ? '#e6f6ff' : '#5cf0e0'; g.beginPath(); g.ellipse(-r * 0.35, cy - r * 0.5, r * 0.34, r * 0.2, -0.6, 0, 7); g.fill();
+  [-1, 1].forEach(l => { const ex = l * r * 0.4 + 1, ey = cy - 1, er = r * 0.36;
+    g.fillStyle = '#fff'; g.lineWidth = GM; g.beginPath(); g.ellipse(ex, ey, er, er * 1.1, 0, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = cong ? '#7fb4d0' : (ven ? '#d4ff2a' : '#2a1240'); g.beginPath(); g.arc(ex + 1, ey + 0.8, er * 0.62, 0, 7); g.fill();
+    g.fillStyle = '#000'; g.beginPath(); g.arc(ex + 1.4, ey + 1, er * 0.28, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(ex - 0.4, ey - 1.2, er * 0.16, 0, 7); g.fill();
+    g.fillStyle = cong ? '#bfe3f5' : '#19d9c8'; g.beginPath(); g.moveTo(ex + l * er * 1.25, ey - er * 1.6); g.lineTo(ex - l * er * 1.15, ey - er * 0.2); g.lineTo(ex + l * er * 1.25, ey - er * 0.2); g.closePath(); g.fill();   // párpado enojado (abajo hacia el centro)
+    g.strokeStyle = NEGRO; g.lineWidth = 2.8; g.beginPath(); g.moveTo(ex + l * er * 1.25, ey - er * 1.6); g.lineTo(ex - l * er * 1.15, ey - er * 0.2); g.stroke(); g.lineWidth = GM; });
+  g.fillStyle = '#7a1024'; g.beginPath(); g.ellipse(1, cy + r * 0.5, lvl ? 4.6 : 3.2, lvl ? 3.6 : 2, 0, 0, 7); g.fill(); g.stroke();
   if (cong) hielo(g, -r - 6, cy - r - 8, r * 2 + 12, r * 2 + 12);
 }
 function pintarErizo(g, e) {
   const cong = e.congelado > 0, lvl = e.inflado >= 30 ? 2 : (e.inflado >= 8 ? 1 : 0), bin = !cong && e.vx ? Math.floor(((reloj * 0.3) % TAU) / TAU * 6) : 0;
-  const sp = sprite('eri|' + lvl + '|' + (cong ? 1 : 0) + '|' + bin, 100, 90, 50, 76, gg => dibujarErizoSprite(gg, lvl, cong, bin * TAU / 6 / 0.3));
+  const sp = sprite('eri|' + lvl + '|' + (cong ? 1 : 0) + '|' + bin, 140, 130, 70, 112, gg => dibujarErizoSprite(gg, lvl, cong, bin * TAU / 6 / 0.3));
   g.save(); g.translate(e.x + e.w / 2, e.y + e.h); g.scale(e.dir || -1, 1); g.drawImage(sp.c, -sp.ox, -sp.oy, sp.w, sp.h); g.restore();
 }
-function dibujarGaviotaSprite(g, est, cong, robo, t) {       // origen: el centro
-  g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = GM; g.scale(1.15, 1.15);
-  const pica = est === 'pica', ala = cong ? 0.2 : (pica ? -0.5 : Math.sin(t) * 0.8);
-  if (pica) g.rotate(0.45);
-  g.strokeStyle = '#f2a52e'; g.lineWidth = 2; [-3, 3].forEach(x => { g.beginPath(); g.moveTo(x, 6); g.lineTo(x - (pica ? 4 : 1), 13); g.stroke(); });
-  g.strokeStyle = NEGRO; g.lineWidth = GM;
-  g.fillStyle = cong ? '#dff3fb' : '#f4f6f8'; g.beginPath(); g.moveTo(-10, 0); g.lineTo(-20, -3); g.lineTo(-18, 4); g.closePath(); g.fill(); g.stroke();
-  g.beginPath(); g.ellipse(0, 0, 13, 7.5, 0, 0, 7); g.fill(); g.stroke();
-  g.save(); g.rotate(-ala); g.fillStyle = cong ? '#bfd8e6' : '#aab4c0'; g.beginPath(); g.moveTo(-2, -3); g.quadraticCurveTo(-8, -22 - ala * 8, -24, -12 - ala * 6); g.quadraticCurveTo(-14, -9, -16, -2); g.quadraticCurveTo(-8, -3, -2, 1); g.closePath(); g.fill(); g.stroke(); g.fillStyle = cong ? '#7fb4d0' : '#3a4452'; g.beginPath(); g.moveTo(-18, -11 - ala * 5); g.lineTo(-24, -12 - ala * 6); g.lineTo(-16, -3); g.closePath(); g.fill(); g.restore();
-  g.fillStyle = cong ? '#dff3fb' : '#f4f6f8'; g.beginPath(); g.arc(11, -4, 6, 0, 7); g.fill(); g.stroke();
-  g.fillStyle = '#f2a52e'; g.beginPath(); g.moveTo(16, -5); g.lineTo(25, -2.6); g.lineTo(16, -1.6); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#d83a34'; g.beginPath(); g.arc(23, -1.6, 1.4, 0, 7); g.fill();
-  g.fillStyle = '#fff'; g.beginPath(); g.arc(13, -6, 2.4, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#000'; g.beginPath(); g.arc(13.6, -6, 1.1, 0, 7); g.fill();
-  g.strokeStyle = NEGRO; g.lineWidth = 1.8; g.beginPath(); g.moveTo(10, -10); g.lineTo(16, -8.4); g.stroke();
-  if (robo) { g.save(); g.translate(21, 2); g.rotate(0.3); g.scale(0.55, 0.55); dibujarChocoArte(g); g.restore(); }
-  if (cong) hielo(g, -22, -16, 48, 32);
+function dibujarGaviotaSprite(g, est, cong, robo, t) {       // gaviota redondita con ojos grandes (como los de la mariquita). Origen: el centro
+  g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = GM; g.scale(1.3, 1.3);
+  const pica = est === 'pica', ala = cong ? 0.2 : (pica ? -0.5 : Math.sin(t) * 0.8), blanco = cong ? '#e4f6fd' : '#fbfcfd', gris = cong ? '#bfd8e6' : '#9aa7b6';
+  if (pica) g.rotate(0.4);
+  g.strokeStyle = '#f2a52e'; g.lineWidth = 2.2; [-3, 3].forEach(x => { g.beginPath(); g.moveTo(x, 7); g.lineTo(x - (pica ? 4 : 1), 13); g.stroke(); }); g.strokeStyle = NEGRO; g.lineWidth = GM;
+  g.fillStyle = blanco; g.beginPath(); g.ellipse(-13, 1, 6, 4.4, 0.25, 0, 7); g.fill(); g.stroke();                       // colita redonda
+  g.beginPath(); g.ellipse(0, 1, 14, 10, 0, 0, 7); g.fill(); g.stroke();                                                  // cuerpo gordito
+  g.save(); g.rotate(-ala * 0.9); g.translate(-2, -4); g.fillStyle = gris; g.beginPath(); g.ellipse(-8, -4, 12, 6.4, -0.35, 0, 7); g.fill(); g.stroke();   // ala redonda
+  g.fillStyle = cong ? '#7fb4d0' : '#4a5668'; g.beginPath(); g.ellipse(-16, -7, 4.2, 3, -0.35, 0, 7); g.fill(); g.restore();
+  g.fillStyle = blanco; g.beginPath(); g.arc(11, -6, 10, 0, 7); g.fill(); g.stroke();                                    // cabezota redonda
+  g.fillStyle = '#f2a52e'; g.beginPath(); g.ellipse(22.4, -2.6, 5.4, 3.4, 0.12, 0, 7); g.fill(); g.stroke();             // piquito redondo
+  g.fillStyle = '#d83a34'; g.beginPath(); g.arc(25.4, -1.6, 1.5, 0, 7); g.fill();
+  ojoMod(g, 8.4, -8, 5.8, '#ffd54a', blanco, false); ojoMod(g, 16.6, -7.4, 5.2, '#ffd54a', blanco, false);                  // ojotes como los de la mariquita
+  g.strokeStyle = NEGRO; g.lineWidth = 2; g.beginPath(); g.moveTo(3, -15.4); g.lineTo(10, -14.2); g.moveTo(14, -14.4); g.lineTo(20.6, -15); g.stroke();
+  if (robo) { g.save(); g.translate(24, 3); g.rotate(0.3); g.scale(0.55, 0.55); dibujarChocoArte(g); g.restore(); }
+  if (cong) hielo(g, -22, -18, 50, 34);
 }
 function pintarGaviota(g, e) {
   const cong = e.congelado > 0, bin = !cong ? Math.floor(((reloj * 0.4) % TAU) / TAU * 8) : 0, robo = e.robo ? 1 : 0;
-  const sp = sprite('gav|' + e.est + '|' + (cong ? 1 : 0) + '|' + robo + '|' + bin, 110, 80, 55, 40, gg => dibujarGaviotaSprite(gg, e.est, cong, robo, bin * TAU / 8 / 0.4));
+  const sp = sprite('gav|' + e.est + '|' + (cong ? 1 : 0) + '|' + robo + '|' + bin, 120, 90, 60, 45, gg => dibujarGaviotaSprite(gg, e.est, cong, robo, bin * TAU / 8 / 0.4));
   g.save(); g.translate(e.x + e.w / 2, e.y + e.h / 2); g.scale(e.dir || 1, 1); g.drawImage(sp.c, -sp.ox, -sp.oy, sp.w, sp.h); g.restore();
 }
 function pintarEscarabajo(g, e) {
@@ -2211,8 +2228,8 @@ function cargarNivel(n) {
   murcielagos = murcielagosDef.map(([c, r]) => ({ x0: c * T, y0: r * T, x: c * T, y: r * T, w: 26, h: 22, t: Math.floor(Math.random() * 100), dir: 1, vivo: true, congelado: 0, px: 0, py: 0, pique: 0, espera: 90 }));
   serpientes = serpientesDef.map(c => ({ x: c * T, y: 12 * T - 38, w: 76, h: 38, vx: -1.7, vy: 0, dir: -1, golpes: 0, vivo: true,
     congelado: 0, destello: 0, enfria: 0, boca: 0, comiendo: 0, aturdida: 0 }));
-  cangrejos = cangrejosDef.map(c => ({ x: c * T, y: 12 * T - 24, w: 34, h: 24, vx: 0, vy: 0, vivo: true, congelado: 0, est: 'pasea', timer: 0, dirP: -1, dir: -1 }));
-  erizos = erizosDef.map(c => ({ x: c * T, y: 12 * T - 26, w: 32, h: 26, vx: -0.8, vy: 0, vivo: true, congelado: 0, dirP: -1, dir: -1, inflado: 0 }));
+  cangrejos = cangrejosDef.map(c => ({ x: c * T, y: 12 * T - 30, w: 40, h: 30, vx: 0, vy: 0, vivo: true, congelado: 0, est: 'pasea', timer: 0, dirP: -1, dir: -1 }));
+  erizos = erizosDef.map(c => ({ x: c * T, y: 12 * T - 34, w: 42, h: 34, vx: -0.8, vy: 0, vivo: true, congelado: 0, dirP: -1, dir: -1, inflado: 0 }));
   gaviotas = gaviotasDef.map(([c, r]) => ({ x0: c * T, y0: r * T, yBase: r * T, x: c * T, y: r * T, w: 30, h: 22, vivo: true, congelado: 0, t: Math.floor(Math.random() * 100), dir: 1, est: 'vuela', timer: 90, tx: 0, ty: 0, robo: 0 }));
   const hpJ = { patron: 6, patrona: 8, playero: 7, kukulkan: 14, chalan: 10 }[N.jefe];
   jefe = { tipo: N.jefe, x: (COLS - 5) * T, y: 12 * T - 78, w: 46, h: 78, vx: 0, vy: 0, hp: hpJ, hpMax: hpJ, vivo: true, estadoJ: 'dormido',
@@ -2401,7 +2418,7 @@ function actualizarEnemigosBaja(p, patear, pisando) {
     moverConColision(e);
     if (e.chocoPared && e.est === 'pasea') { e.dirP = -e.dirP; e.x = antes; }
     const duro = e.est === 'lata' && e.congelado === 0;
-    if (patear(e, () => { if (duro) { sfx('rompe'); chispas(e.x + 17, e.y + 10, 8, '#cfd4da', 3); } else matar(e, e.congelado > 0, '#e8683a'); })) continue;
+    if (patear(e, () => { if (duro) { sfx('rompe'); chispas(e.x + 20, e.y + 12, 8, '#cfd4da', 3); } else matar(e, e.congelado > 0, '#e8683a'); })) continue;
     if (tragando === 0 && e.vivo && choca(p, e)) {
       if (pisando(e)) { if (!duro) matar(e, e.congelado > 0, '#e8683a'); else sfx('bloque'); p.vy = -9; }
       else if (e.congelado === 0 && !duro) { recibirGolpe(false, Math.sign(p.x - e.x) * 4); if (estado !== 'jugando') return; }
@@ -2423,7 +2440,7 @@ function actualizarEnemigosBaja(p, patear, pisando) {
     moverConColision(e);
     if (e.chocoPared && e.congelado === 0) { e.dirP = -e.dirP; e.x = antes; }
     if (patear(e, () => matar(e, e.congelado > 0, '#7a3da8'))) continue;
-    const caja = e.inflado >= 30 ? { x: e.x - 8, y: e.y - 10, w: e.w + 16, h: e.h + 10 } : e;
+    const caja = e.inflado >= 30 ? { x: e.x - 10, y: e.y - 12, w: e.w + 20, h: e.h + 12 } : e;
     if (tragando === 0 && e.vivo && choca(p, caja)) {
       if (e.congelado > 0) { if (pisando(e)) { matar(e, true, '#bfeaff'); p.vy = -9; } }
       else { if (pisando(e)) p.vy = -9; recibirGolpe(false, Math.sign(p.x - e.x) * 4); if (estado !== 'jugando') return; }
@@ -3179,7 +3196,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.11', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.12', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
