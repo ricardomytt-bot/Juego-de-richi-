@@ -73,3 +73,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 ## Audio sin acumulación (3.10)
 - Los efectos de sonido del modo compatible (el del iPhone) ahora se juntan en un solo archivo y se tocan con 6 reproductores fijos. Antes cada sonido distinto abría 2 reproductores nuevos y, con los minutos, se juntaban decenas (probable causa de que el iPhone se fuera poniendo lento). En total quedan unos 9 reproductores <audio> sin importar cuánto se juegue.
 - "Mostrar FPS" (Ajustes) ahora también muestra los minutos jugados y cuántos dibujos guardados hay, para detectar si algo crece con el tiempo.
+
+## Versión 3.11
+- Sofi Lofi cae más despacio (caída 0.7→0.55, velocidad máxima de caída 7.5→6).

@@ -44,7 +44,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.10
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.11
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -74,8 +74,8 @@ const PERSONAJES = [
   { id: 'julian', nombre: 'JULIÁN CHÓN', estilo: 'julian', vel: 4.4, salto: 13.2, caida: 1.0, maxCaida: 15, voz: 190,
     desc: ['El más rápido,', 'con buen salto.'], stats: { vel: 4, salto: 3, caida: 3 },
     piel: '#f3cfa4', piel2: '#d6a676', pelo: ['#9a6035', '#64391c'], camisa: ['#e6b52e', '#b98618'], pantalon: '#2b3e72', zapato: '#8f3a2c', mejilla: '#d8403a', mod: { piel: '#f4c79a', pelo: '#7a4a2a', cejas: '#5a3218', camisa: '#ffd93b', detalle: '#e0a800', pantalon: '#2f5aa8', zapato: '#e0483a', iris: '#8a5a24' } },
-  { id: 'sofi', nombre: 'SOFI LOFI', estilo: 'sofi', vel: 3.7, salto: 13.2, caida: 0.7, maxCaida: 7.5, voz: 330,
-    desc: ['Cae más suave', 'que los demás.'], stats: { vel: 3, salto: 3, caida: 4 },
+  { id: 'sofi', nombre: 'SOFI LOFI', estilo: 'sofi', vel: 3.7, salto: 13.2, caida: 0.55, maxCaida: 6, voz: 330,
+    desc: ['Cae más suave', 'que los demás.'], stats: { vel: 3, salto: 3, caida: 5 },
     piel: '#fbe3c4', piel2: '#dcb48e', pelo: ['#f4dc62', '#cfa52b'], camisa: ['#df6f9e', '#b24a78'], pantalon: '#6f56b0', zapato: '#7a4a2c', mejilla: '#d8403a', mod: { piel: '#ffd7b3', pelo: '#f9df55', cejas: '#d0a21a', camisa: '#ff82b4', detalle: '#ffffff', pantalon: '#8e63d8', zapato: '#b04bd6', iris: '#2fa36b' } },
   { id: 'mama', nombre: 'MAMÁ', estilo: 'mama', vel: 3.6, salto: 13.2, caida: 1.0, maxCaida: 15, voz: 260, hablas: 7, ataque: 'puno', logro: 'kukulkan', pista: 'Derrota a Kukulkán',
     desc: ['Equilibrada y valiente.', 'Ataca con un súper puño.'], stats: { vel: 3, salto: 3, caida: 3 },
@@ -3179,7 +3179,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.10', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.11', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
