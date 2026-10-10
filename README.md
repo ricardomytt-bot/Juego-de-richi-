@@ -57,3 +57,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Versión 3.7 — Lichilón en vector (ultra nítido)
 - El dibujo de Ricardo se vectorizó: ya no son imágenes, son formas (se ve nítido a cualquier tamaño y pesa menos). Contorno negro delgado, colores planos, pupilas con brillo y piernas con tubos y zapatos, como los demás personajes.
+
+## Versión 3.8
+- Lichilón volvió a su aspecto de antes del dibujo. El dibujo de Ricardo (vectorizado) sigue guardado en el código y se reactiva poniendo `LICHI.listo: true`.
