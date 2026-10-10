@@ -66,3 +66,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Rendimiento (3.9b)
 - Las capas de fondo y el terreno solo guardan la franja donde realmente hay dibujo, así se pinta menos por cuadro. La imagen es idéntica (comparada píxel por píxel en los 5 niveles y 3 calidades). Con la CPU frenada 4x: nivel 1 calidad media pasó de ~22.7 a ~17.8 ms por cuadro; La Bufadora de ~17.8 a ~14.7 ms.
+
+## Memoria (3.9c)
+- Corrección para que el juego no se vaya poniendo lento con el tiempo (sobre todo en iPhone/Safari): cada vez que se tira un dibujo guardado (al cambiar de nivel o de calidad) ahora se libera su memoria al instante, en vez de esperar a que Safari la recoja. En una prueba de 20 cargas de nivel/calidad se crearon 5,753 dibujos guardados y todos los viejos se liberaron (antes se acumulaban).

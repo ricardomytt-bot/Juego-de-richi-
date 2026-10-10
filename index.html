@@ -1398,6 +1398,11 @@ function dibujarCielo(tema) {
 }
 // ---------- Sprites: cada dibujo se hace UNA vez y luego solo se copia (así el celular casi no tiene que dibujar trazos) ----------
 let SPR = {}, TER = { id: '', ch: [], bloques: [] }, HUD = { c: null, key: '' }, FIN = null;
+// En el iPhone, un dibujo guardado que ya no se usa sigue gastando memoria hasta mucho después (y cuando se llena, el juego se pone lento y baja la calidad solo).
+// Por eso, al tirar un dibujo guardado, se le quita el tamaño (ancho = alto = 0) para devolver la memoria al instante.
+function liberarCanvas(c) { if (c && c.width) { c.width = 0; c.height = 0; } }
+function liberarSPR(solo) { for (const k in SPR) if (!solo || solo(k)) { liberarCanvas(SPR[k].c); delete SPR[k]; } }
+function liberarCapa(C) { if (!C) return; for (const L of ['lejos', 'selva', 'fach', 'arboles']) (C[L] || []).forEach(liberarCanvas); liberarCanvas(C.cielo); liberarCanvas(C.bruma); (C.nubes || []).forEach(n => liberarCanvas(n.c)); }
 const TAU = 6.2832, TER_PW = 768, TER_Y = 340;               // el terreno solo se guarda de la fila 340 hacia abajo (arriba no hay nada)
 function sprite(clave, w, h, ox, oy, dib) {
   let sp = SPR[clave]; if (sp) return sp;
@@ -1527,7 +1532,7 @@ function dibujarFondo(cam, tema) {
 function aplicarCalidad(q) {
   calidad = Math.max(0, Math.min(2, q)); ESC = MOVIL ? [0.85, 1.0, 1.15][calidad] : [1.0, 1.3, 1.6][calidad]; LIGERO = calidad === 0;
   canvas.width = Math.round(W * ESC); canvas.height = Math.round(H * ESC);
-  for (const k in CAPAS) delete CAPAS[k]; GLOW = {}; SPR = {}; TER.ch = []; HUD.c = null; FIN = null; retrato.c = null; VIG = crearVig(); prepararCapasPoco(tema === 'tarde' || tema === 'playa' || tema === 'chichen' || tema === 'bufadora' ? tema : 'dia');
+  for (const k in CAPAS) { liberarCapa(CAPAS[k]); delete CAPAS[k]; } for (const k in GLOW) liberarCanvas(GLOW[k]); GLOW = {}; liberarSPR(); TER.ch.forEach(liberarCanvas); TER.ch = []; liberarCanvas(HUD.c); HUD.c = null; if (FIN) liberarCanvas(FIN.c); FIN = null; liberarCanvas(retrato.c); retrato.c = null; liberarCanvas(VIG); VIG = crearVig(); prepararCapasPoco(tema === 'tarde' || tema === 'playa' || tema === 'chichen' || tema === 'bufadora' ? tema : 'dia');
 }
 // Mariposas de día y luciérnagas al atardecer (adorno, se apaga en calidad baja)
 function dibujarAmbiente() {}                                 // (sin mariposas ni luciérnagas: el nivel se ve más limpio y corre mejor)
@@ -1965,6 +1970,7 @@ function dibujarDecoracion(d, tarde) {
 function dibujarEdificioFinal(x0, tarde) {                  // el edificio / muelle / pirámide del final se dibuja una vez
   const clave = nivelActual + '|' + ESC, xd = Math.round(x0 * ESC);
   if (!FIN || FIN.clave !== clave) {
+    if (FIN) liberarCanvas(FIN.c);
     const c = crearCanvas(Math.ceil((W + 90) * ESC), Math.ceil(H * ESC)), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, -xd, 0);
     const prev = ctx; ctx = g; try { dibujarEdificioFinalRaw(x0, tarde); } finally { ctx = prev; }
     FIN = { clave, c };
@@ -2154,14 +2160,14 @@ function musicaDelNivel() { musica(NIVELES[nivelActual].musica); }
 function cargarNivel(n) {
   nivelActual = n; const N = NIVELES[n];
   COLS = N.cols; tema = N.tema; arenaX = COLS * T - W;
-  for (const k in CAPAS) if (k !== 'dia' && k !== N.tema) delete CAPAS[k];     // se libera la memoria de los fondos que no se usan
+  for (const k in CAPAS) if (k !== 'dia' && k !== N.tema) { liberarCapa(CAPAS[k]); delete CAPAS[k]; }     // se libera la memoria de los fondos que no se usan
   mapa = Array.from({ length: FILAS }, () => Array(COLS).fill(' '));
   chocosDef = []; escarabajosDef = []; murcielagosDef = []; serpientesDef = []; cangrejosDef = []; erizosDef = []; gaviotasDef = [];
   N.construir();
   sol = mapa.map(f => f.map(solido));
   prepararTerreno(); ultimaCarga = reloj; for (let k = 0; k <= 1; k++) chunkTerreno(k);
   { const id = TER.id, total = Math.ceil(COLS * T * ESC / TER_PW); let k = 2; const sig = () => { if (TER.id !== id || k >= total) return; if (!TER.ch[k]) chunkTerreno(k); k++; setTimeout(sig, 70); }; setTimeout(sig, 400); }
-  for (const k in SPR) if (k.startsWith('jefe|') && k.split('|')[1] !== N.jefe) delete SPR[k];   // se libera memoria de otros jefes
+  liberarSPR(k => k.startsWith('jefe|') && k.split('|')[1] !== N.jefe);   // se libera memoria de otros jefes
   crearDecoraciones();
   pinchosLista = [];
   for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) if (mapa[r][c] === '^') pinchosLista.push({ x: c * T + 9, y: r * T + 14, w: T - 18, h: T - 14 });
@@ -2949,7 +2955,7 @@ function dibujarJugador() {
   }
 }
 function prepararTerreno() {                                // al empezar el nivel: lista de bloques sueltos (los que rebotan o se abren)
-  TER = { id: nivelActual + '|' + ESC, ch: [], bloques: [] };
+  TER.ch.forEach(liberarCanvas); TER = { id: nivelActual + '|' + ESC, ch: [], bloques: [] };
   for (let r = 0; r < 12; r++) for (let c = 0; c < COLS; c++) { const ch = mapa[r][c]; if (ch === '#' || ch === 'c' || ch === 'b' || ch === 'e') TER.bloques.push({ c, r, ch }); }
 }
 function chunkTerreno(k) {                                  // el piso, los pinchos y los huecos de un pedazo del nivel, dibujados una sola vez
