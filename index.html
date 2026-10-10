@@ -44,7 +44,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.8
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.9
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -2087,13 +2087,13 @@ const NIVELES = [
     construir() {
       suelo(0, 13); suelo(17, 31); suelo(35, 49); suelo(53, 67); suelo(71, 93); suelo(98, 116); suelo(120, 136); suelo(140, 164);
       caja(6, 8, 'c'); chocos(3, 5, 10); pinchos(10, 10);                                              // acantilado de entrada
-      plat(19, 23, 9); caja(21, 9, 'b'); chocos(19, 21, 8); escarabajo(26); cangrejo(28); pinchos(30, 30);       // 2: primer cangrejo de la lata
-      plat(37, 41, 9); caja(39, 9, 'e'); chocos(38, 40, 8); erizo(37); gaviota(44, 7); pinchos(45, 46); serpiente(48);   // 3: erizo y gaviota ladrona
-      plat(55, 59, 9); caja(57, 9, 'c'); chocos(56, 58, 8); cangrejo(54); escarabajo(63); gaviota(61, 7); pinchos(65, 65);   // 4
-      pinchos(73, 73); escalera(76); erizo(84); cangrejo(90); pinchos(86, 87); serpiente(92);          // 5
+      plat(19, 23, 9); caja(21, 9, 'b'); chocos(19, 21, 8); cangrejo(27); pinchos(30, 30);       // 2: primer cangrejo de la lata
+      plat(37, 41, 9); caja(39, 9, 'e'); chocos(38, 40, 8); erizo(37); gaviota(44, 7); pinchos(45, 46); erizo(48);   // 3: erizo y gaviota ladrona
+      plat(55, 59, 9); caja(57, 9, 'c'); chocos(56, 58, 8); cangrejo(54); erizo(63); gaviota(61, 7); pinchos(65, 65);   // 4
+      pinchos(73, 73); escalera(76); erizo(84); cangrejo(90); pinchos(86, 87); gaviota(92, 7);          // 5
       plat(80, 84, 8); caja(82, 8, 'b'); chocos(81, 83, 7);
-      cangrejo(100); erizo(108); pinchos(104, 105); plat(106, 110, 9); caja(108, 9, 'e'); chocos(107, 109, 8); gaviota(104, 7); serpiente(114);   // 6
-      erizo(122); escarabajo(130); pinchos(125, 126); pinchos(131, 131); chocos(127, 129, 10); serpiente(134);   // 7
+      cangrejo(100); erizo(108); pinchos(104, 105); plat(106, 110, 9); caja(108, 9, 'e'); chocos(107, 109, 8); gaviota(104, 7); cangrejo(114);   // 6
+      erizo(122); cangrejo(130); pinchos(125, 126); pinchos(131, 131); chocos(127, 129, 10); gaviota(134, 7);   // 7
       caja(149, 8, 'e'); caja(160, 8, 'e'); chocos(154, 156, 10);                                      // arena del Chalán
     } },
 ];
@@ -3139,7 +3139,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.8', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.9', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });

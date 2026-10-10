@@ -60,3 +60,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Versión 3.8
 - Lichilón volvió a su aspecto de antes del dibujo. El dibujo de Ricardo (vectorizado) sigue guardado en el código y se reactiva poniendo `LICHI.listo: true`.
+
+## Versión 3.9
+- En el mundo 2 (La Bufadora) ya no salen escarabajos ni serpientes de Yucatán: solo los 3 enemigos nuevos (cangrejo de la lata, erizo de mar y gaviota ladrona).
