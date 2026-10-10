@@ -1398,7 +1398,7 @@ function dibujarCielo(tema) {
 }
 // ---------- Sprites: cada dibujo se hace UNA vez y luego solo se copia (así el celular casi no tiene que dibujar trazos) ----------
 let SPR = {}, TER = { id: '', ch: [], bloques: [] }, HUD = { c: null, key: '' }, FIN = null;
-const TAU = 6.2832, TER_PW = 768;
+const TAU = 6.2832, TER_PW = 768, TER_Y = 340;               // el terreno solo se guarda de la fila 340 hacia abajo (arriba no hay nada)
 function sprite(clave, w, h, ox, oy, dib) {
   let sp = SPR[clave]; if (sp) return sp;
   const c = crearCanvas(Math.ceil(w * ESC), Math.ceil(h * ESC)), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, ox * ESC, oy * ESC);
@@ -1414,17 +1414,18 @@ function velo(trozos, color) {                              // aclara la capa (c
   trozos.forEach(c => { const g = c.getContext('2d'); g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = color; g.fillRect(0, 0, c.width, c.height); g.restore(); });
   return trozos;
 }
-function capaPartida(anchoLog, dibujar) {                    // una franja larga dividida en pedazos
-  const n = Math.ceil(anchoLog * ESC / PW), trozos = [];
+function capaPartida(anchoLog, dibujar, y0 = 0, y1 = H) {    // una franja larga dividida en pedazos (solo se guarda la franja de arriba a abajo donde hay dibujo: se pinta menos en cada cuadro)
+  const n = Math.ceil(anchoLog * ESC / PW), trozos = [], y0d = Math.floor(y0 * ESC), hD = Math.ceil(y1 * ESC) - y0d;
   for (let i = 0; i < n; i++) {
-    const c = crearCanvas(PW, Math.ceil(H * ESC)), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, -i * PW, 0);
+    const c = crearCanvas(PW, hD), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, -i * PW, -y0d);
     dibujar(g, i * PW / ESC - 120, (i + 1) * PW / ESC + 120); trozos.push(c);
   }
+  trozos.y0 = y0d / ESC; trozos.h = hD / ESC;
   return trozos;
 }
 function pintarCapa(trozos, x) {                             // x lógico; todo alineado a pixeles enteros (sin costuras y muy rápido)
   const base = Math.round(x * ESC);
-  for (let i = 0; i < trozos.length; i++) { const px = base + i * PW; if (px + PW < 0 || px > canvas.width) continue; ctx.drawImage(trozos[i], px / ESC, 0, PW / ESC, H); }
+  for (let i = 0; i < trozos.length; i++) { const px = base + i * PW; if (px + PW < 0 || px > canvas.width) continue; ctx.drawImage(trozos[i], px / ESC, trozos.y0 || 0, PW / ESC, trozos.h || H); }
 }
 function pasosCapas(tema, C) {                               // cada paso dibuja una capa (así se pueden repartir en el tiempo)
   const tarde = tema === 'tarde', playa = tema === 'playa', chi = tema === 'chichen', bufa = tema === 'bufadora', MAXC = 176 * T, base = 392;
@@ -1447,7 +1448,7 @@ function pasosCapas(tema, C) {                               // cada paso dibuja
         for (let i = -1; i < 6; i++) { const mx = i * 330 + 40; if (mx + 200 > x0 && mx < x1 && Math.abs(mx + 100 - 560) > 190) mansion(g, mx, base, 140 + (i & 1) * 40, 100 + ((i + 3) % 3) * 30, '#4a2a62', '#ffcf6a'); }
       }
       else for (let k = 0; k * 1500 + 500 < x1; k++) { const cx = k * 1500 + 500; if (cx + 220 > x0) catedral(g, cx, base, '#a7bde6'); }
-    }), tarde ? 'rgba(255,175,150,.30)' : 'rgba(255,255,255,.32)'); },
+    }, 130, 400), tarde ? 'rgba(255,175,150,.30)' : 'rgba(255,255,255,.32)'); },
     () => { C.selva = velo(capaPartida(MAXC * 0.12 + W + 20, (g, x0, x1) => {
       const xa = Math.floor(x0 / 10) * 10;
       if (playa) {                                                                                  // dunas de arena (el mar sigue debajo)
@@ -1469,11 +1470,11 @@ function pasosCapas(tema, C) {                               // cada paso dibuja
         for (let x = xa; x <= x1 + 10; x += 10) g.lineTo(x, base - 22 - Math.abs(Math.sin(x * 0.03)) * 30 - Math.sin(x * 0.11) * 6);
         g.lineTo(x1 + 10, H); g.fill();
       }
-    }), tarde ? 'rgba(255,175,150,.2)' : 'rgba(255,255,255,.22)'); },
+    }, 296, H), tarde ? 'rgba(255,175,150,.2)' : 'rgba(255,255,255,.22)'); },
     () => { C.fach = velo(capaPartida(MAXC * 0.3 + W + 400, (g, x0, x1) => {
       const haze = { color: tarde ? 'rgba(120,50,110,.22)' : (playa ? 'rgba(255,255,255,.10)' : (bufa ? 'rgba(225,232,240,.22)' : chi ? 'rgba(200,235,210,.14)' : 'rgba(180,215,245,.22)')), noche: tarde };
       for (const f of FACH) { const fx = f.x + 200; if (fx + f.w > x0 && fx < x1) { if (bufa) penasco(g, f, fx, base + 6, haze); else if (playa) casaPlaya(g, f, fx, base + 6, haze); else if (chi) ruinaMaya(g, f, fx, base + 6, haze); else if (tarde) mansionPaseo(g, f, fx, base + 6, haze); else fachada(g, f, fx, base + 6, haze); } }
-    }), tarde ? 'rgba(255,175,150,.10)' : 'rgba(255,255,255,.12)'); },
+    }, 190, 414), tarde ? 'rgba(255,175,150,.10)' : 'rgba(255,255,255,.12)'); },
     () => { C.arboles = capaPartida(MAXC * 0.52 + W + 300, (g, x0, x1) => {
       for (let i = 0; i * 250 < x1 + 200; i++) {
         const sx = i * 250 + azar(i) * 90; if (sx + 130 < x0 || sx - 130 > x1) continue;
@@ -1483,7 +1484,7 @@ function pasosCapas(tema, C) {                               // cada paso dibuja
         else if (tarde) { if (i % 5 === 2) flamboyan(g, sx, 410, 0.9); else laurel(g, sx, 412, 0.85 + azar(i + 3) * 0.3, true); }
         else if (i % 5 === 2) flamboyan(g, sx, 410, 0.9); else palma(g, sx, 412, 120 + azar(i + 3) * 60, (azar(i + 6) - 0.5) * 50, null);
       }
-    }); },
+    }, 180, 420); },
     () => {
       const [c, g] = nuevaCapa(W, H - 330);
       const br = g.createLinearGradient(0, 0, 0, H - 330); br.addColorStop(0, 'rgba(255,255,255,0)'); br.addColorStop(1, tarde ? 'rgba(90,40,100,.35)' : (bufa ? 'rgba(225,232,240,.42)' : playa ? 'rgba(255,255,255,.12)' : 'rgba(255,255,255,.3)')); g.fillStyle = br; g.fillRect(0, 0, W, H - 330);
@@ -2952,7 +2953,7 @@ function prepararTerreno() {                                // al empezar el niv
   for (let r = 0; r < 12; r++) for (let c = 0; c < COLS; c++) { const ch = mapa[r][c]; if (ch === '#' || ch === 'c' || ch === 'b' || ch === 'e') TER.bloques.push({ c, r, ch }); }
 }
 function chunkTerreno(k) {                                  // el piso, los pinchos y los huecos de un pedazo del nivel, dibujados una sola vez
-  const GT = tilesDe(tema), c = crearCanvas(TER_PW, Math.ceil(H * ESC)), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, -k * TER_PW, 0);
+  const GT = tilesDe(tema), yd = Math.floor(TER_Y * ESC), c = crearCanvas(TER_PW, Math.ceil(H * ESC) - yd), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, -k * TER_PW, -yd);
   const x0 = k * TER_PW / ESC, x1 = (k + 1) * TER_PW / ESC, c0 = Math.max(0, Math.floor(x0 / T) - 1), c1 = Math.min(COLS - 1, Math.ceil(x1 / T) + 1), prev = ctx; ctx = g;
   try {
     for (let cc = c0; cc <= c1; cc++) if (mapa[12][cc] === ' ') {
@@ -2971,7 +2972,7 @@ function dibujarNivel() {
   const tarde = tema === 'tarde', GT = tilesDe(tema);
   if (!LIGERO) for (const d of decoraciones) if (d.x > camara - 70 && d.x < camara + W + 70) pintarDeco(d, tarde);
   const k0 = Math.max(0, Math.floor(camara * ESC / TER_PW)), k1 = Math.floor((camara + W) * ESC / TER_PW), alto = Math.ceil(H * ESC) / ESC;
-  for (let k = k0; k <= k1 && k * TER_PW / ESC < COLS * T; k++) ctx.drawImage(TER.ch[k] || chunkTerreno(k), k * TER_PW / ESC, 0, TER_PW / ESC, alto);
+  for (let k = k0; k <= k1 && k * TER_PW / ESC < COLS * T; k++) { const tc = TER.ch[k] || chunkTerreno(k); ctx.drawImage(tc, k * TER_PW / ESC, Math.floor(TER_Y * ESC) / ESC, TER_PW / ESC, tc.height / ESC); }
   for (const b of TER.bloques) {
     const x = b.c * T; if (x < camara - T || x > camara + W) continue;
     const k = b.r + ',' + b.c, dy = rebote[k] ? -Math.sin(rebote[k] / 8 * Math.PI) * 8 : 0, y = b.r * T + dy;
