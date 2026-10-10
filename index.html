@@ -44,7 +44,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.9
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.10
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -392,18 +392,51 @@ function pedirSfx(k) {                                     // fabrica un sonido 
   if (pendSfx[k] || cacheSfx[k]) return; pendSfx[k] = true;
   const f = SONIDOS[k] || (k.startsWith('ouch') ? () => voz(+k.slice(4)) : null); if (!f) return;
   let ev; grabando = []; try { f(); } finally { ev = grabando; grabando = null; }
-  trabajoAudio({ tipo: 's', ev }, buf => { cacheSfx[k] = urlDeBuffer(buf); }, () => { cacheSfx[k] = wavUrl(renderSfx(ev)); });
+  trabajoAudio({ tipo: 's', ev }, buf => { bufSfx[k] = buf; cacheSfx[k] = urlDeBuffer(buf); comprobarHoja(); }, () => { const b = wavBuffer(renderSfx(ev)); bufSfx[k] = b; cacheSfx[k] = urlDeBuffer(b); comprobarHoja(); });
+}
+// Todos los efectos se juntan en UN solo archivo de audio ("hoja de sonidos") y se tocan con unos pocos reproductores fijos.
+// Antes cada sonido distinto abría sus propios reproductores <audio>; con los minutos se juntaban decenas y el iPhone se iba poniendo lento.
+const bufSfx = {}, hoja = { lista: false, armando: false, o: {}, url: null, canales: [], i: 0, esperados: 0 };
+const CANALES_SFX = 6;
+function comprobarHoja() { if (!hoja.lista && !hoja.armando && hoja.esperados && Object.keys(bufSfx).length >= hoja.esperados) armarHoja(); }
+function armarHoja() {
+  if (hoja.lista || hoja.armando) return; const claves = Object.keys(bufSfx); if (!claves.length) return; hoja.armando = true;
+  try {
+    const GAP = 3000; let total = 0; const partes = [];
+    claves.forEach(k => { const pcm = new Int16Array(bufSfx[k].slice(44)); partes.push([k, pcm, total]); total += pcm.length + GAP; });
+    const buf = new ArrayBuffer(44 + total * 2), v = new DataView(buf), out = new Int16Array(buf, 44), txt = (o, t) => { for (let i = 0; i < t.length; i++) v.setUint8(o + i, t.charCodeAt(i)); };
+    txt(0, 'RIFF'); v.setUint32(4, 36 + total * 2, true); txt(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, SR, true); v.setUint32(28, SR * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); txt(36, 'data'); v.setUint32(40, total * 2, true);
+    partes.forEach(([k, pcm, off]) => { out.set(pcm, off); hoja.o[k] = { t: off / SR + 0.01, d: pcm.length / SR }; });
+    hoja.url = urlDeBuffer(buf);
+    hoja.canales = Array.from({ length: CANALES_SFX }, () => { const a = new Audio(hoja.url); a.preload = 'auto'; return a; });
+    for (const k in poolSfx) poolSfx[k].a.forEach(a => { try { a.pause(); a.removeAttribute('src'); a.load(); } catch (e) {} });
+    poolSfx = {};
+    claves.forEach(k => { try { URL.revokeObjectURL(cacheSfx[k]); } catch (e) {} cacheSfx[k] = 'hoja'; delete bufSfx[k]; });
+    hoja.lista = true;
+  } catch (e) { hoja.o = {}; hoja.lista = false; }
+  hoja.armando = false;
+}
+function tocarHoja(k) {
+  const o = hoja.o[k], c = hoja.canales[hoja.i = (hoja.i + 1) % CANALES_SFX]; if (!o || !c || c.readyState < 2) return false;
+  clearTimeout(c.fin); try { c.pause(); c.currentTime = o.t; } catch (e) { return false; }
+  c.volume = Math.min(1, aj.efectos); c.play().catch(() => {}); c.fin = setTimeout(() => { try { c.pause(); } catch (e) {} }, o.d * 1000 + 40); return true;
 }
 let sfxPrecargado = false;
 function precargarSfx() {                                  // todos los sonidos se preparan al principio, uno por uno
   if (sfxPrecargado) return; sfxPrecargado = true;
-  Object.keys(SONIDOS).filter(n => n !== 'ouch').forEach((n, i) => setTimeout(() => pedirSfx(n), 30 * i));
-  PERSONAJES.filter(p => p.voz).forEach((p, i) => setTimeout(() => pedirSfx('ouch' + p.voz), 30 * (60 + i)));
+  const ns = Object.keys(SONIDOS).filter(n => n !== 'ouch'), vs = PERSONAJES.filter(p => p.voz);
+  hoja.esperados = ns.length + vs.length;
+  ns.forEach((n, i) => setTimeout(() => pedirSfx(n), 30 * i));
+  vs.forEach((p, i) => setTimeout(() => pedirSfx('ouch' + p.voz), 30 * (ns.length + i)));
+  setTimeout(armarHoja, 9000);                              // por si algún sonido tarda: se arma con los que ya están
 }
 function sfxAlt(n) {
   if (silencio || aj.efectos <= 0) return;
   const k = n === 'ouch' ? 'ouch' + personaje.voz : n, url = cacheSfx[k];
+  if (hoja.lista && hoja.o[k]) { tocarHoja(k); return; }
   if (!url) { pedirSfx(k); return; }                       // todavía se está preparando: solo pasa en los primeros segundos
+  if (url === 'hoja') return;
   const pool = poolSfx[k] || (poolSfx[k] = { a: [new Audio(url), new Audio(url)], i: 0 });
   const a = pool.a[pool.i = (pool.i + 1) % 2]; a.volume = Math.min(1, aj.efectos); try { a.currentTime = 0; } catch (e) {} a.play().catch(() => {});
 }
@@ -3146,7 +3179,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.9', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.10', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -3529,7 +3562,7 @@ function dibujar() {
     if (estado === 'gano') { const F = NIVELES[nivelActual].fin; dibujarPanelFin(F.titulo, F.lineas.concat('Puntos: ' + puntos, 'Monedas: +' + monedasGanadas + '   (tienes ' + datos.monedas + ')'), '#6bff8a', [['ELEGIR NIVEL', () => irA('niveles'), 'verde'], ['MENÚ PRINCIPAL', () => irA('menu'), 'gris']]); }
   }
   capaVintage();
-  if (aj.fps) texto(fpsMostrado + ' FPS · ' + trabMostrado.toFixed(1) + ' ms · calidad ' + ['baja', 'media', 'alta'][calidad], W / 2, H - 6, 11, '#fff', 'center');
+  if (aj.fps) texto(fpsMostrado + ' FPS · ' + trabMostrado.toFixed(1) + ' ms · calidad ' + ['baja', 'media', 'alta'][calidad] + ' · ' + Math.floor(reloj / 3600) + ' min · ' + Object.keys(SPR).length + ' dib', W / 2, H - 6, 11, '#fff', 'center');
   dibujarAvisos();
 }
 

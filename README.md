@@ -69,3 +69,7 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Memoria (3.9c)
 - Corrección para que el juego no se vaya poniendo lento con el tiempo (sobre todo en iPhone/Safari): cada vez que se tira un dibujo guardado (al cambiar de nivel o de calidad) ahora se libera su memoria al instante, en vez de esperar a que Safari la recoja. En una prueba de 20 cargas de nivel/calidad se crearon 5,753 dibujos guardados y todos los viejos se liberaron (antes se acumulaban).
+
+## Audio sin acumulación (3.10)
+- Los efectos de sonido del modo compatible (el del iPhone) ahora se juntan en un solo archivo y se tocan con 6 reproductores fijos. Antes cada sonido distinto abría 2 reproductores nuevos y, con los minutos, se juntaban decenas (probable causa de que el iPhone se fuera poniendo lento). En total quedan unos 9 reproductores <audio> sin importar cuánto se juegue.
+- "Mostrar FPS" (Ajustes) ahora también muestra los minutos jugados y cuántos dibujos guardados hay, para detectar si algo crece con el tiempo.
