@@ -54,3 +54,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 ## Versión 3.6 — Nuevo Lichilón (dibujo de Ricardo)
 - Lichilón ahora es el dibujo hecho a mano por Ricardo, digitalizado y coloreado (líneas azules de marcador, pelo amarillo, camisa verde, pantalón azul, tenis blancos). Se usa en todas partes: juego, menú, selección de personaje, cinemáticas y el retrato del marcador.
 - Está cortado en partes (cabeza, torso, brazos y piernas) que se mueven para caminar, saltar y atacar. Las imágenes van incrustadas en `index.html` (como PNG en base64).
+
+## Versión 3.7 — Lichilón en vector (ultra nítido)
+- El dibujo de Ricardo se vectorizó: ya no son imágenes, son formas (se ve nítido a cualquier tamaño y pesa menos). Contorno negro delgado, colores planos, pupilas con brillo y piernas con tubos y zapatos, como los demás personajes.
