@@ -50,3 +50,7 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 ## Versión 3.5 — El Chalán albañil y 3 enemigos de Baja California
 - El Chalán ahora es un albañil (casco amarillo, chaleco naranja, cubeta y cuchara). Mismos ataques.
 - Enemigos nuevos (nivel La Bufadora): **Cangrejo de la lata** (se esconde en su lata y embiste; solo se le puede pegar cuando queda mareado), **Erizo de mar** (con espinas: no se le puede saltar encima, solo se vence con ataque; se infla si te acercas) y **Gaviota ladrona** (se lanza en picada y te roba los Kit Kats que llevas; si la golpeas antes de que escape, los suelta).
+
+## Versión 3.6 — Nuevo Lichilón (dibujo de Ricardo)
+- Lichilón ahora es el dibujo hecho a mano por Ricardo, digitalizado y coloreado (líneas azules de marcador, pelo amarillo, camisa verde, pantalón azul, tenis blancos). Se usa en todas partes: juego, menú, selección de personaje, cinemáticas y el retrato del marcador.
+- Está cortado en partes (cabeza, torso, brazos y piernas) que se mueven para caminar, saltar y atacar. Las imágenes van incrustadas en `index.html` (como PNG en base64).
