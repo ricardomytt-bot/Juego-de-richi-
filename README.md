@@ -46,3 +46,7 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Selector de mundos (flechas ◀ ▶ en la pantalla de niveles). Mundo 2 se desbloquea al pasar Chichén Itzá (en modo prueba está todo abierto). Próximos niveles: Los Cabos, Frontera de Tijuana y un nivel icónico.
 - Nivel 5 "La Bufadora" (Ensenada): tema basado en una foto real de La Bufadora (cielo nublado, mar oscuro, acantilados de roca negra, tierra rojiza, muro de piedra con borde rojo y blanco, gaviotas), hotel al final y jefe **El Chalán** (10 de vida) con tres ataques: lluvia de rocas (con sombra que avisa dónde caen), escupitajo de vapor y géiseres de La Bufadora. El vapor de los géiseres **quema**: pierdes una vida cada 10 s durante 30 s, y solo se quita tomando la **gota de agua fresca** que aparece en la arena.
 - Cinemáticas con música nueva "de suspenso" (grave, muy bajita, pocas notas). La música del nivel también es nueva.
+
+## Versión 3.5 — El Chalán albañil y 3 enemigos de Baja California
+- El Chalán ahora es un albañil (casco amarillo, chaleco naranja, cubeta y cuchara). Mismos ataques.
+- Enemigos nuevos (nivel La Bufadora): **Cangrejo de la lata** (se esconde en su lata y embiste; solo se le puede pegar cuando queda mareado), **Erizo de mar** (con espinas: no se le puede saltar encima, solo se vence con ataque; se infla si te acercas) y **Gaviota ladrona** (se lanza en picada y te roba los Kit Kats que llevas; si la golpeas antes de que escape, los suelta).
