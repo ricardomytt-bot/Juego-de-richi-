@@ -79,3 +79,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Versión 3.12
 - Enemigos de Baja California más bonitos: gaviota redondita con ojotes (como la mariquita); erizo turquesa más grande con ojos enojados (al inflarse: puntas moradas y ojos verde-amarillo, modo venenoso); cangrejo ermitaño con una lata de atún como caparazón.
+
+## Versión 3.13
+- Los enemigos nuevos del mundo 2 (cangrejo, erizo, gaviota) son más chicos: ninguno es más grande que el jugador. Regla: los enemigos no son más grandes que el jugador salvo que se pida (los jefes son la excepción).
