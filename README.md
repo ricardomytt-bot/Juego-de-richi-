@@ -63,3 +63,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Versión 3.9
 - En el mundo 2 (La Bufadora) ya no salen escarabajos ni serpientes de Yucatán: solo los 3 enemigos nuevos (cangrejo de la lata, erizo de mar y gaviota ladrona).
+
+## Rendimiento (3.9b)
+- Las capas de fondo y el terreno solo guardan la franja donde realmente hay dibujo, así se pinta menos por cuadro. La imagen es idéntica (comparada píxel por píxel en los 5 niveles y 3 calidades). Con la CPU frenada 4x: nivel 1 calidad media pasó de ~22.7 a ~17.8 ms por cuadro; La Bufadora de ~17.8 a ~14.7 ms.
