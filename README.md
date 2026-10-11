@@ -107,3 +107,9 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Nueva **plataforma que se cae** (`caediza`): si te quedas encima mucho tiempo tiembla, se agrieta y se cae; después de unos segundos vuelve a aparecer. Hay dos secciones con ellas.
 - **Puestos de comida** con techo de lámina en lugar de casas, con el mismo tinaco, techo y escaleras al jefe que en el mundo 1. Los enemigos y pinchos nacen arriba del techo.
 - Todos los niveles (1 a 5) son unas 40 columnas más largos (ayudante `OFF` para desplazar columnas). Los fondos se calculan según el nivel más largo del tema.
+
+## Versión 3.19 — Niveles el doble de largos con todas las mecánicas
+- Los 5 niveles miden entre 416 y 438 columnas (antes ~200): unos 2–3 minutos cada uno.
+- Todos los niveles tienen plataformas que se caen, tinacos con techos (casas, palmeras-puente, chozas, puestos de lámina) y escaleras al jefe. Yucatán ahora tiene 6 casas por nivel; La Bufadora tiene 5 puestos de comida y 4 secciones de plataformas.
+- `tramos(s, mundo, variante)` arma 223 columnas con tramos llanos, casas con tinaco y secciones de plataformas que caen; usa los enemigos de cada mundo.
+- Memoria: el piso en caché solo guarda los pedazos cercanos a la cámara (`mantenerTerreno`), así los niveles largos no gastan más memoria.

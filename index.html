@@ -44,7 +44,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.18
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.19
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -2127,8 +2127,21 @@ const caediza = (c, w = 3, r = 12) => caedizasDef.push({ c: c + OFF, w, r });
 const escalones = c0 => { for (let k = 0; k < 5; k++) colina(c0 + k, c0 + k, 5 - k); };   // escaleras para bajar a la arena del jefe (5,4,3,2,1 bloques)
 const escalera = c0 => { for (let k = 0; k < 3; k++) for (let r = 11 - k; r <= 11; r++) mapa[r][c0 + k + OFF] = '#'; };
 
+// Tramos para armar niveles largos con todas las mecánicas (m = 0 Yucatán, 1 Baja California). Cada nivel recibe 223 columnas más.
+const TRAMOS_LEN = 223;
+function tramos(s, m, v) {
+  const cj = ['c', 'b', 'e'], E1 = c => m ? (c & 1 ? cangrejo(c) : erizo(c)) : escarabajo(c), E2 = (c, r) => m ? gaviota(c, r) : murcielago(c, r), E3 = c => m ? erizo(c) : serpiente(c);
+  const llano = (a, k) => { suelo(a, a + 25); plat(a + 3, a + 7, 9); caja(a + 5, 9, cj[(v + k) % 3]); chocos(a + 4, a + 6, 8); E1(a + 9); pinchos(a + 12, a + 13); E3(a + 17); E2(a + 20, 7); chocos(a + 21, a + 23, 10); pinchos(a + 23, a + 23); };
+  const casa = (a, k) => { suelo(a, a + 35); chocos(a + 1, a + 3, 10); techo(a + 6, a + 8, a + 16); chocos(a + 9, a + 11, 4); caja(a + 12, 3, cj[(v + k) % 3]); E1(a + 13); pinchos(a + 15, a + 15, 5);
+    E1(a + 20); pinchos(a + 23, a + 24); E2(a + 26, 7); chocos(a + 27, a + 29, 10); E3(a + 30); };
+  const cae = a => { caediza(a); caediza(a + 5); caediza(a + 10); E2(a + 7, 5); };
+  const sec = [['llano', 0], ['casa', 3], ['cae', 0], ['llano', 0], ['casa', 3], ['cae', 0], ['casa', 0], ['llano', 3]];
+  let c = s, fin = s;
+  sec.forEach(([t, g], k) => { c += g; if (t === 'llano') { llano(c, k); c += 26; } else if (t === 'casa') { casa(c, k); c += 36; } else { cae(c); c += 14; } });
+  return c;
+}
 const NIVELES = [
-  { nombre: 'NIVEL 1', lugar: 'Calle 60, Centro de Mérida', corto: ['Calle 60', 'Centro de Mérida'], jefeNombre: 'El Patrón', cols: 190, tema: 'dia', jefe: 'patron', musica: 'calle',
+  { nombre: 'NIVEL 1', lugar: 'Calle 60, Centro de Mérida', corto: ['Calle 60', 'Centro de Mérida'], jefeNombre: 'El Patrón', cols: 416, tema: 'dia', jefe: 'patron', musica: 'calle',
     nota: 'Subió la renta: ¡derrota al Patrón!',
     cine: [['p', '¡No puede ser! El Patrón y la Patrona subieron la renta otra vez... ¡ya no nos alcanza!'], ['p', 'Si quiero un departamento gratis, tengo que ganarles. ¡Empiezo por la Calle 60!'], ['patron', '¡Jajaja! ¿Gratis? ¡Aquí todo cuesta! ¡Págame la renta o te saco volando!'], ['p', 'Cuidado con los bichos, las serpientes y los pinchos. ¡Y a juntar Kit Kats! ¡Vamos!']],
     fin: { titulo: '¡DERROTASTE AL PATRÓN!', lineas: ['Pero todavía falta la Patrona...', 'Sigue por el Paseo de Montejo al atardecer.'] },
@@ -2143,13 +2156,13 @@ const NIVELES = [
       suelo(104, 121); suelo(126, 140);                                                                // tramo nuevo
       plat(106, 110, 9); caja(108, 9, 'e'); chocos(107, 109, 8); escarabajo(111); serpiente(113); chocos(115, 117, 10); pinchos(118, 118);
       techo(128, 130, 136); chocos(131, 133, 4); escarabajo(134); pinchos(133, 133, 5);                // otra casa con tinaco
-      OFF = 40; suelo(104, 149);
+      tramos(144, 0, 0); OFF = 266; suelo(104, 149);
       plat(105, 109, 9); caja(107, 9, 'c'); chocos(106, 108, 8); escarabajo(105); pinchos(108, 108);   // F
       techo(110, 112, 119, true); escalones(120);                                                      // el tinaco sube a la casa y de ahí se baja por las escaleras a la arena
       caja(131, 8, 'e'); caja(142, 8, 'c'); chocos(137, 139, 10);                                      // arena del Patrón
       OFF = 0;
     } },
-  { nombre: 'NIVEL 2', lugar: 'Paseo de Montejo, al atardecer', corto: ['Paseo de Montejo', 'Al atardecer'], jefeNombre: 'La Patrona', cols: 200, tema: 'tarde', jefe: 'patrona', musica: 'tarde',
+  { nombre: 'NIVEL 2', lugar: 'Paseo de Montejo, al atardecer', corto: ['Paseo de Montejo', 'Al atardecer'], jefeNombre: 'La Patrona', cols: 426, tema: 'tarde', jefe: 'patrona', musica: 'tarde',
     nota: '¡Ahora le toca a la Patrona!',
     cine: [['p', '¡Lo logré! El Patrón ya no nos molesta... pero la Patrona sigue en el Paseo de Montejo.'], ['patrona', '¡Ay, qué chamaco tan atrevido! ¡Mis bombas harán explotar tus sueños de departamento gratis!'], ['p', 'Cuidado con los círculos rojos. Y si puedo... ¡les devuelvo las bombas con un ataque!']],
     fin: { titulo: '¡DERROTASTE A LA PATRONA!', lineas: ['¡Ya casi tienes tu departamento gratis!', 'Pero... ¡alguien se robó la llave!', 'Sigue la pista hasta la playa de Progreso.'] },
@@ -2165,13 +2178,13 @@ const NIVELES = [
       suelo(116, 134); suelo(139, 152);                                                                // tramo nuevo
       plat(118, 122, 9); caja(120, 9, 'c'); chocos(119, 121, 8); escarabajo(117, 125); pinchos(124, 124); murcielago(123, 7); serpiente(130); chocos(127, 129, 10);
       techo(141, 143, 148); chocos(144, 146, 4); escarabajo(147); pinchos(145, 145, 5);
-      OFF = 40; suelo(116, 159);
+      tramos(156, 0, 1); OFF = 266; suelo(116, 159);
       escarabajo(117); pinchos(118, 118); chocos(117, 119, 10);                                        // 7
       techo(120, 122, 129, true); escalones(130);                                                      // casa grande + escaleras a la arena
       caja(141, 8, 'e'); caja(151, 8, 'c'); chocos(146, 148, 10);                                      // arena de la Patrona
       OFF = 0;
     } },
-  { nombre: 'NIVEL 3', lugar: 'De visita a la playa, Progreso', corto: ['De visita a la playa', 'Progreso, Yucatán'], jefeNombre: 'El Playero', cols: 210, tema: 'playa', jefe: 'playero', musica: 'playa',
+  { nombre: 'NIVEL 3', lugar: 'De visita a la playa, Progreso', corto: ['De visita a la playa', 'Progreso, Yucatán'], jefeNombre: 'El Playero', cols: 436, tema: 'playa', jefe: 'playero', musica: 'playa',
     nota: 'El Playero se robó la llave del departamento',
     cine: [['p', '¡Ya ganamos el departamento! Pero... espera... ¡alguien se robó la llave!'], ['p', 'Dicen que un señor de la playa de Progreso la tiene. ¡Directo al Muelle Fiscal!'], ['playero', '¡Esta llave brillante ahora es mía! Si la quieres, ¡tendrás que surfear conmigo!'], ['p', 'Hay que esquivar sus embestidas y saltar los pinchos de coral. ¡Allá voy!']],
     fin: { titulo: '¡RECUPERASTE LA LLAVE!', lineas: ['Derrotaste al Playero y la llave volvió a casa.', 'Para celebrar, los hermanos visitan Chichén Itzá...', '¡pero algo se mueve en la pirámide!'] },
@@ -2186,13 +2199,13 @@ const NIVELES = [
       suelo(118, 136); suelo(141, 154);                                                                // tramo nuevo
       plat(120, 124, 9); caja(122, 9, 'e'); chocos(121, 123, 8); escarabajo(119, 127); pinchos(126, 126); murcielago(125, 7); serpiente(131); chocos(129, 131, 10);
       techo(143, 145, 150); chocos(146, 148, 4); escarabajo(147); pinchos(149, 149, 5);
-      OFF = 40; suelo(118, 169);
+      tramos(158, 0, 2); OFF = 266; suelo(118, 169);
       escarabajo(120); pinchos(123, 124); chocos(125, 127, 10);                                        // 7
       techo(130, 132, 139, true); escalones(140);                                                      // muro de palmeras + escaleras a la arena
       caja(147, 8, 'e'); caja(158, 8, 'e'); chocos(152, 154, 10);                                      // arena del Playero
       OFF = 0;
     } },
-  { nombre: 'NIVEL 4', lugar: 'Chichén Itzá, Yucatán', corto: ['Chichén Itzá', 'La pirámide de Kukulkán'], jefeNombre: 'Kukulkán', cols: 212, tema: 'chichen', jefe: 'kukulkan', musica: 'chichen',
+  { nombre: 'NIVEL 4', lugar: 'Chichén Itzá, Yucatán', corto: ['Chichén Itzá', 'La pirámide de Kukulkán'], jefeNombre: 'Kukulkán', cols: 438, tema: 'chichen', jefe: 'kukulkan', musica: 'chichen',
     nota: 'Kukulkán bajó de la pirámide y se comió la llave',
     cine: [['p', '¡Qué bonito es Chichén Itzá! ¡Miren esa pirámide tan enorme!'], ['p', 'Esperen... ¿por qué se está moviendo la serpiente de la escalinata?'], ['kukulkan', '¡¡Grrrr!! ¡Esa llave brillante se ve deliciosa! ¡Ñam!'], ['p', '¡Se comió la llave! Para ganarle tengo que atacar el fuego verde y devolvérselo. ¡Vamos!']],
     fin: { titulo: '¡KUKULKÁN ESCUPIÓ LA LLAVE!', lineas: ['Le devolviste sus propios fuegos.', 'La llave volvió con los hermanos...', '¡Ahora, a viajar a Baja California!'] },
@@ -2207,13 +2220,13 @@ const NIVELES = [
       suelo(119, 137); suelo(142, 155);                                                                // tramo nuevo
       plat(121, 125, 9); caja(123, 9, 'e'); chocos(122, 124, 8); escarabajo(120, 128); murcielago(126, 7); pinchos(127, 127); serpiente(133); chocos(130, 132, 10);
       techo(144, 146, 151); chocos(147, 149, 4); escarabajo(148); pinchos(150, 150, 5);
-      OFF = 40; suelo(119, 171);
+      tramos(159, 0, 1); OFF = 266; suelo(119, 171);
       escarabajo(121); pinchos(124, 125); chocos(126, 128, 10); murcielago(123, 7);                    // 7
       techo(132, 134, 141, true); escalones(142);                                                      // gran choza + escaleras a la arena
       caja(148, 8, 'e'); caja(160, 8, 'e'); chocos(153, 155, 10);                                      // arena de Kukulkán
       OFF = 0;
     } },
-  { nombre: 'NIVEL 5', mundo: 1, lugar: 'La Bufadora, Ensenada, Baja California', corto: ['La Bufadora', 'Ensenada, B.C.'], jefeNombre: 'El Chalán', cols: 205, tema: 'bufadora', jefe: 'chalan', musica: 'bufadora',
+  { nombre: 'NIVEL 5', mundo: 1, lugar: 'La Bufadora, Ensenada, Baja California', corto: ['La Bufadora', 'Ensenada, B.C.'], jefeNombre: 'El Chalán', cols: 431, tema: 'bufadora', jefe: 'chalan', musica: 'bufadora',
     nota: 'El Patrón compró los hoteles: ¡vence a su Chalán!',
     cine: [['p', '¡Por fin llegamos a Baja California! Primera parada: ¡La Bufadora, en Ensenada!'], ['p', 'Qué bonito... pero en el hotel nos dijeron que no hay cuartos. ¿Y quién es el dueño? ¡Otra vez el Patrón!'], ['chalan', '¡Alto ahí! El Patrón compró todos los hoteles de Baja California. Desde que lo derrotaron, ¡a ustedes no los hospeda nadie!'], ['p', '¡Pero queremos descansar! Y también necesitamos ganar monedas...'], ['chalan', 'Yo soy el Chalán, el secuaz del Patrón. Mis rocas, mi vapor y la mismísima Bufadora los van a dejar bien cocidos.'], ['p', 'Cuidado con las rocas y los géiseres: si el vapor me quema, pierdo una vida cada 10 segundos. ¡Tengo que encontrar agua fresca! ¡Vamos!']],
     fin: { titulo: '¡VENCISTE AL CHALÁN!', lineas: ['El hotel de La Bufadora ya tiene cuartos para ti.', 'Pero el Patrón todavía tiene más hoteles...', 'El viaje por Baja California continúa.'] },
@@ -2228,7 +2241,7 @@ const NIVELES = [
       suelo(101, 119); plat(103, 107, 9); caja(105, 9, 'e'); chocos(104, 106, 8); cangrejo(103, 116); erizo(110); gaviota(108, 5); pinchos(113, 113); chocos(114, 116, 10);   // 6
       caediza(120); caediza(125); caediza(130); gaviota(126, 5);                                       // 7: otra vez plataformas que se caen
       suelo(134, 152); erizo(137); plat(139, 143, 9); caja(141, 9, 'b'); chocos(140, 142, 8); cangrejo(146); pinchos(148, 148); gaviota(145, 5);
-      suelo(157, 204); plat(158, 162, 9); caja(160, 9, 'c'); chocos(159, 161, 8); erizo(161);          // 8
+      tramos(157, 1, 0); OFF = 226; suelo(157, 204); plat(158, 162, 9); caja(160, 9, 'c'); chocos(159, 161, 8); erizo(161);          // 8
       techo(165, 167, 174, true); escalones(175);                                                      // puesto grande + escaleras a la arena
       caja(189, 8, 'e'); caja(200, 8, 'e'); chocos(194, 196, 10);                                      // arena del Chalán
     } },
@@ -2298,7 +2311,6 @@ function cargarNivel(n) {
   tinacos = estructurasDef.map(e => ({ x: e.tc * T, w: 64, roofX: e.c0 * T, alt: 0, sobre: false }));
   sol = mapa.map(f => f.map(solido));
   prepararTerreno(); ultimaCarga = reloj; for (let k = 0; k <= 1; k++) chunkTerreno(k);
-  { const id = TER.id, total = Math.ceil(COLS * T * ESC / TER_PW); let k = 2; const sig = () => { if (TER.id !== id || k >= total) return; if (!TER.ch[k]) chunkTerreno(k); k++; setTimeout(sig, 70); }; setTimeout(sig, 400); }
   liberarSPR(k => k.startsWith('jefe|') && k.split('|')[1] !== N.jefe);   // se libera memoria de otros jefes
   crearDecoraciones();
   pinchosLista = [];
@@ -3196,7 +3208,13 @@ function dibujarTinaco(t) {
     for (let k = 0; k < 3; k++) { const ph = (f + k / 3) % 1; g.fillStyle = 'rgba(255,255,255,' + ((1 - ph) * 0.55).toFixed(2) + ')'; g.beginPath(); g.arc(x + 32 + Math.sin(ph * 7 + k * 2) * 7, ty - 4 - ph * 46, 5 + ph * 9, 0, TAU); g.fill(); }
   }
 }
+function mantenerTerreno() {                                // en niveles largos solo se guardan los pedazos de piso cercanos a la cámara (ahorra memoria)
+  const k0 = Math.max(0, Math.floor(camara * ESC / TER_PW)), k1 = Math.floor((camara + W) * ESC / TER_PW), total = Math.ceil(COLS * T * ESC / TER_PW);
+  for (let k = 0; k < TER.ch.length; k++) if (TER.ch[k] && (k < k0 - 2 || k > k1 + 5)) { liberarCanvas(TER.ch[k]); delete TER.ch[k]; }
+  for (let k = k0; k <= Math.min(total - 1, k1 + 3); k++) if (!TER.ch[k]) { chunkTerreno(k); break; }
+}
 function dibujarNivel() {
+  if (reloj % 20 === 0) mantenerTerreno();
   const tarde = tema === 'tarde', GT = tilesDe(tema);
   if (!LIGERO) for (const d of decoraciones) if (d.x > camara - 70 && d.x < camara + W + 70) pintarDeco(d, tarde);
   dibujarEstructuras(false);
@@ -3213,7 +3231,8 @@ function dibujarNivel() {
   for (const q of caedizas) {
     if (q.est === 2 || q.x + q.w < camara || q.x > camara + W) continue;
     const sac = q.est === 0 && q.t > 40 ? Math.sin(reloj * 2.6) * Math.min(2.5, (q.t - 40) / 14) : 0, x = q.x + sac, y = q.y;
-    ctx.globalAlpha = q.a; ctx.fillStyle = '#a99b78'; ctx.fillRect(x, y + 4, q.w, 14); ctx.fillStyle = '#cfc3a3'; ctx.fillRect(x, y, q.w, 8); ctx.fillStyle = '#ece3c8'; ctx.fillRect(x, y, q.w, 3);
+    const mat = tema === 'playa' ? ['#8a6238', '#d2a66e', '#ecc88e'] : tema === 'chichen' ? ['#8d8a76', '#b9b59b', '#d3d0b8'] : tema === 'bufadora' ? ['#a99b78', '#cfc3a3', '#ece3c8'] : ['#b9a98a', '#e0d3b4', '#f2e9d0'];
+    ctx.globalAlpha = q.a; ctx.fillStyle = mat[0]; ctx.fillRect(x, y + 4, q.w, 14); ctx.fillStyle = mat[1]; ctx.fillRect(x, y, q.w, 8); ctx.fillStyle = mat[2]; ctx.fillRect(x, y, q.w, 3);
     ctx.fillStyle = 'rgba(70,60,40,.5)'; for (let k = T; k < q.w; k += T) ctx.fillRect(x + k - 1, y + 3, 2, 15); ctx.fillRect(x, y + 17, q.w, 3);
     if (q.est === 0 && q.t > 40) { ctx.strokeStyle = 'rgba(60,50,30,.7)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x + q.w * 0.3, y + 1); ctx.lineTo(x + q.w * 0.36, y + 10); ctx.lineTo(x + q.w * 0.32, y + 18); ctx.moveTo(x + q.w * 0.7, y + 2); ctx.lineTo(x + q.w * 0.64, y + 12); ctx.stroke(); }
     ctx.globalAlpha = 1;
@@ -3383,7 +3402,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.18', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.19', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
