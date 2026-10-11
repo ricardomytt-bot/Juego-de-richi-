@@ -145,3 +145,8 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Nado más lento: velocidad horizontal 0.82 → 0.62, subida máxima 2.9 → 2.1, hundimiento máximo 2.0 → 1.4 y el dash en el agua es más corto.
 - Ajolote rediseñado: cuerpo rosa claro, cabezota con sonrisa y mejillas, tres branquias como plumas, patitas y cola con aleta.
 - El Tiburón ahora tiene 7 de vida (7 dientes dorados) y un ataque nuevo: **embestida** (avisa con una franja roja a la altura donde estás y cruza toda la arena; esquívala nadando arriba o abajo). Cuerpo completo del tiburón cuando embiste.
+
+## Versión 3.25 — Botón de habilidad, Nado rápido y Álbum de stickers
+- **Botón HABILIDAD** (táctil; en teclado Shift o L): usa la habilidad equipada. Sin ninguna equipada se ve gris con una ✖ y al tocarlo suena el sonido de error ("pam") con un aviso. Reemplaza al botón DASH.
+- Habilidades con botón (se **equipan**, una a la vez, en HABILIDADES): **Dash** y la nueva **Nado rápido** (bajo el agua: 4 s de nado veloz y 6 s de recarga; en tierra suena el error). Las demás habilidades siguen activándose solas. Quien ya tenía el Dash lo lleva equipado.
+- **Álbum de stickers** (menú → ÁLBUM): 14 stickers escondidos, 2 por nivel (los de tierra muy arriba sobre azoteas, los del agua pegados al techo del arrecife). Solo brillan cuando estás cerca. Logros "Coleccionista" (7) y "Álbum completo" (14).

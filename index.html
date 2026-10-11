@@ -22,6 +22,8 @@
   #b-izq   { left: 12px;  bottom: 14px; width: 78px; height: 78px; }
   #b-der   { left: 100px; bottom: 14px; width: 78px; height: 78px; }
   #b-dash  { right: 118px; bottom: 96px; width: 52px; height: 52px; background: rgba(150,110,255,.45); display: none; font-size: 9px; }
+  #b-dash.bloq { background: rgba(120,120,132,.5); color: #ddd; }
+  #b-dash.cd { opacity: .5; }
   #b-dash .ico { font-size: 18px; }
   #b-salto { right: 16px; bottom: 18px; width: 82px; height: 82px; background: rgba(60,180,90,.40); }
   #b-patada{ right: 110px; bottom: 18px; width: 64px; height: 64px; background: rgba(240,150,40,.40); }
@@ -37,14 +39,14 @@
   <button id="b-izq"><span class="ico">◀</span></button>
   <button id="b-der"><span class="ico">▶</span></button>
   <button id="b-patada"><span class="ico">👊</span>ATAQUE</button>
-  <button id="b-dash"><span class="ico">💨</span>DASH</button>
+  <button id="b-dash"><span class="ico">✖</span>HABILIDAD</button>
   <button id="b-poder"><span class="ico">❄</span>PODER</button>
   <button id="b-salto"><span class="ico">⬆</span>SALTAR</button>
 </div>
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.24
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.25
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -90,14 +92,15 @@ const PERSONAJES = [
 const CLAVE_GUARDADO = 'lichilon_departamentos_v2', CLAVE_VIEJA = 'lichilon_departamentos_v1';   // v2 = partida nueva (el progreso anterior se borró a propósito)
 const ES_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const AJ_DEFECTO = { musica: 0.6, efectos: 0.8, texto: 1, temblor: true, botones: 'auto', compatible: ES_IOS, efectoPelicula: false, calidad: MOVIL ? 1 : 2, fps: false };
-const datos = { ajustes: { ...AJ_DEFECTO }, nombre: 'Jugador 1', logros: {}, stats: {}, mejor: 0, prog: {}, intro: true, monedas: 0, tienda: {}, creado: 0 };
+const datos = { ajustes: { ...AJ_DEFECTO }, nombre: 'Jugador 1', logros: {}, stats: {}, mejor: 0, prog: {}, intro: true, monedas: 0, tienda: {}, equipada: null, stickers: {}, creado: 0 };
 // ---------- Perfiles: hasta 4 partidas guardadas; los ajustes (volumen, calidad...) son de todos ----------
 const CLAVE_PERFILES = 'lichilon_perfiles_v1';
-const perfilNuevo = nombre => ({ nombre, logros: {}, stats: {}, mejor: 0, prog: {}, intro: true, monedas: 0, tienda: {}, creado: Date.now() });
+const perfilNuevo = nombre => ({ nombre, logros: {}, stats: {}, mejor: 0, prog: {}, intro: true, monedas: 0, tienda: {}, equipada: null, stickers: {}, creado: Date.now() });
 let perfiles = [null, null, null, null], perfilActual = 0;
 const VIEJOS = { rayo: 60, escudo: 40, corazon: 50, hielo: 30 };   // objetos de la tienda anterior: se devuelven en monedas
 function cargarPerfil(i) {
   const p = perfiles[i]; datos.nombre = p.nombre || 'Jugador ' + (i + 1); datos.logros = p.logros || {}; datos.stats = p.stats || {}; datos.mejor = p.mejor || 0; datos.prog = p.prog || {}; datos.monedas = p.monedas || 0; datos.tienda = p.tienda || {}; datos.intro = true; datos.creado = p.creado || Date.now();
+  datos.stickers = p.stickers || {}; datos.equipada = p.equipada || (datos.tienda && datos.tienda.dash ? 'dash' : null);       // quien ya tenía el Dash lo lleva equipado
   for (const k in VIEJOS) if (datos.tienda[k]) { datos.monedas += VIEJOS[k]; delete datos.tienda[k]; }
 }
 try {
@@ -114,7 +117,7 @@ try {
 } catch (e) { perfiles[0] = perfilNuevo('Jugador 1'); perfilActual = 0; cargarPerfil(0); }
 function guardarDatos() {
   try {
-    perfiles[perfilActual] = { nombre: datos.nombre, logros: datos.logros, stats: datos.stats, mejor: datos.mejor, prog: datos.prog, intro: true, monedas: datos.monedas, tienda: datos.tienda, creado: datos.creado };
+    perfiles[perfilActual] = { nombre: datos.nombre, logros: datos.logros, stats: datos.stats, mejor: datos.mejor, prog: datos.prog, intro: true, monedas: datos.monedas, tienda: datos.tienda, equipada: datos.equipada, stickers: datos.stickers, creado: datos.creado };
     localStorage.setItem(CLAVE_PERFILES, JSON.stringify({ actual: perfilActual, ajustes: datos.ajustes, perfiles })); return true;
   } catch (e) { return false; }
 }
@@ -254,6 +257,8 @@ const SONIDOS = {
   ding:    () => { tono(1568, 1568, 0.22, 'triangle', 0.09); tono(2093, 2093, 0.3, 'sine', 0.05, 0.05); },
   chapuzon: () => { ruido(0.32, 0.14, 1100); tono(320, 110, 0.22, 'sine', 0.09); tono(700, 250, 0.12, 'sine', 0.05, 0.05); },
   aterriza: () => tono(150, 70, 0.07, 'sine', 0.1),
+  error:   () => { tono(170, 70, 0.18, 'square', 0.13); tono(120, 55, 0.24, 'sawtooth', 0.1, 0.06); ruido(0.1, 0.12, 500); },                                  // pam: no se puede
+  sticker: () => [1319, 1568, 1976, 2349, 1976, 2637].forEach((f, i) => { tono(f, f, 0.12, 'triangle', 0.08, i * 0.07); tono(f * 1.5, f * 1.5, 0.08, 'sine', 0.03, i * 0.07); }),
   mordida: () => { tono(320, 110, 0.13, 'sawtooth', 0.11); ruido(0.09, 0.13, 2600); tono(200, 100, 0.12, 'square', 0.06, 0.07); },
   onda:    () => { tono(520, 340, 0.2, 'sine', 0.06); tono(780, 520, 0.2, 'sine', 0.04, 0.06); },
   grito:   () => { tono(950, 280, 0.7, 'sawtooth', 0.1); tono(1400, 420, 0.65, 'square', 0.04); ruido(0.6, 0.1, 2200, 'highpass'); },
@@ -2440,6 +2445,16 @@ function tramosMar(s, v) {
   let c = s; sec.forEach((t, k) => { if (t === 'arrecife') arrecife(c, k + v); else if (t === 'tunel') tunel(c, k + v); else cueva(c, k + v); c += 28; });
   return c;
 }
+// Álbum de stickers: 2 escondidos en cada nivel (los de tierra están muy arriba, sobre una azotea; los de agua, pegados al techo del arrecife)
+const STICKERS = [
+  { id: 'st1a', n: 0, e: '🌮', nombre: 'Taco de la Calle 60' }, { id: 'st1b', n: 0, e: '🚲', nombre: 'Bici yucateca' },
+  { id: 'st2a', n: 1, e: '⛪', nombre: 'Catedral al atardecer' }, { id: 'st2b', n: 1, e: '🌇', nombre: 'Atardecer del Paseo' },
+  { id: 'st3a', n: 2, e: '🏖️', nombre: 'Playa de Progreso' }, { id: 'st3b', n: 2, e: '🦀', nombre: 'Cangrejito playero' },
+  { id: 'st4a', n: 3, e: '🗿', nombre: 'Cabeza maya' }, { id: 'st4b', n: 3, e: '🐍', nombre: 'Serpiente emplumada' },
+  { id: 'st5a', n: 4, e: '🌊', nombre: 'Ola de La Bufadora' }, { id: 'st5b', n: 4, e: '🦭', nombre: 'Lobo marino' },
+  { id: 'st6a', n: 5, e: '⛵', nombre: 'Velero de Los Cabos' }, { id: 'st6b', n: 5, e: '🎣', nombre: 'Caña del Pescador' },
+  { id: 'st7a', n: 6, e: '🐙', nombre: 'Pulpo curioso' }, { id: 'st7b', n: 6, e: '🐠', nombre: 'Pez de arrecife' },
+];
 const NIVELES = [
   { nombre: 'NIVEL 1', lugar: 'Calle 60, Centro de Mérida', corto: ['Calle 60', 'Centro de Mérida'], jefeNombre: 'El Patrón', cols: 416, tema: 'dia', jefe: 'patron', musica: 'calle',
     nota: 'Subió la renta: ¡derrota al Patrón!',
@@ -2589,6 +2604,8 @@ const LOGROS = [
   { id: 'intocable',  nombre: 'Intocable',           desc: 'Vence a 3 jefes sin perder vidas',          stat: 'intocable',    meta: 3,   monedas: 40 },
   { id: 'kukulkan',   nombre: 'Héroe de Yucatán',    desc: 'Derrota a Kukulkán',                        stat: 'kukulkan',     meta: 1,   premio: 'mama', monedas: 50 },
   { id: 'aguaPatos',  nombre: '¡Al agua, patos!',    desc: 'Termina tu primer nivel acuático',          stat: 'tiburon',      meta: 1,   monedas: 50 },
+  { id: 'stick7',     nombre: 'Coleccionista',       desc: 'Encuentra 7 stickers escondidos',           stat: 'stickers',     meta: 7,   monedas: 40 },
+  { id: 'stick14',    nombre: 'Álbum completo',      desc: 'Encuentra los 14 stickers',                 stat: 'stickers',     meta: 14,  monedas: 100 },
   { id: 'ricos',      nombre: 'Millonario',          desc: 'Junta 250 monedas en total',                stat: 'monedasTotal', meta: 250, monedas: 50 },
 ];
 let avisos = [];
@@ -2613,7 +2630,7 @@ let estado = 'menu', estadoT = 0, ajustesVolver = 'menu', modoPers = 'elegir', a
 let seleccion = 0, personaje = PERSONAJES[0], nivelActual = 0, arenaX = 0, tema = 'dia';
 let vidas = VIDAS_INICIO, puntos = 0, puntosNivel = 0, vidasPerdidasNivel = 0, nChocos = 0, progChoco = 0, camara = 0, reloj = 0;
 let cargaRayo = 0, rayosVis = [];
-let cdHielo = 0, elitesLista = [], savia = 0, poder = null, botas = 0, escudo = false, temblor = 0, banner = 0, usados = {}, rebote = {};
+let nadoT = 0, nadoCd = 0, msgHab = { t: 0, txt: '' }, stickersLista = [], cdHielo = 0, elitesLista = [], savia = 0, poder = null, botas = 0, escudo = false, temblor = 0, banner = 0, usados = {}, rebote = {};
 let escarabajos = [], murcielagos = [], serpientes = [], items = [], balas = [], particulas = [], chocosVivos = [], pinchosLista = [], tragando = 0;
 let geiseres = [], quema = 0;
 let jefe = null, proyJ = [], ultimo = { x: 64, y: 340 }, pinchosJ = [], explos = [];
@@ -2625,7 +2642,7 @@ function irA(e) {
   if (e === 'logros') logroY = 0;
   if (e === 'cine') { cineI = 0; cineT0 = 0; cineVisPrev = 0; cineJefe = false; }
   if (e === 'niveles') { const k = NIVELES.findIndex((_, i) => !nivelHecho(i)); mundoSel = k < 0 ? 0 : (NIVELES[k].mundo || 0); nivelesDeMundo().forEach(i => prepararCapasPoco(NIVELES[i].tema)); ui.foco = k < 0 ? 0 : Math.max(0, nivelesDeMundo().indexOf(k)); }
-  if (e === 'menu' || e === 'personajes' || e === 'niveles' || e === 'tienda' || e === 'perfil' || e === 'logros' || e === 'intro' || (e === 'ajustes' && ajustesVolver === 'menu')) musica('menu');
+  if (e === 'menu' || e === 'personajes' || e === 'niveles' || e === 'tienda' || e === 'perfil' || e === 'logros' || e === 'album' || e === 'intro' || (e === 'ajustes' && ajustesVolver === 'menu')) musica('menu');
   if (e === 'cine') musica('suspenso');
   if (e !== 'jugando') guardarDatos();
 }
@@ -2648,7 +2665,7 @@ function cargarNivel(n) {
   pinchosLista = [];
   for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) if (mapa[r][c] === '^') pinchosLista.push({ x: c * T + 9, y: r * T + 14, w: T - 18, h: T - 14 });
   usados = {}; rebote = {}; items = []; balas = []; particulas = []; proyJ = []; pinchosJ = []; explos = []; geiseres = []; quema = 0; monedasJ = []; monedasGanadas = 0; tragando = 0;
-  poder = null; botas = 0; escudo = false; cdHielo = 0; savia = tiene('savia') ? 1 : 0; cargaRayo = 0; rayosVis = []; puntosNivel = puntos; vidasPerdidasNivel = 0;
+  poder = null; botas = 0; escudo = false; cdHielo = 0; nadoT = 0; nadoCd = 0; savia = tiene('savia') ? 1 : 0; cargaRayo = 0; rayosVis = []; puntosNivel = puntos; vidasPerdidasNivel = 0;
   const extras = [];                                          // 1 o 2 enemigos extra al azar; a veces son "especiales" (más duros, más rápidos y con brillo)
   { const n = 1 + (Math.random() < 0.5 ? 1 : 0), arenaC = COLS - 25;
     for (let k = 0; k < n; k++) {
@@ -2676,6 +2693,12 @@ function cargarNivel(n) {
   mantas = mantasDef.map(c => ({ tipo: 'manta', x: c * T, y: 12 * T - 14, w: 44, h: 14, x0: c * T, vivo: true, dir: -1, t: Math.floor(Math.random() * 200) }));
   ajolotes = ajolotesDef.map(([c, r]) => ({ tipo: 'ajolote', x: c * T, y: r * T, y0: r * T, w: 32, h: 20, vivo: true, hp: 3, inv: 0, congelado: 0, dir: -1, t: Math.floor(Math.random() * 100), timer: 70 + Math.floor(Math.random() * 60), flash: 0, knock: 0 }));
   ondas = []; burbujas = [];
+  stickersLista = [];
+  { const de = STICKERS.filter(t => t.n === nivelActual), hallar = (c0, c1, r) => { for (let c = c0; c <= c1; c++) if (mapa[r][c] === ' ' && mapa[r + 1][c] === ' ' && mapa[r - 1][c] === ' ') return c; return -1; };
+    const sitios = [];
+    if (N.acuatico) { [146, 286].forEach(c0 => { const c = hallar(c0 - 3, c0 + 3, 1); if (c >= 0) sitios.push([c, 1]); }); }
+    else { const rs = estructurasDef.filter(e => !e.solida); [0.3, 0.8].forEach(u => { const e = rs[Math.floor(rs.length * u)]; if (e) { const c = hallar(e.c0, e.c1, 2); if (c >= 0) sitios.push([c, 2]); } }); }
+    de.forEach((t, i) => { const q = sitios[i]; if (q) stickersLista.push({ id: t.id, e: t.e, nombre: t.nombre, x: q[0] * T + 4, y: q[1] * T + 4, w: 24, h: 24, tomado: !!datos.stickers[t.id], t: Math.floor(Math.random() * 100) }); }); }
   { const A = { escarabajos, murcielagos, serpientes, cangrejos, erizos, gaviotas, dorados, ajolotes }; elitesLista = [];
     for (const [nom, i, el, tipo] of extras) if (el) { const o = A[nom][i]; o.elite = tipo; o.hp = o.hp ? o.hp + 2 : 2; elitesLista.push(o); } }
   const hpJ = { patron: 6, patrona: 8, playero: 7, kukulkan: 14, chalan: 10, pescador: 8, tiburon: 7 }[N.jefe];
@@ -3481,6 +3504,7 @@ function actualizar() {
   if (p.invulnerable > 0) p.invulnerable--;
   if (p.enfriamiento > 0) p.enfriamiento--;
   if (cdHielo > 0) cdHielo--;
+  if (nadoT > 0) nadoT--; if (nadoCd > 0) nadoCd--;
   for (const a of [escarabajos, murcielagos, serpientes, cangrejos, erizos, gaviotas, dorados, ajolotes]) for (const e of a) if (e.inv > 0) e.inv--;
   if (botas > 0) botas--;
 
@@ -3490,11 +3514,11 @@ function actualizar() {
     if (tragando === 0) { perderVida(0); if (estado !== 'jugando') return; }
   } else {
     const dirIn = (ctrl.der ? 1 : 0) - (ctrl.izq ? 1 : 0);
-    p.vx = dirIn * pj.vel * (tiene('veloz') ? 1.18 : 1) * (acuatico ? 0.62 : 1) + p.empuje; p.empuje *= 0.85; if (p.embiste > 0) { p.embiste--; p.vx = p.mirando * 7 + p.empuje; }       // la embestida del Patrón: un arranque corto hacia adelante
+    p.vx = dirIn * pj.vel * (tiene('veloz') ? 1.18 : 1) * (acuatico ? (nadoT > 0 ? 1.0 : 0.62) : 1) + p.empuje; p.empuje *= 0.85; if (p.embiste > 0) { p.embiste--; p.vx = p.mirando * 7 + p.empuje; }       // la embestida del Patrón: un arranque corto hacia adelante
      if (Math.abs(p.empuje) < 0.1) p.empuje = 0;
     if (dirIn) { p.mirando = dirIn; p.pasos += Math.abs(dirIn * pj.vel); }
     const saltoNuevo = ctrl.salto && !p.saltoPrev, estabaEnSuelo = p.enSuelo; p.saltoPrev = ctrl.salto; if (p.enSuelo) p.dobleUsado = false;
-    if (acuatico) { if (ctrl.salto) { if (saltoNuevo || reloj % 22 === 0) sfx('burbuja'); p.vy = Math.max(p.vy - 0.4, -2.1); p.enSuelo = false; } }       // nadar: mantén el botón de salto para subir
+    if (acuatico) { if (ctrl.salto) { if (saltoNuevo || reloj % 22 === 0) sfx('burbuja'); p.vy = Math.max(p.vy - (nadoT > 0 ? 0.6 : 0.4), nadoT > 0 ? -3.2 : -2.1); p.enSuelo = false; } }       // nadar: mantén el botón de salto para subir
     else if (ctrl.salto && p.enSuelo) { p.vy = -pj.salto * (botas > 0 ? 1.38 : 1); p.enSuelo = false; sfx(botas > 0 ? 'resorte' : 'salto'); polvo(p.x + 13, p.y + p.h, 4); }
     else if (saltoNuevo && !estabaEnSuelo && tiene('doble') && !p.dobleUsado) { p.dobleUsado = true; p.vy = -pj.salto * 0.85; sfx('salto'); chispas(p.x + 13, p.y + p.h, 10, '#fff', 3); polvo(p.x + 13, p.y + p.h, 5); }
     if (!acuatico && !ctrl.salto && p.vy < -4) p.vy = -4;
@@ -3502,7 +3526,12 @@ function actualizar() {
     if (ctrl.poder) { if (poder) dispararPoder(); else usarRayo(); }
     if (ctrl.rayo) usarRayo();
     if (p.dashEsp > 0) p.dashEsp--;
-    if (ctrl.dash && tiene('dash') && !(p.dash > 0) && !(p.dashEsp > 0)) { if (dirIn) p.mirando = dirIn; p.dash = 9; p.dashEsp = 50; p.embiste = 0; p.invulnerable = Math.max(p.invulnerable, 14); sfx('dash'); chispas(p.x + 13, p.y + 27, 8, '#cdbfff', 3); }
+    if (ctrl.dash) {                                                       // botón HABILIDAD: usa la habilidad equipada (si no hay ninguna: suena el error)
+      const hab = datos.equipada && tiene(datos.equipada) ? datos.equipada : null;
+      if (!hab) { sfx('error'); msgHab = { t: 120, txt: 'Equipa una habilidad en HABILIDADES (menú)' }; }
+      else if (hab === 'dash') { if (!(p.dash > 0) && !(p.dashEsp > 0)) { if (dirIn) p.mirando = dirIn; p.dash = 9; p.dashEsp = 50; p.embiste = 0; p.invulnerable = Math.max(p.invulnerable, 14); sfx('dash'); chispas(p.x + 13, p.y + 27, 8, '#cdbfff', 3); } }
+      else if (hab === 'nado') { if (!acuatico) { sfx('error'); msgHab = { t: 100, txt: 'Nado rápido solo funciona bajo el agua' }; } else if (nadoT <= 0 && nadoCd <= 0) { nadoT = 240; nadoCd = 600; sfx('dash'); chispas(p.x + 13, p.y + 27, 10, '#bff3ff', 3); } }
+    }
     for (const t of tinacos) t.alt = t.sobre ? Math.min(1, t.alt + 0.014) : Math.max(0, t.alt - 0.02);      // el agua sube mientras estás encima
     const vyAntes = p.vy, pieAntes = p.y + p.h;
     p.vy = acuatico ? Math.min(p.vy * 0.975 + 0.08, 1.4) : Math.min(p.vy + GRAVEDAD * (p.vy > 0 ? pj.caida : 1), pj.maxCaida);
@@ -3639,6 +3668,10 @@ function actualizar() {
 
   actualizarJefe(p, pata, pisando); if (estado !== 'jugando') return;
   actualizarProyectiles(p, pata); if (estado !== 'jugando') return;
+  for (const st of stickersLista) if (!st.tomado && choca(p, st)) {
+    st.tomado = true; datos.stickers[st.id] = true; registrar('stickers'); guardarDatos(); sfx('sticker'); chispas(st.x + 12, st.y + 12, 18, '#fff', 4); chispas(st.x + 12, st.y + 12, 10, '#ffd23f', 5);
+    avisos.push({ t: 0, titulo: '¡STICKER ENCONTRADO!', txt: st.e + ' ' + st.nombre, sub: 'Míralo en el ÁLBUM del menú' });
+  }
   actualizarMonedas(p); actualizarQuemadura(p);
 
   // --- Objetos y Kit Kats ---
@@ -3863,6 +3896,8 @@ function pintarMarcador() {                                 // marcador limpio: 
   for (let i = 0; i < CHOCOS_POR_VIDA; i++) { ctx.fillStyle = i < progChoco ? '#ff4b4b' : 'rgba(255,255,255,.28)'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(66 + i * 16, 73, 5.2, 0, 7); ctx.fill(); ctx.stroke(); }
   let px = 128;
   const chip = (activo, dibujo, col) => { if (!activo) return; ctx.fillStyle = 'rgba(20,24,56,.62)'; ctx.beginPath(); ctx.arc(px + 13, 73, 13, 0, 7); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke(); dibujo(px + 13, 73); px += 31; };
+  { const eq = datos.equipada && tiene(datos.equipada) ? datos.equipada : null, cdh = eq === 'dash' ? jugador.dashEsp / 50 : eq === 'nado' ? (nadoT > 0 ? 0 : nadoCd / 600) : 0;
+    chip(!!eq, (x, y) => { ctx.save(); ctx.translate(x, y); ctx.scale(0.34, 0.34); iconoObjeto(ctx, eq, 0, 0); ctx.restore(); if (cdh > 0) { ctx.fillStyle = 'rgba(20,24,56,.72)'; ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, 13, -Math.PI / 2, -Math.PI / 2 + Math.min(1, cdh) * TAU); ctx.closePath(); ctx.fill(); } }, '#c9b6ff'); }
   chip(!!poder, (x, y) => { ctx.save(); ctx.translate(x, y); ctx.scale(0.5, 0.5); dibujarCristal(ctx, -12, -12); ctx.restore(); if (cdHielo > 0) { ctx.fillStyle = 'rgba(20,24,56,.72)'; ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, 13, -Math.PI / 2, -Math.PI / 2 + cdHielo / 90 * TAU); ctx.closePath(); ctx.fill(); } }, '#9be4ff');
   chip(escudo, (x, y) => dibujarEscudoIcono(ctx, x - 7, y - 8, 0.58), '#ffd93b');
   chip(botas > 0, (x, y) => { ctx.save(); ctx.translate(x, y); ctx.scale(0.5, 0.5); dibujarIconoBotas(ctx, -12, -12); ctx.restore(); ctx.fillStyle = '#ffae4d'; ctx.fillRect(x - 12, 90, 24 * botas / BOTAS_DURACION, 3); }, '#ffae4d');
@@ -3882,7 +3917,7 @@ function pintarMarcador() {                                 // marcador limpio: 
 }
 function dibujarMarcador() {                                // el marcador se redibuja solo cuando algo cambia
   const hp = jefe && jefe.vivo && jefe.estadoJ === 'activo' ? jefe.hp : -1;
-  const key = [puntos, personaje.id, progChoco, vidas, poder ? 1 : 0, Math.ceil(cdHielo / 6), escudo ? 1 : 0, savia, botas > 0 ? Math.ceil(botas / 10) : 0, datos.monedas, silencio ? 1 : 0, nivelActual, hp, jefe ? jefe.tipo : '', ESC].join('|');
+  const key = [puntos, personaje.id, progChoco, vidas, poder ? 1 : 0, Math.ceil(cdHielo / 6), datos.equipada || '', nadoT > 0 ? 1 : 0, Math.ceil(Math.max(nadoCd, jugador.dashEsp) / 10), escudo ? 1 : 0, savia, botas > 0 ? Math.ceil(botas / 10) : 0, datos.monedas, silencio ? 1 : 0, nivelActual, hp, jefe ? jefe.tipo : '', ESC].join('|');
   if (!HUD.c || HUD.key !== key) {
     const c = HUD.c || (HUD.c = crearCanvas(Math.ceil(W * ESC), Math.ceil(100 * ESC))), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, 0, 0); g.clearRect(0, 0, W, 100);
     const prev = ctx; ctx = g; try { pintarMarcador(); } finally { ctx = prev; }
@@ -3906,6 +3941,11 @@ function dibujarJuego() {
   ctx.save(); ctx.translate(-Math.round(camara * ESC) / ESC + sx, sy);
   dibujarEdificioFinal(arenaX, tema === 'tarde');
   dibujarNivel();
+  for (const st of stickersLista) {                          // el sticker escondido solo brilla cuando estás cerca
+    if (st.tomado) continue; const d = Math.hypot(st.x + 12 - (jugador.x + 13), st.y + 12 - (jugador.y + 27));
+    if (d > 190) continue; const al = Math.min(1, (190 - d) / 110) * (0.55 + 0.3 * Math.sin(reloj * 0.12 + st.t));
+    ctx.save(); ctx.globalAlpha = al; ctx.translate(st.x + 12, st.y + 12 + Math.sin(reloj * 0.07 + st.t) * 2); resplandor(ctx, 0, 0, 22, 'rgba(255,255,255,.7)'); ctx.font = '22px "Apple Color Emoji","Segoe UI Emoji",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(st.e, 0, 1); ctx.restore();
+  }
   for (const m of chocosVivos) if (!m.tomado && m.x > camara - 40 && m.x < camara + W + 20) dibujarChoco(ctx, m);       // solo los que se ven
   for (const it of items) { const y = it.y + Math.sin(reloj * 0.1) * 2; if (it.tipo === 'hielo') dibujarCristal(ctx, it.x, y); else if (it.tipo === 'botas') dibujarIconoBotas(ctx, it.x, y); else if (it.tipo === 'agua') dibujarGota(ctx, it.x, y); else dibujarEscudoIcono(ctx, it.x, y); }
   for (const e of escarabajos) if (e.vivo) pintarEscarabajo(ctx, e);
@@ -3944,6 +3984,7 @@ function dibujarJuego() {
   if (estado === 'jugando') dibujarMarcador();
   if (estado === 'jugando' && quema > 0) { ctx.fillStyle = 'rgba(150,30,10,.82)'; trazoRedondo(ctx, 8, 98, 176, 42, 12); ctx.fill(); ctx.strokeStyle = '#ffb36b'; ctx.lineWidth = 2; ctx.stroke(); texto('🔥 QUEMADURA  ' + Math.ceil(quema / 60) + 's', 96, 116, 14, '#fff', 'center'); texto('¡Toma la gota de agua!', 96, 132, 11, '#ffe0b0', 'center', true); }
   if (estado === 'jugando' && jefe && jefe.tipo === 'kukulkan' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡ATACA SOLO EL FUEGO VERDE!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
+  if (estado === 'jugando' && msgHab.t > 0) { msgHab.t--; ctx.globalAlpha = Math.min(1, msgHab.t / 20); texto(msgHab.txt, W / 2, 380, 16, '#ffb3b3', 'center', true); ctx.globalAlpha = 1; }
   if (estado === 'jugando' && jefe && jefe.tipo === 'tiburon' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip2', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡ROMPE EL DIENTE DORADO!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
   if (banner > 0 && estado === 'jugando') {
     const a = Math.min(1, banner / 30, (170 - banner) / 20), N = NIVELES[nivelActual]; ctx.globalAlpha = a;
@@ -4011,10 +4052,10 @@ function dibujarMenu() {
   uiBoton('COMENZAR EL JUEGO', W / 2 - 170, 176, 340, 46, () => { modoPers = 'elegir'; irA('personajes'); }, 'verde', 21);
   [['PERSONAJES', 'azul', () => { modoPers = 'ver'; irA('personajes'); }], ['LOGROS', 'dorado', () => irA('logros')], ['HABILIDADES', 'rojo', () => irA('tienda')]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 232, 150, 36, f, cc, 15));
   if (logrosPendientes()) { ctx.fillStyle = '#ff3b3b'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(468, 236, 10, 0, 7); ctx.fill(); ctx.stroke(); texto(String(logrosPendientes()), 468, 241, 12, '#fff', 'center'); }
-  [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
+  [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.24', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.25', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -4163,7 +4204,8 @@ const OBJETOS = [
   { id: 'iman',    nombre: 'Imán de Kit Kats', precio: 40, desc: 'Los Kit Kats que están cerca de ti vuelan solos hasta tus manos.' },
   { id: 'planeo',  nombre: 'Capa planeadora',  precio: 50, desc: 'Mantén apretado SALTAR en el aire y caes despacito. ¡Perfecto para los huecos!' },
   { id: 'veloz',   nombre: 'Zapatos veloces',  precio: 50, desc: 'Corres un poco más rápido en todos los niveles.' },
-  { id: 'dash',    nombre: 'Dash',             precio: 60, desc: 'Botón DASH (o Shift): te lanzas hacia adelante y quedas a salvo un instante. Se recarga solo.' },
+  { id: 'nado',    nombre: 'Nado rápido',      precio: 60, activa: true, desc: 'Equípala y toca HABILIDAD bajo el agua: nadas mucho más rápido unos segundos. Se recarga sola.' },
+  { id: 'dash',    nombre: 'Dash',             precio: 60, activa: true, desc: 'Equípalo y toca HABILIDAD (o Shift): te lanzas hacia adelante y quedas a salvo un instante. Se recarga solo.' },
   { id: 'savia',   nombre: 'Savia vital',      precio: 70, desc: 'Empiezas cada nivel con un corazón azul extra que absorbe un golpe antes de perder una vida.' },
   { id: 'doble',   nombre: 'Doble salto',      precio: 90, desc: 'Puedes saltar una vez más en el aire. ¡Llegas a lugares muy altos!' },
 ];
@@ -4182,6 +4224,11 @@ function iconoObjeto(g, id, x, y) {                          // dibujo grande de
     g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
     [[-12, 11, 22], [-4, -12, 16], [-4, 0, 26]].forEach(([dy, _, l], k) => { g.strokeStyle = 'rgba(190,170,255,' + (0.9 - k * 0.2) + ')'; g.lineWidth = 4; g.beginPath(); g.moveTo(x - 24, y + [-10, 0, 10][k]); g.lineTo(x - 24 + [18, 26, 18][k], y + [-10, 0, 10][k]); g.stroke(); });
     g.fillStyle = '#ffe14d'; g.strokeStyle = NEGRO; g.lineWidth = 2.4; g.beginPath(); g.moveTo(x - 2, y - 14); g.lineTo(x + 22, y); g.lineTo(x - 2, y + 14); g.lineTo(x + 2, y + 5); g.lineTo(x - 8, y + 5); g.lineTo(x - 8, y - 5); g.lineTo(x + 2, y - 5); g.closePath(); g.fill(); g.stroke(); g.restore();
+  } else if (id === 'nado') {
+    g.save(); g.translate(x, y); g.lineJoin = 'round'; g.lineCap = 'round';
+    g.fillStyle = '#2aa6e0'; g.strokeStyle = NEGRO; g.lineWidth = 2.4; g.beginPath(); g.moveTo(-6, -22); g.quadraticCurveTo(22, -14, 18, 12); g.quadraticCurveTo(6, 4, -10, 6); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#7fe3ff'; g.beginPath(); g.moveTo(-2, -16); g.quadraticCurveTo(14, -10, 12, 4); g.quadraticCurveTo(4, 0, -4, 0); g.closePath(); g.fill();
+    g.strokeStyle = '#bff3ff'; g.lineWidth = 3; [[-26, 14], [-26, 22]].forEach(([wx, wy]) => { g.beginPath(); g.moveTo(wx, wy); g.quadraticCurveTo(wx + 8, wy - 6, wx + 16, wy); g.quadraticCurveTo(wx + 24, wy + 6, wx + 32, wy); g.stroke(); }); g.restore();
   } else if (id === 'planeo') {
     g.save(); g.translate(x, y); g.lineJoin = 'round';
     g.fillStyle = '#ff5a5a'; g.strokeStyle = NEGRO; g.lineWidth = 2.4; g.beginPath(); g.moveTo(-24, 0); g.quadraticCurveTo(0, -34, 24, 0); g.quadraticCurveTo(12, -6, 0, 0); g.quadraticCurveTo(-12, -6, -24, 0); g.closePath(); g.fill(); g.stroke();
@@ -4209,9 +4256,12 @@ function iconoObjeto(g, id, x, y) {                          // dibujo grande de
 }
 function comprarObjeto(o) {
   tiendaMsg.t0 = estadoT;
-  if (tiene(o.id)) { tiendaMsg.txt = 'Ya tienes ' + o.nombre; tiendaMsg.col = '#cfd8ff'; sfx('clic'); return; }
+  if (tiene(o.id)) {
+    if (o.activa) { datos.equipada = datos.equipada === o.id ? null : o.id; guardarDatos(); tiendaMsg.txt = datos.equipada === o.id ? '¡' + o.nombre + ' equipada! Úsala con el botón HABILIDAD.' : o.nombre + ' guardada (sin equipar).'; tiendaMsg.col = '#7bd36b'; sfx('menu'); return; }
+    tiendaMsg.txt = 'Ya tienes ' + o.nombre; tiendaMsg.col = '#cfd8ff'; sfx('clic'); return;
+  }
   if (datos.monedas < o.precio) { tiendaMsg.txt = 'Te faltan ' + (o.precio - datos.monedas) + ' monedas para ' + o.nombre; tiendaMsg.col = '#ff9a9a'; sfx('golpe'); return; }
-  datos.monedas -= o.precio; datos.tienda[o.id] = true; guardarDatos(); sfx('vida'); sfx('moneda'); tiendaMsg.txt = '¡Aprendiste ' + o.nombre + '! Ya la tienes siempre.'; tiendaMsg.col = '#7bd36b';
+  datos.monedas -= o.precio; datos.tienda[o.id] = true; if (o.activa && !datos.equipada) datos.equipada = o.id; guardarDatos(); sfx('vida'); sfx('moneda'); tiendaMsg.txt = '¡Aprendiste ' + o.nombre + '! Ya la tienes siempre.'; tiendaMsg.col = '#7bd36b';
 }
 function dibujarTienda() {
   dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.62)'; ctx.fillRect(0, 0, W, H);
@@ -4226,14 +4276,36 @@ function dibujarTienda() {
     ctx.fillStyle = 'rgba(255,255,255,.08)'; trazoRedondo(ctx, x + 8, y + 8, 56, 52, 12); ctx.fill();
     iconoObjeto(ctx, o.id, x + 36, y + 36);
     texto(o.nombre, x + 72, y + 30, o.nombre.length > 15 ? 14 : 16, mio ? '#7bd36b' : '#ffe27a');
-    texto(mio ? 'Lo tienes' : 'Habilidad', x + 72, y + 50, 11, '#cfd8ff', 'left', true);
+    texto(mio ? (o.activa ? 'Habilidad activa' : 'Lo tienes') : (o.activa ? 'Habilidad activa' : 'Habilidad'), x + 72, y + 50, 11, '#cfd8ff', 'left', true);
     envolver(o.desc, w - 20, 11.5).forEach((l, k) => texto(l, x + 10, y + 78 + k * 14, 11.5, '#fff', 'left', true));
     const py = y + h - 32;
-    if (mio) { ctx.fillStyle = '#2fa83a'; trazoRedondo(ctx, x + 10, py, w - 20, 24, 12); ctx.fill(); texto('✔ TUYO', x + w / 2, py + 17, 14, '#fff', 'center'); }
+    if (mio) { const eqp = o.activa && datos.equipada === o.id; ctx.fillStyle = o.activa && !eqp ? '#2a7bd9' : '#2fa83a'; trazoRedondo(ctx, x + 10, py, w - 20, 24, 12); ctx.fill(); texto(o.activa ? (eqp ? '✔ EQUIPADA' : 'EQUIPAR') : '✔ TUYO', x + w / 2, py + 17, 14, '#fff', 'center'); }
     else { ctx.fillStyle = alcanza ? '#e8a200' : '#4a4f6c'; trazoRedondo(ctx, x + 10, py, w - 20, 24, 12); ctx.fill(); dibujarMoneda(ctx, x + 36, py + 12, 8, true); texto(o.precio + '  ·  ' + (alcanza ? 'COMPRAR' : 'faltan ' + (o.precio - datos.monedas)), x + w / 2 + 12, py + 17, 13, '#fff', 'center'); }
   });
   if (estadoT - tiendaMsg.t0 < 170) texto(tiendaMsg.txt, W / 2, 428, 17, tiendaMsg.col, 'center');
-  else texto('Las habilidades que compras se activan solas en cada partida.', W / 2, 428, 13, '#cfd8ff', 'center', true);
+  else texto('Las habilidades con botón se EQUIPAN (una a la vez); las demás se activan solas.', W / 2, 428, 13, '#cfd8ff', 'center', true);
+  uiCerrar(() => irA('menu'), W - 58, 8);
+}
+// ---------- Álbum de stickers (como en Mario Wonder): 14 escondidos, 2 en cada nivel ----------
+let albumSel = 0;
+function dibujarAlbum() {
+  dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.66)'; ctx.fillRect(0, 0, W, H);
+  const hay = STICKERS.filter(t => datos.stickers[t.id]).length;
+  texto('ÁLBUM DE STICKERS', W / 2, 46, 32, '#ffd43b', 'center'); texto(hay + ' / ' + STICKERS.length, W / 2, 72, 17, '#fff', 'center');
+  ctx.fillStyle = 'rgba(255,255,255,.18)'; trazoRedondo(ctx, W / 2 - 120, 80, 240, 10, 5); ctx.fill(); ctx.fillStyle = '#7bd36b'; trazoRedondo(ctx, W / 2 - 120, 80, Math.max(10, 240 * hay / STICKERS.length), 10, 5); ctx.fill();
+  const COL = ['#ffb347', '#ff7aa8', '#4fc3c9', '#9bcf53', '#6aa6e8', '#f5c344', '#8e7cff'];
+  STICKERS.forEach((t, i) => {
+    const col = t.n, fila = i % 2, x = 22 + col * 108, y = 112 + fila * 136, w = 98, h = 126, idx = ui.rects.length, tengo = !!datos.stickers[t.id];
+    ui.rects.push({ tipo: 'boton', x, y, w, h, accion: () => { albumSel = i; sfx('clic'); } });
+    const f = (ui.foco === idx && !ui.sinTeclado) || albumSel === i;
+    ctx.fillStyle = tengo ? '#fff' : 'rgba(255,255,255,.12)'; trazoRedondo(ctx, x, y, w, h, 14); ctx.fill();
+    if (f) { ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 4; trazoRedondo(ctx, x - 2, y - 2, w + 4, h + 4, 16); ctx.stroke(); }
+    if (tengo) { ctx.fillStyle = COL[col]; trazoRedondo(ctx, x + 6, y + 6, w - 12, h - 34, 10); ctx.fill(); ctx.font = '46px "Apple Color Emoji","Segoe UI Emoji",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(t.e, x + w / 2, y + 48); ctx.textBaseline = 'alphabetic'; texto(t.nombre, x + w / 2, y + h - 12, t.nombre.length > 14 ? 9.5 : 11, '#2a1a40', 'center'); }
+    else { texto('?', x + w / 2, y + 66, 46, 'rgba(255,255,255,.45)', 'center'); texto('Nivel ' + (t.n + 1), x + w / 2, y + h - 12, 11, 'rgba(255,255,255,.55)', 'center'); }
+  });
+  const t = STICKERS[albumSel], tengo = !!datos.stickers[t.id];
+  texto(tengo ? t.e + '  ' + t.nombre : 'Sticker escondido en el nivel ' + (t.n + 1) + ': ' + NIVELES[t.n].corto[0], W / 2, 400, 16, tengo ? '#7bd36b' : '#ffe27a', 'center');
+  if (!tengo) texto(NIVELES[t.n].acuatico ? 'Pista: nada pegado al techo del arrecife...' : 'Pista: búscalo muy arriba, sobre una azotea (salta desde el techo).', W / 2, 424, 13, '#cfd8ff', 'center', true);
   uiCerrar(() => irA('menu'), W - 58, 8);
 }
 // Elegir el nivel (por estados de México; el primer mundo es Yucatán)
@@ -4392,6 +4464,7 @@ function dibujar() {
   else if (estado === 'tienda') dibujarTienda();
   else if (estado === 'perfil') dibujarPerfil();
   else if (estado === 'logros') dibujarLogros();
+  else if (estado === 'album') dibujarAlbum();
   else if (estado === 'ajustes') dibujarAjustes();
   else if (estado === 'intro') dibujarIntro();
   else if (estado === 'cine') dibujarCine();
@@ -4470,7 +4543,7 @@ addEventListener('pointerup', () => { ui.arr = null; });
 
 const domTactil = document.getElementById('tactil'), domGirar = document.getElementById('girar'), domDash = document.getElementById('b-dash');
 cargarNivel(0); irA('menu');
-let ultimoT = 0, acum = 0, dibCont = 0, fpsT0 = 0, fpsMostrado = 60, fpsBajos = 0, domVis = null, domGir = null;
+let domHab = '', ultimoT = 0, acum = 0, dibCont = 0, fpsT0 = 0, fpsMostrado = 60, fpsBajos = 0, domVis = null, domGir = null;
 let trabAcum = 0, trabN = 0, trabMostrado = 0;
 function ciclo(ts) {
   const ahora = ts || performance.now();
@@ -4487,7 +4560,9 @@ function ciclo(ts) {
     if (fpsBajos >= 3 && calidad > 0) { fpsBajos = 0; aplicarCalidad(calidad - 1); avisos.push({ t: 0, titulo: 'CALIDAD AJUSTADA', txt: 'Bajé la calidad gráfica', sub: 'Para que vaya más fluido. Cámbiala en Ajustes.' }); }
   }
   const verBotones = botonesVisibles() && estado === 'jugando', gir = botonesVisibles();
-  if (verBotones !== domVis) { domTactil.style.display = verBotones ? 'block' : 'none'; domDash.style.display = tiene('dash') ? 'flex' : 'none'; domVis = verBotones; }
+  if (verBotones !== domVis) { domTactil.style.display = verBotones ? 'block' : 'none'; domDash.style.display = verBotones ? 'flex' : 'none'; domVis = verBotones; }
+  { const eq = datos.equipada && tiene(datos.equipada) ? datos.equipada : '', cd = eq === 'dash' ? jugador.dashEsp > 0 : eq === 'nado' ? (nadoCd > 0 || nadoT > 0) : false, hk = eq + '|' + (cd ? 1 : 0);
+    if (hk !== domHab) { domHab = hk; domDash.classList.toggle('bloq', !eq); domDash.classList.toggle('cd', cd); domDash.innerHTML = '<span class="ico">' + (eq === 'dash' ? '💨' : eq === 'nado' ? '🏊' : '✖') + '</span>' + (eq === 'dash' ? 'DASH' : eq === 'nado' ? 'NADO' : 'HABILIDAD'); } }
   if (gir !== domGir) { domGirar.classList.toggle('on', gir); domGir = gir; }
   if (!verBotones) for (const k in tactil) tactil[k] = false;
   requestAnimationFrame(ciclo);
