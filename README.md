@@ -150,3 +150,7 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - **Botón HABILIDAD** (táctil; en teclado Shift o L): usa la habilidad equipada. Sin ninguna equipada se ve gris con una ✖ y al tocarlo suena el sonido de error ("pam") con un aviso. Reemplaza al botón DASH.
 - Habilidades con botón (se **equipan**, una a la vez, en HABILIDADES): **Dash** y la nueva **Nado rápido** (bajo el agua: 4 s de nado veloz y 6 s de recarga; en tierra suena el error). Las demás habilidades siguen activándose solas. Quien ya tenía el Dash lo lleva equipado.
 - **Álbum de stickers** (menú → ÁLBUM): 14 stickers escondidos, 2 por nivel (los de tierra muy arriba sobre azoteas, los del agua pegados al techo del arrecife). Solo brillan cuando estás cerca. Logros "Coleccionista" (7) y "Álbum completo" (14).
+
+## Versión 3.26 — Stickers con lucecita y habilidades desbloqueadas (prueba)
+- Los stickers escondidos ahora tienen una lucecita dorada tenue con una estrellita que se ve desde lejos; de cerca brillan más y se ve el emoji.
+- `MODO_PRUEBA_HAB = true`: todas las habilidades están desbloqueadas solo para probarlas en esta versión (para quitarlo: ponerlo en false).

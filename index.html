@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.25
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.26
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -3943,8 +3943,8 @@ function dibujarJuego() {
   dibujarNivel();
   for (const st of stickersLista) {                          // el sticker escondido solo brilla cuando estás cerca
     if (st.tomado) continue; const d = Math.hypot(st.x + 12 - (jugador.x + 13), st.y + 12 - (jugador.y + 27));
-    if (d > 190) continue; const al = Math.min(1, (190 - d) / 110) * (0.55 + 0.3 * Math.sin(reloj * 0.12 + st.t));
-    ctx.save(); ctx.globalAlpha = al; ctx.translate(st.x + 12, st.y + 12 + Math.sin(reloj * 0.07 + st.t) * 2); resplandor(ctx, 0, 0, 22, 'rgba(255,255,255,.7)'); ctx.font = '22px "Apple Color Emoji","Segoe UI Emoji",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(st.e, 0, 1); ctx.restore();
+    if (st.x < camara - 40 || st.x > camara + W + 20) continue; const cerca = Math.max(0, (190 - d) / 190), al = Math.min(1, 0.55 + 0.45 * cerca) * (0.8 + 0.2 * Math.sin(reloj * 0.12 + st.t));       // una lucecita tenue lo delata de lejos; de cerca brilla más
+    ctx.save(); ctx.globalAlpha = al; ctx.translate(st.x + 12, st.y + 12 + Math.sin(reloj * 0.07 + st.t) * 2); resplandor(ctx, 0, 0, 26, 'rgba(255,205,70,.95)'); ctx.fillStyle = '#fff'; ctx.strokeStyle = 'rgba(160,100,0,.8)'; ctx.lineWidth = 1; ctx.beginPath(); for (let k = 0; k < 8; k++) { const r = k % 2 ? 1.6 : 5.5, an = k * Math.PI / 4 + reloj * 0.03; ctx.lineTo(Math.cos(an) * r, Math.sin(an) * r); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.globalAlpha = al * (0.3 + 0.7 * cerca); ctx.font = '22px "Apple Color Emoji","Segoe UI Emoji",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(st.e, 0, 1); ctx.restore();
   }
   for (const m of chocosVivos) if (!m.tomado && m.x > camara - 40 && m.x < camara + W + 20) dibujarChoco(ctx, m);       // solo los que se ven
   for (const it of items) { const y = it.y + Math.sin(reloj * 0.1) * 2; if (it.tipo === 'hielo') dibujarCristal(ctx, it.x, y); else if (it.tipo === 'botas') dibujarIconoBotas(ctx, it.x, y); else if (it.tipo === 'agua') dibujarGota(ctx, it.x, y); else dibujarEscudoIcono(ctx, it.x, y); }
@@ -4055,7 +4055,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.25', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.26', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -4209,7 +4209,8 @@ const OBJETOS = [
   { id: 'savia',   nombre: 'Savia vital',      precio: 70, desc: 'Empiezas cada nivel con un corazón azul extra que absorbe un golpe antes de perder una vida.' },
   { id: 'doble',   nombre: 'Doble salto',      precio: 90, desc: 'Puedes saltar una vez más en el aire. ¡Llegas a lugares muy altos!' },
 ];
-const tiene = id => !!datos.tienda[id];
+const MODO_PRUEBA_HAB = true;                               // SOLO PARA ESTA VERSIÓN DE PRUEBA: todas las habilidades están desbloqueadas (se quita poniendo false)
+const tiene = id => MODO_PRUEBA_HAB || !!datos.tienda[id];
 const vidasInicio = () => VIDAS_INICIO;
 let tiendaMsg = { t0: -999, txt: '', col: '#fff' };
 function iconoRayo(g, x, y, esc = 1) {
