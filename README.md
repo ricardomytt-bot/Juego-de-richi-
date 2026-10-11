@@ -133,3 +133,10 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Arreglo: en modo compatible (iPhone) los efectos se tocaban desde una "hoja de sonidos" con reproductores `<audio>` que en el iPhone no siempre quedaban listos, y se quedaban mudos. Ahora cada sonido fabricado se toca con WebAudio (buffers, un solo nodo ligero por sonido); si el audio no está activo, se usa un reproductor `<audio>` por sonido como respaldo. La hoja ya no se usa.
 - Efectos nuevos: tajo de espada, puñetazo, embestida, dash, enemigo derrotado, enemigo especial derrotado, armadura del especial, golpe al jefe, jefe vencido, explosión, cuenta atrás de la moneda, mareo, enganche del anzuelo, crujido y derrumbe de plataformas, burbujas y "ding" del tinaco, chapuzón al caer al agua, aterrizaje.
 - Cinemáticas: la música baja a 16 % (antes 35 %); solo suenan las voces de los personajes, el clic al avanzar y la llave que cae.
+
+## Versión 3.23 — Nivel 7: Los Cabos bajo el agua y El Tiburón
+- Primer nivel **acuático** (`acuatico: true`, tema `mar`): se nada (mantén el salto para subir, el agua frena y flotas), fondo marino con rocas y túneles (`techoCol`, `colina`), arrecife, algas, barco hundido, burbujas. 12 tramos generados con `tramosMar` (arrecife, túnel, cueva).
+- Enemigos acuáticos: **dorado** (te persigue y muerde; la mordida te inmoviliza 1 s; 2 golpes), **mantarraya** (en el fondo; si la tocas pierdes un corazón; no se puede vencer) y **ajolote** (manda ondas con la cola; 3 golpes). También pueden salir como enemigos especiales extra.
+- **El Tiburón** (4 de vida): solo se le puede dañar rompiendo el **diente dorado** que sale del suelo (uno entre 6). Ataques: explosiones de sangre por todo el mapa, grito (tirazo de viento que quita 2 vidas) y dientes que salen del suelo. La llave está entre sus dientes.
+- Logro nuevo: "¡Al agua, patos!" (terminar el primer nivel acuático).
+- Arreglos de rendimiento: el brillo de los enemigos especiales y del diente dorado ya no crea una imagen nueva en cada cuadro; las monedas solo se dibujan cuando están en pantalla y sin girarlas.
