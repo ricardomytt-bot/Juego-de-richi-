@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.29
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.30
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -72,16 +72,19 @@ const BOTAS_DURACION = 900;                       // 15 segundos
 const PERSONAJES = [
   { id: 'lichi', nombre: 'LICHILÓN', estilo: 'lichi', vel: 3.4, salto: 13.6, caida: 1.0, maxCaida: 15, voz: 215,
     desc: ['Buen saltador y', 'bastante resistente.'], stats: { vel: 3, salto: 4, caida: 3 },
-    piel: '#fbe3c4', piel2: '#dcb48e', pelo: ['#f2d25a', '#c9982b'], camisa: ['#3f9a58', '#2a6c3e'], pantalon: '#3a58a6', zapato: '#8a5f2c', mejilla: '#d8403a', mod: { piel: '#ffd7b3', pelo: '#f7d94c', cejas: '#d49a12', camisa: '#46c466', detalle: '#ffffff', pantalon: '#3d6fd8', zapato: '#f2f0e6', iris: '#1e88e5' } },
+    piel: '#f6d3b0', piel2: '#dcb48e', pelo: ['#8c6a42', '#6a4c2a'], camisa: ['#34405a', '#242e44'], pantalon: '#8f9d8c', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#f6d3b0', pelo: '#8c6a42', cejas: '#6a4c2a', camisa: '#34405a', detalle: '#ffffff', cuello: '#4a5878', logo: true, lentes: true, pantalon: '#8f9d8c', zapato: '#f2f0e6', iris: '#1e88e5' } },
   { id: 'julian', nombre: 'JULIÁN CHÓN', estilo: 'julian', vel: 4.4, salto: 13.2, caida: 1.0, maxCaida: 15, voz: 190,
     desc: ['El más rápido,', 'con buen salto.'], stats: { vel: 4, salto: 3, caida: 3 },
-    piel: '#f3cfa4', piel2: '#d6a676', pelo: ['#9a6035', '#64391c'], camisa: ['#e6b52e', '#b98618'], pantalon: '#2b3e72', zapato: '#8f3a2c', mejilla: '#d8403a', mod: { piel: '#f4c79a', pelo: '#7a4a2a', cejas: '#5a3218', camisa: '#ffd93b', detalle: '#e0a800', pantalon: '#2f5aa8', zapato: '#e0483a', iris: '#8a5a24' } },
+    piel: '#f2c9a0', piel2: '#d6a676', pelo: ['#4a3020', '#2e1c10'], camisa: ['#7a2d45', '#5a1f33'], pantalon: '#d9d0b6', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#f2c9a0', pelo: '#4a3020', cejas: '#2e1c10', camisa: '#7a2d45', detalle: '#ffffff', cuello: '#27345a', pantalon: '#d9d0b6', zapato: '#f2f0e6', iris: '#6a4524' } },
   { id: 'sofi', nombre: 'SOFI LOFI', estilo: 'sofi', vel: 3.7, salto: 13.2, caida: 0.55, maxCaida: 6, voz: 330,
     desc: ['Cae más suave', 'que los demás.'], stats: { vel: 3, salto: 3, caida: 5 },
-    piel: '#fbe3c4', piel2: '#dcb48e', pelo: ['#f4dc62', '#cfa52b'], camisa: ['#df6f9e', '#b24a78'], pantalon: '#6f56b0', zapato: '#7a4a2c', mejilla: '#d8403a', mod: { piel: '#ffd7b3', pelo: '#f9df55', cejas: '#d0a21a', camisa: '#ff82b4', detalle: '#ffffff', pantalon: '#8e63d8', zapato: '#b04bd6', iris: '#2fa36b' } },
+    piel: '#fbe0c4', piel2: '#dcb48e', pelo: ['#b9835a', '#8a5e3a'], camisa: ['#8fb0ec', '#6d90d0'], pantalon: '#f6f2e8', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#fbe0c4', pelo: '#b9835a', cejas: '#8a5e3a', camisa: '#8fb0ec', detalle: '#ffffff', rayas: true, mono: '#7fa6e8', pecas: true, pantalon: '#f6f2e8', zapato: '#f2f0e6', iris: '#2fa36b' } },
   { id: 'mama', nombre: 'MAMÁ', estilo: 'mama', vel: 3.6, salto: 13.2, caida: 1.0, maxCaida: 15, voz: 260, hablas: 7, ataque: 'puno', logro: 'kukulkan', pista: 'Derrota a Kukulkán',
     desc: ['Equilibrada y valiente.', 'Ataca con un súper puño.'], stats: { vel: 3, salto: 3, caida: 3 },
-    piel: '#eab88c', piel2: '#c98f60', pelo: ['#4a2c1c', '#2e1a10'], camisa: ['#8ec3ea', '#5f9bc8'], pantalon: '#3d6fb4', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#eab88c', pelo: '#4a2c1c', cejas: '#2e1a10', camisa: '#8ec3ea', detalle: '#ffd24a', pantalon: '#3d6fb4', zapato: '#f2f0e6', iris: '#5a3a1e' } },
+    piel: '#dda57c', piel2: '#c98f60', pelo: ['#2f1c14', '#1e120c'], camisa: ['#e2715e', '#b95040'], pantalon: '#2f3b57', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#dda57c', pelo: '#2f1c14', cejas: '#1e120c', camisa: '#e2715e', detalle: '#ffd24a', cadena: true, pantalon: '#2f3b57', zapato: '#f2f0e6', iris: '#4a2e1a' } },
+  { id: 'papa', nombre: 'PAPÁ', estilo: 'papa', vel: 3.5, salto: 13.0, caida: 1.0, maxCaida: 15, voz: 150, hablas: 5, ataque: 'disco', logro: 'piloto', pista: 'Derrota a El Piloto',
+    desc: ['Fuerte y tranquilo.', 'Lanza su frisbee.'], stats: { vel: 3, salto: 3, caida: 3 },
+    piel: '#e4b58c', piel2: '#c98f60', pelo: ['#3b2a1e', '#2a1c12'], camisa: ['#6c8ea8', '#587a92'], pantalon: '#b3a98c', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#e4b58c', pelo: '#3b2a1e', cejas: '#2a1c12', camisa: '#6c8ea8', detalle: '#ffffff', cuello: '#587a92', barba: '#8a7f72', pantalon: '#b3a98c', zapato: '#f2f0e6', iris: '#4a3a26' } },
   { id: 'sec2', nombre: '???', pendiente: true, logro: 'choco30',    pista: 'Recoge 30 Kit Kats' },
   { id: 'cazador', nombre: 'CAZADOR', estilo: 'julian', sombrero: true, vel: 3.9, salto: 13.2, caida: 1.0, maxCaida: 15, voz: 210, ataque: 'espada', logro: 'especiales', pista: 'Derrota 10 enemigos especiales',
     desc: ['Misterioso y ágil.', 'Ataca con su espada.'], stats: { vel: 3, salto: 3, caida: 3 },
@@ -742,12 +745,15 @@ function cabezaMod(g, pj, t, abierta, parpO) {
     g.bezierCurveTo(-29, -26, -9, -34, 6, -33); g.bezierCurveTo(23, -32, 29, -15, 23, -3);
     g.bezierCurveTo(21, -8, 19, -11, 15, -13); g.bezierCurveTo(12, -19, 5, -12, 1, -15); g.bezierCurveTo(-3, -19, -11, -11, -15, -14); g.bezierCurveTo(-19, -17, -22, -9, -23, 3);
     g.closePath(); g.fill(); g.stroke();
+  } else if (pj.estilo === 'papa') {                         // pelo corto de papá
+    g.beginPath(); g.moveTo(-23, 3); g.bezierCurveTo(-27, -22, -10, -30, 3, -30); g.bezierCurveTo(19, -30, 28, -18, 23, 3); g.bezierCurveTo(22, -6, 18, -13, 10, -15); g.bezierCurveTo(0, -19, -12, -16, -20, -11); g.bezierCurveTo(-22, -7, -23, -2, -23, 3);
+    g.closePath(); g.fill(); g.stroke();
   } else if (pj.estilo === 'mama') {                         // rizos oscuros con luces color caramelo
     [[-19, -14], [-11, -20], [-2, -22], [8, -21], [16, -17], [22, -10], [-23, -6], [24, -2]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 7.6, 0, 7); g.fill(); g.stroke(); });
     g.fillStyle = '#a8703c'; g.lineWidth = 1.6; [[-13, -22], [4, -24], [18, -15]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 4.4, 0, 7); g.fill(); g.stroke(); }); g.lineWidth = GM;
   } else {                                                   // Sofi: rizos y moño
     [[-17, -15], [-9, -19], [-1, -21], [8, -20], [16, -16], [21, -9]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 7.4, 0, 7); g.fill(); g.stroke(); });
-    g.fillStyle = '#ff4f9a'; [-1, 1].forEach(s => { g.beginPath(); g.ellipse(-2 + s * 10, -35, 10, 6.4, s * -0.5, 0, 7); g.fill(); g.stroke(); });
+    g.fillStyle = m.mono || '#ff4f9a'; [-1, 1].forEach(s => { g.beginPath(); g.ellipse(-2 + s * 10, -35, 10, 6.4, s * -0.5, 0, 7); g.fill(); g.stroke(); });
     g.beginPath(); g.arc(-2, -35, 4.4, 0, 7); g.fill(); g.stroke();
   }
   if (pj.sombrero) {                                         // sombrero de cazador con pluma
@@ -756,9 +762,14 @@ function cabezaMod(g, pj, t, abierta, parpO) {
     g.fillStyle = '#2f6b3a'; g.fillRect(-19.5, -32, 39, 6); g.strokeRect(-19.5, -32, 39, 6);
     g.fillStyle = '#d8403a'; g.beginPath(); g.ellipse(17, -38, 3.4, 10, 0.7, 0, 7); g.fill(); g.stroke();
   }
+  if (m.barba) {                                             // barba corta con canas
+    g.save(); g.beginPath(); g.ellipse(0, 0, 23, 21, 0, 0, 7); g.clip(); g.fillStyle = m.barba; g.beginPath(); g.moveTo(-30, 5); g.quadraticCurveTo(-12, 12, 4, 8.6); g.quadraticCurveTo(20, 12, 30, 5); g.lineTo(30, 40); g.lineTo(-30, 40); g.closePath(); g.fill(); g.restore();
+    g.beginPath(); g.ellipse(0, 0, 23, 21, 0, 0, 7); g.stroke();
+  }
   // ojotes y cejas
   ojoMod(g, -4, 1, 8.8, m.iris, m.piel, parp); ojoMod(g, 11.5, 1, 8.2, m.iris, m.piel, parp);
   barra(g, -10, -12.5, 13, 4.2, -0.14, m.cejas); barra(g, 14, -12.5, 12, 4.2, 0.18, m.cejas);
+  if (m.lentes) { g.strokeStyle = '#15151c'; g.lineWidth = 2.8; g.fillStyle = 'rgba(190,225,255,.16)'; trazoRedondo(g, -14, -8.4, 19, 17, 4.6); g.fill(); g.stroke(); trazoRedondo(g, 2.6, -8.4, 19, 17, 4.6); g.fill(); g.stroke(); g.beginPath(); g.moveTo(5, -1); g.lineTo(2.6, -1); g.stroke(); g.beginPath(); g.moveTo(-14, -3); g.lineTo(-22, -5); g.stroke(); g.strokeStyle = NEGRO; g.lineWidth = GM; }
   // boca chiquita
   const mx = 4, abre = () => { g.beginPath(); g.moveTo(mx - 7, 11.6); g.quadraticCurveTo(mx, 9.4, mx + 7, 11.6); g.quadraticCurveTo(mx + 6.4, 19.6, mx, 19.8); g.quadraticCurveTo(mx - 6.4, 19.6, mx - 7, 11.6); g.closePath(); };
   if (abierta) {
@@ -767,6 +778,7 @@ function cabezaMod(g, pj, t, abierta, parpO) {
     g.fillStyle = '#fff'; g.lineWidth = 1.4; trazoRedondo(g, mx - 3.6, 10.8, 3.5, 4.2, 1); g.fill(); g.stroke(); trazoRedondo(g, mx + 0.1, 10.8, 3.5, 4.2, 1); g.fill(); g.stroke();
     g.lineWidth = GM; abre(); g.stroke();
   } else { g.lineWidth = 2.2; g.beginPath(); g.arc(mx, 8.6, 6.6, 0.28 * Math.PI, 0.72 * Math.PI); g.stroke(); }
+  if (m.pecas && pj.estilo !== 'mama') { g.fillStyle = 'rgba(170,105,65,.6)'; [[-14, 8], [-9, 11], [-17, 12], [18, 8], [13, 11], [21, 12], [-4, 12], [9, 13]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 1.1, 0, 7); g.fill(); }); }
   if (pj.estilo === 'mama') {                                // pecas y arete dorado
     g.fillStyle = 'rgba(160,100,60,.55)'; [[-14, 8], [-9, 11], [-17, 12], [18, 8], [13, 11], [21, 12]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 1.1, 0, 7); g.fill(); });
     g.strokeStyle = '#ffd24a'; g.lineWidth = 2; g.beginPath(); g.arc(-22.6, 10.5, 3.6, 0, 7); g.stroke(); g.strokeStyle = NEGRO; g.lineWidth = GM;
@@ -836,7 +848,11 @@ function dibujarNino(g, pj, x, y, esc, dir, pose) {
   brazoMod(g, m, -8.4, -35, aT, -1);
   g.fillStyle = m.camisa; g.strokeStyle = NEGRO; g.lineWidth = GM;                      // torso
   g.beginPath(); g.moveTo(-9.4, -37); g.quadraticCurveTo(0, -39.8, 9.4, -37); g.lineTo(10.6, -26); g.quadraticCurveTo(0, -23.4, -10.6, -26); g.closePath(); g.fill(); g.stroke();
-  g.fillStyle = m.detalle; g.beginPath(); g.arc(0, -31, 2.4, 0, 7); g.fill();
+  if (m.rayas) { g.strokeStyle = '#fff'; g.lineWidth = 2.2; [-34, -30, -26.6].forEach(yy => { g.beginPath(); g.moveTo(-9.4, yy); g.lineTo(9.4, yy); g.stroke(); }); g.strokeStyle = NEGRO; g.lineWidth = GM; }          // top de rayas
+  if (m.cuello) { g.fillStyle = m.cuello; g.lineWidth = 1.4; g.beginPath(); g.moveTo(-6.4, -38.4); g.lineTo(0, -33.4); g.lineTo(6.4, -38.4); g.lineTo(3.2, -39.4); g.lineTo(0, -37.4); g.lineTo(-3.2, -39.4); g.closePath(); g.fill(); g.stroke(); g.lineWidth = GM; }      // cuello de polo
+  if (m.logo) { g.fillStyle = '#fff'; g.beginPath(); g.moveTo(-7, -27.6); g.lineTo(-4.6, -33.4); g.lineTo(-2.6, -27.6); g.closePath(); g.fill(); }                                  // velerito
+  if (m.cadena) { g.strokeStyle = '#ffd24a'; g.lineWidth = 1.3; g.beginPath(); g.moveTo(-5.4, -38.6); g.quadraticCurveTo(0, -30, 5.4, -38.6); g.stroke(); g.fillStyle = '#ffd24a'; g.fillRect(-0.8, -33.4, 1.6, 5.4); g.fillRect(-2.4, -31.6, 4.8, 1.5); g.strokeStyle = NEGRO; g.lineWidth = GM; }   // cadena con cruz
+  else if (!m.cuello) { g.fillStyle = m.detalle; g.beginPath(); g.arc(0, -31, 2.4, 0, 7); g.fill(); }
   g.fillStyle = m.pantalon; g.beginPath();                                                // caderas grandes
   if (pj.estilo === 'sofi') { g.moveTo(-10, -27); g.lineTo(10, -27); g.lineTo(20, -12); for (let i = 0; i < 4; i++) g.quadraticCurveTo(15 - i * 10, -8, 10 - i * 10, -12); g.lineTo(-20, -12); }
   else { g.moveTo(-12, -27); g.lineTo(12, -27); g.quadraticCurveTo(15.5, -20, 14.5, -12); g.lineTo(-14.5, -12); g.quadraticCurveTo(-15.5, -20, -12, -27); }
@@ -1240,25 +1256,24 @@ function pintarManta(g, m) {                                // mantarraya: plana
   g.fillStyle = '#fff'; g.beginPath(); g.arc(14, -2, 2.4, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#000'; g.beginPath(); g.arc(14.6, -2, 1.1, 0, 7); g.fill();
   g.restore();
 }
-function pintarAjolote(g, e) {                              // ajolote: cuerpo rosa claro, cabezota con sonrisa, tres branquias como plumas a cada lado y cola con aleta
+function pintarAjolote(g, e) {                              // ajolote: cuerpo rosa claro, cabezota redonda con ojos de puntitos y sonrisa, tres branquias rojas a cada lado y aleta rosa fuerte
   const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
   if (cx < camara - 40 || cx > camara + W + 40) return;
   const ond = Math.sin(e.t * 0.12) * 3, br = Math.sin(e.t * 0.1);
   g.save(); g.translate(cx, cy); g.scale(e.dir || 1, 1); g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 1.5; if (e.flash > 0 && e.flash % 2) g.globalAlpha = 0.6;
-  g.fillStyle = '#ffd3df'; g.beginPath(); g.moveTo(-9, -6); g.quadraticCurveTo(-20, -11 + ond * 0.4, -31, -3 + ond); g.quadraticCurveTo(-34, 1 + ond, -31, 5 + ond); g.quadraticCurveTo(-20, 8 + ond * 0.4, -9, 6); g.closePath(); g.fill(); g.stroke();   // cola con aleta
-  g.strokeStyle = 'rgba(230,120,150,.7)'; g.lineWidth = 1; for (let k = 0; k < 4; k++) { g.beginPath(); g.moveTo(-12 - k * 5, -1); g.lineTo(-13 - k * 5, -5 - (3 - k) * 0.6 + ond * 0.2 * (k + 1) / 4); g.stroke(); } g.strokeStyle = NEGRO; g.lineWidth = 1.5;
-  g.fillStyle = '#ffe4ec'; g.beginPath(); g.ellipse(-3, 1, 14, 7.4, 0, 0, 7); g.fill(); g.stroke();                                   // cuerpo
-  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(-3, 4, 10, 3, 0, 0, 7); g.fill();
-  g.strokeStyle = '#e8566e'; g.lineWidth = 1.8; g.fillStyle = '#ff7a96';                                                                // branquias (3 plumas)
-  [[-1, -5, -9, -13], [3, -6, 1, -15], [7, -5, 12, -13]].forEach(([x0, y0, x1, y1], k) => {
-    const sw = br * (1 + k * 0.4); g.beginPath(); g.moveTo(x0 + 3, y0 + 3); g.lineTo(x1 + sw, y1); g.stroke();
-    for (let q = 0; q < 3; q++) { const t = (q + 1) / 4, px = x0 + 3 + (x1 + sw - x0 - 3) * t, py = y0 + 3 + (y1 - y0 - 3) * t; g.beginPath(); g.ellipse(px - 2, py, 3.2, 1.3, -0.6, 0, 7); g.fill(); g.beginPath(); g.ellipse(px + 2, py, 3.2, 1.3, 0.6, 0, 7); g.fill(); }
-  });
-  g.strokeStyle = NEGRO; g.lineWidth = 1.5; g.fillStyle = '#ffe4ec'; g.beginPath(); g.ellipse(11, 0.5, 9.6, 7.8, 0, 0, 7); g.fill(); g.stroke();   // cabeza ancha
-  g.fillStyle = 'rgba(255,120,150,.45)'; g.beginPath(); g.arc(10, 3.4, 2.4, 0, 7); g.fill();
-  g.fillStyle = '#111'; g.beginPath(); g.arc(15, -2.4, 1.6, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(15.5, -2.9, 0.5, 0, 7); g.fill();
-  g.strokeStyle = '#9a3a55'; g.lineWidth = 1.3; g.beginPath(); g.moveTo(12, 3); g.quadraticCurveTo(16, 6.4, 19.6, 3); g.stroke();                       // sonrisa
-  g.strokeStyle = NEGRO; g.lineWidth = 1.4; g.fillStyle = '#ffd3df'; [[-5, 7], [6, 7.4]].forEach(([x, y], k) => { g.beginPath(); g.ellipse(x + (k ? 2 : 0), y + 1.6, 3.2, 2, 0.2, 0, 7); g.fill(); g.stroke(); });   // patitas
+  const rama = (x0, y0, a, L, col, sw) => { g.save(); g.translate(x0, y0); g.rotate(a + sw * 0.07); g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.moveTo(0, 0); g.lineTo(L, 0); g.stroke(); g.lineWidth = 1.7; for (let k = 1; k <= 4; k++) { const px = L * k / 5, bl = 5.6 - k * 0.75; g.beginPath(); g.moveTo(px, 0); g.lineTo(px + 2.2, -bl); g.moveTo(px, 0); g.lineTo(px + 2.2, bl); g.stroke(); } g.restore(); };
+  g.fillStyle = '#e8507a'; g.beginPath(); g.moveTo(9, -6.5); g.quadraticCurveTo(-4, -13 + ond * 0.3, -18, -9.5 + ond * 0.6); g.quadraticCurveTo(-30, -9 + ond, -35, -1 + ond); g.quadraticCurveTo(-30, 6.5 + ond, -18, 5.5 + ond * 0.6); g.lineTo(5, 5); g.closePath(); g.fill(); g.stroke();   // aleta de la espalda y cola
+  g.fillStyle = '#f7b0c4'; g.beginPath(); g.moveTo(4, -1); g.quadraticCurveTo(-14, -3 + ond * 0.4, -31, -1 + ond); g.quadraticCurveTo(-24, 5.5 + ond * 0.6, -12, 6); g.lineTo(4, 6.5); g.closePath(); g.fill();
+  g.fillStyle = '#f7b4c6'; g.beginPath(); g.ellipse(-3, 1.4, 13.5, 6.8, 0, 0, 7); g.fill(); g.stroke();                              // cuerpo
+  g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.ellipse(-3, 4, 9.5, 2.6, 0, 0, 7); g.fill();
+  g.strokeStyle = NEGRO; g.lineWidth = 1.4; g.fillStyle = '#ee8fab'; [[-8, 6.4, -0.2], [5, 6.8, 0.2]].forEach(([x, y, r]) => { g.beginPath(); g.ellipse(x, y + 1.4, 3.4, 2.1, r, 0, 7); g.fill(); g.stroke(); });   // patitas
+  rama(8, -3, -2.7, 12, '#b32c57', br); rama(9, -2, -2.1, 12, '#b32c57', -br);                                                             // branquias del lado lejano
+  rama(7, -4, -2.4, 13, '#d93a67', br); rama(9, -5, -1.75, 13.5, '#d93a67', -br); rama(11, -4.6, -1.2, 11, '#d93a67', br);                  // branquias del lado cercano
+  g.strokeStyle = NEGRO; g.lineWidth = 1.5; g.fillStyle = '#f9bfcd'; g.beginPath(); g.ellipse(11.5, 0.8, 10.4, 8.4, 0, 0, 7); g.fill(); g.stroke();   // cabeza redonda
+  g.fillStyle = 'rgba(240,110,150,.4)'; g.beginPath(); g.arc(8.8, 4.4, 2.4, 0, 7); g.fill();
+  g.fillStyle = '#111'; g.beginPath(); g.arc(16.4, -2.2, 1.8, 0, 7); g.arc(9.4, -2.6, 1.6, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(16.9, -2.8, 0.55, 0, 7); g.arc(9.8, -3.1, 0.5, 0, 7); g.fill();
+  g.fillStyle = '#c0456a'; g.beginPath(); g.arc(19.2, 0.6, 0.55, 0, 7); g.arc(17.4, 0.9, 0.5, 0, 7); g.fill();                                  // naricitas
+  g.strokeStyle = '#c0304f'; g.lineWidth = 1.3; g.beginPath(); g.moveTo(8, 4.4); g.quadraticCurveTo(14, 7.2, 20, 4); g.stroke();                // sonrisa ancha
   g.restore();
   if (e.congelado > 0) hielo(g, e.x - 4, e.y - 4, e.w + 8, e.h + 8);
 }
@@ -2756,6 +2771,7 @@ const LOGROS = [
   { id: 'patadas',    nombre: 'Atacante experto',    desc: 'Acierta 200 ataques',                       stat: 'patadas',      meta: 200, monedas: 30 },
   { id: 'reflector',  nombre: 'Reflector',           desc: 'Devuelve 30 fuegos a Kukulkán',             stat: 'fuegos',       meta: 30,  monedas: 40 },
   { id: 'intocable',  nombre: 'Intocable',           desc: 'Vence a 3 jefes sin perder vidas',          stat: 'intocable',    meta: 3,   monedas: 40 },
+  { id: 'piloto',     nombre: 'Piloto fuera de servicio', desc: 'Derrota a El Piloto',                stat: 'piloto',       meta: 1,   premio: 'papa', monedas: 50 },
   { id: 'kukulkan',   nombre: 'Héroe de Yucatán',    desc: 'Derrota a Kukulkán',                        stat: 'kukulkan',     meta: 1,   premio: 'mama', monedas: 50 },
   { id: 'aguaPatos',  nombre: '¡Al agua, patos!',    desc: 'Termina tu primer nivel acuático',          stat: 'tiburon',      meta: 1,   monedas: 50 },
   { id: 'stick7',     nombre: 'Coleccionista',       desc: 'Encuentra 7 stickers escondidos',           stat: 'stickers',     meta: 7,   monedas: 40 },
@@ -2805,7 +2821,7 @@ function musicaDelNivel() { musica(NIVELES[nivelActual].musica); }
 
 function cargarNivel(n) {
   nivelActual = n; const N = NIVELES[n];
-  COLS = N.cols; tema = N.tema; arenaX = COLS * T - W; acuatico = !!N.acuatico; TER_Y = acuatico ? 0 : 176; jugador.atrapado = 0;
+  COLS = N.cols; tema = N.tema; arenaX = COLS * T - W; acuatico = !!N.acuatico; TER_Y = acuatico ? 0 : 176; jugador.atrapado = 0; disco = null;
   for (const k in CAPAS) if (k !== 'dia' && k !== N.tema) { liberarCapa(CAPAS[k]); delete CAPAS[k]; }     // se libera la memoria de los fondos que no se usan
   mapa = Array.from({ length: FILAS }, () => Array(COLS).fill(' '));
   chocosDef = []; escarabajosDef = []; murcielagosDef = []; serpientesDef = []; cangrejosDef = []; erizosDef = []; gaviotasDef = []; almohadasDef = []; papelesDef = []; cafeterasDef = []; doradosDef = []; mantasDef = []; ajolotesDef = []; estructurasDef = []; caedizasDef = []; OFF = 0;
@@ -2885,7 +2901,7 @@ function precalentar() {
     for (let b = 0; b < 16; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'camina', fase: b * TAU / 16 + 0.01, t: 100, aire: false, botas: false, vy: 0 }));
     for (let b = 0; b < 10; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'quieto', t: b / 10 * TAU / 0.08 + 0.5, aire: false, botas: false, vy: 0 }));
     for (let b = -3; b <= 3; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'salta', t: 100, aire: true, botas: false, vy: b * 4 }));
-    tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: (pj.ataque === 'puno' || pj.ataque === 'espada') ? 'puno' : pj.ataque === 'embestida' ? 'embiste' : 'patea', t: 100, aire: false, botas: false, vy: 0 }));
+    tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: (pj.ataque === 'puno' || pj.ataque === 'espada' || pj.ataque === 'disco') ? 'puno' : pj.ataque === 'embestida' ? 'embiste' : 'patea', t: 100, aire: false, botas: false, vy: 0 }));
   });
   const conRel = (v, f) => () => { const r = reloj; reloj = v; try { f(); } finally { reloj = r; } };
   for (let b = 0; b < 12; b++) {
@@ -3017,6 +3033,21 @@ function dispararPoder() {
   const d = jugador.mirando;
   balas.push({ tipo: poder, x: jugador.x + (d > 0 ? jugador.w : -10), y: jugador.y + 16, w: 12, h: 12, vx: 7 * d, vy: -1, vida: 120, giro: 0 });
   sfx('hielo');
+}
+let disco = null;                                           // el frisbee de Papá: va, golpea todo lo que toca, regresa y también golpea al volver
+function lanzarDisco() { const p = jugador, d = p.mirando; disco = { x: p.x + p.w / 2 + d * 14 - 13, y: p.y + 22, w: 26, h: 10, d, fase: 'ida', t: 0, rot: 0 }; p.golpeaA = new Set(); sfx('lanza'); }
+function actualizarDisco(p) {
+  const q = disco; if (!q) return; q.t++; q.rot += 0.7;
+  if (q.fase === 'ida') { q.x += q.d * 8.5; if (q.t > 34 || hayBloque(q.x + q.w / 2 + q.d * 14, q.y + q.h / 2)) { q.fase = 'vuelta'; p.golpeaA = new Set(); } }
+  else { const dx = p.x + p.w / 2 - (q.x + q.w / 2), dy = p.y + 22 - (q.y + q.h / 2), dd = Math.hypot(dx, dy) || 1; q.x += dx / dd * 9.5; q.y += dy / dd * 9.5; if (dd < 16 || q.t > 150) disco = null; }
+}
+function dibujarDisco(g, q) {
+  const cx = q.x + q.w / 2, cy = q.y + q.h / 2, sy = 0.45 + Math.abs(Math.sin(q.rot)) * 0.4;
+  g.save(); g.translate(cx, cy);
+  g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 2.4; g.lineCap = 'round'; const dd = q.fase === 'ida' ? -q.d : q.d * 0; for (let k = 0; k < 2; k++) { g.beginPath(); g.moveTo(dd * (16 + k * 5), -3 + k * 6); g.lineTo(dd * (30 + k * 8), -3 + k * 6); g.stroke(); }
+  g.scale(1, sy); g.fillStyle = '#e8453c'; g.strokeStyle = NEGRO; g.lineWidth = 2.2 / sy * 0.6; g.beginPath(); g.ellipse(0, 0, 13, 13 * 0.55, 0, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = '#ffd34d'; g.beginPath(); g.ellipse(0, 0, 8, 4.4, 0, 0, 7); g.fill();
+  g.restore();
 }
 function cajaPatada() {
   const d = jugador.mirando;
@@ -3706,7 +3737,7 @@ function actualizarProyectiles(p, pata) {
         if (d < 34 && jefe.vivo) { q.vida = 0; marear(jefe); }
       } else {
         if (q.y + q.h >= 12 * T && q.vy > 0) { q.y = 12 * T - q.h; q.vy = -q.vy * 0.45; q.vx *= 0.7; if (++q.rebotes > 2) { q.vx = 0; q.vy = 0; q.grav = 0; q.vida = Math.min(q.vida, 150); } }
-        const zona = p.patada > 0 ? { x: p.mirando > 0 ? p.x - 4 : p.x - 56, y: p.y - 6, w: 86, h: p.h + 12 } : null;
+        const zona = disco ? disco : p.patada > 0 ? { x: p.mirando > 0 ? p.x - 4 : p.x - 56, y: p.y - 6, w: 86, h: p.h + 12 } : null;
         if (zona && choca(zona, q)) { q.devuelto = true; q.vida = 700; sfx('patada'); chispas(cq, cy, 12, '#fff', 4); puntos += 100; registrar('patadas'); }
         else if (tragando === 0 && q.rebotes <= 2 && choca(p, q)) { q.vida = 0; chispas(cq, cy, 10, '#ffd34d', 3); recibirGolpe(true, Math.sign(q.vx || 1) * 4); }
         for (const b of balas) if (b.vida > 0 && choca(b, q)) { b.vida = 0; q.vida = 0; chispas(cq, cy, 10, '#bfeaff', 3); sfx('hielo'); }
@@ -3741,7 +3772,7 @@ function actualizarProyectiles(p, pata) {
         q.vx = dx / d * 7.5; q.vy = dy / d * 7.5;
         if (d < 58 && jefe.vivo && jefe.invul <= 0) { q.vida = 0; danarJefe(jefe, 1); jefe.flash = 24; chispas(H.x, H.y, 26, '#ffb13b', 6); chispas(H.x, H.y, 14, '#bff3ff', 5); }
       } else {
-        const zonaPatada = p.patada > 0 ? { x: p.mirando > 0 ? p.x - 6 : p.x - 56, y: p.y - 8, w: 88, h: p.h + 16 } : null;      // mientras atacas, el fuego que te toca (o casi) se devuelve, nunca te daña
+        const zonaPatada = disco ? disco : p.patada > 0 ? { x: p.mirando > 0 ? p.x - 6 : p.x - 56, y: p.y - 8, w: 88, h: p.h + 16 } : null;      // mientras atacas, el fuego que te toca (o casi) se devuelve, nunca te daña
         if (q.bueno && zonaPatada && choca(zonaPatada, q)) { q.devuelto = true; q.vida = 700; sfx('patada'); sfx('hielo'); chispas(cq, cy, 14, '#bff3ff', 5); puntos += 100; registrar('patadas'); registrar('fuegos'); }
         else if (tragando === 0 && choca(p, q)) { q.vida = 0; chispas(cq, cy, 16, '#ff9a3a', 5); recibirGolpe(true, (q.vx >= 0 ? 1 : -1) * 5); }
         else if (hayBloque(cq, cy) || q.y > FILAS * T) { q.vida = 0; chispas(cq, cy, 10, '#ff9a3a', 3); }
@@ -3812,7 +3843,8 @@ function actualizar() {
     else if (ctrl.salto && p.enSuelo) { p.vy = -pj.salto * (botas > 0 ? 1.38 : 1); p.enSuelo = false; sfx(botas > 0 ? 'resorte' : 'salto'); polvo(p.x + 13, p.y + p.h, 4); }
     else if (saltoNuevo && !estabaEnSuelo && activa('doble') && !p.dobleUsado) { p.dobleUsado = true; p.vy = -pj.salto * 0.85; sfx('salto'); chispas(p.x + 13, p.y + p.h, 10, '#fff', 3); polvo(p.x + 13, p.y + p.h, 5); }
     if (!acuatico && !ctrl.salto && p.vy < -4) p.vy = -4;
-    if (ctrl.patada && p.patada === 0) { if (pj.ataque === 'embestida') { p.patada = 12; p.embiste = 10; } else p.patada = 14; p.golpeaA = new Set(); sfx(pj.ataque === 'espada' ? 'tajo' : pj.ataque === 'puno' ? 'pum' : pj.ataque === 'embestida' ? 'embiste' : 'patada'); }
+    if (ctrl.patada && p.patada === 0 && pj.ataque === 'disco') { if (!disco) { lanzarDisco(); p.patada = 12; } }
+    else if (ctrl.patada && p.patada === 0) { if (pj.ataque === 'embestida') { p.patada = 12; p.embiste = 10; } else p.patada = 14; p.golpeaA = new Set(); sfx(pj.ataque === 'espada' ? 'tajo' : pj.ataque === 'puno' ? 'pum' : pj.ataque === 'embestida' ? 'embiste' : 'patada'); }
     if (ctrl.poder) { if (poder) dispararPoder(); else usarRayo(); }
     if (ctrl.rayo) usarRayo();
     if (p.dashEsp > 0) p.dashEsp--;
@@ -3854,7 +3886,8 @@ function actualizar() {
     if (jefe && jefe.tipo === 'tiburon' && jefe.estadoJ === 'activo' && p.x + p.w > arenaX + W - 215) p.x = arenaX + W - 215 - p.w;          // el tiburón ocupa la derecha de la arena
   }
   if (p.patada > 0) p.patada--;
-  const pata = p.patada > 0 ? cajaPatada() : null;
+  actualizarDisco(p);
+  const pata = disco ? disco : (p.patada > 0 && personaje.ataque !== 'disco' ? cajaPatada() : null);
   const pisando = o => p.vy > 0 && p.y + p.h - o.y < 20;
   const patear = (o, f) => { if (pata && !p.golpeaA.has(o) && choca(pata, o)) { p.golpeaA.add(o); registrar('patadas'); f(); return true; } return false; };
 
@@ -4008,7 +4041,7 @@ function dibujarJugador() {
   if (p.invulnerable > 0 && !escudo && Math.floor(p.invulnerable / 4) % 2) return;
   const cx = p.x + p.w / 2, cy = p.y + p.h / 2;
   if (poder) resplandor(ctx, cx, cy, 40, 'rgba(150,225,255,.6)');
-  const estadoP = p.patada > 0 ? ((personaje.ataque === 'puno' || personaje.ataque === 'espada') ? 'puno' : personaje.ataque === 'embestida' ? 'embiste' : 'patea') : acuatico ? ((p.vy < -0.8 || (!p.enSuelo && p.vy > 0.8)) ? 'salta' : p.vx ? 'camina' : 'quieto') : !p.enSuelo ? 'salta' : p.vx ? 'camina' : 'quieto';
+  const estadoP = p.patada > 0 ? ((personaje.ataque === 'puno' || personaje.ataque === 'espada' || personaje.ataque === 'disco') ? 'puno' : personaje.ataque === 'embestida' ? 'embiste' : 'patea') : acuatico ? ((p.vy < -0.8 || (!p.enSuelo && p.vy > 0.8)) ? 'salta' : p.vx ? 'camina' : 'quieto') : !p.enSuelo ? 'salta' : p.vx ? 'camina' : 'quieto';
   dibujarNinoCache(ctx, personaje, cx, p.y + p.h, 0.68, p.mirando, { estado: estadoP, fase: p.pasos * 0.2, t: reloj, aire: !p.enSuelo, botas: botas > 0, vy: p.vy });
   if (p.patada > 0 && personaje.ataque === 'puno') {                // ¡PAM!
     const d = p.mirando, a = Math.min(1, p.patada / 8), fx = cx + d * 36, fy = p.y + 19;
@@ -4283,7 +4316,7 @@ function dibujarJuego() {
   for (const x of explos) dibujarExplosion(ctx, x);
   if (jefe && jefe.tipo === 'kukulkan' && jefe.rayo) dibujarRayo(ctx, jefe);
   for (const b of balas) dibujarBola(ctx, b);
-  dibujarJugador();
+  dibujarJugador(); if (disco) dibujarDisco(ctx, disco);
   for (const pa of particulas) { ctx.globalAlpha = Math.min(1, pa.vida / 15); ctx.fillStyle = pa.color; ctx.beginPath(); ctx.arc(pa.x, pa.y, pa.tam, 0, 7); ctx.fill(); }
   ctx.globalAlpha = 1;
   ctx.restore();
@@ -4363,7 +4396,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.29', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.30', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -4434,7 +4467,7 @@ function dibujarLogros() {
   }
   uiCerrar(() => irA('menu'), W - 62, 18);
 }
-const TARJ = i => ({ x: 22 + i * 129, y: 84, w: 121, h: 150 });
+const TARJ = i => ({ x: 22 + i * 110, y: 84, w: 104, h: 150 });
 function dibujarPersonajes() {
   dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.5)'; ctx.fillRect(0, 0, W, H);
   texto(modoPers === 'elegir' ? 'ELIGE TU PERSONAJE' : 'PERSONAJES', W / 2, 54, 30, '#ffd43b', 'center');

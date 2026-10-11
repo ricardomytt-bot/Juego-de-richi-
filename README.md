@@ -169,3 +169,9 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Jefe **El Piloto** (contratado por el Patrón): carritos de azafata que hay que saltar, gasolina con círculo rojo que explota y turbulencia (3 s sin poder moverte; cuando estira los brazos, salen pinchos donde hay maletas y carritos tirados, así que hay que moverse a un lugar libre).
 - Todas las explosiones (bomba de la Patrona, moneda del Pescador, sangre del tiburón, gasolina) usan el círculo rojo de aviso del nivel acuático, con golpe circular.
 - 2 stickers nuevos (álbum de 16, con 8 columnas). Mundos "Chiapas" y "Veracruz y Tabasco" anunciados.
+
+## Versión 3.30 — Papá, skins de la familia y ajolote nuevo
+- **Papá** (personaje nuevo): se desbloquea al derrotar a El Piloto. Ataca con un **frisbee** que va, golpea todo lo que toca, regresa y también golpea al volver (solo puede haber uno a la vez). Pelo oscuro corto, barba con canas y polo azul.
+- Skins nuevos, en el mismo estilo de siempre, basados en la foto: **Lichilón** (lentes, pelo castaño, polo azul marino con velerito), **Julián Chón** (pelo oscuro, polo guinda con cuello azul marino), **Sofi Lofi** (pelo castaño con pecas, top de rayas azul y blanco, falda blanca) y **Mamá** (blusa coral, cadena dorada con cruz).
+- **Ajolote** rehecho según la imagen: cuerpo rosa claro, cabeza redonda, ojos de puntitos, sonrisa ancha, tres branquias rojas por lado y aleta rosa fuerte.
+- Nuevo logro "Piloto fuera de servicio". Las tarjetas de personajes se ajustaron para que quepan 7.
