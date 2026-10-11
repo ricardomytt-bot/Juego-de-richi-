@@ -44,7 +44,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.15
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.16
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -2017,15 +2017,7 @@ function dibujarDecoracion(d, tarde) {
   }
 }
 
-function dibujarEdificioFinal(x0, tarde) {                  // el edificio / muelle / pirámide del final se dibuja una vez
-  const clave = nivelActual + '|' + ESC, xd = Math.round(x0 * ESC);
-  if (!FIN || FIN.clave !== clave) {
-    if (FIN) liberarCanvas(FIN.c);
-    const c = crearCanvas(Math.ceil((W + 90) * ESC), Math.ceil(H * ESC)), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, -xd, 0);
-    const prev = ctx; ctx = g; try { dibujarEdificioFinalRaw(x0, tarde); } finally { ctx = prev; }
-    FIN = { clave, c };
-  }
-  ctx.drawImage(FIN.c, xd / ESC, 0, FIN.c.width / ESC, FIN.c.height / ESC);
+function dibujarEdificioFinal(x0, tarde) {                  // ya no hay edificio al fondo: la pelea es solo en la arena
   if (tema === 'chichen' && jefe) dibujarKukulkan(ctx, jefe);
 }
 // Edificio de departamentos (donde esperan los jefes)
@@ -2096,7 +2088,7 @@ const NIVELES = [
       plat(20, 24, 9); caja(22, 9, 'b'); chocos(20, 22, 8); escarabajo(23); pinchos(26, 26);           // B
       plat(35, 39, 9); caja(37, 9, 'c'); chocos(36, 38, 8); escarabajo(41); pinchos(43, 44); serpiente(47);   // C
       plat(58, 63, 9); caja(60, 9, 'e'); chocos(59, 61, 8); escarabajo(56, 65, 68); murcielago(63, 8); pinchos(67, 67);   // D
-      pinchos(77, 77); techo(80, 82, 92); chocos(84, 86, 5); chocos(89, 91, 5); escarabajo(86); pinchos(89, 89); serpiente(95);   // E: una casa con tinaco
+      pinchos(77, 77); techo(80, 82, 92); chocos(83, 85, 4); chocos(89, 91, 4); pinchos(87, 87, 5); escarabajo(90); serpiente(95);   // E: una casa con tinaco
       plat(94, 98, 9); caja(96, 9, 'b'); chocos(94, 96, 8); murcielago(96, 6);
       plat(105, 109, 9); caja(107, 9, 'c'); chocos(106, 108, 8); escarabajo(105); pinchos(108, 108);   // F
       techo(110, 112, 119, true); escalones(120);                                                      // el tinaco sube a la casa y de ahí se baja por las escaleras a la arena
@@ -2112,7 +2104,7 @@ const NIVELES = [
       plat(17, 21, 9); caja(19, 9, 'b'); chocos(18, 20, 8); escarabajo(16, 24); pinchos(23, 23);       // 2
       plat(33, 37, 9); caja(35, 9, 'e'); chocos(34, 36, 8); pinchos(39, 40); serpiente(43);            // 3
       plat(52, 56, 9); caja(54, 9, 'c'); chocos(53, 55, 8); escarabajo(51, 60); murcielago(58, 8); pinchos(61, 62);   // 4
-      techo(72, 74, 84); chocos(75, 77, 5); chocos(80, 82, 5); pinchos(76, 77); escarabajo(79); pinchos(81, 81); serpiente(84);   // 5: casa con tinaco
+      techo(72, 74, 84); chocos(75, 77, 4); chocos(81, 83, 4); pinchos(77, 77, 5); escarabajo(80); pinchos(82, 82, 5); serpiente(88);   // 5: casa con tinaco
       plat(85, 89, 9); caja(87, 9, 'b'); chocos(86, 88, 8); murcielago(86, 6);
       escarabajo(96); pinchos(98, 99); plat(101, 105, 9); caja(103, 9, 'c'); chocos(102, 104, 8); murcielago(100, 8); serpiente(109);   // 6
       escarabajo(117); pinchos(118, 118); chocos(117, 119, 10);                                        // 7
@@ -2129,7 +2121,7 @@ const NIVELES = [
       plat(19, 23, 9); caja(21, 9, 'b'); chocos(19, 21, 8); escarabajo(25, 28); pinchos(29, 29);       // 2
       plat(37, 41, 9); caja(39, 9, 'e'); chocos(38, 40, 8); escarabajo(36); murcielago(42, 8); pinchos(44, 45); serpiente(47);   // 3
       plat(55, 59, 9); caja(57, 9, 'c'); chocos(56, 58, 8); escarabajo(53, 62); murcielago(60, 7); pinchos(64, 64);   // 4
-      pinchos(72, 72); techo(74, 76, 86); caja(81, 3, 'b'); chocos(78, 80, 5); chocos(83, 85, 5); escarabajo(82, 88); pinchos(84, 85); serpiente(90);   // 5: palmeras con tinaco
+      pinchos(72, 72); techo(74, 76, 86); caja(81, 3, 'b'); chocos(78, 80, 4); chocos(83, 85, 4); escarabajo(82, 88); pinchos(84, 85, 5); serpiente(90);   // 5: palmeras con tinaco
       escarabajo(99, 105); pinchos(102, 103); plat(104, 108, 9); caja(106, 9, 'c'); chocos(105, 107, 8); murcielago(103, 7); serpiente(111);   // 6
       escarabajo(120); pinchos(123, 124); chocos(125, 127, 10);                                        // 7
       techo(130, 132, 139, true); escalones(140);                                                      // muro de palmeras + escaleras a la arena
@@ -2145,7 +2137,7 @@ const NIVELES = [
       plat(18, 22, 9); caja(20, 9, 'b'); chocos(18, 20, 8); escarabajo(25, 27); pinchos(28, 28);       // 2
       plat(36, 40, 9); caja(38, 9, 'e'); chocos(37, 39, 8); murcielago(41, 8); escarabajo(35); pinchos(43, 44); serpiente(46);   // 3
       plat(54, 58, 9); caja(56, 9, 'c'); chocos(55, 57, 8); escarabajo(53); murcielago(60, 7); serpiente(62); pinchos(64, 64);   // 4
-      pinchos(72, 72); techo(74, 76, 86); caja(81, 3, 'b'); chocos(78, 80, 5); chocos(83, 85, 5); escarabajo(82, 88); pinchos(84, 85); serpiente(90);   // 5: chozas mayas con tinaco
+      pinchos(72, 72); techo(74, 76, 86); caja(81, 3, 'b'); chocos(78, 80, 4); chocos(83, 85, 4); escarabajo(82, 88); pinchos(84, 85, 5); serpiente(90);   // 5: chozas mayas con tinaco
       escarabajo(98, 106); pinchos(102, 103); plat(104, 108, 9); caja(106, 9, 'e'); chocos(105, 107, 8); murcielago(101, 7); serpiente(112);   // 6
       escarabajo(121); pinchos(124, 125); chocos(126, 128, 10); murcielago(123, 7);                    // 7
       techo(132, 134, 141, true); escalones(142);                                                      // gran choza + escaleras a la arena
@@ -2227,7 +2219,8 @@ function cargarNivel(n) {
   mapa = Array.from({ length: FILAS }, () => Array(COLS).fill(' '));
   chocosDef = []; escarabajosDef = []; murcielagosDef = []; serpientesDef = []; cangrejosDef = []; erizosDef = []; gaviotasDef = []; estructurasDef = [];
   N.construir();
-  estructuras = estructurasDef; tinacos = estructurasDef.map(e => ({ x: e.tc * T, w: 64, roofX: e.c0 * T, alt: 0, sobre: false }));
+  estructuras = estructurasDef; const fila = c => estructurasDef.some(e => !e.solida && c >= e.c0 && c <= e.c1) ? 6 : 12;   // sobre un techo, los enemigos nacen arriba
+  tinacos = estructurasDef.map(e => ({ x: e.tc * T, w: 64, roofX: e.c0 * T, alt: 0, sobre: false }));
   sol = mapa.map(f => f.map(solido));
   prepararTerreno(); ultimaCarga = reloj; for (let k = 0; k <= 1; k++) chunkTerreno(k);
   { const id = TER.id, total = Math.ceil(COLS * T * ESC / TER_PW); let k = 2; const sig = () => { if (TER.id !== id || k >= total) return; if (!TER.ch[k]) chunkTerreno(k); k++; setTimeout(sig, 70); }; setTimeout(sig, 400); }
@@ -2238,9 +2231,9 @@ function cargarNivel(n) {
   usados = {}; rebote = {}; items = []; balas = []; particulas = []; proyJ = []; pinchosJ = []; explos = []; geiseres = []; quema = 0; monedasJ = []; monedasGanadas = 0; tragando = 0;
   poder = null; botas = 0; escudo = false; savia = tiene('savia') ? 1 : 0; cargaRayo = 0; rayosVis = []; puntosNivel = puntos; vidasPerdidasNivel = 0;
   chocosVivos = chocosDef.map(([c, r]) => ({ x: c * T + 4, y: r * T + 8, w: 24, h: 16, tomado: false }));
-  escarabajos = escarabajosDef.map(c => ({ x: c * T, y: 12 * T - 24, w: 30, h: 24, vx: -1.2, vy: 0, vivo: true, congelado: 0, ultimoVx: -1, dirP: -1 }));
+  escarabajos = escarabajosDef.map(c => ({ x: c * T, y: fila(c) * T - 24, w: 30, h: 24, vx: -1.2, vy: 0, vivo: true, congelado: 0, ultimoVx: -1, dirP: -1 }));
   murcielagos = murcielagosDef.map(([c, r]) => ({ x0: c * T, y0: r * T, x: c * T, y: r * T, w: 26, h: 22, t: Math.floor(Math.random() * 100), dir: 1, vivo: true, congelado: 0, px: 0, py: 0, pique: 0, espera: 90 }));
-  serpientes = serpientesDef.map(c => ({ x: c * T, y: 12 * T - 38, w: 76, h: 38, vx: -1.7, vy: 0, dir: -1, golpes: 0, vivo: true,
+  serpientes = serpientesDef.map(c => ({ x: c * T, y: fila(c) * T - 38, w: 76, h: 38, vx: -1.7, vy: 0, dir: -1, golpes: 0, vivo: true,
     congelado: 0, destello: 0, enfria: 0, boca: 0, comiendo: 0, aturdida: 0 }));
   cangrejos = cangrejosDef.map(c => ({ x: c * T, y: 12 * T - 22, w: 30, h: 22, vx: 0, vy: 0, vivo: true, congelado: 0, est: 'pasea', timer: 0, dirP: -1, dir: -1 }));
   erizos = erizosDef.map(c => ({ x: c * T, y: 12 * T - 24, w: 28, h: 24, vx: -0.8, vy: 0, vivo: true, congelado: 0, dirP: -1, dir: -1, inflado: 0 }));
@@ -3058,9 +3051,14 @@ function dibujarEstructuras(post) {                         // casas / palmeras 
     if (x1 < camara - 30 || x0 > camara + W + 30) continue;
     if (e.solida === post) {                                // --- cuerpo ---
       const yT = 6 * T;
-      if (tema === 'playa') {
-        if (e.solida) for (let x = x0; x < x1; x += 16) { g.fillStyle = (x / 16) & 1 ? '#8a5a2c' : '#7a4c22'; g.fillRect(x, yT, 16, 12 * T - yT); g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(x + 13, yT, 3, 12 * T - yT); for (let y = yT + 14; y < 12 * T; y += 22) { g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(x, y, 13, 2); } }
-        else [x0 + 6, x1 - 18].forEach((tx, k) => { g.fillStyle = '#8a5a2c'; g.fillRect(tx, yT, 12, 12 * T - yT); g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(tx + 9, yT, 3, 12 * T - yT); for (let y = yT + 12; y < 12 * T; y += 16) g.fillRect(tx, y, 12, 2); });
+      if (tema === 'playa') {                              // mini puente: pilotes, vigas y pasamanos debajo de la losa
+        if (e.solida) { g.fillStyle = '#3a2716'; g.fillRect(x0, yT, w, 12 * T - yT); g.strokeStyle = '#7a5632'; g.lineWidth = 3; for (let x = x0; x < x1; x += 32) { g.beginPath(); g.moveTo(x, yT + 14); g.lineTo(x + 32, 12 * T); g.moveTo(x + 32, yT + 14); g.lineTo(x, 12 * T); g.stroke(); } for (let x = x0; x <= x1 - 12; x += 32) { g.fillStyle = '#5a3d24'; g.fillRect(x, yT, 12, 12 * T - yT); } for (let y = yT + 48; y < 12 * T; y += 48) { g.fillStyle = '#6b4a2a'; g.fillRect(x0, y, w, 8); } }
+        else {
+          const px = []; for (let x = x0 + 4; x < x1 - 8; x += 96) px.push(x); px.push(x1 - 16);
+          px.forEach(x => { g.fillStyle = '#4a3220'; g.fillRect(x, yT, 12, 12 * T - yT); g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(x + 2, yT, 3, 12 * T - yT); g.fillStyle = '#d8c79a'; g.fillRect(x - 5, 12 * T - 6, 22, 6); });
+          g.fillStyle = '#6b4a2a'; g.fillRect(x0 + 4, yT + 58, w - 8, 7); g.fillRect(x0 + 4, yT + 30, w - 8, 5);              // barras del pasamanos
+          g.strokeStyle = '#8a6238'; g.lineWidth = 2; for (let x = x0 + 24; x < x1 - 20; x += 22) { g.beginPath(); g.moveTo(x, yT + 35); g.lineTo(x, yT + 58); g.stroke(); }
+        }
       } else if (tema === 'chichen') {
         g.fillStyle = '#d9c9a0'; g.fillRect(x0, yT, w, 12 * T - yT); g.fillStyle = '#9a9387'; g.fillRect(x0, 10 * T, w, 2 * T);
         g.fillStyle = '#b8a678'; for (let x = x0 + 8; x < x1 - 8; x += 20) g.fillRect(x, yT + 40, 12, 6), g.fillRect(x + 4, yT + 46, 4, 6);   // franja de grecas
@@ -3075,9 +3073,12 @@ function dibujarEstructuras(post) {                         // casas / palmeras 
     }
     if (!post) continue;                                    // --- techo ---
     const yR = 6 * T - 3;
-    if (tema === 'playa') {
-      g.fillStyle = '#2b8a3e'; g.fillRect(x0 - 4, yR, w + 8, 14); g.fillStyle = '#37b24d'; g.fillRect(x0 - 4, yR, w + 8, 5);
-      for (let x = x0 - 2, k = 0; x < x1 + 6; x += 34, k++) { g.save(); g.translate(x, yR + 2); g.rotate(k & 1 ? 0.35 : -0.35); g.fillStyle = k & 1 ? '#40c057' : '#2f9e44'; g.beginPath(); g.ellipse(0, -4, 26, 7, 0, 0, TAU); g.fill(); g.restore(); }
+    if (tema === 'playa') {                                // losa de tablones como la del muelle, con barandal
+      g.fillStyle = grad(g, 0, yR, 0, yR + 18, [[0, '#d2a66e'], [1, '#8a6238']]); g.fillRect(x0 - 4, yR, w + 8, 18);
+      g.strokeStyle = 'rgba(60,35,15,.55)'; g.lineWidth = 1.4; for (let x = x0; x < x1; x += 22) { g.beginPath(); g.moveTo(x, yR); g.lineTo(x, yR + 18); g.stroke(); }
+      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(x0 - 4, yR + 15, w + 8, 3);
+      g.strokeStyle = '#f4ead0'; g.lineWidth = 3; g.beginPath(); g.moveTo(x0 - 2, yR - 20); g.lineTo(x1 + 2, yR - 20); g.stroke();
+      g.lineWidth = 2; for (let x = x0 + 4; x < x1; x += 24) { g.beginPath(); g.moveTo(x, yR - 20); g.lineTo(x, yR); g.stroke(); }
     } else if (tema === 'chichen') {
       g.fillStyle = '#b8872a'; g.fillRect(x0 - 8, yR - 2, w + 16, 18); g.fillStyle = '#d9a93b'; g.fillRect(x0 - 8, yR - 2, w + 16, 5);
       g.fillStyle = '#8a6420'; for (let x = x0 - 6; x < x1 + 6; x += 7) g.fillRect(x, yR + 4, 2, 11);
@@ -3278,7 +3279,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.15', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.16', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });

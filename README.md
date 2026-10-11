@@ -93,3 +93,8 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Antes del jefe: una casa/muro sólido (solo se pasa por el tinaco) y **escaleras para bajar** a la arena. Al despertar el jefe, una reja se cierra detrás de ti.
 - En cada arena hay un tinaco con una casita para subirte.
 - El terreno en caché se guarda desde más arriba (TER_Y 176) para incluir los techos.
+
+## Versión 3.16 — Enemigos arriba, puentes de playa, arena sin edificio
+- Enemigos y pinchos que antes quedaban debajo de los techos ahora nacen arriba, sobre el techo.
+- Playa: las palmeras-techo ahora son mini puentes de madera (pilotes, pasamanos y losa de tablones como el Muelle Fiscal).
+- Se quitó el edificio / muelle / pirámide / hotel del fondo de las arenas de los jefes: la pelea es solo en la arena.
