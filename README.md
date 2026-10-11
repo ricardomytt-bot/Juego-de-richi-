@@ -86,3 +86,10 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 ## Versión 3.14 — Niveles con relieve
 - Los 5 niveles ya no son planos: lomas, escalones, muros de hasta 3 bloques, zanjas que se cruzan por arriba o por abajo, la gran pirámide de Chichén y terrazas en La Bufadora. Se avanza en una sola dirección. Las arenas de los jefes siguen planas.
 - Nuevo bloque de piso alto (`h`) y ayudantes `colina`, `loma` y `valle` para armar niveles.
+
+## Versión 3.15 — Mundo 1: niveles planos con techos y tinacos
+- Los niveles 1 a 4 vuelven a ser planos (se quita el relieve de la 3.14 en el mundo 1; el mundo 2 no se tocó).
+- Nuevo: **tinaco con vapor**. Al subirte, sube el agua y te lleva al techo plano de una casa (ciudad), palmeras (playa) o choza maya (Chichén). Hay uno a la mitad del nivel (opcional, con moneditas arriba) y uno antes del jefe.
+- Antes del jefe: una casa/muro sólido (solo se pasa por el tinaco) y **escaleras para bajar** a la arena. Al despertar el jefe, una reja se cierra detrás de ti.
+- En cada arena hay un tinaco con una casita para subirte.
+- El terreno en caché se guarda desde más arriba (TER_Y 176) para incluir los techos.
