@@ -163,9 +163,9 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Todas las habilidades (imán, capa, zapatos, savia, doble salto, dash y nado rápido) se **equipan** y solo una funciona a la vez (`activa(id)`); equipar otra reemplaza la anterior. Sin habilidad equipada no se activa ninguna.
 - El botón HABILIDAD muestra el icono de la equipada; las que funcionan solas muestran un aviso al tocarlo.
 
-## Versión 3.29 — Nivel 8: Aeropuerto de Tijuana y El Piloto
-- Nuevo nivel 8 (último del mundo 2): aeropuerto con terminal, pista, torre de control y aviones; largo, con caedizas, mostradores con elevador de equipaje y escaleras a la puerta de abordaje. Vuelo rumbo a **Chiapas**.
-- Enemigos nuevos: **maleta rodante** (embiste y suelta un Kit Kat), **dron guardia** (avisa y escanea con un rayo) y **robot aspiradora** (te jala; se vence a patadas). También pueden salir como enemigos especiales.
-- Arena = cabina del avión. Jefe **El Piloto** (contratado por el Patrón): carritos de azafata que hay que saltar, gasolina con círculo rojo que explota y turbulencia (3 s sin poder moverte).
-- Todas las explosiones (bomba de la Patrona, moneda del Pescador, sangre del tiburón, gasolina) usan ahora el círculo rojo de aviso del nivel acuático, con golpe circular.
-- 2 stickers nuevos (álbum de 16, ahora con 8 columnas). Mundos "Chiapas" y "Veracruz y Tabasco" anunciados.
+## Versión 3.29 — Nivel 8: vuelo a Chiapas y El Piloto
+- Nuevo nivel 8 (último del mundo 2): **todo el nivel es dentro del avión**, con el mismo fondo de cabina que la batalla final (ventanillas, compartimentos, asientos azules, alfombra del pasillo; los huecos dejan ver la bodega oscura). Largo, con caedizas, cocina del avión con elevador y escaleras a la cabina. Vuelo rumbo a **Chiapas**.
+- Enemigos nuevos: **almohada saltarina** (brinca hacia ti y suelta un Kit Kat), **avión de papel** (planea, avisa y se lanza en picada) y **cafetera de vapor** (silba y suelta un chorro caliente hacia delante). También pueden salir como enemigos especiales.
+- Jefe **El Piloto** (contratado por el Patrón): carritos de azafata que hay que saltar, gasolina con círculo rojo que explota y turbulencia (3 s sin poder moverte).
+- Todas las explosiones (bomba de la Patrona, moneda del Pescador, sangre del tiburón, gasolina) usan el círculo rojo de aviso del nivel acuático, con golpe circular.
+- 2 stickers nuevos (álbum de 16, con 8 columnas). Mundos "Chiapas" y "Veracruz y Tabasco" anunciados.
