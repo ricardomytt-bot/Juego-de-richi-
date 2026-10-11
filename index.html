@@ -44,7 +44,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.21
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.22
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -235,6 +235,25 @@ const SONIDOS = {
   clic:    () => tono(500, 700, 0.06, 'triangle', 0.07),
   bloque:  () => tono(160, 100, 0.09, 'triangle', 0.1),
   moneda:  () => { tono(1319, 1568, 0.07, 'square', 0.05); tono(1760, 2093, 0.14, 'triangle', 0.07, 0.06); },
+  tajo:    () => { ruido(0.16, 0.14, 4200, 'highpass'); tono(900, 280, 0.14, 'sawtooth', 0.06); tono(1800, 600, 0.08, 'triangle', 0.04, 0.02); },                       // espada del Cazador
+  pum:     () => { tono(190, 55, 0.14, 'sine', 0.2); ruido(0.07, 0.12, 700); },                                                                                         // puñetazo
+  embiste: () => { ruido(0.22, 0.14, 700); tono(160, 90, 0.2, 'sawtooth', 0.07); },                                                                                    // embestida
+  dash:    () => { ruido(0.14, 0.13, 3200, 'highpass'); tono(500, 1100, 0.12, 'triangle', 0.05); },
+  muere:   () => { tono(700, 160, 0.22, 'sine', 0.13); tono(1400, 400, 0.12, 'triangle', 0.05, 0.04); ruido(0.09, 0.09, 3200, 'highpass'); },                           // enemigo derrotado
+  especial: () => [784, 988, 1175, 1568, 1976].forEach((f, i) => { tono(f, f, 0.14, 'triangle', 0.09, i * 0.06); tono(f * 2, f * 2, 0.08, 'sine', 0.03, i * 0.06); }),    // enemigo especial derrotado
+  armadura: () => { tono(1200, 900, 0.1, 'square', 0.06); tono(1800, 1300, 0.08, 'triangle', 0.05, 0.02); ruido(0.05, 0.1, 5000, 'highpass'); },                         // el especial aguanta el golpe
+  jefeGolpe: () => { tono(200, 45, 0.3, 'sawtooth', 0.16); ruido(0.18, 0.18, 800); tono(900, 300, 0.12, 'triangle', 0.07, 0.03); },                                      // le pegas al jefe
+  jefeVence: () => { tono(110, 35, 0.9, 'sawtooth', 0.18); ruido(0.7, 0.16, 500); [392, 523, 659, 784, 1047, 1319, 1568].forEach((f, i) => { tono(f, f, 0.26, 'triangle', 0.1, 0.35 + i * 0.1); tono(f / 2, f / 2, 0.3, 'sine', 0.06, 0.35 + i * 0.1); }); },   // ¡derrotaste al jefe!
+  explota: () => { ruido(0.5, 0.22, 600); tono(130, 38, 0.55, 'sawtooth', 0.18); tono(70, 30, 0.6, 'sine', 0.2); },
+  tic:     () => tono(1100, 1100, 0.04, 'square', 0.05),
+  mareo:   () => [520, 430, 520, 430, 520].forEach((f, i) => tono(f, f * 0.88, 0.12, 'triangle', 0.08, i * 0.09)),
+  enganche: () => { tono(1600, 600, 0.14, 'triangle', 0.08); ruido(0.1, 0.1, 3000, 'highpass', 0.02); tono(300, 200, 0.2, 'sawtooth', 0.06, 0.08); },
+  crujir:  () => { ruido(0.1, 0.12, 1800, 'highpass'); tono(260, 180, 0.08, 'square', 0.05); },
+  derrumbe: () => { ruido(0.35, 0.14, 500); tono(140, 50, 0.32, 'sawtooth', 0.09); },
+  burbuja: () => { tono(380, 760, 0.09, 'sine', 0.08); tono(520, 980, 0.07, 'sine', 0.05, 0.06); },
+  ding:    () => { tono(1568, 1568, 0.22, 'triangle', 0.09); tono(2093, 2093, 0.3, 'sine', 0.05, 0.05); },
+  chapuzon: () => { ruido(0.32, 0.14, 1100); tono(320, 110, 0.22, 'sine', 0.09); tono(700, 250, 0.12, 'sine', 0.05, 0.05); },
+  aterriza: () => tono(150, 70, 0.07, 'sine', 0.1),
 };
 // Voces: cada letra que se "dice" hace un piipito corto; el tono cambia según la letra y la voz de cada personaje
 const HABLAS = [{ b: 430, t: 'triangle', v: 0.09 }, { b: 340, t: 'triangle', v: 0.09 }, { b: 560, t: 'triangle', v: 0.09 }, { b: 135, t: 'sawtooth', v: 0.06 }, { b: 400, t: 'square', v: 0.045 }, { b: 210, t: 'triangle', v: 0.11 }, { b: 78, t: 'sawtooth', v: 0.1 }, { b: 500, t: 'triangle', v: 0.09 }, { b: 250, t: 'square', v: 0.05 }, { b: 175, t: 'sawtooth', v: 0.07 }];
@@ -399,9 +418,9 @@ function pedirSfx(k) {                                     // fabrica un sonido 
 }
 // Todos los efectos se juntan en UN solo archivo de audio ("hoja de sonidos") y se tocan con unos pocos reproductores fijos.
 // Antes cada sonido distinto abría sus propios reproductores <audio>; con los minutos se juntaban decenas y el iPhone se iba poniendo lento.
-const bufSfx = {}, hoja = { lista: false, armando: false, o: {}, url: null, canales: [], i: 0, esperados: 0 };
+const abSfx = {}, bufSfx = {}, hoja = { lista: false, armando: false, o: {}, url: null, canales: [], i: 0, esperados: 0 };
 const CANALES_SFX = 6;
-function comprobarHoja() { if (!hoja.lista && !hoja.armando && hoja.esperados && Object.keys(bufSfx).length >= hoja.esperados) armarHoja(); }
+function comprobarHoja() { /* la hoja de sonidos ya no se usa: en el iPhone sus reproductores no siempre quedaban listos y los efectos se quedaban mudos */ }
 function armarHoja() {
   if (hoja.lista || hoja.armando) return; const claves = Object.keys(bufSfx); if (!claves.length) return; hoja.armando = true;
   try {
@@ -432,16 +451,19 @@ function precargarSfx() {                                  // todos los sonidos 
   hoja.esperados = ns.length + vs.length;
   ns.forEach((n, i) => setTimeout(() => pedirSfx(n), 30 * i));
   vs.forEach((p, i) => setTimeout(() => pedirSfx('ouch' + p.voz), 30 * (ns.length + i)));
-  setTimeout(armarHoja, 9000);                              // por si algún sonido tarda: se arma con los que ya están
 }
 function sfxAlt(n) {
   if (silencio || aj.efectos <= 0) return;
   const k = n === 'ouch' ? 'ouch' + personaje.voz : n, url = cacheSfx[k];
-  if (hoja.lista && hoja.o[k]) { tocarHoja(k); return; }
   if (!url) { pedirSfx(k); return; }                       // todavía se está preparando: solo pasa en los primeros segundos
-  if (url === 'hoja') return;
-  const pool = poolSfx[k] || (poolSfx[k] = { a: [new Audio(url), new Audio(url)], i: 0 });
-  const a = pool.a[pool.i = (pool.i + 1) % 2]; a.volume = Math.min(1, aj.efectos); try { a.currentTime = 0; } catch (e) {} a.play().catch(() => {});
+  const a = audioCtx;
+  if (a && busSfx && a.state === 'running') {              // lo normal: el sonido ya fabricado se toca con WebAudio (ligero y sin retraso)
+    let ab = abSfx[k];
+    if (!ab && bufSfx[k]) { try { const pcm = new Int16Array(bufSfx[k].slice(44)), b = a.createBuffer(1, pcm.length, SR), d = b.getChannelData(0); for (let i = 0; i < pcm.length; i++) d[i] = pcm[i] / 32768; ab = abSfx[k] = b; } catch (e) {} }
+    if (ab) { try { const src = a.createBufferSource(); src.buffer = ab; src.connect(busSfx); src.start(); return; } catch (e) {} }
+  } else if (a && a.state !== 'running') { try { a.resume(); } catch (e) {} }
+  const pool = poolSfx[k] || (poolSfx[k] = { a: [new Audio(url)], i: 0 });                 // respaldo: reproductor <audio>
+  const au = pool.a[0]; au.volume = Math.min(1, aj.efectos); try { au.currentTime = 0; } catch (e) {} au.play().catch(() => {});
 }
 function precargarMusica(n) { if (n && PISTAS[n]) obtenerMusica(n, () => {}); }
 function sintMusica(ev, N) {                               // la canción completa, de una sola vez (se hace en el obrero)
@@ -2441,7 +2463,7 @@ const jugador = { x: 0, y: 0, w: 26, h: 54, vx: 0, vy: 0, enSuelo: false, mirand
 
 let ultimaCarga = 0, nivelElegido = 0, cineI = 0, cineT0 = 0, cineVisPrev = 0, cineJefe = false;
 function irA(e) {
-  estado = e; estadoT = 0; ui.foco = 0; const bm = e === 'cine' ? 0.35 : 1; if (bm !== bajaMusica) { bajaMusica = bm; aplicarVolumen(); } for (const k in pulsos) delete pulsos[k];
+  estado = e; estadoT = 0; ui.foco = 0; const bm = e === 'cine' ? 0.16 : 1; if (bm !== bajaMusica) { bajaMusica = bm; aplicarVolumen(); } for (const k in pulsos) delete pulsos[k];
   if (e === 'logros') logroY = 0;
   if (e === 'cine') { cineI = 0; cineT0 = 0; cineVisPrev = 0; cineJefe = false; }
   if (e === 'niveles') { const k = NIVELES.findIndex((_, i) => !nivelHecho(i)); mundoSel = k < 0 ? 0 : (NIVELES[k].mundo || 0); nivelesDeMundo().forEach(i => prepararCapasPoco(NIVELES[i].tema)); ui.foco = k < 0 ? 0 : Math.max(0, nivelesDeMundo().indexOf(k)); }
@@ -2599,7 +2621,7 @@ function perderVida(empuje = 0, dano = 1) {
 function caerAlVacio() {                                     // única excepción: del hoyo te sacamos al último suelo seguro
   const p = jugador;
   vidas--; vidasPerdidasNivel++; poder = null; botas = 0; escudo = false; sfx('ouch');
-  if (tema === 'playa' || tema === 'bufadora' || tema === 'puerto') { chispas(p.x + 13, 12 * T + 30, 18, '#bfeaff', 4); sfx('hielo'); }
+  if (tema === 'playa' || tema === 'bufadora' || tema === 'puerto') { chispas(p.x + 13, 12 * T + 30, 18, '#bfeaff', 4); sfx('chapuzon'); }
   if (vidas <= 0) { vidas = 0; musica(null); sfx('pierde'); irA('perdio'); return; }
   p.x = ultimo.x; p.y = ultimo.y; p.vx = p.vy = 0; p.empuje = 0; p.invulnerable = 160; tragando = 0;
   camara = Math.max(0, Math.min(p.x - W / 2, COLS * T - W));
@@ -2737,14 +2759,14 @@ function actualizarEnemigosBaja(p, patear, pisando) {
   }
 }
 function golpeEspecial(e) {                              // un enemigo especial aguanta 2 golpes
-  e.hp--; e.inv = 30; e.flash = 10; jugador.invulnerable = Math.max(jugador.invulnerable, 36); sfx('golpe');
+  e.hp--; e.inv = 30; e.flash = 10; jugador.invulnerable = Math.max(jugador.invulnerable, 36); sfx('armadura');
   chispas(e.x + e.w / 2, e.y + e.h / 2, 14, '#ffd23f', 4);
 }
 function matar(e, congelado, color) {                    // escarabajos y murciélagos
   if (e.elite && e.inv > 0) return;
   if (e.elite && e.hp > 1) { golpeEspecial(e); return; }
-  if (e.elite) { puntos += 300; registrar('especiales'); chispas(e.x + e.w / 2, e.y + e.h / 2, 26, '#ffd23f', 5); }
-  e.vivo = false; puntos += congelado ? 200 : 100; registrar('enemigos');
+  if (e.elite) { puntos += 300; registrar('especiales'); chispas(e.x + e.w / 2, e.y + e.h / 2, 26, '#ffd23f', 5); sfx('especial'); }
+  e.vivo = false; sfx('muere'); puntos += congelado ? 200 : 100; registrar('enemigos');
   if (congelado) { chispas(e.x + e.w / 2, e.y + e.h / 2, 18, '#bfeaff', 4); sfx('rompe'); }
   else { chispas(e.x + e.w / 2, e.y + e.h / 2, 12, color, 3); sfx('pisoton'); }
 }
@@ -2754,8 +2776,8 @@ function golpearSerpiente(s) {                           // 3 golpes normal, 2 s
   s.golpes++; s.destello = 10; s.enfria = 14; sfx('golpe'); if (s.elite) { s.inv = 14; s.flash = 8; }
   chispas(s.x + s.w / 2, s.y + 14, 10, s.congelado > 0 ? '#bfeaff' : '#7dff7d', 3);
   if (s.golpes >= (s.congelado > 0 ? 2 : 3) + (s.elite ? 2 : 0)) {
-    if (s.elite) { puntos += 300; registrar('especiales'); }
-    s.vivo = false; puntos += 500; chispas(s.x + s.w / 2, s.y + 18, 36, s.congelado > 0 ? '#bfeaff' : '#3aa845', 6);
+    if (s.elite) { puntos += 300; registrar('especiales'); sfx('especial'); }
+    sfx('muere'); s.vivo = false; puntos += 500; chispas(s.x + s.w / 2, s.y + 18, 36, s.congelado > 0 ? '#bfeaff' : '#3aa845', 6);
     sfx(s.congelado > 0 ? 'rompe' : 'golpe'); registrar('serpientes'); registrar('enemigos');
   } else if (s.congelado === 0) { s.aturdida = 28; s.x -= s.dir * 12; }
 }
@@ -2772,9 +2794,9 @@ function tomarChoco(m) {
 function danarJefe(j, n) {
   if (!j.vivo || j.invul > 0) return;
   if (j.tipo === 'pescador' && !(j.mareo > 0)) { sfx('bloque'); chispas(j.x + j.w / 2, j.y + 30, 6, '#fff', 3); return; }     // solo le haces daño cuando está mareado
-  j.hp -= n; j.invul = 50; sfx('golpe'); temblor = 10; chispas(j.x + j.w / 2, j.y + 30, 16, '#fff', 4);
+  j.hp -= n; j.invul = 50; sfx(j.hp <= 0 ? 'jefeVence' : 'jefeGolpe'); temblor = 10; chispas(j.x + j.w / 2, j.y + 30, 16, '#fff', 4);
   if (j.hp <= 0) {
-    j.vivo = false; j.muerte = 0; j.vx = 0; puntos += 3000; proyJ = []; pinchosJ = []; temblor = 24; sfx('rugido'); musica(null);
+    j.vivo = false; j.muerte = 0; j.vx = 0; puntos += 3000; proyJ = []; pinchosJ = []; temblor = 24; musica(null);
     chispas(j.x + j.w / 2, j.y + 36, 70, '#ffd700', 7); chispas(j.x + j.w / 2, j.y + 36, 40, '#ff6fa8', 6);
     registrar(j.tipo); if (vidasPerdidasNivel === 0) { registrar('intocable'); if (j.tipo === 'patron') registrar('patronSin'); } soltarMonedas(j);
   } else j.aturdido = Math.max(j.aturdido, 24);
@@ -2820,7 +2842,7 @@ const alturaEspina = e => e.t < 8 ? 34 * e.t / 8 : (e.t < 50 ? 34 : 34 * (62 - e
 function explotar(q) {
   const cx = q.x + q.w / 2, cy = q.y + q.h / 2, R = 78, p = jugador;
   explos.push({ x: cx, y: cy, t: 0, R });
-  temblor = Math.max(temblor, 16); sfx('golpe'); sfx('rugido');
+  temblor = Math.max(temblor, 16); sfx('explota');
   chispas(cx, cy, 30, '#ffb13b', 6); chispas(cx, cy, 18, '#ff5a3a', 5); polvo(cx, cy + 10, 8);
   if (tragando === 0 && Math.abs(p.x + p.w / 2 - cx) < R && Math.abs(p.y + p.h / 2 - cy) < 70) recibirGolpe(true, (p.x + p.w / 2 >= cx ? 1 : -1) * 7, 2);
   if (q.devuelta && jefe && jefe.vivo && Math.abs(jefe.x + jefe.w / 2 - cx) < R && Math.abs(jefe.y + jefe.h / 2 - cy) < 80) { jefe.invul = 0; danarJefe(jefe, 3); jefe.aturdido = 70; }
@@ -2842,7 +2864,7 @@ function iaChalan(j) {
 }
 // El Pescador: te tira los productos de su tienda (¡devuélveselos de una patada para marearlo!), una moneda gigante que rueda y explota, una embestida y su caña de pescar
 function marear(j) {
-  if (!j.vivo) return; j.mareo = 230; j.fase = 'mareado'; j.vx = 0; j.invul = 0; j.aturdido = 0; temblor = Math.max(temblor, 12); sfx('golpe'); sfx('rompe');
+  if (!j.vivo) return; j.mareo = 230; j.fase = 'mareado'; j.vx = 0; j.invul = 0; j.aturdido = 0; temblor = Math.max(temblor, 12); sfx('golpe'); sfx('mareo');
   chispas(j.x + j.w / 2, j.y + 10, 24, '#ffe14d', 5); registrar('mareos');
 }
 function iaPescador(j) {
@@ -2866,7 +2888,7 @@ function lanzarMoneda(j) { const d = j.dir; proyJ.push({ tipo: 'monedaGig', x: j
 function lanzarAnzuelo(j) { const d = j.dir; proyJ.push({ tipo: 'anzuelo', x: j.x + (d > 0 ? j.w : -18), y: j.y + 28, w: 20, h: 14, vx: d * 9, vy: 0, grav: 0, rot: 0, vida: 70, agarro: 0, ox: j.x + j.w / 2, oy: j.y + 32 }); sfx('lanza'); }
 function explotarMoneda(q) {
   const cx = q.x + q.w / 2, cy = q.y + q.h / 2, R = 120, p = jugador;
-  explos.push({ x: cx, y: cy, t: 0, R }); temblor = Math.max(temblor, 18); sfx('golpe'); sfx('rugido');
+  explos.push({ x: cx, y: cy, t: 0, R }); temblor = Math.max(temblor, 18); sfx('explota');
   chispas(cx, cy, 34, '#ffd34d', 7); chispas(cx, cy, 20, '#fff6c0', 5); polvo(cx, cy + 20, 10);
   if (tragando === 0 && Math.abs(p.x + p.w / 2 - cx) < R && Math.abs(p.y + p.h / 2 - cy) < 90) recibirGolpe(true, (p.x + p.w / 2 >= cx ? 1 : -1) * 8, 2);       // la explosión quita 2 vidas
 }
@@ -3062,6 +3084,7 @@ function actualizarProyectiles(p, pata) {
     if (q.tipo === 'monedaGig') {                                        // la moneda gigante rueda, rebota en las paredes y explota a los 3 segundos
       if (q.x < arenaX + 8) { q.x = arenaX + 8; q.vx = Math.abs(q.vx); } if (q.x + q.w > COLS * T - 8) { q.x = COLS * T - 8 - q.w; q.vx = -Math.abs(q.vx); }
       if (!q.golpeo && tragando === 0 && choca(p, q)) { q.golpeo = true; recibirGolpe(true, Math.sign(q.vx) * 7, 1); }       // si te atropella: 1 vida
+      if (q.mecha > 0 && q.mecha % 60 === 0) sfx('tic');
       if (--q.mecha <= 0) { explotarMoneda(q); q.vida = 0; }
       continue;
     }
@@ -3069,7 +3092,7 @@ function actualizarProyectiles(p, pata) {
       q.ox = jefe.x + jefe.w / 2; q.oy = jefe.y + 32; q.rot = 0;
       if (q.agarro > 0) { q.agarro--; p.empuje = (Math.sign(q.ox - (p.x + 13)) || 1) * 8; q.x = p.x + 4; q.y = p.y + 18; q.vx = 0; if (q.agarro === 0) q.vida = 0; continue; }
       if (pata && choca(pata, q)) { q.vida = 0; sfx('patada'); chispas(q.x + 10, q.y + 7, 8, '#fff', 3); continue; }
-      if (tragando === 0 && choca(p, q) && recibirGolpe(true, 0, 1)) { q.agarro = 18; q.vx = 0; sfx('lanza'); }                 // te engancha y te jala hacia él
+      if (tragando === 0 && choca(p, q) && recibirGolpe(true, 0, 1)) { q.agarro = 18; q.vx = 0; sfx('enganche'); }                 // te engancha y te jala hacia él
       continue;
     }
     if (q.tipo === 'fuego') {
@@ -3148,11 +3171,11 @@ function actualizar() {
     if (ctrl.salto && p.enSuelo) { p.vy = -pj.salto * (botas > 0 ? 1.38 : 1); p.enSuelo = false; sfx(botas > 0 ? 'resorte' : 'salto'); polvo(p.x + 13, p.y + p.h, 4); }
     else if (saltoNuevo && !estabaEnSuelo && tiene('doble') && !p.dobleUsado) { p.dobleUsado = true; p.vy = -pj.salto * 0.85; sfx('salto'); chispas(p.x + 13, p.y + p.h, 10, '#fff', 3); polvo(p.x + 13, p.y + p.h, 5); }
     if (!ctrl.salto && p.vy < -4) p.vy = -4;
-    if (ctrl.patada && p.patada === 0) { if (pj.ataque === 'embestida') { p.patada = 12; p.embiste = 10; } else p.patada = 14; p.golpeaA = new Set(); sfx('patada'); }
+    if (ctrl.patada && p.patada === 0) { if (pj.ataque === 'embestida') { p.patada = 12; p.embiste = 10; } else p.patada = 14; p.golpeaA = new Set(); sfx(pj.ataque === 'espada' ? 'tajo' : pj.ataque === 'puno' ? 'pum' : pj.ataque === 'embestida' ? 'embiste' : 'patada'); }
     if (ctrl.poder) { if (poder) dispararPoder(); else usarRayo(); }
     if (ctrl.rayo) usarRayo();
     if (p.dashEsp > 0) p.dashEsp--;
-    if (ctrl.dash && tiene('dash') && !(p.dash > 0) && !(p.dashEsp > 0)) { if (dirIn) p.mirando = dirIn; p.dash = 9; p.dashEsp = 50; p.embiste = 0; p.invulnerable = Math.max(p.invulnerable, 14); sfx('patada'); chispas(p.x + 13, p.y + 27, 8, '#cdbfff', 3); }
+    if (ctrl.dash && tiene('dash') && !(p.dash > 0) && !(p.dashEsp > 0)) { if (dirIn) p.mirando = dirIn; p.dash = 9; p.dashEsp = 50; p.embiste = 0; p.invulnerable = Math.max(p.invulnerable, 14); sfx('dash'); chispas(p.x + 13, p.y + 27, 8, '#cdbfff', 3); }
     for (const t of tinacos) t.alt = t.sobre ? Math.min(1, t.alt + 0.014) : Math.max(0, t.alt - 0.02);      // el agua sube mientras estás encima
     const vyAntes = p.vy, pieAntes = p.y + p.h;
     p.vy = Math.min(p.vy + GRAVEDAD * (p.vy > 0 ? pj.caida : 1), pj.maxCaida);
@@ -3161,19 +3184,20 @@ function actualizar() {
     moverConColision(p);
     for (const t of tinacos) {                                              // el tinaco es una plataforma que sube con el agua
       const ty = TINACO_Y0 - t.alt * (TINACO_Y0 - TINACO_Y1), pie = p.y + p.h;
-      t.sobre = p.vy >= 0 && p.x + p.w > t.x + 4 && p.x < t.x + t.w - 4 && pieAntes <= ty + 8 && pie >= ty - 0.5;
+      const estaba = t.sobre; t.sobre = p.vy >= 0 && p.x + p.w > t.x + 4 && p.x < t.x + t.w - 4 && pieAntes <= ty + 8 && pie >= ty - 0.5;
+      if (t.sobre && (!estaba || (t.alt < 1 && reloj % 16 === 0))) sfx('burbuja'); else if (t.sobre && t.alt >= 1 && !t.llego) { t.llego = true; sfx('ding'); } if (!t.sobre && t.alt === 0) t.llego = false;
       if (t.sobre) { p.y = ty - p.h; p.vy = 0; p.enSuelo = true; if (ty > TINACO_Y1 + 0.5 && p.x + p.w > t.roofX) p.x = t.roofX - p.w; }
     }
     for (const q of caedizas) {
       if (q.est === 0) {
         if (q.a < 1) q.a = Math.min(1, q.a + 0.05);
         const pie = p.y + p.h, sobre = p.vy >= 0 && p.x + p.w > q.x + 2 && p.x < q.x + q.w - 2 && pieAntes <= q.y + 8 && pie >= q.y - 0.5;
-        if (sobre) { p.y = q.y - p.h; p.vy = 0; p.enSuelo = true; q.t++; } else if (q.t > 0) q.t = Math.max(0, q.t - 0.5);
-        if (q.t >= 34) { q.est = 1; q.vy = 3; polvo(q.x + q.w / 2, q.y, 8); }
+        if (sobre) { p.y = q.y - p.h; p.vy = 0; p.enSuelo = true; q.t++; if (q.t === 12) sfx('crujir'); } else if (q.t > 0) q.t = Math.max(0, q.t - 0.5);
+        if (q.t >= 34) { q.est = 1; q.vy = 3; polvo(q.x + q.w / 2, q.y, 8); sfx('derrumbe'); }
       } else if (q.est === 1) { q.vy += 1.1; q.y += q.vy; if (q.y > FILAS * T + 40) { q.est = 2; q.t = 0; } }
       else if (++q.t > 150) { q.est = 0; q.y = q.y0; q.t = 0; q.a = 0; }
     }
-    if (p.enSuelo && vyAntes > 5) polvo(p.x + 13, p.y + p.h, 6);
+    if (p.enSuelo && vyAntes > 5) { polvo(p.x + 13, p.y + p.h, 6); if (vyAntes > 8) sfx('aterriza'); }
     else if (p.enSuelo && dirIn && reloj % 7 === 0) polvo(p.x + 13 - dirIn * 8, p.y + p.h, 1);
     if (p.golpeCabeza) abrirBloque(p.golpeCabeza.c, p.golpeCabeza.r);
     if (p.enSuelo && hayBloque(p.x + 13 - 40, p.y + p.h + 4) && hayBloque(p.x + 13 + 40, p.y + p.h + 4) && !pinchosLista.some(s => Math.abs(s.x - p.x) < 80)) ultimo = { x: p.x, y: p.y };
@@ -3653,7 +3677,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.21', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.22', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });

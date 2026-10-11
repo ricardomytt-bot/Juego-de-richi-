@@ -128,3 +128,8 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
   - Te tira productos de su tienda (latas, salvavidas, pescados, botas, cajas, anclas): devuélveselos de una patada y se marea (3.8 s). Mientras está mareado, cada golpe le hace daño.
   - Moneda gigante que rueda y explota a los 3 s (explosión: -2 vidas en el radio; si te atropella: -1).
   - Embestida con aviso y caña de pescar: el anzuelo te engancha, te quita una vida y te jala hacia él.
+
+## Versión 3.22 — Efectos de sonido arreglados y nuevos
+- Arreglo: en modo compatible (iPhone) los efectos se tocaban desde una "hoja de sonidos" con reproductores `<audio>` que en el iPhone no siempre quedaban listos, y se quedaban mudos. Ahora cada sonido fabricado se toca con WebAudio (buffers, un solo nodo ligero por sonido); si el audio no está activo, se usa un reproductor `<audio>` por sonido como respaldo. La hoja ya no se usa.
+- Efectos nuevos: tajo de espada, puñetazo, embestida, dash, enemigo derrotado, enemigo especial derrotado, armadura del especial, golpe al jefe, jefe vencido, explosión, cuenta atrás de la moneda, mareo, enganche del anzuelo, crujido y derrumbe de plataformas, burbujas y "ding" del tinaco, chapuzón al caer al agua, aterrizaje.
+- Cinemáticas: la música baja a 16 % (antes 35 %); solo suenan las voces de los personajes, el clic al avanzar y la llave que cae.
