@@ -140,3 +140,8 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - **El Tiburón** (4 de vida): solo se le puede dañar rompiendo el **diente dorado** que sale del suelo (uno entre 6). Ataques: explosiones de sangre por todo el mapa, grito (tirazo de viento que quita 2 vidas) y dientes que salen del suelo. La llave está entre sus dientes.
 - Logro nuevo: "¡Al agua, patos!" (terminar el primer nivel acuático).
 - Arreglos de rendimiento: el brillo de los enemigos especiales y del diente dorado ya no crea una imagen nueva en cada cuadro; las monedas solo se dibujan cuando están en pantalla y sin girarlas.
+
+## Versión 3.24 — Ajustes de Los Cabos bajo el agua
+- Nado más lento: velocidad horizontal 0.82 → 0.62, subida máxima 2.9 → 2.1, hundimiento máximo 2.0 → 1.4 y el dash en el agua es más corto.
+- Ajolote rediseñado: cuerpo rosa claro, cabezota con sonrisa y mejillas, tres branquias como plumas, patitas y cola con aleta.
+- El Tiburón ahora tiene 7 de vida (7 dientes dorados) y un ataque nuevo: **embestida** (avisa con una franja roja a la altura donde estás y cruza toda la arena; esquívala nadando arriba o abajo). Cuerpo completo del tiburón cuando embiste.

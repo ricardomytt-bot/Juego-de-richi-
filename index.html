@@ -44,7 +44,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.23
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.24
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -1171,17 +1171,25 @@ function pintarManta(g, m) {                                // mantarraya: plana
   g.fillStyle = '#fff'; g.beginPath(); g.arc(14, -2, 2.4, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#000'; g.beginPath(); g.arc(14.6, -2, 1.1, 0, 7); g.fill();
   g.restore();
 }
-function pintarAjolote(g, e) {                              // ajolote rosa con branquias en forma de plumas
+function pintarAjolote(g, e) {                              // ajolote: cuerpo rosa claro, cabezota con sonrisa, tres branquias como plumas a cada lado y cola con aleta
   const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
   if (cx < camara - 40 || cx > camara + W + 40) return;
-  const ond = Math.sin(e.t * 0.12) * 3;
-  g.save(); g.translate(cx, cy); g.scale(e.dir || 1, 1); g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 1.6; if (e.flash > 0 && e.flash % 2) g.globalAlpha = 0.6;
-  g.fillStyle = '#ffb3c8'; g.beginPath(); g.moveTo(-14, -2); g.quadraticCurveTo(-26, -8 + ond, -32, 0 + ond * 1.4); g.quadraticCurveTo(-26, 8 + ond, -14, 4); g.closePath(); g.fill(); g.stroke();
-  g.strokeStyle = '#e8718f'; g.lineWidth = 3; [[-5, -8], [0, -10], [5, -8]].forEach(([x, y]) => { g.beginPath(); g.moveTo(x + 8, y + 6); g.lineTo(x + 8 + (x - 2) * 0.8, y + 5 + y * 0.6); g.stroke(); });
-  g.strokeStyle = NEGRO; g.lineWidth = 1.6; g.fillStyle = '#ffb3c8'; g.beginPath(); g.ellipse(-2, 0, 15, 8, 0, 0, 7); g.fill(); g.stroke();
-  g.fillStyle = '#ffc9d8'; g.beginPath(); g.ellipse(10, -1, 9, 7.4, 0, 0, 7); g.fill(); g.stroke();
-  g.fillStyle = '#000'; g.beginPath(); g.arc(12, -3, 1.7, 0, 7); g.arc(6, -3, 1.7, 0, 7); g.fill(); g.strokeStyle = '#a0405c'; g.lineWidth = 1.4; g.beginPath(); g.arc(9, 0, 3.4, 0.2, Math.PI - 0.2); g.stroke();
-  g.strokeStyle = NEGRO; g.lineWidth = 2.6; g.fillStyle = '#e8718f'; [[-8, 7], [4, 7]].forEach(([x, y]) => { g.beginPath(); g.ellipse(x, y + 1, 3, 2, 0, 0, 7); g.fill(); g.stroke(); });
+  const ond = Math.sin(e.t * 0.12) * 3, br = Math.sin(e.t * 0.1);
+  g.save(); g.translate(cx, cy); g.scale(e.dir || 1, 1); g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 1.5; if (e.flash > 0 && e.flash % 2) g.globalAlpha = 0.6;
+  g.fillStyle = '#ffd3df'; g.beginPath(); g.moveTo(-9, -6); g.quadraticCurveTo(-20, -11 + ond * 0.4, -31, -3 + ond); g.quadraticCurveTo(-34, 1 + ond, -31, 5 + ond); g.quadraticCurveTo(-20, 8 + ond * 0.4, -9, 6); g.closePath(); g.fill(); g.stroke();   // cola con aleta
+  g.strokeStyle = 'rgba(230,120,150,.7)'; g.lineWidth = 1; for (let k = 0; k < 4; k++) { g.beginPath(); g.moveTo(-12 - k * 5, -1); g.lineTo(-13 - k * 5, -5 - (3 - k) * 0.6 + ond * 0.2 * (k + 1) / 4); g.stroke(); } g.strokeStyle = NEGRO; g.lineWidth = 1.5;
+  g.fillStyle = '#ffe4ec'; g.beginPath(); g.ellipse(-3, 1, 14, 7.4, 0, 0, 7); g.fill(); g.stroke();                                   // cuerpo
+  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(-3, 4, 10, 3, 0, 0, 7); g.fill();
+  g.strokeStyle = '#e8566e'; g.lineWidth = 1.8; g.fillStyle = '#ff7a96';                                                                // branquias (3 plumas)
+  [[-1, -5, -9, -13], [3, -6, 1, -15], [7, -5, 12, -13]].forEach(([x0, y0, x1, y1], k) => {
+    const sw = br * (1 + k * 0.4); g.beginPath(); g.moveTo(x0 + 3, y0 + 3); g.lineTo(x1 + sw, y1); g.stroke();
+    for (let q = 0; q < 3; q++) { const t = (q + 1) / 4, px = x0 + 3 + (x1 + sw - x0 - 3) * t, py = y0 + 3 + (y1 - y0 - 3) * t; g.beginPath(); g.ellipse(px - 2, py, 3.2, 1.3, -0.6, 0, 7); g.fill(); g.beginPath(); g.ellipse(px + 2, py, 3.2, 1.3, 0.6, 0, 7); g.fill(); }
+  });
+  g.strokeStyle = NEGRO; g.lineWidth = 1.5; g.fillStyle = '#ffe4ec'; g.beginPath(); g.ellipse(11, 0.5, 9.6, 7.8, 0, 0, 7); g.fill(); g.stroke();   // cabeza ancha
+  g.fillStyle = 'rgba(255,120,150,.45)'; g.beginPath(); g.arc(10, 3.4, 2.4, 0, 7); g.fill();
+  g.fillStyle = '#111'; g.beginPath(); g.arc(15, -2.4, 1.6, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(15.5, -2.9, 0.5, 0, 7); g.fill();
+  g.strokeStyle = '#9a3a55'; g.lineWidth = 1.3; g.beginPath(); g.moveTo(12, 3); g.quadraticCurveTo(16, 6.4, 19.6, 3); g.stroke();                       // sonrisa
+  g.strokeStyle = NEGRO; g.lineWidth = 1.4; g.fillStyle = '#ffd3df'; [[-5, 7], [6, 7.4]].forEach(([x, y], k) => { g.beginPath(); g.ellipse(x + (k ? 2 : 0), y + 1.6, 3.2, 2, 0.2, 0, 7); g.fill(); g.stroke(); });   // patitas
   g.restore();
   if (e.congelado > 0) hielo(g, e.x - 4, e.y - 4, e.w + 8, e.h + 8);
 }
@@ -2670,7 +2678,7 @@ function cargarNivel(n) {
   ondas = []; burbujas = [];
   { const A = { escarabajos, murcielagos, serpientes, cangrejos, erizos, gaviotas, dorados, ajolotes }; elitesLista = [];
     for (const [nom, i, el, tipo] of extras) if (el) { const o = A[nom][i]; o.elite = tipo; o.hp = o.hp ? o.hp + 2 : 2; elitesLista.push(o); } }
-  const hpJ = { patron: 6, patrona: 8, playero: 7, kukulkan: 14, chalan: 10, pescador: 8, tiburon: 4 }[N.jefe];
+  const hpJ = { patron: 6, patrona: 8, playero: 7, kukulkan: 14, chalan: 10, pescador: 8, tiburon: 7 }[N.jefe];
   jefe = { tipo: N.jefe, x: (COLS - 5) * T, y: 12 * T - 78, w: 46, h: 78, vx: 0, vy: 0, hp: hpJ, hpMax: hpJ, vivo: true, estadoJ: 'dormido',
     fase: 'camina', timer: 60, ciclo: 0, invul: 0, aturdido: 0, congelado: 0, dir: -1, t: 0, cargaDir: -1, muerte: 0, cayendo: false, saltoDir: 1 };
   if (N.jefe === 'tiburon') Object.assign(jefe, { w: 220, h: 130, x: arenaX + W - 230, y: 125, entra: 0, boca: 0, flash: 0, tip: 0, sangres: [], dientes: [], viento: null, timer: 120, ciclo: 0 });
@@ -3262,7 +3270,16 @@ function actualizarTiburon(p, pata, pisando) {
   const ea = j.entra * j.entra * (3 - 2 * j.entra);
   j.x = arenaX + W - 230 + (1 - ea) * 300 + Math.sin(j.t * 0.02) * 8; j.y = 125 + Math.sin(j.t * 0.03) * 24;
   if (j.entra < 1) return;
-  const rabia = j.hp <= 2, ocupado0 = j.sangres.length > 0 || !!j.viento || j.dientes.length > 0;
+  const C = j.carga;                                                 // embestida: apunta, avisa y cruza la arena a toda velocidad (esquívala nadando arriba o abajo)
+  if (C) {
+    C.t++;
+    if (C.f === 'aviso') { if (C.t < 36) C.y += (p.y + 27 - C.y) * 0.2; if (C.t >= 56) { C.f = 'va'; C.t = 0; sfx('grito'); temblor = 14; } }
+    else if (C.f === 'va') { const u = Math.min(1, C.t / 20); C.off = 560 * u * u; if (C.t >= 26) { C.f = 'vuelve'; C.t = 0; } }
+    else { C.off = Math.max(0, C.off - 14); if (C.off <= 0) j.carga = null; }
+    j.x = arenaX + W - 230 - (C.off || 0); j.y = C.y - 65;
+    if (C.f !== 'aviso' && !C.pego && tragando === 0 && C.off > 20 && choca(p, { x: j.x + 12, y: j.y + 20, w: 200, h: 100 })) { C.pego = true; recibirGolpe(true, -9, 1); }
+  }
+  const rabia = j.hp <= 3, ocupado0 = j.sangres.length > 0 || !!j.viento || j.dientes.length > 0 || !!j.carga;
   for (const b of j.sangres) {                                       // explosiones de sangre: avisan y explotan a los 46 cuadros
     b.t++;
     if (b.t === 46) { sfx('explota'); temblor = Math.max(temblor, 10); chispas(b.x, b.y, 22, '#d0141c', 6); chispas(b.x, b.y, 10, '#ff6a6a', 4); if (tragando === 0 && Math.hypot(p.x + 13 - b.x, p.y + 27 - b.y) < b.R + 12) recibirGolpe(true, (p.x + 13 >= b.x ? 1 : -1) * 6, 1); }
@@ -3287,10 +3304,10 @@ function actualizarTiburon(p, pata, pisando) {
     }
   }
   j.dientes = j.dientes.filter(d => d.h > 0 || d.estado === 'sube');
-  const ocupado = j.sangres.length > 0 || !!j.viento || j.dientes.length > 0;
+  const ocupado = j.sangres.length > 0 || !!j.viento || j.dientes.length > 0 || !!j.carga;
   if (ocupado0 && !ocupado && j.timer < 60) j.timer = rabia ? 70 : 100;
-  j.boca += ((j.viento ? (j.viento.t < 60 ? j.viento.t / 60 : 1) : ocupado ? 0.55 : 0) - j.boca) * 0.15;
-  if (!ocupado && j.vivo && --j.timer <= 0) { const k = j.ciclo++ % 3; if (k === 0) sangreTiburon(j, p, rabia); else if (k === 1) vientoTiburon(j, p); else dientesTiburon(j); }
+  j.boca += ((j.viento ? (j.viento.t < 60 ? j.viento.t / 60 : 1) : j.carga ? (j.carga.f === 'aviso' ? 0.3 : 1) : ocupado ? 0.55 : 0) - j.boca) * 0.15;
+  if (!ocupado && j.vivo && --j.timer <= 0) { const k = j.ciclo++ % 4; if (k === 0) sangreTiburon(j, p, rabia); else if (k === 1) vientoTiburon(j, p); else if (k === 2) dientesTiburon(j); else { j.carga = { f: 'aviso', t: 0, y: p.y + 27, off: 0, pego: false }; sfx('rugido'); } }
 }
 function dibujarCabezaTiburon(g, boca, flash) {                      // la cabeza del tiburón (mira a la izquierda; el origen es el centro de la cabeza)
   const ap = boca * 0.5;
@@ -3302,7 +3319,7 @@ function dibujarCabezaTiburon(g, boca, flash) {                      // la cabez
   g.fillStyle = '#fff'; g.lineWidth = 1.8; for (let i = 0; i < 6; i++) { const x = -88 + i * 16; g.beginPath(); g.moveTo(x, -5); g.lineTo(x + 8, -20); g.lineTo(x + 16, -5); g.closePath(); g.fill(); g.stroke(); }
   g.restore();
   g.lineWidth = 3; g.fillStyle = grad(g, 0, -64, 0, 40, [[0, '#6d8aa6'], [0.6, '#587692'], [1, '#e8eff5']]);
-  g.beginPath(); g.moveTo(-126, 6); g.quadraticCurveTo(-112, -40, -44, -62); g.quadraticCurveTo(40, -78, 130, -52); g.lineTo(160, 70); g.quadraticCurveTo(60, 74, -28, 40); g.quadraticCurveTo(-90, 26, -126, 6); g.closePath(); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(-126, 6); g.quadraticCurveTo(-112, -40, -44, -62); g.quadraticCurveTo(40, -78, 130, -52); g.quadraticCurveTo(250, -40, 330, -10); g.lineTo(380, -50); g.lineTo(362, 6); g.lineTo(390, 54); g.lineTo(330, 24); g.quadraticCurveTo(200, 68, 60, 74); g.quadraticCurveTo(0, 62, -28, 40); g.quadraticCurveTo(-90, 26, -126, 6); g.closePath(); g.fill(); g.stroke();
   g.fillStyle = '#fff'; g.lineWidth = 1.8; for (let i = 0; i < 6; i++) { const x = -116 + i * 16; g.beginPath(); g.moveTo(x, 8 + i * 3.2); g.lineTo(x + 8, 22 + i * 3.4); g.lineTo(x + 16, 11 + i * 3.2); g.closePath(); g.fill(); g.stroke(); }   // dientes de arriba
   g.strokeStyle = 'rgba(20,35,50,.55)'; g.lineWidth = 3; for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(34 + i * 14, -22); g.quadraticCurveTo(26 + i * 14, 0, 36 + i * 14, 20); g.stroke(); }   // branquias
   g.strokeStyle = NEGRO; g.lineWidth = 3; g.fillStyle = '#ffd23f'; g.beginPath(); g.ellipse(-70, -18, 14, 12, 0, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#000'; g.beginPath(); g.ellipse(-68, -17, 5.6, 8, 0, 0, 7); g.fill();
@@ -3318,6 +3335,8 @@ function dibujarTiburon(g, j) {
     if (b.t < 46) { const u = b.t / 46, al = 0.25 + 0.2 * Math.sin(b.t * 0.5); g.fillStyle = 'rgba(200,20,30,' + al.toFixed(2) + ')'; g.beginPath(); g.arc(b.x, b.y, b.R * (0.35 + 0.65 * u), 0, 7); g.fill(); g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 2; g.setLineDash([8, 6]); g.beginPath(); g.arc(b.x, b.y, b.R, 0, 7); g.stroke(); g.setLineDash([]); }
     else { const u = (b.t - 46) / 20, r = b.R * (0.7 + 0.5 * u); g.save(); g.globalAlpha = 1 - u; g.fillStyle = '#d0141c'; g.beginPath(); g.arc(b.x, b.y, r, 0, 7); g.fill(); g.fillStyle = '#ff6a6a'; g.beginPath(); g.arc(b.x, b.y, r * 0.6, 0, 7); g.fill(); g.fillStyle = '#fff1f1'; g.beginPath(); g.arc(b.x, b.y, r * 0.25, 0, 7); g.fill(); g.restore(); }
   }
+  const C = j.carga;
+  if (C && C.f === 'aviso') { const al = 0.14 + 0.1 * Math.sin(C.t * 0.5); g.fillStyle = 'rgba(255,60,50,' + al.toFixed(2) + ')'; g.fillRect(arenaX, C.y - 70, W - 200, 140); for (let x = arenaX + 40; x < arenaX + W - 220; x += 80) texto('◄', x + ((C.t * 4) % 80) * -1 + 80, C.y + 8, 24, 'rgba(255,255,255,.7)', 'center'); }
   const V = j.viento;                                                  // tirazo de viento
   if (V) {
     if (V.t < 60) { const al = 0.12 + 0.1 * Math.sin(V.t * 0.5); g.fillStyle = 'rgba(255,255,255,' + al.toFixed(2) + ')'; g.fillRect(V.x - 48, 0, 96, 12 * T); g.fillStyle = 'rgba(255,255,255,.7)'; for (let y = 30; y < 12 * T; y += 60) texto('◄', V.x + ((V.t * 3 + y) % 60) - 30, y, 22, 'rgba(255,255,255,.7)', 'center'); }
@@ -3332,7 +3351,7 @@ function dibujarTiburon(g, j) {
     g.fillStyle = 'rgba(255,255,255,.6)'; g.beginPath(); g.moveTo(d.x - 7, y0 - 6); g.lineTo(d.x - 2, y0 - d.h * 0.8); g.lineTo(d.x - 2, y0 - 6); g.fill(); g.restore();
   }
   if (j.vivo || j.muerte < 90) {
-    const bin = Math.round(j.boca * 6), fl = j.flash > 0 ? 1 : 0, sp = sprite('tib|' + bin + '|' + fl, 340, 240, 170, 130, gg => dibujarCabezaTiburon(gg, bin / 6, fl ? 30 : 0));
+    const bin = Math.round(j.boca * 6), fl = j.flash > 0 ? 1 : 0, sp = sprite('tib2|' + bin + '|' + fl, 560, 240, 170, 130, gg => dibujarCabezaTiburon(gg, bin / 6, fl ? 30 : 0));
     g.save(); if (!j.vivo) g.globalAlpha = Math.max(0, 1 - j.muerte / 90); g.drawImage(sp.c, j.x + 110 - sp.ox, j.y + 65 - sp.oy, sp.w, sp.h); g.restore();
     if (j.vivo) dibujarLlave(g, j.x + 14, j.y + 100 + j.boca * 16 + Math.sin(j.t * 0.08) * 3, 1.25, -0.6 + Math.sin(j.t * 0.06) * 0.15);                 // la llave entre sus dientes
   }
@@ -3471,11 +3490,11 @@ function actualizar() {
     if (tragando === 0) { perderVida(0); if (estado !== 'jugando') return; }
   } else {
     const dirIn = (ctrl.der ? 1 : 0) - (ctrl.izq ? 1 : 0);
-    p.vx = dirIn * pj.vel * (tiene('veloz') ? 1.18 : 1) * (acuatico ? 0.82 : 1) + p.empuje; p.empuje *= 0.85; if (p.embiste > 0) { p.embiste--; p.vx = p.mirando * 7 + p.empuje; }       // la embestida del Patrón: un arranque corto hacia adelante
+    p.vx = dirIn * pj.vel * (tiene('veloz') ? 1.18 : 1) * (acuatico ? 0.62 : 1) + p.empuje; p.empuje *= 0.85; if (p.embiste > 0) { p.embiste--; p.vx = p.mirando * 7 + p.empuje; }       // la embestida del Patrón: un arranque corto hacia adelante
      if (Math.abs(p.empuje) < 0.1) p.empuje = 0;
     if (dirIn) { p.mirando = dirIn; p.pasos += Math.abs(dirIn * pj.vel); }
     const saltoNuevo = ctrl.salto && !p.saltoPrev, estabaEnSuelo = p.enSuelo; p.saltoPrev = ctrl.salto; if (p.enSuelo) p.dobleUsado = false;
-    if (acuatico) { if (ctrl.salto) { if (saltoNuevo || reloj % 22 === 0) sfx('burbuja'); p.vy = Math.max(p.vy - 0.55, -2.9); p.enSuelo = false; } }       // nadar: mantén el botón de salto para subir
+    if (acuatico) { if (ctrl.salto) { if (saltoNuevo || reloj % 22 === 0) sfx('burbuja'); p.vy = Math.max(p.vy - 0.4, -2.1); p.enSuelo = false; } }       // nadar: mantén el botón de salto para subir
     else if (ctrl.salto && p.enSuelo) { p.vy = -pj.salto * (botas > 0 ? 1.38 : 1); p.enSuelo = false; sfx(botas > 0 ? 'resorte' : 'salto'); polvo(p.x + 13, p.y + p.h, 4); }
     else if (saltoNuevo && !estabaEnSuelo && tiene('doble') && !p.dobleUsado) { p.dobleUsado = true; p.vy = -pj.salto * 0.85; sfx('salto'); chispas(p.x + 13, p.y + p.h, 10, '#fff', 3); polvo(p.x + 13, p.y + p.h, 5); }
     if (!acuatico && !ctrl.salto && p.vy < -4) p.vy = -4;
@@ -3486,10 +3505,10 @@ function actualizar() {
     if (ctrl.dash && tiene('dash') && !(p.dash > 0) && !(p.dashEsp > 0)) { if (dirIn) p.mirando = dirIn; p.dash = 9; p.dashEsp = 50; p.embiste = 0; p.invulnerable = Math.max(p.invulnerable, 14); sfx('dash'); chispas(p.x + 13, p.y + 27, 8, '#cdbfff', 3); }
     for (const t of tinacos) t.alt = t.sobre ? Math.min(1, t.alt + 0.014) : Math.max(0, t.alt - 0.02);      // el agua sube mientras estás encima
     const vyAntes = p.vy, pieAntes = p.y + p.h;
-    p.vy = acuatico ? Math.min(p.vy * 0.975 + 0.1, 2.0) : Math.min(p.vy + GRAVEDAD * (p.vy > 0 ? pj.caida : 1), pj.maxCaida);
+    p.vy = acuatico ? Math.min(p.vy * 0.975 + 0.08, 1.4) : Math.min(p.vy + GRAVEDAD * (p.vy > 0 ? pj.caida : 1), pj.maxCaida);
     if (acuatico && p.y < 6) { p.y = 6; if (p.vy < 0) p.vy = 0; }
     if (tiene('planeo') && ctrl.salto && !p.enSuelo && p.vy > 1.6) p.vy = 1.6;
-    if (p.dash > 0) { p.dash--; p.vx = p.mirando * 11; p.vy = 0; if (p.dash % 3 === 0) chispas(p.x + 13 - p.mirando * 10, p.y + 27, 2, '#cdbfff', 1.5); }
+    if (p.dash > 0) { p.dash--; p.vx = p.mirando * (acuatico ? 7 : 11); p.vy = 0; if (p.dash % 3 === 0) chispas(p.x + 13 - p.mirando * 10, p.y + 27, 2, '#cdbfff', 1.5); }
     moverConColision(p);
     for (const t of tinacos) {                                              // el tinaco es una plataforma que sube con el agua
       const ty = TINACO_Y0 - t.alt * (TINACO_Y0 - TINACO_Y1), pie = p.y + p.h;
@@ -3995,7 +4014,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.23', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.24', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
