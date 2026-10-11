@@ -175,3 +175,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Skins nuevos, en el mismo estilo de siempre, basados en la foto: **Lichilón** (lentes, pelo castaño, polo azul marino con velerito), **Julián Chón** (pelo oscuro, polo guinda con cuello azul marino), **Sofi Lofi** (pelo castaño con pecas, top de rayas azul y blanco, falda blanca) y **Mamá** (blusa coral, cadena dorada con cruz).
 - **Ajolote** rehecho según la imagen: cuerpo rosa claro, cabeza redonda, ojos de puntitos, sonrisa ancha, tres branquias rojas por lado y aleta rosa fuerte.
 - Nuevo logro "Piloto fuera de servicio". Las tarjetas de personajes se ajustaron para que quepan 7.
+
+## Versión 3.31 — Pelo más güero
+- **Lichilón**: pelo rubio y nuevo peinado hacia atrás con las líneas del peine. **Sofi Lofi**: pelo más rubio (mismo peinado).

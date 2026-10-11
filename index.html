@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.30
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.31
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -72,13 +72,13 @@ const BOTAS_DURACION = 900;                       // 15 segundos
 const PERSONAJES = [
   { id: 'lichi', nombre: 'LICHILÓN', estilo: 'lichi', vel: 3.4, salto: 13.6, caida: 1.0, maxCaida: 15, voz: 215,
     desc: ['Buen saltador y', 'bastante resistente.'], stats: { vel: 3, salto: 4, caida: 3 },
-    piel: '#f6d3b0', piel2: '#dcb48e', pelo: ['#8c6a42', '#6a4c2a'], camisa: ['#34405a', '#242e44'], pantalon: '#8f9d8c', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#f6d3b0', pelo: '#8c6a42', cejas: '#6a4c2a', camisa: '#34405a', detalle: '#ffffff', cuello: '#4a5878', logo: true, lentes: true, pantalon: '#8f9d8c', zapato: '#f2f0e6', iris: '#1e88e5' } },
+    peinado: 'atras', piel: '#f6d3b0', piel2: '#dcb48e', pelo: ['#ecd06a', '#c9a23a'], camisa: ['#34405a', '#242e44'], pantalon: '#8f9d8c', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#f6d3b0', pelo: '#ecd06a', pelo2: '#b88f2a', cejas: '#c9a23a', camisa: '#34405a', detalle: '#ffffff', cuello: '#4a5878', logo: true, lentes: true, pantalon: '#8f9d8c', zapato: '#f2f0e6', iris: '#1e88e5' } },
   { id: 'julian', nombre: 'JULIÁN CHÓN', estilo: 'julian', vel: 4.4, salto: 13.2, caida: 1.0, maxCaida: 15, voz: 190,
     desc: ['El más rápido,', 'con buen salto.'], stats: { vel: 4, salto: 3, caida: 3 },
     piel: '#f2c9a0', piel2: '#d6a676', pelo: ['#4a3020', '#2e1c10'], camisa: ['#7a2d45', '#5a1f33'], pantalon: '#d9d0b6', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#f2c9a0', pelo: '#4a3020', cejas: '#2e1c10', camisa: '#7a2d45', detalle: '#ffffff', cuello: '#27345a', pantalon: '#d9d0b6', zapato: '#f2f0e6', iris: '#6a4524' } },
   { id: 'sofi', nombre: 'SOFI LOFI', estilo: 'sofi', vel: 3.7, salto: 13.2, caida: 0.55, maxCaida: 6, voz: 330,
     desc: ['Cae más suave', 'que los demás.'], stats: { vel: 3, salto: 3, caida: 5 },
-    piel: '#fbe0c4', piel2: '#dcb48e', pelo: ['#b9835a', '#8a5e3a'], camisa: ['#8fb0ec', '#6d90d0'], pantalon: '#f6f2e8', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#fbe0c4', pelo: '#b9835a', cejas: '#8a5e3a', camisa: '#8fb0ec', detalle: '#ffffff', rayas: true, mono: '#7fa6e8', pecas: true, pantalon: '#f6f2e8', zapato: '#f2f0e6', iris: '#2fa36b' } },
+    piel: '#fbe0c4', piel2: '#dcb48e', pelo: ['#e8cb70', '#c9a23a'], camisa: ['#8fb0ec', '#6d90d0'], pantalon: '#f6f2e8', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#fbe0c4', pelo: '#e8cb70', cejas: '#c9a23a', camisa: '#8fb0ec', detalle: '#ffffff', rayas: true, mono: '#7fa6e8', pecas: true, pantalon: '#f6f2e8', zapato: '#f2f0e6', iris: '#2fa36b' } },
   { id: 'mama', nombre: 'MAMÁ', estilo: 'mama', vel: 3.6, salto: 13.2, caida: 1.0, maxCaida: 15, voz: 260, hablas: 7, ataque: 'puno', logro: 'kukulkan', pista: 'Derrota a Kukulkán',
     desc: ['Equilibrada y valiente.', 'Ataca con un súper puño.'], stats: { vel: 3, salto: 3, caida: 3 },
     piel: '#dda57c', piel2: '#c98f60', pelo: ['#2f1c14', '#1e120c'], camisa: ['#e2715e', '#b95040'], pantalon: '#2f3b57', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#dda57c', pelo: '#2f1c14', cejas: '#1e120c', camisa: '#e2715e', detalle: '#ffd24a', cadena: true, pantalon: '#2f3b57', zapato: '#f2f0e6', iris: '#4a2e1a' } },
@@ -734,7 +734,11 @@ function cabezaMod(g, pj, t, abierta, parpO) {
   g.beginPath(); g.ellipse(0, 0, 23, 21, 0, 0, 7); g.fill(); g.stroke();                                          // cabezota
   // pelo: una sola pieza
   g.fillStyle = m.pelo;
-  if (pj.estilo === 'lichi') {                               // copetito y mechón atrás
+  if (pj.peinado === 'atras') {                              // peinado hacia atrás con raya de lado, con las líneas del peine
+    g.beginPath(); g.moveTo(-23, 3); g.bezierCurveTo(-28, -18, -16, -33, 0, -33); g.bezierCurveTo(16, -33, 28, -20, 23, -3); g.bezierCurveTo(21, -10, 17, -16, 9, -19); g.bezierCurveTo(1, -22, -10, -19, -15, -13); g.bezierCurveTo(-18, -10, -21, -6, -23, 3);
+    g.closePath(); g.fill(); g.stroke();
+    g.strokeStyle = m.pelo2 || 'rgba(160,120,40,.7)'; g.lineWidth = 1.6; [[-14, -22, 2, -27], [-6, -20, 10, -27], [4, -19, 18, -22]].forEach(([x0, y0, x1, y1]) => { g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo((x0 + x1) / 2, y0 - 9, x1, y1); g.stroke(); }); g.strokeStyle = NEGRO; g.lineWidth = GM;
+  } else if (pj.estilo === 'lichi') {                        // copetito y mechón atrás
     g.beginPath(); g.moveTo(-23, 3);
     g.bezierCurveTo(-25, -3, -27, -7, -42, -9); g.bezierCurveTo(-31, -13, -29, -17, -27, -22);
     g.bezierCurveTo(-25, -35, -10, -36, -3, -34); g.bezierCurveTo(-3, -44, 7, -50, 17, -44); g.bezierCurveTo(14, -39, 13, -36, 17, -34);
@@ -4396,7 +4400,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.30', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.31', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
