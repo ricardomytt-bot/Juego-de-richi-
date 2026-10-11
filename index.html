@@ -44,7 +44,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.19
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.20
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -81,7 +81,9 @@ const PERSONAJES = [
     desc: ['Equilibrada y valiente.', 'Ataca con un súper puño.'], stats: { vel: 3, salto: 3, caida: 3 },
     piel: '#eab88c', piel2: '#c98f60', pelo: ['#4a2c1c', '#2e1a10'], camisa: ['#8ec3ea', '#5f9bc8'], pantalon: '#3d6fb4', zapato: '#f2f0e6', mejilla: '#d8403a', mod: { piel: '#eab88c', pelo: '#4a2c1c', cejas: '#2e1a10', camisa: '#8ec3ea', detalle: '#ffd24a', pantalon: '#3d6fb4', zapato: '#f2f0e6', iris: '#5a3a1e' } },
   { id: 'sec2', nombre: '???', pendiente: true, logro: 'choco30',    pista: 'Recoge 30 Kit Kats' },
-  { id: 'sec3', nombre: '???', pendiente: true, logro: 'serpientes', pista: 'Derrota 8 serpientes' },
+  { id: 'cazador', nombre: 'CAZADOR', estilo: 'julian', sombrero: true, vel: 3.9, salto: 13.2, caida: 1.0, maxCaida: 15, voz: 210, ataque: 'espada', logro: 'especiales', pista: 'Derrota 10 enemigos especiales',
+    desc: ['Misterioso y ágil.', 'Ataca con su espada.'], stats: { vel: 3, salto: 3, caida: 3 },
+    piel: '#e3b78e', piel2: '#c08a5e', pelo: ['#3a2a1c', '#241a10'], camisa: ['#3f7a4a', '#2c5a36'], pantalon: '#5a4128', zapato: '#3a2a1c', mejilla: '#d8403a', mod: { piel: '#e3b78e', pelo: '#3a2a1c', cejas: '#241a10', camisa: '#3f7a4a', detalle: '#c9a24a', pantalon: '#5a4128', zapato: '#3a2a1c', iris: '#3a6a3a' } },
 ];
 
 // ---------- AJUSTES Y DATOS GUARDADOS ----------
@@ -710,6 +712,12 @@ function cabezaMod(g, pj, t, abierta, parpO) {
     [[-17, -15], [-9, -19], [-1, -21], [8, -20], [16, -16], [21, -9]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 7.4, 0, 7); g.fill(); g.stroke(); });
     g.fillStyle = '#ff4f9a'; [-1, 1].forEach(s => { g.beginPath(); g.ellipse(-2 + s * 10, -35, 10, 6.4, s * -0.5, 0, 7); g.fill(); g.stroke(); });
     g.beginPath(); g.arc(-2, -35, 4.4, 0, 7); g.fill(); g.stroke();
+  }
+  if (pj.sombrero) {                                         // sombrero de cazador con pluma
+    g.fillStyle = '#7a5a2e'; g.beginPath(); g.ellipse(0, -22, 33, 7, 0, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = '#8f6a36'; g.beginPath(); g.moveTo(-19, -24); g.quadraticCurveTo(-21, -47, 0, -47); g.quadraticCurveTo(21, -47, 19, -24); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#2f6b3a'; g.fillRect(-19.5, -32, 39, 6); g.strokeRect(-19.5, -32, 39, 6);
+    g.fillStyle = '#d8403a'; g.beginPath(); g.ellipse(17, -38, 3.4, 10, 0.7, 0, 7); g.fill(); g.stroke();
   }
   // ojotes y cejas
   ojoMod(g, -4, 1, 8.8, m.iris, m.piel, parp); ojoMod(g, 11.5, 1, 8.2, m.iris, m.piel, parp);
@@ -2223,7 +2231,7 @@ const NIVELES = [
       tramos(159, 0, 1); OFF = 266; suelo(119, 171);
       escarabajo(121); pinchos(124, 125); chocos(126, 128, 10); murcielago(123, 7);                    // 7
       techo(132, 134, 141, true); escalones(142);                                                      // gran choza + escaleras a la arena
-      caja(148, 8, 'e'); caja(160, 8, 'e'); chocos(153, 155, 10);                                      // arena de Kukulkán
+      caja(149, 8, 'e'); caja(170, 8, 'e'); chocos(153, 155, 10);                                      // arena de Kukulkán
       OFF = 0;
     } },
   { nombre: 'NIVEL 5', mundo: 1, lugar: 'La Bufadora, Ensenada, Baja California', corto: ['La Bufadora', 'Ensenada, B.C.'], jefeNombre: 'El Chalán', cols: 431, tema: 'bufadora', jefe: 'chalan', musica: 'bufadora',
@@ -2252,7 +2260,8 @@ const solido = ch => ch === '#' || ch === 'c' || ch === 'b' || ch === 'e' || ch 
 const LOGROS = [
   { id: 'patron',     nombre: 'Patrón sin rasguños', desc: 'Derrota al Patrón sin perder ninguna vida', stat: 'patronSin',    meta: 1,   monedas: 25 },
   { id: 'choco30',    nombre: 'Chocoadicto',         desc: 'Recoge 150 Kit Kats',                       stat: 'chocos',       meta: 150, premio: 'sec2', monedas: 30 },
-  { id: 'serpientes', nombre: 'Cazaserpientes',      desc: 'Derrota 40 serpientes',                     stat: 'serpientes',   meta: 40,  premio: 'sec3', monedas: 30 },
+  { id: 'serpientes', nombre: 'Cazaserpientes',      desc: 'Derrota 40 serpientes',                     stat: 'serpientes',   meta: 40,  monedas: 30 },
+  { id: 'especiales', nombre: 'Cazador de élite',    desc: 'Derrota 10 enemigos especiales',            stat: 'especiales',   meta: 10,  premio: 'cazador', monedas: 40 },
   { id: 'patadas',    nombre: 'Atacante experto',    desc: 'Acierta 200 ataques',                       stat: 'patadas',      meta: 200, monedas: 30 },
   { id: 'reflector',  nombre: 'Reflector',           desc: 'Devuelve 30 fuegos a Kukulkán',             stat: 'fuegos',       meta: 30,  monedas: 40 },
   { id: 'intocable',  nombre: 'Intocable',           desc: 'Vence a 3 jefes sin perder vidas',          stat: 'intocable',    meta: 3,   monedas: 40 },
@@ -2281,7 +2290,7 @@ let estado = 'menu', estadoT = 0, ajustesVolver = 'menu', modoPers = 'elegir', a
 let seleccion = 0, personaje = PERSONAJES[0], nivelActual = 0, arenaX = 0, tema = 'dia';
 let vidas = VIDAS_INICIO, puntos = 0, puntosNivel = 0, vidasPerdidasNivel = 0, nChocos = 0, progChoco = 0, camara = 0, reloj = 0;
 let cargaRayo = 0, rayosVis = [];
-let savia = 0, poder = null, botas = 0, escudo = false, temblor = 0, banner = 0, usados = {}, rebote = {};
+let cdHielo = 0, elitesLista = [], savia = 0, poder = null, botas = 0, escudo = false, temblor = 0, banner = 0, usados = {}, rebote = {};
 let escarabajos = [], murcielagos = [], serpientes = [], items = [], balas = [], particulas = [], chocosVivos = [], pinchosLista = [], tragando = 0;
 let geiseres = [], quema = 0;
 let jefe = null, proyJ = [], ultimo = { x: 64, y: 340 }, pinchosJ = [], explos = [];
@@ -2316,7 +2325,16 @@ function cargarNivel(n) {
   pinchosLista = [];
   for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) if (mapa[r][c] === '^') pinchosLista.push({ x: c * T + 9, y: r * T + 14, w: T - 18, h: T - 14 });
   usados = {}; rebote = {}; items = []; balas = []; particulas = []; proyJ = []; pinchosJ = []; explos = []; geiseres = []; quema = 0; monedasJ = []; monedasGanadas = 0; tragando = 0;
-  poder = null; botas = 0; escudo = false; savia = tiene('savia') ? 1 : 0; cargaRayo = 0; rayosVis = []; puntosNivel = puntos; vidasPerdidasNivel = 0;
+  poder = null; botas = 0; escudo = false; cdHielo = 0; savia = tiene('savia') ? 1 : 0; cargaRayo = 0; rayosVis = []; puntosNivel = puntos; vidasPerdidasNivel = 0;
+  const extras = [];                                          // 1 o 2 enemigos extra al azar; a veces son "especiales" (más duros, más rápidos y con brillo)
+  { const n = 1 + (Math.random() < 0.5 ? 1 : 0), arenaC = COLS - 25;
+    for (let k = 0; k < n; k++) {
+      let c = -1; for (let t = 0; t < 80 && c < 0; t++) { const q = 14 + Math.floor(Math.random() * (arenaC - 40)); let ok = true; for (let d = -3; d <= 3 && ok; d++) { if (mapa[12][q + d] !== '#') ok = false; for (let r = 6; r <= 11 && ok; r++) if (mapa[r][q + d] !== ' ') ok = false; } if (ok) c = q; }
+      if (c < 0) continue;
+      const el = Math.random() < 0.5, tp = Math.floor(Math.random() * 3), fl = 6 + Math.floor(Math.random() * 2);
+      if (!(N.mundo || 0)) { if (tp === 0) { escarabajosDef.push(c); extras.push(['escarabajos', escarabajosDef.length - 1, el, 'escarabajo']); } else if (tp === 1) { murcielagosDef.push([c, fl]); extras.push(['murcielagos', murcielagosDef.length - 1, el, 'murcielago']); } else { serpientesDef.push(c); extras.push(['serpientes', serpientesDef.length - 1, el, 'serpiente']); } }
+      else { if (tp === 0) { cangrejosDef.push(c); extras.push(['cangrejos', cangrejosDef.length - 1, el, 'cangrejo']); } else if (tp === 1) { erizosDef.push(c); extras.push(['erizos', erizosDef.length - 1, el, 'erizo']); } else { gaviotasDef.push([c, fl]); extras.push(['gaviotas', gaviotasDef.length - 1, el, 'gaviota']); } }
+    } }
   chocosVivos = chocosDef.map(([c, r]) => ({ x: c * T + 4, y: r * T + 8, w: 24, h: 16, tomado: false }));
   escarabajos = escarabajosDef.map(c => ({ x: c * T, y: fila(c) * T - 24, w: 30, h: 24, vx: -1.2, vy: 0, vivo: true, congelado: 0, ultimoVx: -1, dirP: -1 }));
   murcielagos = murcielagosDef.map(([c, r]) => ({ x0: c * T, y0: r * T, x: c * T, y: r * T, w: 26, h: 22, t: Math.floor(Math.random() * 100), dir: 1, vivo: true, congelado: 0, px: 0, py: 0, pique: 0, espera: 90 }));
@@ -2325,6 +2343,8 @@ function cargarNivel(n) {
   cangrejos = cangrejosDef.map(c => ({ x: c * T, y: fila(c) * T - 22, w: 30, h: 22, vx: 0, vy: 0, vivo: true, congelado: 0, est: 'pasea', timer: 0, dirP: -1, dir: -1 }));
   erizos = erizosDef.map(c => ({ x: c * T, y: fila(c) * T - 24, w: 28, h: 24, vx: -0.8, vy: 0, vivo: true, congelado: 0, dirP: -1, dir: -1, inflado: 0 }));
   gaviotas = gaviotasDef.map(([c, r]) => ({ x0: c * T, y0: r * T, yBase: r * T, x: c * T, y: r * T, w: 26, h: 20, vivo: true, congelado: 0, t: Math.floor(Math.random() * 100), dir: 1, est: 'vuela', timer: 90, tx: 0, ty: 0, robo: 0 }));
+  { const A = { escarabajos, murcielagos, serpientes, cangrejos, erizos, gaviotas }; elitesLista = [];
+    for (const [nom, i, el, tipo] of extras) if (el) { const o = A[nom][i]; o.elite = tipo; o.hp = 2; elitesLista.push(o); } }
   const hpJ = { patron: 6, patrona: 8, playero: 7, kukulkan: 14, chalan: 10 }[N.jefe];
   jefe = { tipo: N.jefe, x: (COLS - 5) * T, y: 12 * T - 78, w: 46, h: 78, vx: 0, vy: 0, hp: hpJ, hpMax: hpJ, vivo: true, estadoJ: 'dormido',
     fase: 'camina', timer: 60, ciclo: 0, invul: 0, aturdido: 0, congelado: 0, dir: -1, t: 0, cargaDir: -1, muerte: 0, cayendo: false, saltoDir: 1 };
@@ -2349,7 +2369,7 @@ function precalentar() {
     for (let b = 0; b < 16; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'camina', fase: b * TAU / 16 + 0.01, t: 100, aire: false, botas: false, vy: 0 }));
     for (let b = 0; b < 10; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'quieto', t: b / 10 * TAU / 0.08 + 0.5, aire: false, botas: false, vy: 0 }));
     for (let b = -3; b <= 3; b++) tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: 'salta', t: 100, aire: true, botas: false, vy: b * 4 }));
-    tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: pj.ataque === 'puno' ? 'puno' : pj.ataque === 'embestida' ? 'embiste' : 'patea', t: 100, aire: false, botas: false, vy: 0 }));
+    tareas.push(() => dibujarNinoCache(mudo, pj, 0, 0, 0.68, d, { estado: (pj.ataque === 'puno' || pj.ataque === 'espada') ? 'puno' : pj.ataque === 'embestida' ? 'embiste' : 'patea', t: 100, aire: false, botas: false, vy: 0 }));
   });
   const conRel = (v, f) => () => { const r = reloj; reloj = v; try { f(); } finally { reloj = r; } };
   for (let b = 0; b < 12; b++) {
@@ -2467,14 +2487,17 @@ function usarRayo() {                                       // la bola eléctric
   cargaRayo--;
   obj.forEach(e => {
     const ex = e.x + e.w / 2, ey = e.y + e.h / 2, pts = [[cx, cy]]; for (let k = 1; k < 7; k++) pts.push([cx + (ex - cx) * k / 7 + (Math.random() - 0.5) * 26, cy + (ey - cy) * k / 7 + (Math.random() - 0.5) * 26]); pts.push([ex, ey]);
-    rayosVis.push({ pts, t: 0 }); e.vivo = false; puntos += 150; registrar('enemigos'); if (e.golpes !== undefined) registrar('serpientes');
+    rayosVis.push({ pts, t: 0 });
+    if (e.elite && (e.golpes !== undefined || e.hp > 1)) { if (e.golpes !== undefined) e.golpes += 2; else golpeEspecial(e); if (e.golpes === undefined || e.golpes < 5) { chispas(ex, ey, 20, '#bff3ff', 5); return; } }
+    if (e.elite) registrar('especiales');
+    e.vivo = false; puntos += 150; registrar('enemigos'); if (e.golpes !== undefined) registrar('serpientes');
     chispas(ex, ey, 20, '#bff3ff', 5); chispas(ex, ey, 10, '#fff', 4);
   });
   sfx('rompe'); sfx('hielo'); temblor = Math.max(temblor, 8);
 }
 function dispararPoder() {
-  if (!poder || balas.length >= 3 || jugador.enfriamiento > 0) return;
-  jugador.enfriamiento = 16;
+  if (!poder || balas.length >= 2 || jugador.enfriamiento > 0 || cdHielo > 0) return;
+  jugador.enfriamiento = 16; cdHielo = 90;
   const d = jugador.mirando;
   balas.push({ tipo: poder, x: jugador.x + (d > 0 ? jugador.w : -10), y: jugador.y + 16, w: 12, h: 12, vx: 7 * d, vy: -1, vida: 120, giro: 0 });
   sfx('hielo');
@@ -2482,6 +2505,7 @@ function dispararPoder() {
 function cajaPatada() {
   const d = jugador.mirando;
   if (personaje.ataque === 'puno') return { x: d > 0 ? jugador.x + jugador.w - 2 : jugador.x - 38, y: jugador.y + 12, w: 40, h: 38 };      // el puño: alcanza a la altura del pecho y de los bichos
+  if (personaje.ataque === 'espada') return { x: d > 0 ? jugador.x + jugador.w - 2 : jugador.x - 54, y: jugador.y + 4, w: 56, h: 44 };      // la espada: largo alcance
   if (personaje.ataque === 'embestida') return { x: d > 0 ? jugador.x + jugador.w - 6 : jugador.x - 26, y: jugador.y + 4, w: 32, h: jugador.h - 6 };      // el hombro del Patrón: más alto y más ancho que una patada
   return { x: d > 0 ? jugador.x + jugador.w - 4 : jugador.x - 30, y: jugador.y + jugador.h - 26, w: 34, h: 26 };
 }
@@ -2500,11 +2524,11 @@ function actualizarEnemigosBaja(p, patear, pisando) {
       if (e.est === 'pasea') {
         const adel = e.dirP > 0 ? e.x + e.w + 4 : e.x - 4;
         if (e.enSuelo && (!hayBloque(adel, e.y + e.h + 4) || hayPincho(adel, e.y + e.h - 4) || hayBloque(adel, e.y + e.h / 2))) e.dirP = -e.dirP;
-        e.vx = e.dirP * 1.0; e.dir = e.dirP;
+        e.vx = e.dirP * 1.0 * (e.elite ? 1.45 : 1); e.dir = e.dirP;
         if (cerca) { e.est = 'lata'; e.timer = 75; e.vx = 0; sfx('bloque'); }
       } else if (e.est === 'lata') { e.vx = 0; if (--e.timer <= 0) { e.est = 'embiste'; e.timer = 42; e.dir = Math.sign(dxp) || 1; sfx('lanza'); } }
       else if (e.est === 'embiste') {
-        e.vx = e.dir * 3.6; const adel = e.dir > 0 ? e.x + e.w + 4 : e.x - 4; if (e.enSuelo && !hayBloque(adel, e.y + e.h + 4)) e.vx = 0;
+        e.vx = e.dir * 3.6 * (e.elite ? 1.35 : 1); const adel = e.dir > 0 ? e.x + e.w + 4 : e.x - 4; if (e.enSuelo && !hayBloque(adel, e.y + e.h + 4)) e.vx = 0;
         if (--e.timer <= 0 || e.chocoPared || e.vx === 0) { e.est = 'cansado'; e.timer = 75; e.vx = 0; sfx('golpe'); }
       } else { e.vx = 0; if (--e.timer <= 0) { e.est = 'pasea'; e.dirP = e.dir; } }
     }
@@ -2528,7 +2552,7 @@ function actualizarEnemigosBaja(p, patear, pisando) {
       if (cerca && e.inflado < 30) e.inflado++; else if (!cerca && e.inflado > 0) e.inflado--;
       const adel = e.dirP > 0 ? e.x + e.w + 4 : e.x - 4;
       if (e.enSuelo && (!hayBloque(adel, e.y + e.h + 4) || hayPincho(adel, e.y + e.h - 4) || hayBloque(adel, e.y + e.h / 2))) e.dirP = -e.dirP;
-      e.vx = e.dirP * (e.inflado >= 30 ? 0.4 : 0.8); e.dir = e.dirP;
+      e.vx = e.dirP * (e.inflado >= 30 ? 0.4 : 0.8) * (e.elite ? 1.5 : 1); e.dir = e.dirP;
     }
     e.vy = Math.min(e.vy + GRAVEDAD, 15);
     moverConColision(e);
@@ -2545,7 +2569,7 @@ function actualizarEnemigosBaja(p, patear, pisando) {
     if (!g.vivo) continue;
     if (g.congelado > 0) g.congelado--;
     else {
-      g.t++;
+      g.t += g.elite ? 1.4 : 1;
       const dxp = (p.x + 13) - (g.x + g.w / 2), dyp = (p.y + 20) - (g.y + g.h / 2);
       if (g.est === 'vuela') {
         const ang = g.t * 0.022; g.x = g.x0 + Math.sin(ang) * 110; g.y = g.yBase + Math.sin(g.t * 0.07) * 14; g.dir = Math.cos(ang) >= 0 ? 1 : -1;
@@ -2569,16 +2593,25 @@ function actualizarEnemigosBaja(p, patear, pisando) {
     }
   }
 }
+function golpeEspecial(e) {                              // un enemigo especial aguanta 2 golpes
+  e.hp--; e.inv = 30; e.flash = 10; jugador.invulnerable = Math.max(jugador.invulnerable, 36); sfx('golpe');
+  chispas(e.x + e.w / 2, e.y + e.h / 2, 14, '#ffd23f', 4);
+}
 function matar(e, congelado, color) {                    // escarabajos y murciélagos
+  if (e.elite && e.inv > 0) return;
+  if (e.elite && e.hp > 1) { golpeEspecial(e); return; }
+  if (e.elite) { puntos += 300; registrar('especiales'); chispas(e.x + e.w / 2, e.y + e.h / 2, 26, '#ffd23f', 5); }
   e.vivo = false; puntos += congelado ? 200 : 100; registrar('enemigos');
   if (congelado) { chispas(e.x + e.w / 2, e.y + e.h / 2, 18, '#bfeaff', 4); sfx('rompe'); }
   else { chispas(e.x + e.w / 2, e.y + e.h / 2, 12, color, 3); sfx('pisoton'); }
 }
 function golpearSerpiente(s) {                           // 3 golpes normal, 2 si está congelada
   if (!s.vivo || s.enfria > 0) return;
-  s.golpes++; s.destello = 10; s.enfria = 14; sfx('golpe');
+  if (s.elite && s.inv > 0) return;
+  s.golpes++; s.destello = 10; s.enfria = 14; sfx('golpe'); if (s.elite) { s.inv = 14; s.flash = 8; }
   chispas(s.x + s.w / 2, s.y + 14, 10, s.congelado > 0 ? '#bfeaff' : '#7dff7d', 3);
-  if (s.golpes >= (s.congelado > 0 ? 2 : 3)) {
+  if (s.golpes >= (s.congelado > 0 ? 2 : 3) + (s.elite ? 2 : 0)) {
+    if (s.elite) { puntos += 300; registrar('especiales'); }
     s.vivo = false; puntos += 500; chispas(s.x + s.w / 2, s.y + 18, 36, s.congelado > 0 ? '#bfeaff' : '#3aa845', 6);
     sfx(s.congelado > 0 ? 'rompe' : 'golpe'); registrar('serpientes'); registrar('enemigos');
   } else if (s.congelado === 0) { s.aturdida = 28; s.x -= s.dir * 12; }
@@ -2896,6 +2929,8 @@ function actualizar() {
   const p = jugador, pj = personaje;
   if (p.invulnerable > 0) p.invulnerable--;
   if (p.enfriamiento > 0) p.enfriamiento--;
+  if (cdHielo > 0) cdHielo--;
+  for (const a of [escarabajos, murcielagos, serpientes, cangrejos, erizos, gaviotas]) for (const e of a) if (e.inv > 0) e.inv--;
   if (botas > 0) botas--;
 
   // --- El jugador ---
@@ -2932,9 +2967,9 @@ function actualizar() {
         if (q.a < 1) q.a = Math.min(1, q.a + 0.05);
         const pie = p.y + p.h, sobre = p.vy >= 0 && p.x + p.w > q.x + 2 && p.x < q.x + q.w - 2 && pieAntes <= q.y + 8 && pie >= q.y - 0.5;
         if (sobre) { p.y = q.y - p.h; p.vy = 0; p.enSuelo = true; q.t++; } else if (q.t > 0) q.t = Math.max(0, q.t - 0.5);
-        if (q.t >= 80) { q.est = 1; q.vy = 0; polvo(q.x + q.w / 2, q.y, 8); }
-      } else if (q.est === 1) { q.vy += 0.5; q.y += q.vy; if (q.y > FILAS * T + 40) { q.est = 2; q.t = 0; } }
-      else if (++q.t > 200) { q.est = 0; q.y = q.y0; q.t = 0; q.a = 0; }
+        if (q.t >= 34) { q.est = 1; q.vy = 3; polvo(q.x + q.w / 2, q.y, 8); }
+      } else if (q.est === 1) { q.vy += 1.1; q.y += q.vy; if (q.y > FILAS * T + 40) { q.est = 2; q.t = 0; } }
+      else if (++q.t > 150) { q.est = 0; q.y = q.y0; q.t = 0; q.a = 0; }
     }
     if (p.enSuelo && vyAntes > 5) polvo(p.x + 13, p.y + p.h, 6);
     else if (p.enSuelo && dirIn && reloj % 7 === 0) polvo(p.x + 13 - dirIn * 8, p.y + p.h, 1);
@@ -2960,8 +2995,8 @@ function actualizar() {
       const dxp = (p.x + 13) - (e.x + 15), cerca = Math.abs(dxp) < 180 && Math.abs((p.y + p.h) - (e.y + e.h)) < 44;
       const dir = cerca ? (Math.sign(dxp) || 1) : e.dirP, adel = dir > 0 ? e.x + e.w + 4 : e.x - 4;
       const obst = e.enSuelo && (!hayBloque(adel, e.y + e.h + 4) || hayPincho(adel, e.y + e.h - 4) || hayBloque(adel, e.y + e.h / 2));
-      if (obst) { if (cerca) e.vx = 0; else { e.dirP = -e.dirP; e.vx = e.dirP * 1.2; } }
-      else e.vx = dir * (cerca ? 2.3 : 1.2);
+      if (obst) { if (cerca) e.vx = 0; else { e.dirP = -e.dirP; e.vx = e.dirP * 1.2 * (e.elite ? 1.45 : 1); } }
+      else e.vx = dir * (cerca ? 2.3 : 1.2) * (e.elite ? 1.45 : 1);
       if (!cerca && e.vx) e.dirP = Math.sign(e.vx);
       if (e.vx) e.ultimoVx = e.vx;
     }
@@ -2980,7 +3015,7 @@ function actualizar() {
     if (!m.vivo) continue;
     if (m.congelado > 0) m.congelado--;
     else {
-      m.t++;
+      m.t += m.elite ? 1.5 : 1;
       const dxp = (p.x + 13) - (m.x + 13);
       if (m.pique > 0) { m.pique--; m.px += Math.sign(dxp) * 1.7; m.py = Math.min(m.py + 3.3, 12 * T - 26 - m.y0); if (m.pique === 0) m.espera = 150; }
       else { m.px *= 0.96; m.py *= 0.95; if (m.espera > 0) m.espera--; else if (Math.abs(dxp) < 130 && p.y > m.y) m.pique = 38; }
@@ -3008,7 +3043,7 @@ function actualizar() {
     else if (s.congelado > 0 || s.aturdida > 0) s.vx = 0;
     else {
       if (cerca) s.dir = dx > 0 ? 1 : -1;
-      s.vx = s.dir * (cerca ? 2.8 : 1.7);
+      s.vx = s.dir * (cerca ? 2.8 : 1.7) * (s.elite ? 1.4 : 1);
       const frente = s.dir > 0 ? s.x + s.w + 4 : s.x - 4;
       if (s.enSuelo && (!hayBloque(frente, s.y + s.h + 4) || hayPincho(frente, s.y + s.h - 4))) { if (cerca) s.vx = 0; else { s.dir *= -1; s.vx = 0; } }
     }
@@ -3092,11 +3127,17 @@ function dibujarJugador() {
   if (p.invulnerable > 0 && !escudo && Math.floor(p.invulnerable / 4) % 2) return;
   const cx = p.x + p.w / 2, cy = p.y + p.h / 2;
   if (poder) resplandor(ctx, cx, cy, 40, 'rgba(150,225,255,.6)');
-  const estadoP = p.patada > 0 ? (personaje.ataque === 'puno' ? 'puno' : personaje.ataque === 'embestida' ? 'embiste' : 'patea') : !p.enSuelo ? 'salta' : p.vx ? 'camina' : 'quieto';
+  const estadoP = p.patada > 0 ? ((personaje.ataque === 'puno' || personaje.ataque === 'espada') ? 'puno' : personaje.ataque === 'embestida' ? 'embiste' : 'patea') : !p.enSuelo ? 'salta' : p.vx ? 'camina' : 'quieto';
   dibujarNinoCache(ctx, personaje, cx, p.y + p.h, 0.68, p.mirando, { estado: estadoP, fase: p.pasos * 0.2, t: reloj, aire: !p.enSuelo, botas: botas > 0, vy: p.vy });
   if (p.patada > 0 && personaje.ataque === 'puno') {                // ¡PAM!
     const d = p.mirando, a = Math.min(1, p.patada / 8), fx = cx + d * 36, fy = p.y + 19;
     if (p.patada > 4) { ctx.save(); ctx.translate(fx, fy); ctx.rotate(reloj * 0.3); ctx.globalAlpha = a; ctx.fillStyle = '#ffe14d'; ctx.strokeStyle = NEGRO; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < 16; i++) { const r = i % 2 ? 9 : 17, an = i * Math.PI / 8; ctx.lineTo(Math.cos(an) * r, Math.sin(an) * r); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore(); texto('PAM!', fx + d * 6, fy - 20, 15, '#fff', 'center'); ctx.globalAlpha = 1; }
+  } else if (p.patada > 0 && personaje.ataque === 'espada') {       // tajo de espada
+    const d = p.mirando, k = 1 - p.patada / 14, ang = -1.5 + k * 2.5;
+    ctx.save(); ctx.translate(cx + d * 8, p.y + 28); ctx.scale(d, 1);
+    ctx.strokeStyle = 'rgba(255,255,255,' + (0.5 * (1 - k)).toFixed(2) + ')'; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, 0, 40, -1.5, ang); ctx.stroke();
+    ctx.rotate(ang); ctx.fillStyle = '#e9eef5'; ctx.strokeStyle = NEGRO; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(8, -3); ctx.lineTo(50, -1.6); ctx.lineTo(56, 0); ctx.lineTo(50, 1.6); ctx.lineTo(8, 3); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#c9a24a'; ctx.fillRect(2, -7, 6, 14); ctx.strokeRect(2, -7, 6, 14); ctx.fillStyle = '#5a3a1c'; ctx.fillRect(-8, -2.4, 10, 4.8); ctx.restore();
   } else if (p.patada > 0 && personaje.ataque === 'embestida') {
     const d = p.mirando, a = p.patada / 12; ctx.strokeStyle = `rgba(255,255,255,${a * 0.8})`; ctx.lineWidth = 3; ctx.lineCap = 'round';
     for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(cx - d * (16 + k * 4), p.y + 14 + k * 14); ctx.lineTo(cx - d * (36 + k * 8), p.y + 14 + k * 14); ctx.stroke(); }
@@ -3230,11 +3271,11 @@ function dibujarNivel() {
   for (const t of tinacos) dibujarTinaco(t);
   for (const q of caedizas) {
     if (q.est === 2 || q.x + q.w < camara || q.x > camara + W) continue;
-    const sac = q.est === 0 && q.t > 40 ? Math.sin(reloj * 2.6) * Math.min(2.5, (q.t - 40) / 14) : 0, x = q.x + sac, y = q.y;
+    const sac = q.est === 0 && q.t > 12 ? Math.sin(reloj * 2.6) * Math.min(2.5, (q.t - 12) / 8) : 0, x = q.x + sac, y = q.y;
     const mat = tema === 'playa' ? ['#8a6238', '#d2a66e', '#ecc88e'] : tema === 'chichen' ? ['#8d8a76', '#b9b59b', '#d3d0b8'] : tema === 'bufadora' ? ['#a99b78', '#cfc3a3', '#ece3c8'] : ['#b9a98a', '#e0d3b4', '#f2e9d0'];
     ctx.globalAlpha = q.a; ctx.fillStyle = mat[0]; ctx.fillRect(x, y + 4, q.w, 14); ctx.fillStyle = mat[1]; ctx.fillRect(x, y, q.w, 8); ctx.fillStyle = mat[2]; ctx.fillRect(x, y, q.w, 3);
     ctx.fillStyle = 'rgba(70,60,40,.5)'; for (let k = T; k < q.w; k += T) ctx.fillRect(x + k - 1, y + 3, 2, 15); ctx.fillRect(x, y + 17, q.w, 3);
-    if (q.est === 0 && q.t > 40) { ctx.strokeStyle = 'rgba(60,50,30,.7)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x + q.w * 0.3, y + 1); ctx.lineTo(x + q.w * 0.36, y + 10); ctx.lineTo(x + q.w * 0.32, y + 18); ctx.moveTo(x + q.w * 0.7, y + 2); ctx.lineTo(x + q.w * 0.64, y + 12); ctx.stroke(); }
+    if (q.est === 0 && q.t > 12) { ctx.strokeStyle = 'rgba(60,50,30,.7)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x + q.w * 0.3, y + 1); ctx.lineTo(x + q.w * 0.36, y + 10); ctx.lineTo(x + q.w * 0.32, y + 18); ctx.moveTo(x + q.w * 0.7, y + 2); ctx.lineTo(x + q.w * 0.64, y + 12); ctx.stroke(); }
     ctx.globalAlpha = 1;
   }
   if (jefe && jefe.estadoJ === 'activo' && jefe.vivo) {   // la reja se cierra detrás de ti
@@ -3263,7 +3304,7 @@ function pintarMarcador() {                                 // marcador limpio: 
   for (let i = 0; i < CHOCOS_POR_VIDA; i++) { ctx.fillStyle = i < progChoco ? '#ff4b4b' : 'rgba(255,255,255,.28)'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(66 + i * 16, 73, 5.2, 0, 7); ctx.fill(); ctx.stroke(); }
   let px = 128;
   const chip = (activo, dibujo, col) => { if (!activo) return; ctx.fillStyle = 'rgba(20,24,56,.62)'; ctx.beginPath(); ctx.arc(px + 13, 73, 13, 0, 7); ctx.fill(); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke(); dibujo(px + 13, 73); px += 31; };
-  chip(!!poder, (x, y) => { ctx.save(); ctx.translate(x, y); ctx.scale(0.5, 0.5); dibujarCristal(ctx, -12, -12); ctx.restore(); }, '#9be4ff');
+  chip(!!poder, (x, y) => { ctx.save(); ctx.translate(x, y); ctx.scale(0.5, 0.5); dibujarCristal(ctx, -12, -12); ctx.restore(); if (cdHielo > 0) { ctx.fillStyle = 'rgba(20,24,56,.72)'; ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, 13, -Math.PI / 2, -Math.PI / 2 + cdHielo / 90 * TAU); ctx.closePath(); ctx.fill(); } }, '#9be4ff');
   chip(escudo, (x, y) => dibujarEscudoIcono(ctx, x - 7, y - 8, 0.58), '#ffd93b');
   chip(botas > 0, (x, y) => { ctx.save(); ctx.translate(x, y); ctx.scale(0.5, 0.5); dibujarIconoBotas(ctx, -12, -12); ctx.restore(); ctx.fillStyle = '#ffae4d'; ctx.fillRect(x - 12, 90, 24 * botas / BOTAS_DURACION, 3); }, '#ffae4d');
   chip(savia > 0, (x, y) => corazon(x - 8, y - 8, 16, '#4fa8ff', '#12306e'), '#7fc4ff');
@@ -3282,7 +3323,7 @@ function pintarMarcador() {                                 // marcador limpio: 
 }
 function dibujarMarcador() {                                // el marcador se redibuja solo cuando algo cambia
   const hp = jefe && jefe.vivo && jefe.estadoJ === 'activo' ? jefe.hp : -1;
-  const key = [puntos, personaje.id, progChoco, vidas, poder ? 1 : 0, escudo ? 1 : 0, savia, botas > 0 ? Math.ceil(botas / 10) : 0, datos.monedas, silencio ? 1 : 0, nivelActual, hp, jefe ? jefe.tipo : '', ESC].join('|');
+  const key = [puntos, personaje.id, progChoco, vidas, poder ? 1 : 0, Math.ceil(cdHielo / 6), escudo ? 1 : 0, savia, botas > 0 ? Math.ceil(botas / 10) : 0, datos.monedas, silencio ? 1 : 0, nivelActual, hp, jefe ? jefe.tipo : '', ESC].join('|');
   if (!HUD.c || HUD.key !== key) {
     const c = HUD.c || (HUD.c = crearCanvas(Math.ceil(W * ESC), Math.ceil(100 * ESC))), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, 0, 0); g.clearRect(0, 0, W, 100);
     const prev = ctx; ctx = g; try { pintarMarcador(); } finally { ctx = prev; }
@@ -3314,6 +3355,14 @@ function dibujarJuego() {
   for (const e of cangrejos) if (e.vivo) pintarCangrejo(ctx, e);
   for (const e of erizos) if (e.vivo) pintarErizo(ctx, e);
   for (const e of gaviotas) if (e.vivo) pintarGaviota(ctx, e);
+  for (const e of elitesLista) {                            // enemigos especiales: brillo, estrellita y sus golpes restantes
+    if (!e.vivo || e.x + e.w < camara - 20 || e.x > camara + W + 20) continue;
+    const cx = e.x + e.w / 2, cy = e.y + e.h / 2, hpq = e.golpes !== undefined ? 5 - e.golpes : e.hp;
+    resplandor(ctx, cx, cy, 34 + Math.sin(reloj * 0.15) * 3, ({ escarabajo: 'rgba(255,200,60,.6)', murcielago: 'rgba(255,60,90,.6)', serpiente: 'rgba(190,110,255,.6)', cangrejo: 'rgba(255,140,40,.6)', erizo: 'rgba(255,80,40,.6)', gaviota: 'rgba(80,220,255,.6)' })[e.elite]);
+    ctx.save(); ctx.translate(cx, e.y - 12 + Math.sin(reloj * 0.12) * 2); ctx.fillStyle = '#ffd23f'; ctx.strokeStyle = NEGRO; ctx.lineWidth = 1.6; ctx.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 3.4 : 7.5, an = i * Math.PI / 5 - Math.PI / 2; ctx.lineTo(Math.cos(an) * r, Math.sin(an) * r); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+    for (let i = 0; i < hpq; i++) { ctx.fillStyle = '#ff4b4b'; ctx.fillRect(cx - hpq * 4 + i * 8 + 1, e.y - 28, 6, 4); }
+    if (e.flash > 0) { e.flash--; ctx.fillStyle = 'rgba(255,255,255,' + (e.flash / 14).toFixed(2) + ')'; ctx.beginPath(); ctx.arc(cx, cy, 20, 0, TAU); ctx.fill(); }
+  }
   if (jefe && jefe.tipo !== 'kukulkan' && (jefe.vivo || jefe.muerte < 100)) { if (!jefe.vivo) ctx.globalAlpha = Math.max(0, 1 - jefe.muerte / 100); dibujarJefe(ctx, jefe, reloj); ctx.globalAlpha = 1; }
   if (jefe && !jefe.vivo && jefe.tipo === 'playero') dibujarLlave(ctx, jefe.x + jefe.w / 2, jefe.y + 6 - Math.min(jefe.muerte, 90) * 0.9, 1.5, Math.sin(reloj * 0.1) * 0.4);
   if (jefe && !jefe.vivo && jefe.tipo === 'kukulkan') { const Hk = cabezaKuku(jefe); dibujarLlave(ctx, Hk.x, Math.min(352, Hk.y + 30 + jefe.muerte * jefe.muerte * 0.04), 1.5, Math.sin(reloj * 0.1) * 0.4); }
@@ -3402,7 +3451,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.19', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.20', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });

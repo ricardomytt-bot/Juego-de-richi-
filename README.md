@@ -113,3 +113,10 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Todos los niveles tienen plataformas que se caen, tinacos con techos (casas, palmeras-puente, chozas, puestos de lámina) y escaleras al jefe. Yucatán ahora tiene 6 casas por nivel; La Bufadora tiene 5 puestos de comida y 4 secciones de plataformas.
 - `tramos(s, mundo, variante)` arma 223 columnas con tramos llanos, casas con tinaco y secciones de plataformas que caen; usa los enemigos de cada mundo.
 - Memoria: el piso en caché solo guarda los pedazos cercanos a la cámara (`mantenerTerreno`), así los niveles largos no gastan más memoria.
+
+## Versión 3.20 — Enemigos especiales, hielo con cooldown, Cazador secreto
+- Kukulkán: los dos power-ups de la arena están uno en cada extremo.
+- Las plataformas que caen tiemblan antes y caen mucho más rápido (≈0.6 s en lugar de 1.3 s; caen con más aceleración).
+- El poder de hielo tiene cooldown de 1.5 s entre disparos (se ve en el icono del marcador) y solo puede haber 2 bolas a la vez.
+- Cada nivel agrega 1 o 2 enemigos extra al azar; 50 % de las veces son **especiales**: brillo de color y estrellita, 2 golpes de vida (serpientes: 5), más rápidos y valen más. Se pueden hacer daño con la bola eléctrica pero no mueren de un golpe.
+- Logro nuevo "Cazador de élite" (10 enemigos especiales) → personaje secreto **Cazador**: sombrero y espada con tajo de largo alcance.
