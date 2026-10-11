@@ -166,6 +166,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 ## Versión 3.29 — Nivel 8: vuelo a Chiapas y El Piloto
 - Nuevo nivel 8 (último del mundo 2): **todo el nivel es dentro del avión**, con un único fondo de cabina (la arena del jefe no tiene fondo propio: continúa el mismo) (ventanillas, compartimentos, asientos azules, alfombra del pasillo; los huecos dejan ver la bodega oscura). Largo, con caedizas, cocina del avión con elevador y escaleras a la cabina. Vuelo rumbo a **Chiapas**.
 - Enemigos nuevos: **almohada saltarina** (brinca hacia ti y suelta un Kit Kat), **avión de papel** (planea, avisa y se lanza en picada) y **cafetera de vapor** (silba y suelta un chorro caliente hacia delante). También pueden salir como enemigos especiales.
-- Jefe **El Piloto** (contratado por el Patrón): carritos de azafata que hay que saltar, gasolina con círculo rojo que explota y turbulencia (3 s sin poder moverte).
+- Jefe **El Piloto** (contratado por el Patrón): carritos de azafata que hay que saltar, gasolina con círculo rojo que explota y turbulencia (3 s sin poder moverte; cuando estira los brazos, salen pinchos donde hay maletas y carritos tirados, así que hay que moverse a un lugar libre).
 - Todas las explosiones (bomba de la Patrona, moneda del Pescador, sangre del tiburón, gasolina) usan el círculo rojo de aviso del nivel acuático, con golpe circular.
 - 2 stickers nuevos (álbum de 16, con 8 columnas). Mundos "Chiapas" y "Veracruz y Tabasco" anunciados.

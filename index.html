@@ -2381,6 +2381,10 @@ function crearDecoraciones() {
     else if (r < 0.14) tipo = 'farola'; else if (r < 0.26) tipo = 'bugambilia'; else if (r < 0.32) tipo = 'banca'; else if (r < 0.38) tipo = 'bote'; else if (r < 0.43) tipo = 'letrero'; else if (r < 0.5) tipo = 'maceta';
     if (tipo) { decoraciones.push({ x: c * T + 16, tipo }); ultima = c; }
   }
+  if (tema === 'aeropuerto') {                               // en la arena del Piloto, las maletas y carritos tirados siempre están en el mismo lugar (ahí salen los pinchos con la turbulencia)
+    decoraciones = decoraciones.filter(d => d.x < arenaX - 10);
+    [['maletaDeco', 110], ['carritoDeco', 285], ['maletaDeco', 470], ['carritoDeco', 640]].forEach(([tipo, dx]) => decoraciones.push({ x: arenaX + dx, tipo }));
+  }
 }
 function dibujarDecoracion(d, tarde) {
   const x = d.x, y = 12 * T + 2, g = ctx;
@@ -3340,9 +3344,12 @@ function iaPiloto(j) {
     case 'camina': j.vx = j.dir * (rabia ? 1.9 : 1.4); if (--j.timer <= 0) { const k = j.ciclo++ % 4; j.fase = ['carrito', 'gasolina', 'turbulencia', 'carrito'][k]; j.timer = [60, 84, 235, 60][k]; j.vx = 0; if (k === 2) sfx('cinturon'); } break;
     case 'carrito': j.vx = 0; j.timer--; if (j.timer === 38 || (rabia && j.timer === 14)) lanzarCarrito(j); if (j.timer <= 0) { j.fase = 'camina'; j.timer = rabia ? 55 : 75; } break;
     case 'gasolina': j.vx = 0; j.timer--; if (j.timer === 70) crearGasolina(j); if (j.timer <= 0) { j.fase = 'camina'; j.timer = 85; } break;
-    case 'turbulencia': j.vx = 0; j.timer--; if (j.timer === 180) { jugador.atrapado = 180; j.turbT = 180; sfx('rugido'); temblor = Math.max(temblor, 20); } if (j.timer <= 0) { j.fase = 'camina'; j.timer = 60; } break;
+    case 'turbulencia': j.vx = 0; j.timer--; if (j.timer === 180) { jugador.atrapado = 180; j.turbT = 180; sfx('rugido'); sfx('pincho'); temblor = Math.max(temblor, 20); crearPinchosPiloto(j); } if (j.timer <= 0) { j.fase = 'camina'; j.timer = 60; } break;
     default: j.fase = 'camina'; j.timer = 60;
   }
+}
+function crearPinchosPiloto(j) {                            // con la turbulencia salen pinchos justo donde están las maletas y los carritos tirados
+  j.pinchos = decoraciones.filter(d => (d.tipo === 'maletaDeco' || d.tipo === 'carritoDeco') && d.x > arenaX - 10).map(d => ({ x: d.x, h: 0, pego: false }));
 }
 function lanzarCarrito(j) { const d = j.dir; proyJ.push({ tipo: 'carrito', x: j.x + (d > 0 ? j.w : -46), y: 12 * T - 38, w: 46, h: 38, vx: d * 3.7, vy: 0, grav: 0, rot: 0, vida: 900, golpeo: false }); sfx('carrito'); }
 function crearGasolina(j) {
@@ -3352,6 +3359,14 @@ function crearGasolina(j) {
 }
 function actualizarFuegosPiloto(j, p) {
   if (j.turbT > 0) { j.turbT--; temblor = Math.max(temblor, 7); if (reloj % 9 === 0) chispas(p.x + 13, p.y + 20, 1, '#fff', 1.5); }
+  if (j.pinchos) {
+    for (const q of j.pinchos) {
+      q.h = j.turbT > 0 ? Math.min(1, q.h + 0.14) : Math.max(0, q.h - 0.08);
+      if (j.turbT <= 0 && q.h === 0) q.pego = false;
+      if (q.h > 0.5 && !q.pego && tragando === 0 && choca(p, { x: q.x - 28, y: 12 * T - 36, w: 56, h: 36 })) { q.pego = true; recibirGolpe(true, 0, 1); }
+    }
+    if (j.turbT <= 0 && j.pinchos.every(q => q.h === 0)) j.pinchos = null;
+  }
   if (!j.fuegos) return;
   for (const f of j.fuegos) {
     f.t++;
@@ -3361,6 +3376,13 @@ function actualizarFuegosPiloto(j, p) {
     }
   }
   j.fuegos = j.fuegos.filter(f => f.t < 110);
+}
+function dibujarPinchosPiloto(g, q) {                       // fila de pinchos de metal que salen del piso
+  const h = 38 * q.h; if (h < 1) return;
+  g.save(); g.translate(q.x, 12 * T + 2); g.lineJoin = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 2;
+  g.fillStyle = '#6a7384'; g.fillRect(-30, -6 * q.h, 60, 6 * q.h); g.strokeRect(-30, -6 * q.h, 60, 6 * q.h);
+  for (let k = 0; k < 4; k++) { const x = -26 + k * 13.5; g.fillStyle = k % 2 ? '#d7dde6' : '#aab4c4'; g.beginPath(); g.moveTo(x, -6 * q.h); g.lineTo(x + 6.5, -h); g.lineTo(x + 13, -6 * q.h); g.closePath(); g.fill(); g.stroke(); }
+  g.restore();
 }
 function dibujarFuegoPiloto(g, f) {                          // charco de gasolina: avisa con el círculo rojo, explota y deja llamas un momento
   if (f.t < 0) return;
@@ -3646,7 +3668,7 @@ function actualizarJefe(p, pata, pisando) {
   if (j.tipo === 'kukulkan') { actualizarKukulkan(p); return; }
   if (j.tipo === 'tiburon') { actualizarTiburon(p, pata, pisando); return; }
   if (!j.vivo) {
-    j.muerte++; j.vy = Math.min(j.vy + GRAVEDAD, 15); j.vx = 0; moverConColision(j); if (j.fuegos) j.fuegos.length = 0; j.turbT = 0;
+    j.muerte++; j.vy = Math.min(j.vy + GRAVEDAD, 15); j.vx = 0; moverConColision(j); if (j.fuegos) j.fuegos.length = 0; j.turbT = 0; j.pinchos = null;
     if (j.muerte >= 110 && (monedasJ.every(m => m.tomada) || j.muerte >= 520)) finDeJefe();
     return;
   }
@@ -4193,7 +4215,7 @@ function pintarMarcador() {                                 // marcador limpio: 
     ctx.fillStyle = grad(ctx, 0, by, 0, by + 20, [[0, '#ff8a8a'], [1, '#c4161c']]); if (f > 0) { trazoRedondo(ctx, bx, by, Math.max(14, bw * f), 20, 10); ctx.fill(); }
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; trazoRedondo(ctx, bx, by, bw, 20, 10); ctx.stroke();
     texto({ patron: 'EL PATRÓN', patrona: 'LA PATRONA', playero: 'EL PLAYERO', kukulkan: 'KUKULKÁN', chalan: 'EL CHALÁN', pescador: 'EL PESCADOR', tiburon: 'EL TIBURÓN', piloto: 'EL PILOTO' }[jefe.tipo], W / 2, by + 15, 12, '#fff', 'center');
-    if (jefe.tipo === 'piloto' && jefe.vivo && jefe.fase === 'turbulencia') texto(jefe.timer > 180 ? '¡TURBULENCIA!  Abróchense los cinturones' : '¡No te puedes mover! (sí puedes atacar)', W / 2, 118, 20, jefe.timer > 180 ? '#ffd34d' : '#ff8a7a', 'center');
+    if (jefe.tipo === 'piloto' && jefe.vivo && jefe.fase === 'turbulencia') texto(jefe.timer > 180 ? '¡TURBULENCIA!  Sal de donde hay maletas y carritos' : '¡No te puedes mover! (sí puedes atacar)', W / 2, 118, 20, jefe.timer > 180 ? '#ffd34d' : '#ff8a7a', 'center');
   }
   ctx.fillStyle = 'rgba(20,24,56,.62)'; ctx.beginPath(); ctx.arc(W - 24, 78, 14, 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 1.5; ctx.stroke();
   ctx.fillStyle = '#fff'; ctx.fillRect(W - 29, 71, 4, 14); ctx.fillRect(W - 21, 71, 4, 14);
@@ -4256,6 +4278,7 @@ function dibujarJuego() {
   for (const e of pinchosJ) dibujarEspina(ctx, e);
   for (const e of geiseres) dibujarGeiser(ctx, e);
   if (jefe && jefe.fuegos) for (const f of jefe.fuegos) dibujarFuegoPiloto(ctx, f);
+  if (jefe && jefe.pinchos) for (const q of jefe.pinchos) dibujarPinchosPiloto(ctx, q);
   for (const q of proyJ) dibujarProyectil(ctx, q);
   for (const x of explos) dibujarExplosion(ctx, x);
   if (jefe && jefe.tipo === 'kukulkan' && jefe.rayo) dibujarRayo(ctx, jefe);
