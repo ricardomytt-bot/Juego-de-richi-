@@ -101,3 +101,9 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Versión 3.17 — Arenas como antes
 - Se restaura el fondo (edificio / muelle / pirámide / hotel) de la batalla del jefe y se quitan la casita y el tinaco de las arenas. Las cajas de las arenas vuelven a su lugar original.
+
+## Versión 3.18 — Mundo 2: puente de piedra, plataformas que caen, puestos de comida y niveles más largos
+- La Bufadora ahora es un nivel plano sobre un **puente de piedra** (piso y losas color piedra clara). Al fondo, abajo, una mini sección con gente mirando la bufadora desde un puente de piedra.
+- Nueva **plataforma que se cae** (`caediza`): si te quedas encima mucho tiempo tiembla, se agrieta y se cae; después de unos segundos vuelve a aparecer. Hay dos secciones con ellas.
+- **Puestos de comida** con techo de lámina en lugar de casas, con el mismo tinaco, techo y escaleras al jefe que en el mundo 1. Los enemigos y pinchos nacen arriba del techo.
+- Todos los niveles (1 a 5) son unas 40 columnas más largos (ayudante `OFF` para desplazar columnas). Los fondos se calculan según el nivel más largo del tema.
