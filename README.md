@@ -178,3 +178,9 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Versión 3.31 — Pelo más güero
 - **Lichilón**: pelo rubio y nuevo peinado hacia atrás con las líneas del peine. **Sofi Lofi**: pelo más rubio (mismo peinado).
+
+## Versión 3.32 — Chiapas, nivel 9: Cañón del Sumidero
+- Empieza el mundo de **Chiapas**. Nivel 9: acantilados con selva y cascadas, el río verde abajo, orillas de roca con musgo, troncos que se caen y peñascos con elevador de troncos. Largo y con todas las mecánicas. Sin fondo aparte para la pelea: continúa el mismo.
+- Tres enemigos nuevos (también como especiales): **mono araña** (cuelga de una liana, se deja caer si pasas debajo y te persigue a brincos), **cocodrilito** (abre la boca y se lanza a morder; luego se cansa) y **guacamaya** (vuela en ondas y suelta semillas).
+- Jefe **El Lagarto Rey** (10 de vida): mordida lanzada (si se estrella contra la pared queda aturdido), lluvia de rocas, **coletazo** con círculo rojo de aviso (salta o aléjate) y salto aplastante.
+- 2 stickers nuevos (álbum de 18, con 9 columnas).
