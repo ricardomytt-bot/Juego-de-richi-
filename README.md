@@ -154,3 +154,7 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 ## Versión 3.26 — Stickers con lucecita y habilidades desbloqueadas (prueba)
 - Los stickers escondidos ahora tienen una lucecita dorada tenue con una estrellita que se ve desde lejos; de cerca brillan más y se ve el emoji.
 - `MODO_PRUEBA_HAB = true`: todas las habilidades están desbloqueadas solo para probarlas en esta versión (para quitarlo: ponerlo en false).
+
+## Versión 3.27 — Scroll en los apartados
+- Nuevo sistema genérico de zonas que se bajan (`obtenerScroll`, `rectsScroll`, `barraScroll`): barra lateral, deslizar con el dedo, rueda del ratón y flechas (la tarjeta elegida con el teclado siempre se ve). Un botón dentro de una zona con scroll solo actúa si tocas, no si deslizas.
+- Se usa en **Habilidades** (la fila de abajo quedaba cortada), **Álbum** (hoy cabe completo; baja solo si crece) y se mantiene el de **Logros**. Perfil, Ajustes, Niveles y Personajes caben completos en pantalla.

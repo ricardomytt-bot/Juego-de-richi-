@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.26
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.27
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -2638,6 +2638,7 @@ const jugador = { x: 0, y: 0, w: 26, h: 54, vx: 0, vy: 0, enSuelo: false, mirand
 
 let ultimaCarga = 0, nivelElegido = 0, cineI = 0, cineT0 = 0, cineVisPrev = 0, cineJefe = false;
 function irA(e) {
+  delete scrollGen[e];
   estado = e; estadoT = 0; ui.foco = 0; const bm = e === 'cine' ? 0.16 : 1; if (bm !== bajaMusica) { bajaMusica = bm; aplicarVolumen(); } for (const k in pulsos) delete pulsos[k];
   if (e === 'logros') logroY = 0;
   if (e === 'cine') { cineI = 0; cineT0 = 0; cineVisPrev = 0; cineJefe = false; }
@@ -4055,7 +4056,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.26', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.27', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -4199,6 +4200,23 @@ function dibujarPerfil() {
   if (estadoT - perfilMsg.t0 < 220) texto(perfilMsg.txt, W / 2, 442, 14, perfilMsg.col, 'center');
   uiCerrar(() => irA('menu'), W - 58, 8);
 }
+// ---------- Zona que se baja y se sube (barra, deslizar con el dedo, rueda y flechas): sirve para cualquier apartado ----------
+const scrollGen = {};
+function obtenerScroll(nombre, alto, contenido) {            // devuelve {y, max}: cuánto se ha bajado y cuánto se puede bajar
+  const S = scrollGen[nombre] || (scrollGen[nombre] = { y: 0, max: 0 }); S.max = Math.max(0, contenido - alto); S.y = Math.max(0, Math.min(S.max, S.y)); ui.scroll = S; return S;
+}
+function rectsScroll(S, x, y, w, h) {                        // se llama DESPUÉS de crear los botones de la zona (los botones tienen prioridad)
+  if (S.max <= 0) return;
+  ui.rects.push({ tipo: 'scroll', x: x + w - 4, y: y - 4, w: 30, h: h + 8, sinFoco: true, mover: yy => { S.y = Math.max(0, Math.min(S.max, (yy - y - 20) / (h - 40) * S.max)); } });
+  ui.rects.push({ tipo: 'lista', S, x, y, w: w - 8, h, sinFoco: true });
+}
+function barraScroll(S, y, h) {
+  if (S.max <= 0) return;
+  ctx.fillStyle = 'rgba(0,0,0,.4)'; trazoRedondo(ctx, 782, y, 10, h, 5); ctx.fill();
+  const th = Math.max(36, h * h / (h + S.max)), ty = y + (h - th) * S.y / S.max;
+  ctx.fillStyle = grad(ctx, 0, ty, 0, ty + th, [[0, '#ffe27a'], [1, '#e8a200']]); trazoRedondo(ctx, 780, ty, 14, th, 7); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+  texto(tactilActivo ? 'Desliza para ver más' : 'Rueda o ↑ ↓ para ver más', W - 100, 444, 11, '#cfd8ff', 'center', true);
+}
 // ---------- Tienda: objetos especiales que se compran con monedas y se usan siempre ----------
 const OBJETOS = [
   { id: 'iman',    nombre: 'Imán de Kit Kats', precio: 40, desc: 'Los Kit Kats que están cerca de ti vuelan solos hasta tus manos.' },
@@ -4268,9 +4286,12 @@ function dibujarTienda() {
   dibujarFondo(reloj * 1.2, 'dia'); ctx.fillStyle = 'rgba(10,6,40,.62)'; ctx.fillRect(0, 0, W, H);
   texto('HABILIDADES', W / 2, 50, 34, '#ffd43b', 'center');
   dibujarMoneda(ctx, 40, 32, 12, true); texto(String(datos.monedas), 60, 39, 22, '#ffd700');
+  const S = obtenerScroll('tienda', 358, 3 * 170 + 8), fi = ui.sinTeclado ? -1 : ui.foco;
+  if (fi >= 0 && fi < OBJETOS.length) { const cy = 68 + Math.floor(fi / 3) * 170; if (cy - 8 - S.y < 58) S.y = Math.max(0, cy - 8 - 58); else if (cy + 168 - S.y > 414) S.y = Math.min(S.max, cy + 168 - 414); }    // con el teclado: la tarjeta elegida siempre se ve
+  ctx.save(); ctx.beginPath(); ctx.rect(14, 56, 772, 358); ctx.clip(); ctx.translate(0, -S.y);
   OBJETOS.forEach((o, i) => {
     const x = 34 + (i % 3) * 248, y = 68 + Math.floor(i / 3) * 170, w = 236, h = 160, idx = ui.rects.length, mio = tiene(o.id), alcanza = datos.monedas >= o.precio;
-    ui.rects.push({ tipo: 'boton', x, y, w, h, accion: () => comprarObjeto(o) });
+    { const ry = Math.max(56, y - S.y), rb = Math.min(414, y + h - S.y); ui.rects.push(rb > ry ? { tipo: 'boton', x, y: ry, w, h: rb - ry, accion: () => comprarObjeto(o), S } : { tipo: 'boton', x: -999, y: -999, w: 1, h: 1, accion: () => {}, S }); }
     const f = ui.foco === idx && !ui.sinTeclado;
     if (f) { ctx.fillStyle = '#ffd700'; trazoRedondo(ctx, x - 3, y - 3, w + 6, h + 6, 17); ctx.fill(); }
     ctx.fillStyle = f ? '#2b3a67' : 'rgba(20,24,56,.93)'; trazoRedondo(ctx, x, y, w, h, 14); ctx.fill();
@@ -4283,6 +4304,7 @@ function dibujarTienda() {
     if (mio) { const eqp = o.activa && datos.equipada === o.id; ctx.fillStyle = o.activa && !eqp ? '#2a7bd9' : '#2fa83a'; trazoRedondo(ctx, x + 10, py, w - 20, 24, 12); ctx.fill(); texto(o.activa ? (eqp ? '✔ EQUIPADA' : 'EQUIPAR') : '✔ TUYO', x + w / 2, py + 17, 14, '#fff', 'center'); }
     else { ctx.fillStyle = alcanza ? '#e8a200' : '#4a4f6c'; trazoRedondo(ctx, x + 10, py, w - 20, 24, 12); ctx.fill(); dibujarMoneda(ctx, x + 36, py + 12, 8, true); texto(o.precio + '  ·  ' + (alcanza ? 'COMPRAR' : 'faltan ' + (o.precio - datos.monedas)), x + w / 2 + 12, py + 17, 13, '#fff', 'center'); }
   });
+  ctx.restore(); rectsScroll(S, 20, 56, 760, 358); barraScroll(S, 58, 354);
   if (estadoT - tiendaMsg.t0 < 170) texto(tiendaMsg.txt, W / 2, 428, 17, tiendaMsg.col, 'center');
   else texto('Las habilidades con botón se EQUIPAN (una a la vez); las demás se activan solas.', W / 2, 428, 13, '#cfd8ff', 'center', true);
   uiCerrar(() => irA('menu'), W - 58, 8);
@@ -4295,15 +4317,18 @@ function dibujarAlbum() {
   texto('ÁLBUM DE STICKERS', W / 2, 46, 32, '#ffd43b', 'center'); texto(hay + ' / ' + STICKERS.length, W / 2, 72, 17, '#fff', 'center');
   ctx.fillStyle = 'rgba(255,255,255,.18)'; trazoRedondo(ctx, W / 2 - 120, 80, 240, 10, 5); ctx.fill(); ctx.fillStyle = '#7bd36b'; trazoRedondo(ctx, W / 2 - 120, 80, Math.max(10, 240 * hay / STICKERS.length), 10, 5); ctx.fill();
   const COL = ['#ffb347', '#ff7aa8', '#4fc3c9', '#9bcf53', '#6aa6e8', '#f5c344', '#8e7cff'];
+  const SA = obtenerScroll('album', 290, 2 * 136 + 14);
+  ctx.save(); ctx.beginPath(); ctx.rect(14, 104, 772, 290); ctx.clip(); ctx.translate(0, -SA.y);
   STICKERS.forEach((t, i) => {
     const col = t.n, fila = i % 2, x = 22 + col * 108, y = 112 + fila * 136, w = 98, h = 126, idx = ui.rects.length, tengo = !!datos.stickers[t.id];
-    ui.rects.push({ tipo: 'boton', x, y, w, h, accion: () => { albumSel = i; sfx('clic'); } });
+    ui.rects.push({ tipo: 'boton', x, y: y - SA.y, w, h, accion: () => { albumSel = i; sfx('clic'); }, S: SA });
     const f = (ui.foco === idx && !ui.sinTeclado) || albumSel === i;
     ctx.fillStyle = tengo ? '#fff' : 'rgba(255,255,255,.12)'; trazoRedondo(ctx, x, y, w, h, 14); ctx.fill();
     if (f) { ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 4; trazoRedondo(ctx, x - 2, y - 2, w + 4, h + 4, 16); ctx.stroke(); }
     if (tengo) { ctx.fillStyle = COL[col]; trazoRedondo(ctx, x + 6, y + 6, w - 12, h - 34, 10); ctx.fill(); ctx.font = '46px "Apple Color Emoji","Segoe UI Emoji",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#000'; ctx.fillText(t.e, x + w / 2, y + 48); ctx.textBaseline = 'alphabetic'; texto(t.nombre, x + w / 2, y + h - 12, t.nombre.length > 14 ? 9.5 : 11, '#2a1a40', 'center'); }
     else { texto('?', x + w / 2, y + 66, 46, 'rgba(255,255,255,.45)', 'center'); texto('Nivel ' + (t.n + 1), x + w / 2, y + h - 12, 11, 'rgba(255,255,255,.55)', 'center'); }
   });
+  ctx.restore(); rectsScroll(SA, 14, 104, 772, 290); barraScroll(SA, 106, 286);
   const t = STICKERS[albumSel], tengo = !!datos.stickers[t.id];
   texto(tengo ? t.e + '  ' + t.nombre : 'Sticker escondido en el nivel ' + (t.n + 1) + ': ' + NIVELES[t.n].corto[0], W / 2, 400, 16, tengo ? '#7bd36b' : '#ffe27a', 'center');
   if (!tengo) texto(NIVELES[t.n].acuatico ? 'Pista: nada pegado al techo del arrecife...' : 'Pista: búscalo muy arriba, sobre una azotea (salta desde el techo).', W / 2, 424, 13, '#cfd8ff', 'center', true);
@@ -4457,7 +4482,7 @@ function capaVintage() {
 }
 function dibujar() {
   ctx.setTransform(ESC, 0, 0, ESC, 0, 0);
-  ui.rects = []; ui.atras = null; ui.sinTeclado = false;
+  ui.rects = []; ui.atras = null; ui.sinTeclado = false; ui.scroll = null;
   const toca = tactilActivo ? 'Toca la pantalla' : 'Presiona ENTER';
   if (estado === 'menu') dibujarMenu();
   else if (estado === 'personajes') dibujarPersonajes();
@@ -4529,17 +4554,18 @@ canvas.addEventListener('pointerdown', ev => {
   const r = ui.rects[i], lista = ui.rects.filter(q => !q.sinFoco), k = lista.indexOf(r); if (k >= 0) ui.foco = k;
   if (r.tipo === 'slider') { ui.arr = r; fijarSlider(r, x); }
   else if (r.tipo === 'scroll') { ui.arr = r; r.mover(y); }
-  else if (r.tipo === 'lista') { ui.arr = r; r.y0 = y; r.s0 = logroY; r.mover = yy => moverLogros(r.s0 + (r.y0 - yy)); }
+  else if (r.tipo === 'lista') { ui.arr = r; r.y0 = y; if (r.S) { r.s0 = r.S.y; r.mover = yy => { r.S.y = Math.max(0, Math.min(r.S.max, r.s0 + (r.y0 - yy))); }; } else { r.s0 = logroY; r.mover = yy => moverLogros(r.s0 + (r.y0 - yy)); } }
+  else if (r.S) { const a = { tipo: 'lista', y0: y, s0: r.S.y, tap: r, moved: false, mover: yy => { if (Math.abs(yy - a.y0) > 8) a.moved = true; r.S.y = Math.max(0, Math.min(r.S.max, a.s0 + (a.y0 - yy))); } }; ui.arr = a; }       // toque o deslizar: se decide al soltar
   else { sfx('clic'); r.accion(); }
 });
-canvas.addEventListener('wheel', ev => { if (estado === 'logros') { moverLogros(logroY + ev.deltaY * 0.6); ev.preventDefault(); } }, { passive: false });
+canvas.addEventListener('wheel', ev => { if (estado === 'logros') { moverLogros(logroY + ev.deltaY * 0.6); ev.preventDefault(); } else if (ui.scroll && ui.scroll.max > 0) { ui.scroll.y = Math.max(0, Math.min(ui.scroll.max, ui.scroll.y + ev.deltaY * 0.6)); ev.preventDefault(); } }, { passive: false });
 canvas.addEventListener('pointermove', ev => {
   const { x, y } = puntoLogico(ev);
   if (ui.arr) { if (ui.arr.tipo === 'scroll' || ui.arr.tipo === 'lista') ui.arr.mover(y); else fijarSlider(ui.arr, x); return; }
   if (estado === 'jugando') return;
   const lista = ui.rects.filter(q => !q.sinFoco), k = lista.findIndex(r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h); if (k >= 0) ui.foco = k;
 });
-['pointerup', 'pointercancel'].forEach(t => canvas.addEventListener(t, () => { if (ui.arr && ui.arr.suelta) ui.arr.suelta(); ui.arr = null; }));
+['pointerup', 'pointercancel'].forEach(t => canvas.addEventListener(t, ev => { if (ui.arr && ui.arr.suelta) ui.arr.suelta(); if (ui.arr && ui.arr.tap && !ui.arr.moved && ev.type === 'pointerup') { sfx('clic'); ui.arr.tap.accion(); } ui.arr = null; }));
 addEventListener('pointerup', () => { ui.arr = null; });
 
 const domTactil = document.getElementById('tactil'), domGirar = document.getElementById('girar'), domDash = document.getElementById('b-dash');
