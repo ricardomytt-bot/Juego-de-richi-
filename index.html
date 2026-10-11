@@ -44,7 +44,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.16
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.17
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -2017,7 +2017,15 @@ function dibujarDecoracion(d, tarde) {
   }
 }
 
-function dibujarEdificioFinal(x0, tarde) {                  // ya no hay edificio al fondo: la pelea es solo en la arena
+function dibujarEdificioFinal(x0, tarde) {                  // el edificio / muelle / pirámide del final se dibuja una vez
+  const clave = nivelActual + '|' + ESC, xd = Math.round(x0 * ESC);
+  if (!FIN || FIN.clave !== clave) {
+    if (FIN) liberarCanvas(FIN.c);
+    const c = crearCanvas(Math.ceil((W + 90) * ESC), Math.ceil(H * ESC)), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, -xd, 0);
+    const prev = ctx; ctx = g; try { dibujarEdificioFinalRaw(x0, tarde); } finally { ctx = prev; }
+    FIN = { clave, c };
+  }
+  ctx.drawImage(FIN.c, xd / ESC, 0, FIN.c.width / ESC, FIN.c.height / ESC);
   if (tema === 'chichen' && jefe) dibujarKukulkan(ctx, jefe);
 }
 // Edificio de departamentos (donde esperan los jefes)
@@ -2092,7 +2100,7 @@ const NIVELES = [
       plat(94, 98, 9); caja(96, 9, 'b'); chocos(94, 96, 8); murcielago(96, 6);
       plat(105, 109, 9); caja(107, 9, 'c'); chocos(106, 108, 8); escarabajo(105); pinchos(108, 108);   // F
       techo(110, 112, 119, true); escalones(120);                                                      // el tinaco sube a la casa y de ahí se baja por las escaleras a la arena
-      caja(131, 8, 'e'); caja(138, 8, 'c'); chocos(137, 139, 10); techo(142, 144, 148);                // arena del Patrón (casita con tinaco)
+      caja(131, 8, 'e'); caja(142, 8, 'c'); chocos(137, 139, 10);                                      // arena del Patrón
     } },
   { nombre: 'NIVEL 2', lugar: 'Paseo de Montejo, al atardecer', corto: ['Paseo de Montejo', 'Al atardecer'], jefeNombre: 'La Patrona', cols: 160, tema: 'tarde', jefe: 'patrona', musica: 'tarde',
     nota: '¡Ahora le toca a la Patrona!',
@@ -2109,7 +2117,7 @@ const NIVELES = [
       escarabajo(96); pinchos(98, 99); plat(101, 105, 9); caja(103, 9, 'c'); chocos(102, 104, 8); murcielago(100, 8); serpiente(109);   // 6
       escarabajo(117); pinchos(118, 118); chocos(117, 119, 10);                                        // 7
       techo(120, 122, 129, true); escalones(130);                                                      // casa grande + escaleras a la arena
-      caja(141, 8, 'e'); caja(148, 8, 'c'); chocos(146, 148, 10); techo(152, 154, 158);                // arena de la Patrona
+      caja(141, 8, 'e'); caja(151, 8, 'c'); chocos(146, 148, 10);                                      // arena de la Patrona
     } },
   { nombre: 'NIVEL 3', lugar: 'De visita a la playa, Progreso', corto: ['De visita a la playa', 'Progreso, Yucatán'], jefeNombre: 'El Playero', cols: 170, tema: 'playa', jefe: 'playero', musica: 'playa',
     nota: 'El Playero se robó la llave del departamento',
@@ -2125,7 +2133,7 @@ const NIVELES = [
       escarabajo(99, 105); pinchos(102, 103); plat(104, 108, 9); caja(106, 9, 'c'); chocos(105, 107, 8); murcielago(103, 7); serpiente(111);   // 6
       escarabajo(120); pinchos(123, 124); chocos(125, 127, 10);                                        // 7
       techo(130, 132, 139, true); escalones(140);                                                      // muro de palmeras + escaleras a la arena
-      caja(147, 8, 'e'); caja(158, 8, 'e'); chocos(152, 154, 10); techo(162, 164, 168);                // arena del Playero
+      caja(147, 8, 'e'); caja(158, 8, 'e'); chocos(152, 154, 10);                                      // arena del Playero
     } },
   { nombre: 'NIVEL 4', lugar: 'Chichén Itzá, Yucatán', corto: ['Chichén Itzá', 'La pirámide de Kukulkán'], jefeNombre: 'Kukulkán', cols: 172, tema: 'chichen', jefe: 'kukulkan', musica: 'chichen',
     nota: 'Kukulkán bajó de la pirámide y se comió la llave',
@@ -2141,7 +2149,7 @@ const NIVELES = [
       escarabajo(98, 106); pinchos(102, 103); plat(104, 108, 9); caja(106, 9, 'e'); chocos(105, 107, 8); murcielago(101, 7); serpiente(112);   // 6
       escarabajo(121); pinchos(124, 125); chocos(126, 128, 10); murcielago(123, 7);                    // 7
       techo(132, 134, 141, true); escalones(142);                                                      // gran choza + escaleras a la arena
-      caja(148, 8, 'e'); caja(160, 8, 'e'); chocos(153, 155, 10); techo(164, 166, 170);                // arena de Kukulkán
+      caja(148, 8, 'e'); caja(160, 8, 'e'); chocos(153, 155, 10);                                      // arena de Kukulkán
     } },
   { nombre: 'NIVEL 5', mundo: 1, lugar: 'La Bufadora, Ensenada, Baja California', corto: ['La Bufadora', 'Ensenada, B.C.'], jefeNombre: 'El Chalán', cols: 165, tema: 'bufadora', jefe: 'chalan', musica: 'bufadora',
     nota: 'El Patrón compró los hoteles: ¡vence a su Chalán!',
@@ -3279,7 +3287,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.16', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.17', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });

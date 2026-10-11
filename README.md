@@ -98,3 +98,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Enemigos y pinchos que antes quedaban debajo de los techos ahora nacen arriba, sobre el techo.
 - Playa: las palmeras-techo ahora son mini puentes de madera (pilotes, pasamanos y losa de tablones como el Muelle Fiscal).
 - Se quitó el edificio / muelle / pirámide / hotel del fondo de las arenas de los jefes: la pelea es solo en la arena.
+
+## Versión 3.17 — Arenas como antes
+- Se restaura el fondo (edificio / muelle / pirámide / hotel) de la batalla del jefe y se quitan la casita y el tinaco de las arenas. Las cajas de las arenas vuelven a su lugar original.
