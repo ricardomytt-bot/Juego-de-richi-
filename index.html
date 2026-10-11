@@ -44,7 +44,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.13
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.14
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -1453,7 +1453,7 @@ let SPR = {}, TER = { id: '', ch: [], bloques: [] }, HUD = { c: null, key: '' },
 function liberarCanvas(c) { if (c && c.width) { c.width = 0; c.height = 0; } }
 function liberarSPR(solo) { for (const k in SPR) if (!solo || solo(k)) { liberarCanvas(SPR[k].c); delete SPR[k]; } }
 function liberarCapa(C) { if (!C) return; for (const L of ['lejos', 'selva', 'fach', 'arboles']) (C[L] || []).forEach(liberarCanvas); liberarCanvas(C.cielo); liberarCanvas(C.bruma); (C.nubes || []).forEach(n => liberarCanvas(n.c)); }
-const TAU = 6.2832, TER_PW = 768, TER_Y = 340;               // el terreno solo se guarda de la fila 340 hacia abajo (arriba no hay nada)
+const TAU = 6.2832, TER_PW = 768, TER_Y = 240;               // el terreno solo se guarda de la altura 240 hacia abajo (arriba no hay nada)
 function sprite(clave, w, h, ox, oy, dib) {
   let sp = SPR[clave]; if (sp) return sp;
   const c = crearCanvas(Math.ceil(w * ESC), Math.ceil(h * ESC)), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, ox * ESC, oy * ESC);
@@ -2071,6 +2071,13 @@ let cangrejos = [], erizos = [], gaviotas = [], cangrejosDef = [], erizosDef = [
 const cangrejo = (...cs) => cs.forEach(c => cangrejosDef.push(c));
 const erizo = (...cs) => cs.forEach(c => erizosDef.push(c));
 const gaviota = (c, r) => gaviotasDef.push([c, r]);
+// Relieve: 'h' es piso más alto (sólido, se dibuja como el suelo). Los niveles ya no son planos: lomas, escalones, muros y zanjas.
+const colina = (a, b, h) => { for (let c = a; c <= b; c++) for (let r = 12 - h; r < 12; r++) mapa[r][c] = 'h'; };   // bloque de piso h bloques más alto
+const loma = (c0, h, mesa) => {                                // sube de 1 en 1, una meseta y baja de 1 en 1 (ocupa 2h-1+mesa columnas)
+  for (let k = 1; k <= h; k++) colina(c0 + k - 1, c0 + k - 1, k); colina(c0 + h, c0 + h + mesa - 1, h);
+  for (let k = h - 1; k >= 1; k--) colina(c0 + h + mesa + (h - 1 - k), c0 + h + mesa + (h - 1 - k), k);
+};
+const valle = (a, b) => { for (let c = a; c <= b; c++) mapa[12][c] = ' '; };   // zanja de un bloque de profundidad (se baja y se vuelve a subir)
 const escalera = c0 => { for (let k = 0; k < 3; k++) for (let r = 11 - k; r <= 11; r++) mapa[r][c0 + k] = '#'; };
 
 const NIVELES = [
@@ -2080,13 +2087,13 @@ const NIVELES = [
     fin: { titulo: '¡DERROTASTE AL PATRÓN!', lineas: ['Pero todavía falta la Patrona...', 'Sigue por el Paseo de Montejo al atardecer.'] },
     construir() {
       suelo(0, 13); suelo(17, 28); suelo(32, 50); suelo(54, 70); suelo(74, 100); suelo(104, 121); suelo(125, 149);
-      caja(8, 8, 'c'); chocos(5, 7, 10); pinchos(11, 12);                                              // A
-      plat(20, 24, 9); caja(22, 9, 'b'); chocos(20, 22, 8); escarabajo(23); pinchos(26, 26);           // B
-      plat(35, 39, 9); caja(37, 9, 'c'); chocos(36, 38, 8); escarabajo(41); pinchos(43, 44); serpiente(47);   // C
-      plat(58, 63, 9); caja(60, 9, 'e'); chocos(59, 61, 8); escarabajo(56, 65, 68); murcielago(63, 8); pinchos(67, 67);   // D
-      escalera(80); pinchos(77, 77); escarabajo(85); pinchos(88, 88); serpiente(92);                   // E
-      plat(94, 98, 9); caja(96, 9, 'b'); chocos(94, 96, 8); murcielago(96, 6);
-      plat(107, 111, 9); caja(109, 9, 'c'); chocos(108, 110, 8); escarabajo(105, 115); murcielago(106, 8); pinchos(113, 114); serpiente(118);   // F
+      caja(8, 8, 'c'); chocos(5, 7, 10); pinchos(9, 9); colina(12, 13, 1); chocos(12, 13, 9);          // A: una banqueta antes del primer hueco
+      loma(19, 2, 3); caja(22, 7, 'b'); chocos(21, 23, 8); escarabajo(27); pinchos(26, 26);            // B: loma baja con meseta
+      loma(36, 3, 3); caja(40, 5, 'e'); chocos(39, 41, 7); escarabajo(34, 47); pinchos(46, 46); serpiente(47);   // C: la terraza (sube 3 bloques)
+      valle(58, 61); plat(58, 62, 9); caja(60, 9, 'e'); chocos(59, 61, 8); escarabajo(56, 60); murcielago(63, 7);   // D: una zanja que se cruza por arriba o por abajo
+      loma(64, 2, 2); escarabajo(69); pinchos(63, 63);
+      loma(79, 2, 8); caja(84, 7, 'b'); chocos(82, 84, 8); pinchos(86, 86, 9); escarabajo(76, 94); murcielago(91, 6); serpiente(96); pinchos(98, 98);   // E: la plaza alta
+      loma(107, 2, 1); loma(113, 3, 1); caja(109, 6, 'c'); caja(116, 5, 'c'); chocos(108, 109, 8); chocos(115, 117, 7); escarabajo(105); murcielago(111, 6); serpiente(119);   // F: dos jorobas
       caja(131, 8, 'e'); caja(142, 8, 'c'); chocos(137, 139, 10);                                      // arena del Patrón
     } },
   { nombre: 'NIVEL 2', lugar: 'Paseo de Montejo, al atardecer', corto: ['Paseo de Montejo', 'Al atardecer'], jefeNombre: 'La Patrona', cols: 160, tema: 'tarde', jefe: 'patrona', musica: 'tarde',
@@ -2095,14 +2102,13 @@ const NIVELES = [
     fin: { titulo: '¡DERROTASTE A LA PATRONA!', lineas: ['¡Ya casi tienes tu departamento gratis!', 'Pero... ¡alguien se robó la llave!', 'Sigue la pista hasta la playa de Progreso.'] },
     construir() {
       suelo(0, 11); suelo(15, 26); suelo(30, 45); suelo(49, 64); suelo(68, 90); suelo(94, 112); suelo(116, 131); suelo(135, 159);
-      caja(6, 8, 'c'); chocos(3, 5, 10); pinchos(9, 9);                                                // 1
-      plat(17, 21, 9); caja(19, 9, 'b'); chocos(18, 20, 8); escarabajo(16, 24); pinchos(23, 23);       // 2
-      plat(33, 37, 9); caja(35, 9, 'e'); chocos(34, 36, 8); pinchos(39, 40); serpiente(43);            // 3
-      plat(52, 56, 9); caja(54, 9, 'c'); chocos(53, 55, 8); escarabajo(51, 60); murcielago(58, 8); pinchos(61, 62);   // 4
-      escalera(72); pinchos(76, 77); escarabajo(79); pinchos(81, 81); serpiente(84);                   // 5
-      plat(85, 89, 9); caja(87, 9, 'b'); chocos(86, 88, 8); murcielago(86, 6);
-      escarabajo(96); pinchos(98, 99); plat(101, 105, 9); caja(103, 9, 'c'); chocos(102, 104, 8); murcielago(100, 8); serpiente(109);   // 6
-      escarabajo(117, 123); pinchos(119, 120); pinchos(124, 124); chocos(125, 127, 10); serpiente(128);   // 7
+      caja(6, 8, 'c'); chocos(3, 5, 10); pinchos(9, 9); colina(10, 11, 1);                             // 1
+      loma(17, 2, 2); caja(19, 6, 'b'); chocos(18, 20, 8); escarabajo(15); pinchos(24, 24); escarabajo(25);   // 2
+      loma(33, 3, 4); caja(37, 5, 'e'); chocos(36, 38, 7); pinchos(38, 38, 8); serpiente(43);          // 3: escalinata larga
+      valle(52, 55); plat(52, 56, 9); caja(54, 9, 'c'); chocos(53, 55, 8); escarabajo(50, 59); murcielago(58, 6); pinchos(60, 61); colina(62, 64, 2); chocos(62, 64, 8);   // 4
+      loma(72, 3, 2); caja(75, 5, 'b'); chocos(74, 76, 7); escarabajo(69, 80); pinchos(82, 83); plat(85, 89, 9); chocos(86, 88, 8); murcielago(87, 6); serpiente(86);   // 5
+      escarabajo(96); loma(99, 2, 3); chocos(101, 103, 8); caja(102, 6, 'c'); escarabajo(107); murcielago(106, 6); serpiente(110);   // 6
+      escarabajo(117); loma(120, 2, 1); chocos(121, 122, 8); pinchos(125, 125); escarabajo(127); serpiente(129);   // 7
       caja(141, 8, 'e'); caja(151, 8, 'c'); chocos(146, 148, 10);                                      // arena de la Patrona
     } },
   { nombre: 'NIVEL 3', lugar: 'De visita a la playa, Progreso', corto: ['De visita a la playa', 'Progreso, Yucatán'], jefeNombre: 'El Playero', cols: 170, tema: 'playa', jefe: 'playero', musica: 'playa',
@@ -2111,14 +2117,13 @@ const NIVELES = [
     fin: { titulo: '¡RECUPERASTE LA LLAVE!', lineas: ['Derrotaste al Playero y la llave volvió a casa.', 'Para celebrar, los hermanos visitan Chichén Itzá...', '¡pero algo se mueve en la pirámide!'] },
     construir() {
       suelo(0, 13); suelo(17, 30); suelo(34, 48); suelo(52, 66); suelo(70, 92); suelo(97, 114); suelo(118, 134); suelo(138, 169);
-      caja(7, 8, 'c'); chocos(4, 6, 10); pinchos(10, 10);                                               // arena de entrada
-      plat(19, 23, 9); caja(21, 9, 'b'); chocos(19, 21, 8); escarabajo(25, 28); pinchos(29, 29);       // 2
-      plat(37, 41, 9); caja(39, 9, 'e'); chocos(38, 40, 8); escarabajo(36); murcielago(42, 8); pinchos(44, 45); serpiente(47);   // 3
-      plat(55, 59, 9); caja(57, 9, 'c'); chocos(56, 58, 8); escarabajo(53, 62); murcielago(60, 7); pinchos(64, 64);   // 4
-      pinchos(72, 72); escalera(75); escarabajo(82, 88); pinchos(84, 85); serpiente(90);               // 5
-      plat(79, 83, 8); caja(81, 8, 'b'); chocos(80, 82, 7);
-      escarabajo(99, 105); pinchos(102, 103); plat(104, 108, 9); caja(106, 9, 'c'); chocos(105, 107, 8); murcielago(103, 7); serpiente(111);   // 6
-      escarabajo(120, 128); pinchos(123, 124); pinchos(129, 129); chocos(125, 127, 10); serpiente(132);   // 7
+      caja(7, 8, 'c'); chocos(4, 6, 10); pinchos(8, 8); loma(10, 2, 1); chocos(11, 12, 9);              // duna de entrada
+      loma(19, 3, 2); caja(22, 5, 'b'); chocos(21, 23, 7); escarabajo(26); pinchos(28, 28);            // 2: duna alta
+      valle(37, 40); plat(37, 41, 9); caja(39, 9, 'e'); chocos(38, 40, 8); escarabajo(35); murcielago(43, 6); loma(44, 2, 1); pinchos(42, 42);   // 3
+      colina(55, 55, 1); colina(56, 62, 2); caja(59, 6, 'c'); chocos(57, 61, 8); escarabajo(53, 64); murcielago(60, 4); pinchos(64, 64);   // 4: cubierta de barco
+      loma(74, 3, 5); caja(78, 5, 'b'); chocos(77, 79, 7); chocos(80, 81, 7); escarabajo(72, 86); pinchos(85, 85); serpiente(89);   // 5: gran duna
+      loma(100, 2, 1); loma(106, 2, 2); pinchos(104, 105); escarabajo(98); murcielago(103, 6); caja(108, 6, 'c'); chocos(101, 102, 8); serpiente(112);   // 6
+      escarabajo(120); pinchos(123, 123); loma(124, 3, 1); chocos(126, 127, 7); serpiente(131);   // 7
       caja(147, 8, 'e'); caja(158, 8, 'e'); chocos(152, 154, 10);                                      // arena del Playero
     } },
   { nombre: 'NIVEL 4', lugar: 'Chichén Itzá, Yucatán', corto: ['Chichén Itzá', 'La pirámide de Kukulkán'], jefeNombre: 'Kukulkán', cols: 172, tema: 'chichen', jefe: 'kukulkan', musica: 'chichen',
@@ -2127,14 +2132,13 @@ const NIVELES = [
     fin: { titulo: '¡KUKULKÁN ESCUPIÓ LA LLAVE!', lineas: ['Le devolviste sus propios fuegos.', 'La llave volvió con los hermanos...', '¡Ahora, a viajar a Baja California!'] },
     construir() {
       suelo(0, 12); suelo(16, 29); suelo(33, 47); suelo(51, 66); suelo(70, 92); suelo(96, 115); suelo(119, 134); suelo(138, 171);
-      caja(6, 8, 'c'); chocos(3, 5, 10); pinchos(9, 10);                                               // entrada a las ruinas
-      plat(18, 22, 9); caja(20, 9, 'b'); chocos(18, 20, 8); escarabajo(25, 27); pinchos(28, 28);       // 2
-      plat(36, 40, 9); caja(38, 9, 'e'); chocos(37, 39, 8); murcielago(41, 8); escarabajo(35); pinchos(43, 44); serpiente(46);   // 3
-      plat(54, 58, 9); caja(56, 9, 'c'); chocos(55, 57, 8); escarabajo(53); murcielago(60, 7); serpiente(62); pinchos(64, 64);   // 4
-      pinchos(72, 72); escalera(75); escarabajo(82, 88); pinchos(84, 85); serpiente(90);               // 5
-      plat(79, 83, 8); caja(81, 8, 'b'); chocos(80, 82, 7);
-      escarabajo(98, 106); pinchos(102, 103); plat(104, 108, 9); caja(106, 9, 'e'); chocos(105, 107, 8); murcielago(101, 7); serpiente(112);   // 6
-      escarabajo(121, 127); pinchos(124, 125); pinchos(130, 130); chocos(126, 128, 10); murcielago(123, 7); serpiente(132);   // 7
+      caja(6, 8, 'c'); chocos(3, 5, 10); pinchos(8, 8); colina(10, 12, 1);                             // entrada a las ruinas
+      loma(19, 2, 3); caja(22, 6, 'b'); chocos(21, 23, 8); escarabajo(26); pinchos(27, 27);            // 2: templo bajo
+      loma(36, 3, 2); caja(39, 5, 'e'); chocos(38, 40, 7); escarabajo(34); murcielago(44, 6); pinchos(43, 43); serpiente(45);   // 3
+      valle(54, 57); plat(54, 58, 9); caja(56, 9, 'c'); chocos(55, 57, 8); escarabajo(52); murcielago(60, 5); pinchos(64, 64); colina(65, 66, 1); serpiente(61);   // 4
+      loma(74, 3, 7); colina(79, 81, 4); chocos(77, 78, 7); chocos(79, 81, 6); chocos(82, 83, 7); caja(84, 7, 'b'); escarabajo(72, 88); pinchos(87, 87); serpiente(90);   // 5: LA GRAN PIRÁMIDE
+      escarabajo(98); loma(100, 2, 2); caja(102, 6, 'e'); chocos(101, 103, 8); escarabajo(108); pinchos(106, 106); murcielago(110, 6); serpiente(112);   // 6
+      escarabajo(120); loma(122, 3, 1); chocos(124, 126, 7); murcielago(123, 5); escarabajo(129); pinchos(130, 130); serpiente(132);   // 7
       caja(148, 8, 'e'); caja(160, 8, 'e'); chocos(153, 155, 10);                                      // arena de Kukulkán
     } },
   { nombre: 'NIVEL 5', mundo: 1, lugar: 'La Bufadora, Ensenada, Baja California', corto: ['La Bufadora', 'Ensenada, B.C.'], jefeNombre: 'El Chalán', cols: 165, tema: 'bufadora', jefe: 'chalan', musica: 'bufadora',
@@ -2143,18 +2147,17 @@ const NIVELES = [
     fin: { titulo: '¡VENCISTE AL CHALÁN!', lineas: ['El hotel de La Bufadora ya tiene cuartos para ti.', 'Pero el Patrón todavía tiene más hoteles...', 'El viaje por Baja California continúa.'] },
     construir() {
       suelo(0, 13); suelo(17, 31); suelo(35, 49); suelo(53, 67); suelo(71, 93); suelo(98, 116); suelo(120, 136); suelo(140, 164);
-      caja(6, 8, 'c'); chocos(3, 5, 10); pinchos(10, 10);                                              // acantilado de entrada
-      plat(19, 23, 9); caja(21, 9, 'b'); chocos(19, 21, 8); cangrejo(27); pinchos(30, 30);       // 2: primer cangrejo de la lata
-      plat(37, 41, 9); caja(39, 9, 'e'); chocos(38, 40, 8); erizo(37); gaviota(44, 7); pinchos(45, 46); erizo(48);   // 3: erizo y gaviota ladrona
-      plat(55, 59, 9); caja(57, 9, 'c'); chocos(56, 58, 8); cangrejo(54); erizo(63); gaviota(61, 7); pinchos(65, 65);   // 4
-      pinchos(73, 73); escalera(76); erizo(84); cangrejo(90); pinchos(86, 87); gaviota(92, 7);          // 5
-      plat(80, 84, 8); caja(82, 8, 'b'); chocos(81, 83, 7);
-      cangrejo(100); erizo(108); pinchos(104, 105); plat(106, 110, 9); caja(108, 9, 'e'); chocos(107, 109, 8); gaviota(104, 7); cangrejo(114);   // 6
-      erizo(122); cangrejo(130); pinchos(125, 126); pinchos(131, 131); chocos(127, 129, 10); gaviota(134, 7);   // 7
+      caja(6, 8, 'c'); chocos(3, 5, 10); pinchos(10, 10); colina(11, 13, 1);                           // acantilado de entrada
+      loma(19, 3, 2); caja(22, 5, 'b'); chocos(21, 23, 7); cangrejo(27); pinchos(29, 29);               // 2: primer cangrejo de la lata
+      loma(37, 3, 3); caja(41, 5, 'e'); chocos(40, 42, 7); erizo(35); gaviota(46, 6); pinchos(46, 46); erizo(48);   // 3: erizo y gaviota ladrona
+      valle(56, 59); plat(56, 60, 9); caja(58, 9, 'c'); chocos(57, 59, 8); cangrejo(54); colina(62, 64, 3); gaviota(61, 5); erizo(66);   // 4
+      loma(75, 2, 3); loma(82, 3, 3); caja(78, 6, 'b'); caja(86, 5, 'e'); chocos(77, 79, 8); chocos(85, 87, 7); erizo(72); cangrejo(91); gaviota(92, 5);   // 5: dos terrazas
+      cangrejo(100); loma(103, 2, 2); chocos(104, 106, 8); caja(105, 6, 'e'); erizo(110); gaviota(104, 4); pinchos(112, 112); cangrejo(114);   // 6
+      erizo(122); loma(124, 3, 1); chocos(126, 127, 7); cangrejo(131); pinchos(133, 133); gaviota(134, 5);   // 7
       caja(149, 8, 'e'); caja(160, 8, 'e'); chocos(154, 156, 10);                                      // arena del Chalán
     } },
 ];
-const solido = ch => ch === '#' || ch === 'c' || ch === 'b' || ch === 'e';
+const solido = ch => ch === '#' || ch === 'c' || ch === 'b' || ch === 'e' || ch === 'h';
 
 // ---------- LOGROS ----------
 const LOGROS = [
@@ -3016,11 +3019,17 @@ function chunkTerreno(k) {                                  // el piso, los pinc
       if (mapa[12][cc - 1] === '#') { const gr = g.createLinearGradient(cc * T, 0, cc * T + 12, 0); gr.addColorStop(0, 'rgba(0,0,0,.26)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(cc * T, 12 * T, 12, H - 12 * T); }
       if (mapa[12][cc + 1] === '#') { const gr = g.createLinearGradient((cc + 1) * T - 12, 0, (cc + 1) * T, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.26)'); g.fillStyle = gr; g.fillRect((cc + 1) * T - 12, 12 * T, 12, H - 12 * T); }
     }
+    const tierra = (r, cc) => { const q = mapa[r] && mapa[r][cc]; return q === 'h' || (q === '#' && r >= 12); };
     for (let r = 0; r < FILAS; r++) for (let cc = c0; cc <= c1; cc++) {
       const ch = mapa[r][cc];
-      if (ch === '^') dibujarPincho(g, cc * T, r * T); else if (ch === '#' && r >= 12) g.drawImage(r === 12 ? GT[0] : GT[1], cc * T, r * T, T + 0.5, T + 0.5);
+      if (ch === '^') dibujarPincho(g, cc * T, r * T);
+      else if (tierra(r, cc)) {
+        const arriba = !tierra(r - 1, cc);
+        g.drawImage(arriba ? GT[0] : GT[1], cc * T, r * T, T + 0.5, T + 0.5);
+        if (arriba) { const sh = g.createLinearGradient(0, r * T + 12, 0, r * T + 30); sh.addColorStop(0, 'rgba(0,0,0,.20)'); sh.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = sh; g.fillRect(cc * T, r * T + 12, T + 0.5, 18); }
+        if (r < 12 || !tierra(r, cc - 1)) { if (!tierra(r, cc - 1)) { const gr = g.createLinearGradient(cc * T, 0, cc * T + 8, 0); gr.addColorStop(0, 'rgba(0,0,0,.22)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(cc * T, r * T, 8, T); } if (!tierra(r, cc + 1)) { const gr = g.createLinearGradient((cc + 1) * T - 8, 0, (cc + 1) * T, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.22)'); g.fillStyle = gr; g.fillRect((cc + 1) * T - 8, r * T, 8, T); } }
+      }
     }
-    for (let cc = c0; cc <= c1; cc++) if (mapa[12][cc] === '#') { const sh = g.createLinearGradient(0, 12 * T + 12, 0, 12 * T + 30); sh.addColorStop(0, 'rgba(0,0,0,.20)'); sh.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = sh; g.fillRect(cc * T, 12 * T + 12, T + 0.5, 18); }
   } finally { ctx = prev; }
   return (TER.ch[k] = c);
 }
@@ -3196,7 +3205,7 @@ function dibujarMenu() {
   [['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 245 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.13', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.14', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
