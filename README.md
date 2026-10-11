@@ -158,3 +158,7 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 ## Versión 3.27 — Scroll en los apartados
 - Nuevo sistema genérico de zonas que se bajan (`obtenerScroll`, `rectsScroll`, `barraScroll`): barra lateral, deslizar con el dedo, rueda del ratón y flechas (la tarjeta elegida con el teclado siempre se ve). Un botón dentro de una zona con scroll solo actúa si tocas, no si deslizas.
 - Se usa en **Habilidades** (la fila de abajo quedaba cortada), **Álbum** (hoy cabe completo; baja solo si crece) y se mantiene el de **Logros**. Perfil, Ajustes, Niveles y Personajes caben completos en pantalla.
+
+## Versión 3.28 — Una sola habilidad a la vez
+- Todas las habilidades (imán, capa, zapatos, savia, doble salto, dash y nado rápido) se **equipan** y solo una funciona a la vez (`activa(id)`); equipar otra reemplaza la anterior. Sin habilidad equipada no se activa ninguna.
+- El botón HABILIDAD muestra el icono de la equipada; las que funcionan solas muestran un aviso al tocarlo.

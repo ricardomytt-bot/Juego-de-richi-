@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.27
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.28
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -2666,7 +2666,7 @@ function cargarNivel(n) {
   pinchosLista = [];
   for (let r = 0; r < FILAS; r++) for (let c = 0; c < COLS; c++) if (mapa[r][c] === '^') pinchosLista.push({ x: c * T + 9, y: r * T + 14, w: T - 18, h: T - 14 });
   usados = {}; rebote = {}; items = []; balas = []; particulas = []; proyJ = []; pinchosJ = []; explos = []; geiseres = []; quema = 0; monedasJ = []; monedasGanadas = 0; tragando = 0;
-  poder = null; botas = 0; escudo = false; cdHielo = 0; nadoT = 0; nadoCd = 0; savia = tiene('savia') ? 1 : 0; cargaRayo = 0; rayosVis = []; puntosNivel = puntos; vidasPerdidasNivel = 0;
+  poder = null; botas = 0; escudo = false; cdHielo = 0; nadoT = 0; nadoCd = 0; savia = activa('savia') ? 1 : 0; cargaRayo = 0; rayosVis = []; puntosNivel = puntos; vidasPerdidasNivel = 0;
   const extras = [];                                          // 1 o 2 enemigos extra al azar; a veces son "especiales" (más duros, más rápidos y con brillo)
   { const n = 1 + (Math.random() < 0.5 ? 1 : 0), arenaC = COLS - 25;
     for (let k = 0; k < n; k++) {
@@ -3515,13 +3515,13 @@ function actualizar() {
     if (tragando === 0) { perderVida(0); if (estado !== 'jugando') return; }
   } else {
     const dirIn = (ctrl.der ? 1 : 0) - (ctrl.izq ? 1 : 0);
-    p.vx = dirIn * pj.vel * (tiene('veloz') ? 1.18 : 1) * (acuatico ? (nadoT > 0 ? 1.0 : 0.62) : 1) + p.empuje; p.empuje *= 0.85; if (p.embiste > 0) { p.embiste--; p.vx = p.mirando * 7 + p.empuje; }       // la embestida del Patrón: un arranque corto hacia adelante
+    p.vx = dirIn * pj.vel * (activa('veloz') ? 1.18 : 1) * (acuatico ? (nadoT > 0 ? 1.0 : 0.62) : 1) + p.empuje; p.empuje *= 0.85; if (p.embiste > 0) { p.embiste--; p.vx = p.mirando * 7 + p.empuje; }       // la embestida del Patrón: un arranque corto hacia adelante
      if (Math.abs(p.empuje) < 0.1) p.empuje = 0;
     if (dirIn) { p.mirando = dirIn; p.pasos += Math.abs(dirIn * pj.vel); }
     const saltoNuevo = ctrl.salto && !p.saltoPrev, estabaEnSuelo = p.enSuelo; p.saltoPrev = ctrl.salto; if (p.enSuelo) p.dobleUsado = false;
     if (acuatico) { if (ctrl.salto) { if (saltoNuevo || reloj % 22 === 0) sfx('burbuja'); p.vy = Math.max(p.vy - (nadoT > 0 ? 0.6 : 0.4), nadoT > 0 ? -3.2 : -2.1); p.enSuelo = false; } }       // nadar: mantén el botón de salto para subir
     else if (ctrl.salto && p.enSuelo) { p.vy = -pj.salto * (botas > 0 ? 1.38 : 1); p.enSuelo = false; sfx(botas > 0 ? 'resorte' : 'salto'); polvo(p.x + 13, p.y + p.h, 4); }
-    else if (saltoNuevo && !estabaEnSuelo && tiene('doble') && !p.dobleUsado) { p.dobleUsado = true; p.vy = -pj.salto * 0.85; sfx('salto'); chispas(p.x + 13, p.y + p.h, 10, '#fff', 3); polvo(p.x + 13, p.y + p.h, 5); }
+    else if (saltoNuevo && !estabaEnSuelo && activa('doble') && !p.dobleUsado) { p.dobleUsado = true; p.vy = -pj.salto * 0.85; sfx('salto'); chispas(p.x + 13, p.y + p.h, 10, '#fff', 3); polvo(p.x + 13, p.y + p.h, 5); }
     if (!acuatico && !ctrl.salto && p.vy < -4) p.vy = -4;
     if (ctrl.patada && p.patada === 0) { if (pj.ataque === 'embestida') { p.patada = 12; p.embiste = 10; } else p.patada = 14; p.golpeaA = new Set(); sfx(pj.ataque === 'espada' ? 'tajo' : pj.ataque === 'puno' ? 'pum' : pj.ataque === 'embestida' ? 'embiste' : 'patada'); }
     if (ctrl.poder) { if (poder) dispararPoder(); else usarRayo(); }
@@ -3531,13 +3531,14 @@ function actualizar() {
       const hab = datos.equipada && tiene(datos.equipada) ? datos.equipada : null;
       if (!hab) { sfx('error'); msgHab = { t: 120, txt: 'Equipa una habilidad en HABILIDADES (menú)' }; }
       else if (hab === 'dash') { if (!(p.dash > 0) && !(p.dashEsp > 0)) { if (dirIn) p.mirando = dirIn; p.dash = 9; p.dashEsp = 50; p.embiste = 0; p.invulnerable = Math.max(p.invulnerable, 14); sfx('dash'); chispas(p.x + 13, p.y + 27, 8, '#cdbfff', 3); } }
+      else if (hab !== 'dash' && hab !== 'nado') { sfx('clic'); msgHab = { t: 100, txt: OBJETOS.find(o => o.id === hab).nombre + ' ya está activa (funciona sola)', col: '#bff3ff' }; }
       else if (hab === 'nado') { if (!acuatico) { sfx('error'); msgHab = { t: 100, txt: 'Nado rápido solo funciona bajo el agua' }; } else if (nadoT <= 0 && nadoCd <= 0) { nadoT = 240; nadoCd = 600; sfx('dash'); chispas(p.x + 13, p.y + 27, 10, '#bff3ff', 3); } }
     }
     for (const t of tinacos) t.alt = t.sobre ? Math.min(1, t.alt + 0.014) : Math.max(0, t.alt - 0.02);      // el agua sube mientras estás encima
     const vyAntes = p.vy, pieAntes = p.y + p.h;
     p.vy = acuatico ? Math.min(p.vy * 0.975 + 0.08, 1.4) : Math.min(p.vy + GRAVEDAD * (p.vy > 0 ? pj.caida : 1), pj.maxCaida);
     if (acuatico && p.y < 6) { p.y = 6; if (p.vy < 0) p.vy = 0; }
-    if (tiene('planeo') && ctrl.salto && !p.enSuelo && p.vy > 1.6) p.vy = 1.6;
+    if (activa('planeo') && ctrl.salto && !p.enSuelo && p.vy > 1.6) p.vy = 1.6;
     if (p.dash > 0) { p.dash--; p.vx = p.mirando * (acuatico ? 7 : 11); p.vy = 0; if (p.dash % 3 === 0) chispas(p.x + 13 - p.mirando * 10, p.y + 27, 2, '#cdbfff', 1.5); }
     moverConColision(p);
     for (const t of tinacos) {                                              // el tinaco es una plataforma que sube con el agua
@@ -3687,7 +3688,7 @@ function actualizar() {
   }
   items = items.filter(i => !i.tomado);
   for (const m of chocosVivos) if (!m.tomado) {
-    if (tiene('iman')) { const dx = p.x + 13 - (m.x + 12), dy = p.y + 24 - (m.y + 8), d = Math.hypot(dx, dy); if (d < 150 && d > 1) { const v = Math.min(5, 1.5 + (150 - d) * 0.05); m.x += dx / d * v; m.y += dy / d * v; } }
+    if (activa('iman')) { const dx = p.x + 13 - (m.x + 12), dy = p.y + 24 - (m.y + 8), d = Math.hypot(dx, dy); if (d < 150 && d > 1) { const v = Math.min(5, 1.5 + (150 - d) * 0.05); m.x += dx / d * v; m.y += dy / d * v; } }
     if (choca(p, m)) tomarChoco(m);
   }
   for (const r of rayosVis) r.t++; rayosVis = rayosVis.filter(r => r.t < 16);
@@ -3985,7 +3986,7 @@ function dibujarJuego() {
   if (estado === 'jugando') dibujarMarcador();
   if (estado === 'jugando' && quema > 0) { ctx.fillStyle = 'rgba(150,30,10,.82)'; trazoRedondo(ctx, 8, 98, 176, 42, 12); ctx.fill(); ctx.strokeStyle = '#ffb36b'; ctx.lineWidth = 2; ctx.stroke(); texto('🔥 QUEMADURA  ' + Math.ceil(quema / 60) + 's', 96, 116, 14, '#fff', 'center'); texto('¡Toma la gota de agua!', 96, 132, 11, '#ffe0b0', 'center', true); }
   if (estado === 'jugando' && jefe && jefe.tipo === 'kukulkan' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡ATACA SOLO EL FUEGO VERDE!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
-  if (estado === 'jugando' && msgHab.t > 0) { msgHab.t--; ctx.globalAlpha = Math.min(1, msgHab.t / 20); texto(msgHab.txt, W / 2, 380, 16, '#ffb3b3', 'center', true); ctx.globalAlpha = 1; }
+  if (estado === 'jugando' && msgHab.t > 0) { msgHab.t--; ctx.globalAlpha = Math.min(1, msgHab.t / 20); texto(msgHab.txt, W / 2, 380, 16, msgHab.col || '#ffb3b3', 'center', true); ctx.globalAlpha = 1; }
   if (estado === 'jugando' && jefe && jefe.tipo === 'tiburon' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip2', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡ROMPE EL DIENTE DORADO!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
   if (banner > 0 && estado === 'jugando') {
     const a = Math.min(1, banner / 30, (170 - banner) / 20), N = NIVELES[nivelActual]; ctx.globalAlpha = a;
@@ -4056,7 +4057,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.27', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.28', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -4227,8 +4228,11 @@ const OBJETOS = [
   { id: 'savia',   nombre: 'Savia vital',      precio: 70, desc: 'Empiezas cada nivel con un corazón azul extra que absorbe un golpe antes de perder una vida.' },
   { id: 'doble',   nombre: 'Doble salto',      precio: 90, desc: 'Puedes saltar una vez más en el aire. ¡Llegas a lugares muy altos!' },
 ];
+OBJETOS.forEach(o => { o.activa = true; });                       // todas las habilidades se equipan (solo una a la vez)
+const ICO_HAB = { dash: ['💨', 'DASH'], nado: ['🏊', 'NADO'], iman: ['🧲', 'IMÁN'], planeo: ['🪂', 'CAPA'], veloz: ['👟', 'VELOZ'], savia: ['💙', 'SAVIA'], doble: ['⏫', 'DOBLE'] };
 const MODO_PRUEBA_HAB = true;                               // SOLO PARA ESTA VERSIÓN DE PRUEBA: todas las habilidades están desbloqueadas (se quita poniendo false)
-const tiene = id => MODO_PRUEBA_HAB || !!datos.tienda[id];
+const tiene = id => MODO_PRUEBA_HAB || !!datos.tienda[id];                // la tienes (comprada)
+const activa = id => tiene(id) && datos.equipada === id;                    // la llevas equipada: solo UNA habilidad a la vez
 const vidasInicio = () => VIDAS_INICIO;
 let tiendaMsg = { t0: -999, txt: '', col: '#fff' };
 function iconoRayo(g, x, y, esc = 1) {
@@ -4306,7 +4310,7 @@ function dibujarTienda() {
   });
   ctx.restore(); rectsScroll(S, 20, 56, 760, 358); barraScroll(S, 58, 354);
   if (estadoT - tiendaMsg.t0 < 170) texto(tiendaMsg.txt, W / 2, 428, 17, tiendaMsg.col, 'center');
-  else texto('Las habilidades con botón se EQUIPAN (una a la vez); las demás se activan solas.', W / 2, 428, 13, '#cfd8ff', 'center', true);
+  else texto('Solo puedes llevar UNA habilidad equipada a la vez. Toca una para equiparla.', W / 2, 428, 13, '#cfd8ff', 'center', true);
   uiCerrar(() => irA('menu'), W - 58, 8);
 }
 // ---------- Álbum de stickers (como en Mario Wonder): 14 escondidos, 2 en cada nivel ----------
@@ -4589,7 +4593,7 @@ function ciclo(ts) {
   const verBotones = botonesVisibles() && estado === 'jugando', gir = botonesVisibles();
   if (verBotones !== domVis) { domTactil.style.display = verBotones ? 'block' : 'none'; domDash.style.display = verBotones ? 'flex' : 'none'; domVis = verBotones; }
   { const eq = datos.equipada && tiene(datos.equipada) ? datos.equipada : '', cd = eq === 'dash' ? jugador.dashEsp > 0 : eq === 'nado' ? (nadoCd > 0 || nadoT > 0) : false, hk = eq + '|' + (cd ? 1 : 0);
-    if (hk !== domHab) { domHab = hk; domDash.classList.toggle('bloq', !eq); domDash.classList.toggle('cd', cd); domDash.innerHTML = '<span class="ico">' + (eq === 'dash' ? '💨' : eq === 'nado' ? '🏊' : '✖') + '</span>' + (eq === 'dash' ? 'DASH' : eq === 'nado' ? 'NADO' : 'HABILIDAD'); } }
+    if (hk !== domHab) { domHab = hk; domDash.classList.toggle('bloq', !eq); domDash.classList.toggle('cd', cd); domDash.innerHTML = '<span class="ico">' + (eq ? ICO_HAB[eq][0] : '✖') + '</span>' + (eq ? ICO_HAB[eq][1] : 'HABILIDAD'); } }
   if (gir !== domGir) { domGirar.classList.toggle('on', gir); domGir = gir; }
   if (!verBotones) for (const k in tactil) tactil[k] = false;
   requestAnimationFrame(ciclo);
