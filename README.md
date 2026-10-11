@@ -120,3 +120,11 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - El poder de hielo tiene cooldown de 1.5 s entre disparos (se ve en el icono del marcador) y solo puede haber 2 bolas a la vez.
 - Cada nivel agrega 1 o 2 enemigos extra al azar; 50 % de las veces son **especiales**: brillo de color y estrellita, 2 golpes de vida (serpientes: 5), más rápidos y valen más. Se pueden hacer daño con la bola eléctrica pero no mueren de un golpe.
 - Logro nuevo "Cazador de élite" (10 enemigos especiales) → personaje secreto **Cazador**: sombrero y espada con tajo de largo alcance.
+
+## Versión 3.21 — Nivel 6: Puerto de Los Cabos y El Pescador
+- Nuevo tema `puerto`: muelle de madera, El Arco de Cabo San Lucas al fondo, barcos amarrados (veleros, yates, pangas), pilotes y boyas. Misma estructura de niveles largos (plataformas que caen, casetas con tinaco y techo de lámina, escaleras a la arena).
+- Cinemática con la llave que se resbala y cae al mar (animación en la cinemática: tercer elemento `'llave'` de una línea).
+- **El Pescador** (jefe, 8 de vida) con la tienda de buceo detrás: no se le puede hacer daño hasta que está mareado.
+  - Te tira productos de su tienda (latas, salvavidas, pescados, botas, cajas, anclas): devuélveselos de una patada y se marea (3.8 s). Mientras está mareado, cada golpe le hace daño.
+  - Moneda gigante que rueda y explota a los 3 s (explosión: -2 vidas en el radio; si te atropella: -1).
+  - Embestida con aviso y caña de pescar: el anzuelo te engancha, te quita una vida y te jala hacia él.
