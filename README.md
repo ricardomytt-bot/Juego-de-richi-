@@ -184,3 +184,9 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - Tres enemigos nuevos (también como especiales): **mono araña** (cuelga de una liana, se deja caer si pasas debajo y te persigue a brincos), **cocodrilito** (abre la boca y se lanza a morder; luego se cansa) y **guacamaya** (vuela en ondas y suelta semillas).
 - Jefe **El Lagarto Rey** (10 de vida): mordida lanzada (si se estrella contra la pared queda aturdido), lluvia de rocas, **coletazo** con círculo rojo de aviso (salta o aléjate) y salto aplastante.
 - 2 stickers nuevos (álbum de 18, con 9 columnas).
+
+## Versión 3.33 — Arreglos: sonido, frisbee, enemigos de Chiapas y nuevo Lagarto Rey
+- **Sonido molesto del mundo 1 eliminado**: era el "siseo" de las serpientes (un ruido blanco que sonaba al azar y se oía como explosión).
+- **Frisbee de Papá**: ahora es de corta distancia (un disco que gira frente a él, como el puño de Mamá pero un poco más ancho).
+- **Chiapas, enemigos nuevos**: el mono se cambió por el **jaguar** (se agacha con los ojos rojos y da un salto largo sobre ti) y la guacamaya por el **nahual** (máscara de jade voladora que a ratos se hace fantasma: no la puedes golpear, pero tampoco te toca, y atraviesa paredes). El cocodrilito queda igual.
+- **El Lagarto Rey rehecho**: ya no es un enemigo que camina. Está sentado en su trono al fondo (como el Tiburón y Kukulkán) y ataca con **cascadas de lodo** (3 de 6 columnas; ponte en una libre), un **rugido que hace aparecer 4 cocodrilitos** que hay que vencer, una **mordida gigante** (quita 2 vidas) y **lluvia de coronas**: las normales lastiman y hay una **morada** que debes romper de un golpe. Con 3 coronas moradas rotas, cae.
