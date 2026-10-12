@@ -212,3 +212,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Versión 3.38 — Parachico: solo una bola de otro color
 - De las 3 bolas mágicas, **una es de otro color (azul brillante)**. Solo esa se devuelve de una patada y, al llegar al Parachico, lo marea. Las moradas se destruyen si las pateas (y siguen quitando 2 vidas si te pegan).
+
+## Versión 3.39 — La música ahora suena en el iPhone
+- En el modo compatible (iPhone), la música se tocaba con un reproductor `<audio>` que el iPhone a veces bloquea, aunque los efectos (WebAudio) sí sonaban. Ahora la música se toca **con WebAudio, igual que los efectos**. Si WebAudio no arranca, usa el reproductor de antes como respaldo.

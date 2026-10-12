@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.38
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.39
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -366,8 +366,24 @@ PISTAS.sumidero = { ...PISTAS.bufadora, bpm: 108, root: 220, sw: 0.08, acordes: 
 PISTAS.tuxtla = { ...PISTAS.calle, bpm: 112, root: 261.63, sw: 0.1, acordes: ACORDES('0M 5M 9m 7M 0M 5M 7M 0M 0M 9m 5M 7M 0M 5M 7M 0M') };   // plaza de Tuxtla: alegre, con aire de marimba
 PISTAS.mar = { ...PISTAS.bufadora, bpm: 84, root: 246.94, sw: 0.04, padv: 0.05, bajo: [0, null, null, null, 7, null, null, null], bombo: [0], caja: [], hat: [], acordes: ACORDES('0m 8M 3M 10M 0m 8M 5m 10M 0m 8M 3M 10M 5m 8M 10M 0m') };   // bajo el agua: lenta y flotante
 let nombreMusica = null, pistaAct = null, pasoM = 0, proxT = 0;
+// En el iPhone la música (con un reproductor <audio>) no siempre sonaba aunque los efectos sí: ahora la música se toca con WebAudio, igual que los efectos.
+let fuenteMusica = null, fuenteNombre = null, bufMusica = {}, abMusica = {};
+function detenerMusicaBuf() { if (fuenteMusica) { try { fuenteMusica.stop(); } catch (e) {} try { fuenteMusica.disconnect(); } catch (e) {} } fuenteMusica = null; fuenteNombre = null; }
+function iniciarMusicaBuf(nombre) {                         // true si la canción ya está sonando por WebAudio
+  const a = audioCtx; if (!a || !busMusica || a.state !== 'running') return false;
+  if (fuenteMusica && fuenteNombre === nombre) return true;
+  const w = bufMusica[nombre]; if (!w) return false;
+  detenerMusicaBuf();
+  try {
+    let ab = abMusica[nombre];
+    if (!ab) { abMusica = {}; const pcm = new Int16Array(w.slice(44)), b = a.createBuffer(1, pcm.length, SR), d = b.getChannelData(0); for (let i = 0; i < pcm.length; i++) d[i] = pcm[i] / 32768; ab = abMusica[nombre] = b; }
+    const src = a.createBufferSource(); src.buffer = ab; src.loop = true; src.connect(busMusica); src.start();
+    fuenteMusica = src; fuenteNombre = nombre; if (audioMusicaEl) audioMusicaEl.pause(); return true;
+  } catch (e) { return false; }
+}
 function musica(nombre) {
   if (nombre === nombreMusica) return;
+  detenerMusicaBuf();
   nombreMusica = nombre; pistaAct = nombre ? PISTAS[nombre] : null; pasoM = 0; proxT = 0;
   if (usarAlt()) musicaAlt(nombre); else if (audioMusicaEl) audioMusicaEl.pause();
 }
@@ -386,6 +402,7 @@ function paso(p, m, t) {
   if (p.hat.includes(s)) percusion('hat', t, 0.045 * v);
 }
 setInterval(() => {
+  if (usarAlt() && !respaldoAuto && nombreMusica && audioCtx && audioCtx.state === 'running' && bufMusica[nombreMusica] && fuenteNombre !== nombreMusica) iniciarMusicaBuf(nombreMusica);
   const a = audioCtx; if (!a || !pistaAct || silencio || usarAlt() || a.state !== 'running') { proxT = 0; return; }
   if (proxT === 0 || proxT < a.currentTime - 0.3) proxT = a.currentTime + 0.08;
   while (proxT < a.currentTime + 0.3) {
@@ -522,7 +539,7 @@ function renderMusica(nombre, listo) {
   grabando = []; let t = 0;
   try { for (let m = 0; m < total; m++) { paso(p, m, t); t += 60 / p.bpm / 2 * (m % 2 ? 1 - p.sw : 1 + p.sw); } } finally { var ev = grabando; grabando = null; }
   const N = Math.floor(t * SR);
-  trabajoAudio({ tipo: 'm', ev, N }, buf => listo(urlDeBuffer(buf)), () => listo(wavUrl(sintMusica(ev, N))));
+  trabajoAudio({ tipo: 'm', ev, N }, buf => { bufMusica[nombre] = buf; listo(urlDeBuffer(buf)); }, () => { const b = wavBuffer(sintMusica(ev, N)); bufMusica[nombre] = b; listo(urlDeBuffer(b)); });
 }
 const pendMus = {};
 function obtenerMusica(nombre, cb) {                       // devuelve la canción ya lista, o la prepara (una sola vez) y avisa cuando termina
@@ -536,6 +553,7 @@ function musicaAlt(nombre) {
   if (!nombre) return;
   const arrancar = url => {
     if (nombreMusica !== nombre) return;
+    if (!respaldoAuto && (window.AudioContext || window.webkitAudioContext)) { audio(); if (iniciarMusicaBuf(nombre)) { musicaAltPend = null; return; } if (audioCtx) return; }       // por WebAudio (el intervalo de abajo la arranca en cuanto el sonido esté despierto)
     if (!audioMusicaEl) audioMusicaEl = new Audio();
     if (audioMusicaEl.src !== url) audioMusicaEl.src = url;
     audioMusicaEl.loop = true; audioMusicaEl.volume = silencio ? 0 : Math.min(1, aj.musica * bajaMusica);
@@ -4982,7 +5000,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.38', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.39', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
