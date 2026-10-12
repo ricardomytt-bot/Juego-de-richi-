@@ -238,3 +238,10 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - **Nivel 11 (caverna)**: piso de roca oscura, andamios y faroles de mina, cristales azules y morados, carritos mineros y oscuridad con luz alrededor de tu lámpara. Enemigos: serpiente, erizo y murciélago.
 - **Jefe El Minero**: lanza dinamita (¡pátea la dinamita para devolvérsela!), salta y saca pinchos, y **se esconde bajo tierra** (como excavar): solo se ve un montículo que te persigue; un círculo rojo avisa dónde va a salir. Al salir lanza pinchos a los lados y queda aturdido: ¡es tu momento para pisarlo o patearlo!
 - Música propia de la caverna, 2 stickers nuevos y el mundo Chiapas ahora solo muestra Palenque como próximo.
+
+## Versión 3.44 — Nivel 12: Palenque y Chac, dios de la lluvia
+- **Nivel 12 (Palenque)**: selva con ruinas mayas escalonadas al fondo y el templo como arena del jefe. Mismos enemigos que los otros dos niveles de Chiapas (jaguar, mono lanzacocos y cocodrilito).
+- **Jefe Chac** (el más difícil hasta ahora): **empieza a llover justo al comenzar la batalla** y la tormenta se hace más fuerte. Solo se le hace daño **devolviéndole SU rayo dorado** (patéalo); ese rayo sale **cada 6 ataques**. Una barrita de 6 puntitos arriba te dice cuánto falta.
+- **Ataques de Chac**: olas de agua por el suelo (se saltan), olas dobles desde las dos orillas, lluvia ácida (gotas verdes con sombra en el suelo), rayos del cielo (marca amarilla y luego cae), bolas de agua en arco, y salto con ondas al caer. Cuanto menos vida le queda, más rápido y más ataques.
+- Historia: el Patrón invocó a Chac; los hermanos no tienen otro lugar donde vivir y quieren demostrar que son los buenos.
+- Música propia de Palenque y de la pelea con Chac, 2 stickers nuevos.
