@@ -6,8 +6,8 @@
 <title>Lichilón y el Patrón</title>
 <style>
   html, body { margin: 0; height: 100%; background: #0b0b14; overflow: hidden; overscroll-behavior: none; }
-  body { display: flex; align-items: center; justify-content: center; -webkit-user-select: none; user-select: none; }
-  canvas { width: min(100vw, calc(100vh * 16 / 9)); height: auto; touch-action: none; display: block; }
+  body { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; -webkit-user-select: none; user-select: none; }
+  canvas { width: min(100vw, calc(100vh * 16 / 9)); width: min(100vw, calc(100dvh * 16 / 9)); height: auto; touch-action: none; display: block; }
 
   /* Botones táctiles */
   #tactil { position: fixed; inset: 0; pointer-events: none; display: none; }
@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.39
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.40
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -56,6 +56,16 @@
 // ============================================================
 
 const canvas = document.getElementById('juego');
+function ajustarLienzo() {                                  // la pantalla se mide con lo que de verdad se ve (en el iPhone las barras de Safari cambian y la pantalla quedaba corrida hacia abajo)
+  const vv = window.visualViewport, vw = vv ? vv.width : innerWidth, vh = vv ? vv.height : innerHeight;
+  if (!vw || !vh) return;
+  const w = Math.floor(Math.min(vw, vh * 16 / 9));
+  canvas.style.width = w + 'px'; canvas.style.height = Math.round(w * 9 / 16) + 'px';
+  try { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; } catch (e) {}
+}
+['resize', 'orientationchange', 'scroll'].forEach(ev => addEventListener(ev, () => { ajustarLienzo(); setTimeout(ajustarLienzo, 250); }));
+if (window.visualViewport) { visualViewport.addEventListener('resize', ajustarLienzo); visualViewport.addEventListener('scroll', ajustarLienzo); }
+ajustarLienzo(); setTimeout(ajustarLienzo, 300); setTimeout(ajustarLienzo, 1200);
 let ctx = canvas.getContext('2d'); const ctxReal = ctx;
 const W = 800, H = 450;                           // tamaño "lógico" del juego
 const MOVIL = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
@@ -147,7 +157,8 @@ function audio() {
 }
 function crearBuses() {
   const a = audioCtx; master = a.createGain();
-  const comp = a.createDynamicsCompressor(); master.connect(comp); comp.connect(a.destination);
+  const comp = a.createDynamicsCompressor(); try { comp.threshold.value = -10; comp.knee.value = 20; comp.ratio.value = 3; comp.attack.value = 0.005; comp.release.value = 0.2; } catch (e) {} master.connect(comp); comp.connect(a.destination);
+  a.onstatechange = () => { if (a.state === 'running') detenerMusicaBuf(); else { try { a.resume(); } catch (e) {} } };       // si el iPhone interrumpe el sonido (llamada, cambio de app), al volver la música arranca otra vez
   busSfx = a.createGain(); busSfx.connect(master); busMusica = a.createGain(); busMusica.connect(master);
   convolver = a.createConvolver();
   const n = Math.floor(a.sampleRate * 1.7), buf = a.createBuffer(2, n, a.sampleRate);
@@ -156,9 +167,12 @@ function crearBuses() {
   const rb = a.createBuffer(1, a.sampleRate, a.sampleRate), rd = rb.getChannelData(0); for (let i = 0; i < rd.length; i++) rd[i] = Math.random() * 2 - 1; bufRuido = rb;
   aplicarVolumen();
 }
+function vigilarAudio() { const a = audioCtx; if (a && a.state !== 'running') { try { a.resume(); } catch (e) {} } }
+setInterval(vigilarAudio, 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { vigilarAudio(); setTimeout(vigilarAudio, 300); } });
 let bajaMusica = 1;                                          // en las cinemáticas la música se baja para que se oigan mejor los diálogos
 function aplicarVolumen() {
-  if (audioCtx && master) { master.gain.value = silencio ? 0 : 1.8; busSfx.gain.value = aj.efectos; busMusica.gain.value = aj.musica * bajaMusica; }
+  if (audioCtx && master) { master.gain.value = silencio ? 0 : 1.8; busSfx.gain.value = aj.efectos; busMusica.gain.value = aj.musica * bajaMusica * (usarAlt() ? 0.55 : 1); }
   if (audioMusicaEl) audioMusicaEl.volume = silencio ? 0 : Math.min(1, aj.musica * bajaMusica);
 }
 // Desbloquea el audio con cualquier toque o tecla (los navegadores, sobre todo en celular, lo exigen)
@@ -368,6 +382,7 @@ PISTAS.mar = { ...PISTAS.bufadora, bpm: 84, root: 246.94, sw: 0.04, padv: 0.05, 
 let nombreMusica = null, pistaAct = null, pasoM = 0, proxT = 0;
 // En el iPhone la música (con un reproductor <audio>) no siempre sonaba aunque los efectos sí: ahora la música se toca con WebAudio, igual que los efectos.
 let fuenteMusica = null, fuenteNombre = null, bufMusica = {}, abMusica = {};
+function reajustarVolumenMusica() { aplicarVolumen(); }
 function detenerMusicaBuf() { if (fuenteMusica) { try { fuenteMusica.stop(); } catch (e) {} try { fuenteMusica.disconnect(); } catch (e) {} } fuenteMusica = null; fuenteNombre = null; }
 function iniciarMusicaBuf(nombre) {                         // true si la canción ya está sonando por WebAudio
   const a = audioCtx; if (!a || !busMusica || a.state !== 'running') return false;
@@ -3239,6 +3254,7 @@ function cargarNivel(n) {
   if (false) { }   // la música del jefe se prepara con tiempo
 }
 function nuevoJuego() {
+  ajustarLienzo();
   vidas = vidasInicio(); puntos = 0; nChocos = 0; progChoco = 0; datos.intro = true;
   cargarNivel(nivelElegido); irA('jugando'); musicaDelNivel(); registrar('partidas');
 }
@@ -3280,7 +3296,7 @@ function precalentar() {
   let i = 0; const lote = () => { const t0 = performance.now(); while (i < tareas.length && performance.now() - t0 < 6) { try { tareas[i++](); } catch (e) {} } if (i < tareas.length) setTimeout(lote, 24); };
   setTimeout(lote, 80);
 }
-function elegirNivel(n) { if (nivelBloqueado(n)) { sfx('golpe'); return; } nivelElegido = n; cineSigue = false; sfx('menu'); irA('cine'); precalentar(); }
+function elegirNivel(n) { ajustarLienzo(); if (nivelBloqueado(n)) { sfx('golpe'); return; } nivelElegido = n; cineSigue = false; sfx('menu'); irA('cine'); precalentar(); }
 function empezarTrasCine() { if (cineSigue) { cineSigue = false; cargarNivel(nivelElegido); irA('jugando'); musicaDelNivel(); } else nuevoJuego(); }
 function reiniciarNivel() {                                  // al perder todas las vidas: de vuelta al inicio del nivel
   vidas = vidasInicio(); puntos = puntosNivel; progChoco = 0;
@@ -5000,7 +5016,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.39', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.40', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -5027,7 +5043,7 @@ function dibujarAjustes() {
   uiToggle('Sacudida de pantalla', xr, 72, wr, aj.temblor ? 'Sí' : 'No', () => { aj.temblor = !aj.temblor; }, pw);
   uiToggle('Película antigua', xr, 116, wr, aj.efectoPelicula ? 'Sí' : 'No', () => { aj.efectoPelicula = !aj.efectoPelicula; }, pw);
   uiToggle('Botones en pantalla', xr, 160, wr, { auto: 'Automático', siempre: 'Siempre', nunca: 'Nunca' }[aj.botones], () => { aj.botones = { auto: 'siempre', siempre: 'nunca', nunca: 'auto' }[aj.botones]; }, pw);
-  uiToggle('Sonido compatible', xr, 204, wr, aj.compatible ? 'Sí' : 'No', () => { aj.compatible = !aj.compatible; reiniciarMusica(); }, pw);
+  uiToggle('Sonido compatible', xr, 204, wr, aj.compatible ? 'Sí' : 'No', () => { aj.compatible = !aj.compatible; aplicarVolumen(); reiniciarMusica(); }, pw);
   uiToggle('Calidad gráfica', xr, 248, wr, ['Baja', 'Media', 'Alta'][calidad], () => { const q = (calidad + 2) % 3; aj.calidad = q; aplicarCalidad(q); }, pw);
   uiToggle('Mostrar FPS', xr, 292, wr, aj.fps ? 'Sí' : 'No', () => { aj.fps = !aj.fps; }, pw);
   texto('Si va trabado, baja la calidad gráfica.', xr, 352, 12, '#cfd8ff', 'left', true);

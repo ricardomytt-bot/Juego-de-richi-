@@ -215,3 +215,7 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Versión 3.39 — La música ahora suena en el iPhone
 - En el modo compatible (iPhone), la música se tocaba con un reproductor `<audio>` que el iPhone a veces bloquea, aunque los efectos (WebAudio) sí sonaban. Ahora la música se toca **con WebAudio, igual que los efectos**. Si WebAudio no arranca, usa el reproductor de antes como respaldo.
+
+## Versión 3.40 — Pantalla bien puesta y música + efectos más estables
+- **Pantalla**: el tamaño del juego se calcula con lo que de verdad se ve en el celular (las barras de Safari cambian), se bloquea el scroll de la página y se reajusta al empezar cada nivel. Antes quedaba corrida hacia abajo.
+- **Sonido**: compresor más suave (la música ya no "aplasta" los efectos), música un poco más baja, y si el iPhone interrumpe el sonido, se reactiva solo (también al volver a la app) y la música arranca otra vez.
