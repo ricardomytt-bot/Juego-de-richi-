@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.40
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.41
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -169,17 +169,29 @@ function crearBuses() {
 }
 function vigilarAudio() { const a = audioCtx; if (a && a.state !== 'running') { try { a.resume(); } catch (e) {} } }
 setInterval(vigilarAudio, 1000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { vigilarAudio(); setTimeout(vigilarAudio, 300); } });
+// Salirse de la app (ir al inicio, abrir otra app, Centro de control) NO apaga el sonido: sigue sonando. Solo se corta al CERRAR la app.
+document.addEventListener('visibilitychange', () => { vigilarAudio(); if (silencioEl && silencioEl.paused) { try { silencioEl.play().catch(() => {}); } catch (e) {} } setTimeout(vigilarAudio, 300); });
+addEventListener('pagehide', () => { vigilarAudio(); });
+function configurarSesionMedios() {                          // así el iPhone trata el juego como una app que reproduce audio (aparece en el Centro de control y no lo corta al salirte)
+  try {
+    if (navigator.audioSession) navigator.audioSession.type = 'playback';
+    if ('mediaSession' in navigator && typeof MediaMetadata !== 'undefined') {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: 'Lichilón y los Departamentos', artist: 'Música del juego' });
+      navigator.mediaSession.playbackState = 'playing';
+      [['play', false], ['pause', true]].forEach(([acc, mudo]) => { try { navigator.mediaSession.setActionHandler(acc, () => { silencio = mudo; aplicarVolumen(); navigator.mediaSession.playbackState = mudo ? 'paused' : 'playing'; if (!mudo) vigilarAudio(); }); } catch (e) {} });
+    }
+  } catch (e) {}
+}
 let bajaMusica = 1;                                          // en las cinemáticas la música se baja para que se oigan mejor los diálogos
 function aplicarVolumen() {
-  if (audioCtx && master) { master.gain.value = silencio ? 0 : 1.8; busSfx.gain.value = aj.efectos; busMusica.gain.value = aj.musica * bajaMusica * (usarAlt() ? 0.55 : 1); }
+  if (audioCtx && master) { master.gain.value = silencio ? 0 : 1.8; busSfx.gain.value = aj.efectos; busMusica.gain.value = aj.musica * bajaMusica * 0.6; }
   if (audioMusicaEl) audioMusicaEl.volume = silencio ? 0 : Math.min(1, aj.musica * bajaMusica);
 }
 // Desbloquea el audio con cualquier toque o tecla (los navegadores, sobre todo en celular, lo exigen)
 let audioOk = false;
 function desbloquearAudio() {
   if (audioOk) { if (musicaAltPend) musicaAltPend(); return; }
-  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  configurarSesionMedios();
   const a = audio();
   if (a) { try { const b = a.createBuffer(1, 1, 22050), s = a.createBufferSource(); s.buffer = b; s.connect(a.destination); s.start(0); } catch (e) {} }
   try {                                                      // truco para que el iPhone/iPad no lo silencie con el switch de timbre
@@ -333,52 +345,75 @@ function percusion(tipo, t, v) {
     const d = tipo === 'caja' ? 0.13 : 0.045; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d); s.connect(f); f.connect(g); s.start(t, Math.random() * 0.4); s.stop(t + d + 0.02); }
   enviar(g, tipo === 'caja' ? 0.2 : 0);
 }
-const ACORDES = s => s.split(' ').map(x => [parseInt(x), x.endsWith('m') ? 'm' : 'M']);
-const MEL = s => s.replace(/\|/g, ' ').trim().split(/\s+/).map(x => x === '.' ? null : parseInt(x));
-const CALLE = {
-  bpm: 128, sw: 0.1, root: 392, vel: 1, pad: false, bajo: [0, null, 7, null, 0, null, 7, null], comp: [1, 3, 5, 7], bombo: [0, 4], caja: [2, 6], hat: [1, 3, 5, 7],
-  acordes: ACORDES('0M 7M 9m 5M 0M 7M 5M 7M 5M 0M 2m 7M 5M 0M 7M 0M'),
-  mel: MEL('7 . 12 . 11 9 7 . | 9 . 14 . 12 11 9 . | 11 . 16 . 14 12 11 . | 12 11 9 7 9 . . . | 7 . 12 . 11 9 7 . | 9 . 14 . 12 11 9 7 | 5 7 9 12 11 9 7 5 | 7 . 11 . 14 . . . | 12 . 9 . 12 . 14 . | 16 . 14 . 12 . 11 . | 9 . 12 . 14 12 9 . | 11 . 14 . 11 9 7 . | 12 . 14 . 16 14 12 . | 14 . 12 . 11 . 9 . | 9 11 14 11 9 7 9 11 | 12 . 7 . 4 . . .'),
+// ---------- MÚSICA NUEVA: más épica y activa (bajo y sintetizador con fuerza, batería, arpegios, cuerdas y metales); se compone con código y se toca como un archivo ----------
+const ESCALAS = { min: [0, 2, 3, 5, 7, 8, 10], arm: [0, 2, 3, 5, 7, 8, 11], frig: [0, 1, 4, 5, 7, 8, 10], mix: [0, 2, 4, 5, 7, 9, 10], may: [0, 2, 4, 5, 7, 9, 11], dor: [0, 2, 3, 5, 7, 9, 10] };
+const PROGRES = {
+  heroica: ['0m', '8M', '3M', '10M', '0m', '8M', '10M', '7M'], oscura: ['0m', '0m', '8M', '10M', '0m', '5m', '8M', '7M'], frigia: ['0m', '1M', '0m', '10M', '0m', '1M', '10M', '0M'],
+  alegre: ['0M', '7M', '9m', '5M', '0M', '7M', '5M', '7M'], dorica: ['0m', '5M', '0m', '10M', '0m', '5M', '10M', '7m'], clima: ['0m', '10M', '8M', '7M', '0m', '10M', '8M', '7M'],
+};
+const BATERIAS = {
+  epico: { k: 'x..x..x.x..x..x.', c: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', t: '' }, marcha: { k: 'x...x...x...x...', c: '....x.......x...', h: '..x...x...x...x.', t: '' },
+  tribal: { k: 'x..x.x..x..x.x..', c: '....x.....x.x...', h: 'x.xxx.xxx.xxx.xx', t: '..x...x.....x..x' }, ligera: { k: 'x.......x.......', c: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', t: '' },
+  ninguna: { k: '', c: '', h: '', t: '' },
 };
 const PISTAS = {
-  calle: CALLE,
-  menu: { ...CALLE, bpm: 92, vel: 0.85, pad: true, bajo: [0, null, null, null, 7, null, null, null], comp: [2, 6], bombo: [], caja: [], hat: [] },
-  tarde: {
-    bpm: 98, sw: 0.14, root: 329.63, vel: 0.95, pad: true, bajo: [0, null, 7, null, 0, null, null, 7], comp: [1, 3, 5, 7], bombo: [0, 4], caja: [6], hat: [3, 7],
-    acordes: ACORDES('0m 8M 3M 10M 0m 8M 10M 0m 5m 8M 3M 10M 5m 8M 10M 0m'),
-    mel: MEL('7 . 12 . 10 . 7 . | 8 . 12 . 10 8 7 . | 7 . 10 . 14 . 12 10 | 14 . 10 . 12 . 10 7 | 7 . 12 . 15 . 14 12 | 15 . 12 . 8 . 7 . | 10 . 12 . 14 . 12 10 | 12 . 7 . 3 . . . | 12 . 8 . 5 . 8 12 | 15 . 12 . 8 . 12 . | 14 . 10 . 7 . 10 14 | 17 . 14 . 10 . 14 . | 12 . 15 . 17 . 15 12 | 15 . 12 . 8 . 12 15 | 14 . 10 . 14 . 17 . | 12 . 7 . 3 . 7 .'),
-  },
-  playa: {
-    bpm: 106, sw: 0.18, root: 349.23, vel: 0.95, pad: true, bajo: [0, null, null, 7, null, 0, null, null], comp: [1, 3, 5, 7], bombo: [4], caja: [4], hat: [0, 2, 4, 6],
-    acordes: ACORDES('0M 7M 9m 5M 0M 7M 5M 7M 9m 5M 0M 7M 5M 0M 7M 0M'),
-    mel: MEL('16 . 12 . 14 16 19 . | 19 . 17 . 16 14 12 . | 16 . 12 . 16 . 19 21 | 19 17 16 . 14 . 12 . | 12 . 16 . 19 . 16 . | 14 . 19 . 17 16 14 . | 17 . 16 . 14 . 12 14 | 16 . 14 . 11 . 14 . | 21 . 19 . 16 . 12 . | 17 . 21 . 19 17 16 . | 19 . 16 . 12 . 16 19 | 14 16 17 19 . 17 14 . | 17 . 17 . 19 . 21 . | 19 . 16 . 12 . 16 . | 14 . 17 . 19 . 17 14 | 16 . 12 . 7 . . .'),
-  },
-  chichen: {
-    bpm: 118, sw: 0.05, root: 293.66, vel: 1, pad: true, bajo: [0, 0, null, 0, 7, null, 5, null], comp: [3, 7], bombo: [0, 4], caja: [2, 6], hat: [1, 3, 5, 7],
-    acordes: ACORDES('0m 0m 5m 7M 0m 0m 10M 7M 0m 3M 5m 7M 0m 8M 7M 0m'),
-    mel: MEL('12 . 15 . 12 . 10 . | 12 . 10 7 . . 10 . | 17 . 15 . 12 . 15 . | 14 . 11 . 14 . 19 . | 12 . 15 . 17 . 15 12 | 15 . 12 . 10 . 7 . | 17 . 14 . 10 . 14 . | 14 . 11 . 7 . 11 . | 19 . 17 . 15 . 12 . | 15 . 19 . 15 . 10 . | 17 . 20 . 17 . 12 . | 19 . 14 . 11 . 14 . | 12 . 15 . 12 . 10 7 | 15 . 12 . 8 . 12 . | 14 . 11 . 14 . 11 7 | 12 . 7 . 0 . . .'),
-  },
-  bufadora: {                                                // La Bufadora: costa, olas y un ritmo de viaje (re mixolidio)
-    bpm: 112, sw: 0.12, root: 293.66, vel: 0.95, pad: true, bajo: [0, null, null, 7, 0, null, 7, null], comp: [1, 3, 5, 7], bombo: [0, 4], caja: [4], hat: [2, 6],
-    acordes: ACORDES('0M 10M 5M 0M 0M 10M 7M 0M 5M 0M 7M 10M 5M 0M 7M 0M'),
-    mel: MEL('12 . 16 . 19 . 16 . | 17 . 14 . 12 . 14 . | 12 . 17 . 21 . 19 . | 16 . 19 . 16 . . . | 12 . 16 . 19 . 24 . | 22 . 19 . 17 . 14 . | 17 . 21 . 19 . 17 . | 16 . 12 . 16 . . . | 19 . 16 . 12 . 16 . | 17 . 14 . 17 . 21 . | 19 . 22 . 19 . 16 . | 14 . 17 . 14 . . . | 21 . 19 . 17 . 14 . | 12 . 16 . 19 . 16 . | 17 . 19 . 21 . 24 . | 19 . 16 . 12 . . .')
-  },
-  suspenso: {                                                // para las cinemáticas: grave, muy bajita, pocas notas, de suspenso
-    bpm: 54, sw: 0, root: 196, vel: 0.75, pad: true, padv: 0.04, bajo: [0, null, null, null, null, null, null, null], comp: [], bombo: [], caja: [], hat: [],
-    acordes: ACORDES('0m 0m 1M 0m 6M 0m 1M 0m'),
-    mel: MEL('0 . . . . . . . | . . . . 1 . . . | . . . . . . . . | . . 6 . . . . . | . . . . . . 0 . | . . . . . . . . | . 1 . . . . . . | . . . . . . . .')
-  },
-  jefe: {                                                    // épica michoacana: cadencia andaluza (La menor), ritmo de son abajeño, melodía de violín que sube hasta el clímax
-    bpm: 140, sw: 0.08, root: 220, vel: 1.12, pad: true, padv: 0.05, oct: -12, bajo: [0, null, 7, 0, null, 7, 0, 7], comp: [1, 3, 4, 6, 7], bombo: [0, 3, 6], caja: [2, 4, 7], hat: [0, 1, 2, 3, 4, 5, 6, 7],
-    acordes: ACORDES('0m 10M 8M 7M 0m 10M 8M 7M 0m 10M 8M 7M 0m 10M 8M 7M'),
-    mel: MEL('12 . 15 . 19 . 24 . | 22 . 19 . 17 . 14 . | 20 . 24 . 27 . 24 20 | 23 . 19 . 23 . 26 . | 24 . 19 . 24 . 27 . | 26 . 22 . 19 . 22 . | 24 . 27 . 24 . 20 . | 23 . 26 . 23 . 19 . | 24 24 27 24 31 . 27 24 | 29 29 26 29 31 . 29 26 | 27 27 24 27 32 . 31 27 | 26 28 29 . 26 . 31 . | 31 29 27 24 27 29 31 . | 29 26 22 26 29 26 22 . | 27 24 20 24 27 31 32 31 | 31 . 26 . 23 . . .'),
-  },
+  menu:       { bpm: 112, root: 110,   esc: 'arm',  prog: 'heroica', bat: 'ligera',  arp: 1, stab: 0, lead: 'saw', semilla: 11, pico: 0.55 },
+  calle:      { bpm: 132, root: 110,   esc: 'min',  prog: 'heroica', bat: 'epico',   arp: 2, stab: 1, lead: 'saw', semilla: 3 },
+  tarde:      { bpm: 124, root: 73.42, esc: 'min',  prog: 'oscura',  bat: 'marcha',  arp: 2, stab: 1, lead: 'sq',  semilla: 7 },
+  playa:      { bpm: 136, root: 98,    esc: 'mix',  prog: 'alegre',  bat: 'ligera',  arp: 2, stab: 1, lead: 'sq',  semilla: 21 },
+  chichen:    { bpm: 148, root: 82.41, esc: 'frig', prog: 'frigia',  bat: 'tribal',  arp: 2, stab: 1, lead: 'saw', semilla: 5 },
+  bufadora:   { bpm: 138, root: 73.42, esc: 'dor',  prog: 'dorica',  bat: 'epico',   arp: 2, stab: 1, lead: 'saw', semilla: 13 },
+  puerto:     { bpm: 128, root: 65.41, esc: 'mix',  prog: 'alegre',  bat: 'marcha',  arp: 1, stab: 1, lead: 'sq',  semilla: 17 },
+  mar:        { bpm: 104, root: 82.41, esc: 'min',  prog: 'clima',   bat: 'ligera',  arp: 1, stab: 0, lead: 'saw', semilla: 9, pico: 0.55 },
+  aeropuerto: { bpm: 150, root: 92.5,  esc: 'arm',  prog: 'heroica', bat: 'epico',   arp: 2, stab: 1, lead: 'sq',  semilla: 31 },
+  sumidero:   { bpm: 142, root: 73.42, esc: 'frig', prog: 'frigia',  bat: 'tribal',  arp: 2, stab: 1, lead: 'saw', semilla: 25 },
+  tuxtla:     { bpm: 126, root: 87.31, esc: 'may',  prog: 'alegre',  bat: 'marcha',  arp: 2, stab: 1, lead: 'sq',  semilla: 41 },
+  jefe:       { bpm: 158, root: 110,   esc: 'arm',  prog: 'clima',   bat: 'epico',   arp: 2, stab: 1, lead: 'saw', semilla: 2, intensa: 1 },
+  suspenso:   { bpm: 72,  root: 98,    esc: 'min',  prog: 'oscura',  bat: 'ninguna', arp: 0, stab: 0, lead: 'saw', semilla: 6, pico: 0.5 },
 };
-PISTAS.puerto = { ...PISTAS.bufadora, bpm: 100, root: 261.63, sw: 0.16, acordes: ACORDES('0M 5M 7M 0M 0M 5M 10M 0M 7M 5M 0M 7M 7M 5M 10M 0M') };   // Los Cabos: más relajada, con ritmo de puerto
-PISTAS.aeropuerto = { ...PISTAS.bufadora, bpm: 118, root: 293.66, sw: 0.1, acordes: ACORDES('0M 7M 9m 5M 0M 7M 5M 7M 0M 9m 5M 7M 0M 5M 7M 0M') };   // aeropuerto: animada, de viaje
-PISTAS.sumidero = { ...PISTAS.bufadora, bpm: 108, root: 220, sw: 0.08, acordes: ACORDES('0m 5m 10M 7M 0m 5m 3M 7M 0m 8M 3M 10M 0m 5m 7M 0m') };   // cañón: aventura con aire de selva
-PISTAS.tuxtla = { ...PISTAS.calle, bpm: 112, root: 261.63, sw: 0.1, acordes: ACORDES('0M 5M 9m 7M 0M 5M 7M 0M 0M 9m 5M 7M 0M 5M 7M 0M') };   // plaza de Tuxtla: alegre, con aire de marimba
-PISTAS.mar = { ...PISTAS.bufadora, bpm: 84, root: 246.94, sw: 0.04, padv: 0.05, bajo: [0, null, null, null, 7, null, null, null], bombo: [0], caja: [], hat: [], acordes: ACORDES('0m 8M 3M 10M 0m 8M 5m 10M 0m 8M 3M 10M 5m 8M 10M 0m') };   // bajo el agua: lenta y flotante
+function componer(P) {                                       // devuelve la lista de notas de toda la canción (16 compases) y su duración en muestras
+  const d = 60 / P.bpm / 4, compases = 16, esc = ESCALAS[P.esc], prog = PROGRES[P.prog].map(x => [parseInt(x), x.endsWith('m') ? [0, 3, 7] : [0, 4, 7]]), ev = [], f = st => Math.pow(2, st / 12);
+  let sem = P.semilla * 7919 + 13; const azar = () => { sem = (sem * 1103515245 + 12345) & 0x7fffffff; return sem / 0x7fffffff; };
+  const bat = BATERIAS[P.bat], plantillas = [[0, 3, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14], [0, 4, 6, 8, 12], [0, 3, 6, 9, 12, 14], [0, 6, 8, 14]];
+  let grado = 7;                                             // el hilo de la melodía (en grados de la escala)
+  const semitono = g => esc[((g % 7) + 7) % 7] + 12 * Math.floor(g / 7);
+  for (let b = 0; b < compases; b++) {
+    const [r, ct] = prog[b % prog.length], t0 = b * 16 * d, tonos = ct.map(c => (r + c) % 12), segunda = b >= 8, clima = b >= 12;
+    for (let s = 0; s < 16; s++) {                           // batería
+      const t = t0 + s * d, fill = b % 4 === 3 && s >= 12;
+      if (bat.k[s] === 'x') ev.push({ k: 'x', tipo: 'bombo', t, v: 0.62 });
+      if (bat.c[s] === 'x' && !fill) ev.push({ k: 'x', tipo: 'caja', t, v: 0.26 });
+      if (bat.h[s] === 'x') ev.push({ k: 'x', tipo: 'hat', t, v: (s % 4 === 0 ? 0.07 : 0.045) });
+      if (bat.t[s] === 'x') ev.push({ k: 'x', tipo: 'tom', t, v: 0.3, f: 150 - (s % 8) * 5 });
+      if (fill && P.bat !== 'ninguna') ev.push({ k: 'x', tipo: s % 2 ? 'caja' : 'tom', t, v: 0.28, f: 190 - (s - 12) * 25 });
+    }
+    if (b % 4 === 0 && P.bat !== 'ninguna') ev.push({ k: 'x', tipo: 'crash', t: t0, v: 0.09 });
+    if (P.bat !== 'ninguna') for (let s = 0; s < 16; s += 2) {                                            // bajo con fuerza (corcheas)
+      const quinta = s % 8 === 6, oct = s === 10 || (P.intensa && s === 14);
+      ev.push({ k: 'b', t: t0 + s * d, f: P.root * 2 * f(r + (quinta ? 7 : 0) + (oct ? 12 : 0)), dur: d * 1.9, v: 0.21 });
+    } else if (b % 2 === 0) ev.push({ k: 'b', t: t0, f: P.root * 2 * f(r), dur: d * 14, v: 0.16 });
+    ct.forEach((c, i) => ev.push({ k: 'p', t: t0, f: P.root * 2 * f(r + c + (i === 2 ? 12 : 0)), dur: d * 16, v: P.bat === 'ninguna' ? 0.05 : 0.032 }));            // cuerdas
+    if (P.arp) { const paso = P.arp === 2 ? 1 : 2, arr = [r, r + ct[1], r + 7, r + 12], seq = [0, 1, 2, 3, 2, 1, 2, 1];
+      for (let s = 0; s < 16; s += paso) ev.push({ k: 'a', t: t0 + s * d, f: P.root * 4 * f(arr[seq[(s / paso) % 8]] + (segunda ? 12 : 0)), dur: d * (paso === 1 ? 1.6 : 2.2), v: s % 4 === 0 ? 0.075 : 0.05 }); }
+    if (P.stab && b % 2 === 0) [0, 6].forEach(s => ct.forEach(c => ev.push({ k: 's', t: t0 + s * d, f: P.root * 4 * f(r + c), dur: d * 2.4, v: clima ? 0.065 : 0.05 })));            // metales
+    if (P.bat !== 'ninguna' || b % 2 === 0) {                // melodía (frase A, A', A, clímax)
+      const fr = Math.floor(b / 4), kind = fr === 1 ? 1 : fr === 3 ? 2 : 0, rng0 = sem;
+      sem = P.semilla * 104729 + kind * 7001 + (b % 4) * 31;
+      const pl = plantillas[Math.floor(azar() * plantillas.length)], notas = [];
+      if (b % 4 === 0) grado = kind === 2 ? 11 : 7;
+      pl.forEach((s0, i) => {
+        let mejor = grado + Math.floor(azar() * 5) - 2, bd = 99;
+        if (s0 === 0 || azar() < 0.4) for (let g = mejor - 2; g <= mejor + 2; g++) { const m = semitono(g) % 12, dist = Math.min(...tonos.map(x => Math.min(Math.abs(x - m), 12 - Math.abs(x - m)))) + Math.abs(g - mejor) * 0.2; if (dist < bd) { bd = dist; mejor = g; } }
+        grado = Math.max(2, Math.min(15, mejor));
+        const sig = pl[i + 1] !== undefined ? pl[i + 1] : 16, last = i === pl.length - 1 && b % 4 === 3;
+        notas.push({ s0, dur: last ? 14 : sig - s0, g: grado });
+      });
+      notas.forEach(n => ev.push({ k: 'l', t: t0 + n.s0 * d, f: P.root * 2 * f(semitono(n.g)), dur: d * Math.max(1, n.dur * 0.94), v: clima ? 0.15 : 0.125, w: P.lead }));
+      sem = rng0 + b;
+    }
+  }
+  return { ev, N: Math.floor(compases * 16 * d * SR), pico: P.pico || 0.62 };
+}
 let nombreMusica = null, pistaAct = null, pasoM = 0, proxT = 0;
 // En el iPhone la música (con un reproductor <audio>) no siempre sonaba aunque los efectos sí: ahora la música se toca con WebAudio, igual que los efectos.
 let fuenteMusica = null, fuenteNombre = null, bufMusica = {}, abMusica = {};
@@ -399,32 +434,13 @@ function iniciarMusicaBuf(nombre) {                         // true si la canci�
 function musica(nombre) {
   if (nombre === nombreMusica) return;
   detenerMusicaBuf();
-  nombreMusica = nombre; pistaAct = nombre ? PISTAS[nombre] : null; pasoM = 0; proxT = 0;
-  if (usarAlt()) musicaAlt(nombre); else if (audioMusicaEl) audioMusicaEl.pause();
+  nombreMusica = nombre; pistaAct = nombre ? PISTAS[nombre] : null;
+  musicaAlt(nombre);
 }
 function reiniciarMusica() { const n = nombreMusica; nombreMusica = null; musica(n); }
-function paso(p, m, t) {
-  const bar = Math.floor(m / 8) % p.acordes.length, s = m % 8, [raiz, tipo] = p.acordes[bar], f = st => Math.pow(2, st / 12);
-  const ct = tipo === 'm' ? [0, 3, 7] : [0, 4, 7], v = p.vel;
-  const n = p.mel[(bar * 8 + s) % p.mel.length];
-  if (n !== null) marimba(p.root * f(n), t, 0.2 * v, 0.55);
-  if (n !== null && p.oct) marimba(p.root * f(n + p.oct), t, 0.11 * v, 0.7);
-  const b = p.bajo[s]; if (b !== null && b !== undefined) bajoNota(p.root / 4 * f(raiz + b), t, 0.3 * v, 0.34);
-  if (p.comp.includes(s)) ct.forEach((c, i) => marimba(p.root / 2 * f(raiz + c + (i === 0 ? 12 : 0)), t + i * 0.012, 0.045 * v, 0.28));
-  if (p.pad && s === 0) ct.forEach(c => padNota(p.root / 2 * f(raiz + c), t, 60 / p.bpm * 4, (p.padv || 0.028) * v));
-  if (p.bombo.includes(s)) percusion('bombo', t, 0.5 * v);
-  if (p.caja.includes(s)) percusion('caja', t, 0.18 * v);
-  if (p.hat.includes(s)) percusion('hat', t, 0.045 * v);
-}
-setInterval(() => {
-  if (usarAlt() && !respaldoAuto && nombreMusica && audioCtx && audioCtx.state === 'running' && bufMusica[nombreMusica] && fuenteNombre !== nombreMusica) iniciarMusicaBuf(nombreMusica);
-  const a = audioCtx; if (!a || !pistaAct || silencio || usarAlt() || a.state !== 'running') { proxT = 0; return; }
-  if (proxT === 0 || proxT < a.currentTime - 0.3) proxT = a.currentTime + 0.08;
-  while (proxT < a.currentTime + 0.3) {
-    try { paso(pistaAct, pasoM, proxT); } catch (e) {}
-    const base = 60 / pistaAct.bpm / 2; proxT += base * (pasoM % 2 ? 1 - pistaAct.sw : 1 + pistaAct.sw); pasoM++;
-  }
-}, 60);
+setInterval(() => {                                          // la música (un archivo) se arranca en cuanto el sonido esté despierto
+  if (nombreMusica && !respaldoAuto && audioCtx && audioCtx.state === 'running' && bufMusica[nombreMusica] && fuenteNombre !== nombreMusica) iniciarMusicaBuf(nombreMusica);
+}, 200);
 
 // --- Modo compatible: un mini sintetizador que crea archivos .wav con código ---
 function wavBuffer(mono) {
@@ -517,18 +533,41 @@ function sfxAlt(n) {
   const au = pool.a[0]; au.volume = Math.min(1, aj.efectos); try { au.currentTime = 0; } catch (e) {} au.play().catch(() => {});
 }
 function precargarMusica(n) { if (n && PISTAS[n]) obtenerMusica(n, () => {}); }
-function sintMusica(ev, N) {                               // la canción completa, de una sola vez (se hace en el obrero)
-  const out = new Float32Array(N), poner = (n, val) => { out[((n % N) + N) % N] += val; };
+function sintMusica(ev, N, pico) {                         // la canción completa, de una sola vez (se hace en el obrero)
+  const out = new Float32Array(N), poner = (n, val) => { out[((n % N) + N) % N] += val; }, T2 = 6.2832;
   for (let i0 = 0; i0 < ev.length; i0++) {
     const e = ev[i0], n0 = Math.floor(e.t * SR);
-      if (e.k === 'm') { const n = Math.floor(e.dur * SR); for (let i = 0; i < n; i++) { const a = i / SR, env = e.v * Math.exp(-6.5 * i / n) * Math.min(1, a / 0.006); poner(n0 + i, env * (Math.sin(6.2832 * e.f * a) + 0.28 * Math.sin(6.2832 * e.f * 4 * a) + 0.07 * Math.sin(6.2832 * e.f * 9.2 * a))); } }
-      else if (e.k === 'b') { const n = Math.floor(e.dur * SR); for (let i = 0; i < n; i++) { const a = i / SR, env = e.v * Math.exp(-4.5 * i / n) * Math.min(1, a / 0.01); poner(n0 + i, env * (Math.sin(6.2832 * e.f * a) + 0.35 * Math.sin(6.2832 * e.f * 2 * a) + 0.6 * Math.sin(3.1416 * e.f * a))); } }
-      else if (e.k === 'p') { const n = Math.floor((e.dur + 0.3) * SR); for (let i = 0; i < n; i++) { const a = i / SR, env = e.v * Math.min(1, a / 0.4, (e.dur + 0.3 - a) / 0.3); poner(n0 + i, env * (Math.sin(6.2832 * e.f * a) + Math.sin(6.2832 * e.f * 1.004 * a) + 0.35 * Math.sin(6.2832 * e.f * 2 * a))); } }
-      else if (e.k === 'x') {
-        if (e.tipo === 'bombo') { const n = Math.floor(0.18 * SR); let ph = 0; for (let i = 0; i < n; i++) { const u = i / SR; ph += (42 + 108 * Math.exp(-u * 30)) / SR; poner(n0 + i, Math.sin(6.2832 * ph) * e.v * Math.exp(-u * 22)); } }
-        else { const d = e.tipo === 'caja' ? 0.13 : 0.045, n = Math.floor(d * SR); let lp = 0; for (let i = 0; i < n; i++) { const w = Math.random() * 2 - 1; lp += 0.45 * (w - lp); poner(n0 + i, (w - lp) * e.v * 2.2 * Math.exp(-5 * i / n)); } }
-      }
+    if (e.k === 'l') {                                       // melodía: dos sierras (o cuadradas) un poco desafinadas, con vibrato
+      const n = Math.floor(e.dur * SR), fr = e.f; let p1 = 0, p2 = 0, lp = 0;
+      for (let i = 0; i < n; i++) { const a = i / SR, vib = 1 + 0.005 * Math.sin(T2 * 5.5 * a) * Math.min(1, a / 0.2); p1 += fr * vib * 0.997 / SR; p1 -= Math.floor(p1); p2 += fr * vib * 1.003 / SR; p2 -= Math.floor(p2);
+        const w = e.w === 'sq' ? ((p1 < 0.5 ? 1 : -1) + (p2 < 0.5 ? 1 : -1)) * 0.5 : p1 + p2 - 1; lp += 0.3 * (w - lp);
+        poner(n0 + i, lp * e.v * Math.min(1, a / 0.012) * Math.min(1, (n - i) / (0.07 * SR)) * (0.72 + 0.28 * Math.exp(-3 * a))); }
+    } else if (e.k === 'a') {                                // arpegio: pulsos brillantes que se apagan rápido
+      const n = Math.floor(e.dur * SR); let p1 = 0, lp = 0;
+      for (let i = 0; i < n; i++) { const u = i / n; p1 += e.f / SR; p1 -= Math.floor(p1); const w = (2 * p1 - 1) * 0.7 + (p1 < 0.3 ? 0.3 : -0.3); lp += (0.5 - 0.3 * u) * (w - lp);
+        poner(n0 + i, lp * e.v * Math.exp(-5 * u) * Math.min(1, i / (0.004 * SR))); }
+    } else if (e.k === 'b') {                                // bajo: sierra con un seno grave debajo
+      const n = Math.floor(e.dur * SR); let p1 = 0, p2 = 0, lp = 0;
+      for (let i = 0; i < n; i++) { const u = i / n; p1 += e.f / SR; p1 -= Math.floor(p1); p2 += e.f / 2 / SR; p2 -= Math.floor(p2); lp += (0.16 + 0.12 * (1 - u)) * (2 * p1 - 1 - lp);
+        poner(n0 + i, (lp * 0.8 + Math.sin(T2 * p2) * 0.7) * e.v * Math.exp(-2.4 * u) * Math.min(1, i / (0.006 * SR))); }
+    } else if (e.k === 'p') {                                // cuerdas: tres sierras suaves, entran despacio
+      const n = Math.floor((e.dur + 0.35) * SR); let p1 = 0, p2 = 0, p3 = 0, lp = 0;
+      for (let i = 0; i < n; i++) { const a = i / SR; p1 += e.f * 0.996 / SR; p1 -= Math.floor(p1); p2 += e.f / SR; p2 -= Math.floor(p2); p3 += e.f * 1.004 / SR; p3 -= Math.floor(p3);
+        lp += 0.09 * ((p1 + p2 + p3) * 2 - 3 - lp); poner(n0 + i, lp * e.v * Math.min(1, a / 0.3, (e.dur + 0.35 - a) / 0.3)); }
+    } else if (e.k === 's') {                                // metales: golpes cortos y llenos
+      const n = Math.floor(e.dur * SR); let p1 = 0, p2 = 0, lp = 0;
+      for (let i = 0; i < n; i++) { const u = i / n; p1 += e.f / SR; p1 -= Math.floor(p1); p2 += e.f * 1.005 / SR; p2 -= Math.floor(p2); lp += (0.42 - 0.2 * u) * (p1 + p2 - 1 - lp);
+        poner(n0 + i, lp * e.v * Math.exp(-4.2 * u) * Math.min(1, i / (0.005 * SR))); }
+    } else if (e.k === 'x') {                                // batería
+      if (e.tipo === 'bombo') { const n = Math.floor(0.22 * SR); let ph = 0; for (let i = 0; i < n; i++) { const u = i / SR; ph += (46 + 120 * Math.exp(-u * 32)) / SR; poner(n0 + i, Math.sin(T2 * ph) * e.v * Math.exp(-u * 17)); } }
+      else if (e.tipo === 'caja') { const n = Math.floor(0.17 * SR); let lp = 0, ph = 0; for (let i = 0; i < n; i++) { const u = i / SR, w = Math.random() * 2 - 1; lp += 0.5 * (w - lp); ph += 190 / SR; poner(n0 + i, ((w - lp) * 1.4 + Math.sin(T2 * ph) * 0.5) * e.v * Math.exp(-u * 22)); } }
+      else if (e.tipo === 'tom') { const n = Math.floor(0.26 * SR); let ph = 0; for (let i = 0; i < n; i++) { const u = i / SR; ph += ((e.f || 140) * (0.7 + 0.3 * Math.exp(-u * 12))) / SR; poner(n0 + i, Math.sin(T2 * ph) * e.v * Math.exp(-u * 11)); } }
+      else if (e.tipo === 'crash') { const n = Math.floor(0.9 * SR); let lp = 0; for (let i = 0; i < n; i++) { const u = i / SR, w = Math.random() * 2 - 1; lp += 0.6 * (w - lp); poner(n0 + i, (w - lp) * e.v * Math.exp(-u * 3.2)); } }
+      else { const n = Math.floor(0.05 * SR); let lp = 0; for (let i = 0; i < n; i++) { const w = Math.random() * 2 - 1; lp += 0.45 * (w - lp); poner(n0 + i, (w - lp) * e.v * 2.2 * Math.exp(-5 * i / n)); } }
+    }
   }
+  let mx = 0; for (let i = 0; i < N; i++) { const v = Math.abs(out[i]); if (v > mx) mx = v; }
+  const g = mx > 0 ? (pico || 0.62) / mx : 1; for (let i = 0; i < N; i++) out[i] *= g;
   return out;
 }
 // El "obrero": un hilo aparte que fabrica los sonidos y la música, para que el juego no se trabe mientras se preparan
@@ -537,7 +576,7 @@ function crearObrero() {
   if (obrero || obreroFallo) return obrero;
   try {
     const fuente = 'const SR=' + SR + ';\nconst onda=' + onda.toString() + ';\n' + resonador.toString() + '\n' + renderSfx.toString() + '\n' + sintMusica.toString() + '\n' + wavBuffer.toString() +
-      '\nonmessage=function(e){var m=e.data;var mono=m.tipo==="m"?sintMusica(m.ev,m.N):renderSfx(m.ev);var buf=wavBuffer(mono);postMessage({id:m.id,buf:buf},[buf]);};';
+      '\nonmessage=function(e){var m=e.data;var mono=m.tipo==="m"?sintMusica(m.ev,m.N,m.pico):renderSfx(m.ev);var buf=wavBuffer(mono);postMessage({id:m.id,buf:buf},[buf]);};';
     obrero = new Worker(URL.createObjectURL(new Blob([fuente], { type: 'text/javascript' })));
     obrero.onmessage = e => { const f = obreroCola[e.data.id]; delete obreroCola[e.data.id]; if (f) f.ok(e.data.buf); };
     obrero.onerror = () => { obreroFallo = true; const c = obreroCola; obreroCola = {}; obrero = null; for (const k in c) c[k].fallo(); };
@@ -550,11 +589,8 @@ function trabajoAudio(msg, ok, fallo) {
   try { o.postMessage({ ...msg, id }); } catch (e) { delete obreroCola[id]; setTimeout(fallo, 0); }
 }
 function renderMusica(nombre, listo) {
-  const p = PISTAS[nombre], total = p.acordes.length * 8;
-  grabando = []; let t = 0;
-  try { for (let m = 0; m < total; m++) { paso(p, m, t); t += 60 / p.bpm / 2 * (m % 2 ? 1 - p.sw : 1 + p.sw); } } finally { var ev = grabando; grabando = null; }
-  const N = Math.floor(t * SR);
-  trabajoAudio({ tipo: 'm', ev, N }, buf => { bufMusica[nombre] = buf; listo(urlDeBuffer(buf)); }, () => { const b = wavBuffer(sintMusica(ev, N)); bufMusica[nombre] = b; listo(urlDeBuffer(b)); });
+  const P = componer(PISTAS[nombre]), ev = P.ev, N = P.N, pico = P.pico;
+  trabajoAudio({ tipo: 'm', ev, N, pico }, buf => { bufMusica[nombre] = buf; listo(urlDeBuffer(buf)); }, () => { const b = wavBuffer(sintMusica(ev, N, pico)); bufMusica[nombre] = b; listo(urlDeBuffer(b)); });
 }
 const pendMus = {};
 function obtenerMusica(nombre, cb) {                       // devuelve la canción ya lista, o la prepara (una sola vez) y avisa cuando termina
@@ -767,6 +803,8 @@ function cabezaMod(g, pj, t, abierta, parpO) {
   }
   g.fillStyle = m.piel; g.beginPath(); g.ellipse(-22.4, 3, 3.2, 4.6, 0, 0, 7); g.fill(); g.stroke();                 // oreja
   g.beginPath(); g.ellipse(0, 0, 23, 21, 0, 0, 7); g.fill(); g.stroke();                                          // cabezota
+  g.save(); g.beginPath(); g.ellipse(0, 0, 22, 20, 0, 0, 7); g.clip(); const rgc = g.createRadialGradient(-8, -9, 3, 0, 2, 30); rgc.addColorStop(0, 'rgba(255,255,255,.20)'); rgc.addColorStop(0.5, 'rgba(255,255,255,0)'); rgc.addColorStop(1, 'rgba(120,60,30,.24)'); g.fillStyle = rgc; g.fillRect(-30, -30, 60, 60);   // luz y sombra en la cara
+  g.fillStyle = 'rgba(230,100,100,.22)'; g.beginPath(); g.ellipse(-12, 9, 5.6, 3.2, 0, 0, 7); g.ellipse(18, 9, 5.6, 3.2, 0, 0, 7); g.fill(); g.restore();                                                      // mejillas
   // pelo: una sola pieza
   g.fillStyle = m.pelo;
   if (pj.peinado === 'atras') {                              // peinado hacia atrás con raya de lado, con las líneas del peine
@@ -795,6 +833,7 @@ function cabezaMod(g, pj, t, abierta, parpO) {
     g.fillStyle = m.mono || '#ff4f9a'; [-1, 1].forEach(s => { g.beginPath(); g.ellipse(-2 + s * 10, -35, 10, 6.4, s * -0.5, 0, 7); g.fill(); g.stroke(); });
     g.beginPath(); g.arc(-2, -35, 4.4, 0, 7); g.fill(); g.stroke();
   }
+  g.strokeStyle = 'rgba(255,255,255,.34)'; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath(); g.arc(1, -4, 24, -2.4, -1.05); g.stroke(); g.strokeStyle = NEGRO; g.lineWidth = GM;       // brillo del pelo
   if (pj.sombrero) {                                         // sombrero de cazador con pluma
     g.fillStyle = '#7a5a2e'; g.beginPath(); g.ellipse(0, -22, 33, 7, 0, 0, 7); g.fill(); g.stroke();
     g.fillStyle = '#8f6a36'; g.beginPath(); g.moveTo(-19, -24); g.quadraticCurveTo(-21, -47, 0, -47); g.quadraticCurveTo(21, -47, 19, -24); g.closePath(); g.fill(); g.stroke();
@@ -885,14 +924,14 @@ function dibujarNino(g, pj, x, y, esc, dir, pose) {
   piernaMod(g, m, 5.5, -23 + bob * 0.5, pieF, botas);
   g.save(); g.translate(0, bob); g.translate(0, -24); g.rotate(inclina); g.translate(0, 24);
   brazoMod(g, m, -8.4, -35, aT, -1);
-  g.fillStyle = m.camisa; g.strokeStyle = NEGRO; g.lineWidth = GM;                      // torso
+  g.fillStyle = grad(g, -10, -39, 10, -24, [[0, aclarar(m.camisa, 0.14)], [1, sombrear(m.camisa, 0.8)]]); g.strokeStyle = NEGRO; g.lineWidth = GM;                      // torso
   g.beginPath(); g.moveTo(-9.4, -37); g.quadraticCurveTo(0, -39.8, 9.4, -37); g.lineTo(10.6, -26); g.quadraticCurveTo(0, -23.4, -10.6, -26); g.closePath(); g.fill(); g.stroke();
   if (m.rayas) { g.strokeStyle = '#fff'; g.lineWidth = 2.2; [-34, -30, -26.6].forEach(yy => { g.beginPath(); g.moveTo(-9.4, yy); g.lineTo(9.4, yy); g.stroke(); }); g.strokeStyle = NEGRO; g.lineWidth = GM; }          // top de rayas
   if (m.cuello) { g.fillStyle = m.cuello; g.lineWidth = 1.4; g.beginPath(); g.moveTo(-6.4, -38.4); g.lineTo(0, -33.4); g.lineTo(6.4, -38.4); g.lineTo(3.2, -39.4); g.lineTo(0, -37.4); g.lineTo(-3.2, -39.4); g.closePath(); g.fill(); g.stroke(); g.lineWidth = GM; }      // cuello de polo
   if (m.logo) { g.fillStyle = '#fff'; g.beginPath(); g.moveTo(-7, -27.6); g.lineTo(-4.6, -33.4); g.lineTo(-2.6, -27.6); g.closePath(); g.fill(); }                                  // velerito
   if (m.cadena) { g.strokeStyle = '#ffd24a'; g.lineWidth = 1.3; g.beginPath(); g.moveTo(-5.4, -38.6); g.quadraticCurveTo(0, -30, 5.4, -38.6); g.stroke(); g.fillStyle = '#ffd24a'; g.fillRect(-0.8, -33.4, 1.6, 5.4); g.fillRect(-2.4, -31.6, 4.8, 1.5); g.strokeStyle = NEGRO; g.lineWidth = GM; }   // cadena con cruz
   else if (!m.cuello) { g.fillStyle = m.detalle; g.beginPath(); g.arc(0, -31, 2.4, 0, 7); g.fill(); }
-  g.fillStyle = m.pantalon; g.beginPath();                                                // caderas grandes
+  g.fillStyle = grad(g, -14, -27, 14, -12, [[0, aclarar(m.pantalon, 0.12)], [1, sombrear(m.pantalon, 0.8)]]); g.beginPath();                                                // caderas grandes
   if (pj.estilo === 'sofi') { g.moveTo(-10, -27); g.lineTo(10, -27); g.lineTo(20, -12); for (let i = 0; i < 4; i++) g.quadraticCurveTo(15 - i * 10, -8, 10 - i * 10, -12); g.lineTo(-20, -12); }
   else { g.moveTo(-12, -27); g.lineTo(12, -27); g.quadraticCurveTo(15.5, -20, 14.5, -12); g.lineTo(-14.5, -12); g.quadraticCurveTo(-15.5, -20, -12, -27); }
   g.closePath(); g.fill(); g.stroke();
@@ -1588,7 +1627,12 @@ function dibujarPinchoArte(g, x, y) {                          // x,y = esquina 
 }
 
 // --- Mosaicos (se dibujan una vez, a doble resolución) ---
-function crearTile(fn) { const c = crearCanvas(64, 64); fn(c.getContext('2d')); return c; }
+function crearTile(fn) {
+  const c = crearCanvas(64, 64), g = c.getContext('2d'); fn(g);
+  const gl = g.createLinearGradient(0, 0, 0, 64); gl.addColorStop(0, 'rgba(255,255,255,.10)'); gl.addColorStop(0.45, 'rgba(255,255,255,0)'); gl.addColorStop(1, 'rgba(10,10,40,.17)'); g.fillStyle = gl; g.fillRect(0, 0, 64, 64);      // luz de arriba: da volumen
+  for (let i = 0; i < 38; i++) { g.fillStyle = i % 2 ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.05)'; g.fillRect(azar(i + 101) * 63, azar(i + 177) * 63, 1.8, 1.8); }                                                       // grano de material
+  return c;
+}
 const TILE_BANQUETA = crearTile(g => {
   g.fillStyle = grad(g, 0, 0, 0, 64, [[0, '#dcd8cf'], [1, '#aaa59a']]); g.fillRect(0, 0, 64, 64);
   g.fillStyle = grad(g, 0, 0, 0, 12, [[0, '#ffd84a'], [1, '#e8a91a']]); g.fillRect(0, 0, 64, 12);      // guarnición pintada
@@ -1906,7 +1950,22 @@ function sprite(clave, w, h, ox, oy, dib) {
   let sp = SPR[clave]; if (sp) return sp;
   const c = crearCanvas(Math.ceil(w * ESC), Math.ceil(h * ESC)), g = c.getContext('2d'); g.setTransform(ESC, 0, 0, ESC, ox * ESC, oy * ESC);
   const prev = ctx; ctx = g; try { dib(g); } finally { ctx = prev; }
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-atop';                      // luz suave de arriba y sombra abajo, solo sobre lo dibujado (más volumen, más realista, mismo estilo animado)
+  const lz = g.createLinearGradient(0, 0, 0, c.height); lz.addColorStop(0, 'rgba(255,255,255,.20)'); lz.addColorStop(0.5, 'rgba(255,255,255,0)'); lz.addColorStop(1, 'rgba(12,10,50,.26)'); g.fillStyle = lz; g.fillRect(0, 0, c.width, c.height); g.restore();
   return SPR[clave] = { c, w, h, ox, oy };
+}
+let VIGNETA = null;
+function dibujarVigneta() {                                  // oscurece un poquito las orillas de la pantalla (como una cámara): da profundidad
+  if (LIGERO) return;
+  if (!VIGNETA || VIGNETA.e !== ESC || VIGNETA.t !== tema) {
+    if (VIGNETA) liberarCanvas(VIGNETA.c);
+    const c = crearCanvas(Math.ceil(W * ESC), Math.ceil(H * ESC)), g = c.getContext('2d'), rg = g.createRadialGradient(c.width / 2, c.height * 0.48, c.height * 0.36, c.width / 2, c.height / 2, c.width * 0.62);
+    rg.addColorStop(0, 'rgba(0,0,0,0)'); rg.addColorStop(1, 'rgba(10,8,34,.36)'); g.fillStyle = rg; g.fillRect(0, 0, c.width, c.height);
+    const fria = tema === 'mar' || tema === 'aeropuerto', sol = g.createRadialGradient(c.width * 0.82, -c.height * 0.15, 0, c.width * 0.82, -c.height * 0.15, c.height * 1.25);       // luz del sol desde arriba a la derecha (cálida; fría bajo el agua y en el avión)
+    sol.addColorStop(0, fria ? 'rgba(170,220,255,.16)' : 'rgba(255,236,190,.20)'); sol.addColorStop(1, 'rgba(255,236,190,0)'); g.fillStyle = sol; g.fillRect(0, 0, c.width, c.height);
+    VIGNETA = { c, e: ESC, t: tema };
+  }
+  ctx.drawImage(VIGNETA.c, 0, 0, W, H);
 }
 let calidad = 1, GLOW = {}; const retrato = { c: null, t: -99, id: '' };
 // Fondo con capas ya dibujadas: se preparan UNA sola vez, en pedacitos chicos (1024 px), y luego solo se mueven
@@ -3054,7 +3113,7 @@ const NIVELES = [
   { nombre: 'NIVEL 7', mundo: 1, acuatico: true, lugar: 'Los Cabos, bajo el agua', corto: ['Los Cabos', 'Bajo el agua'], jefeNombre: 'El Tiburón', cols: 391, tema: 'mar', jefe: 'tiburon', musica: 'mar',
     nota: 'Un tiburón se tragó la llave: ¡a nadar!',
     cine: [['p', '¡Ya tengo el traje de buceo! Ahora a buscar la llave en el fondo del mar.'], ['p', 'Qué bonito se ve todo aquí abajo... pero cuidado con los bichos del arrecife.'], ['tiburon', 'Grrr... ¡Esa llave brillante es MÍA! El Patrón me prometió un banquete a cambio de cuidarla.'], ['p', '¡Es un tiburón enorme! No le puedo hacer daño de frente...'], ['tiburon', 'Mis explosiones, mi grito y mis dientes los dejarán hechos pedazos.'], ['p', 'Tiene que haber una forma: ¡el diente dorado! Si lo rompo, lo debilito. ¡Vamos!']],
-    fin: { titulo: '¡VENCISTE AL TIBURÓN!', lineas: ['¡Recuperaste la llave del fondo del mar!', 'Ya casi puedes volver a tu departamento...', 'El viaje por Baja California continúa.'] },
+    fin: { titulo: '¡VENCISTE AL TIBURÓN!', lineas: ['¡Recuperaste la llave del fondo del mar!', 'Pegada a ella flota una nota: "Si la quieren, vengan por mí a Chiapas. —El Patrón".', 'El Patrón se escapó... ¡hay que seguirlo! Primero, el aeropuerto de Tijuana.'] },
     construir() {
       suelo(0, 390);                                                                                    // el fondo del mar
       caja(6, 5, 'c'); chocos(3, 8, 9); dorado(15, 7); chocos(10, 13, 8); pinchos(18, 19);              // entrada al arrecife
@@ -3063,8 +3122,8 @@ const NIVELES = [
     } },
   { nombre: 'NIVEL 8', mundo: 1, lugar: 'A bordo del avión rumbo a Chiapas', corto: ['Vuelo a Chiapas', 'Despegando de Tijuana'], jefeNombre: 'El Piloto', cols: 431, tema: 'aeropuerto', jefe: 'piloto', musica: 'aeropuerto',
     nota: 'Todo el vuelo es una pelea: ¡llega hasta la cabina del Piloto!',
-    cine: [['p', '¡Tengo la llave otra vez! Y pegada a ella había una nota: "Si quieren su departamento gratis, vengan a buscarme a Chiapas. —El Patrón". ¡Tomemos el vuelo en Tijuana!'], ['p', 'Cuidado con las almohadas saltarinas, los aviones de papel y esas cafeteras de vapor...'], ['p', 'Allá al fondo está la cabina del piloto. ¡Hay que llegar!'], ['piloto', 'Bienvenido a bordo... Soy El Piloto. El Patrón me contrató para que ustedes jamás lleguen a Chiapas.'], ['p', '¡No puede ser! ¡Tú manejas el avión!'], ['piloto', 'Hoy hay turbulencia, carritos sueltos y mucho combustible. Abróchense los cinturones... ¡jajaja!'], ['p', 'Tengo que esquivar sus carritos, huir de la gasolina y aguantar la turbulencia. ¡Vamos!']],
-    fin: { titulo: '¡DERROTASTE AL PILOTO!', lineas: ['Sin piloto, el avión pierde el control...', '¡Y se estrella en Chiapas, en pleno Cañón del Sumidero!', 'Estás vivo, pero atrapado en el cañón: hay que salir de aquí.'] },
+    cine: [['p', '¡Tengo la llave! Y la nota del Patrón dice: "Vengan por mí a Chiapas". ¡Vamos al aeropuerto de Tijuana!'], ['p', 'Cuidado con las almohadas saltarinas, los aviones de papel y esas cafeteras de vapor...'], ['patron', '¡Jajaja! Bienvenidos a mi avión, mocosos. Es el vuelo que yo les compré... ¡sin boleto de regreso!'], ['p', '¡El Patrón! ¿Nos está viendo desde algún lado?'], ['piloto', 'Bienvenido a bordo... Soy El Piloto. El Patrón me contrató para que jamás lleguen a Chiapas.'], ['p', '¡No puede ser! ¡Tú manejas el avión!'], ['piloto', 'Hoy hay turbulencia, carritos sueltos y mucho combustible. Abróchense los cinturones... ¡jajaja!'], ['p', 'Tengo que esquivar sus carritos, huir de la gasolina y aguantar la turbulencia. ¡Vamos!']],
+    fin: { titulo: '¡DERROTASTE AL PILOTO!', lineas: ['Sin piloto, el avión pierde el control...', '¡Y se estrella en Chiapas, en pleno Cañón del Sumidero!', 'Por la radio se oye al Patrón gritando de coraje...'] },
     construir() {
       suelo(0, 13); suelo(17, 31); suelo(35, 49);
       caja(6, 8, 'c'); chocos(3, 5, 10); pinchos(10, 10);                                              // entrada: pasillo del avión
@@ -3083,8 +3142,8 @@ const NIVELES = [
     } },
   { nombre: 'NIVEL 9', mundo: 2, lugar: 'Cañón del Sumidero, Chiapas', corto: ['Cañón del Sumidero', 'Chiapas'], jefeNombre: 'El Lagarto Rey', cols: 431, tema: 'sumidero', jefe: 'lagarto', musica: 'sumidero',
     nota: 'Cruza el cañón: ¡el Lagarto Rey vigila el río!',
-    cine: [['p', '¡Auch! El avión se estrelló... ¡caímos en el Cañón del Sumidero, en Chiapas!'], ['p', 'El Patrón quería que nunca llegáramos, y casi lo logra. Pero su nota decía que está en Chiapas, así que de aquí no me voy sin encontrarlo.'], ['p', 'Hay que salir del cañón por la orilla, saltando entre rocas y troncos... ¡y cuidado con los jaguares, los monos lanzacocos y los cocodrilitos!'], ['lagarto', '¡GRRR! Soy el Lagarto Rey, dueño del Sumidero. Desde mi trono lo veo todo... El Patrón me prometió todos los pescados del río si no te dejo salir.'], ['p', '¡Es enorme! No lo puedo golpear de frente...'], ['lagarto', 'Te aplastaré con cascadas de lodo, te morderé y mis cocodrilitos te devorarán. ¡Y nadie me quitará mi corona!'], ['p', 'Si logro romperle las coronas moradas que caen, ¡se va a quedar sin nada! ¡Vamos!']],
-    fin: { titulo: '¡VENCISTE AL LAGARTO REY!', lineas: ['Saliste del Cañón del Sumidero.', 'La pista del Patrón te lleva a Tuxtla Gutiérrez...'] },
+    cine: [['p', '¡Auch! El avión se estrelló... ¡caímos en el Cañón del Sumidero, en Chiapas!'], ['patron', '¡¿Sobrevivieron al choque?! Qué tercos son... Lagarto Rey, ¡que ni un solo mocoso salga de ese cañón!'], ['p', 'Esa es la voz del Patrón. Casi lo logra, pero su nota decía que está en Chiapas: ¡de aquí no me voy sin encontrarlo!'], ['p', 'Hay que salir del cañón por la orilla, saltando entre rocas y troncos... ¡y cuidado con los jaguares, los monos lanzacocos y los cocodrilitos!'], ['lagarto', '¡GRRR! Soy el Lagarto Rey, dueño del Sumidero. Las órdenes del Patrón son mi ley, y me prometió todos los pescados del río si no te dejo salir.'], ['p', '¡Es enorme! No lo puedo golpear de frente...'], ['lagarto', 'Te aplastaré con cascadas de lodo, te morderé y mis cocodrilitos te devorarán. ¡Y nadie me quitará mi corona!'], ['p', 'Si logro romperle las coronas moradas que caen, ¡se va a quedar sin nada! ¡Vamos!']],
+    fin: { titulo: '¡VENCISTE AL LAGARTO REY!', lineas: ['Saliste del Cañón del Sumidero.', 'En la radio del avión se oye al Patrón: "¡Entonces los espero en Tuxtla!"', 'Sigue su pista hasta Tuxtla Gutiérrez...'] },
     construir() {
       suelo(0, 13); suelo(17, 31); suelo(35, 49);
       caja(6, 8, 'c'); chocos(3, 5, 10); pinchos(10, 10);                                              // entrada: sendero del cañón
@@ -3103,8 +3162,8 @@ const NIVELES = [
     } },
   { nombre: 'NIVEL 10', mundo: 2, lugar: 'Tuxtla Gutiérrez, Chiapas', corto: ['Tuxtla Gutiérrez', 'Chiapas'], jefeNombre: 'El Parachico', cols: 431, tema: 'tuxtla', jefe: 'parachico', musica: 'tuxtla',
     nota: 'La pista del Patrón lleva a la plaza de Tuxtla.',
-    cine: [['p', '¡Llegamos a Tuxtla Gutiérrez, la capital de Chiapas! La pista del Patrón dice que lo espera en la plaza.'], ['p', 'Cuidado con los jaguares, los monos lanzacocos y los cocodrilitos que se escaparon del cañón...'], ['parachico', '¡Alto ahí, forastero! Soy El Parachico, el mejor bailarín de la plaza. El Patrón me pagó para que no pases... ¡y yo no bailo gratis!'], ['p', 'Mira su capa y sus listones... seguro lanza cosas con ella.'], ['parachico', '¡Mis bolas mágicas te quitarán dos vidas! Gira, gira, gira... ¡como un trompo!'], ['p', 'Si le devuelvo sus tres bolas mágicas de una patada, ¡se va a marear! Y ahí le pego. ¡Vamos!']],
-    fin: { titulo: '¡VENCISTE AL PARACHICO!', lineas: ['La plaza de Tuxtla vuelve a sonar la marimba.', 'La pista del Patrón sigue más adentro de Chiapas...'] },
+    cine: [['p', '¡Llegamos a Tuxtla Gutiérrez, la capital de Chiapas! La pista del Patrón dice que lo espera en la plaza.'], ['p', 'Cuidado con los jaguares, los monos lanzacocos y los cocodrilitos que se escaparon del cañón...'], ['patron', '¡Jajaja! ¿Todavía siguen vivos? Mi amigo El Parachico les tiene preparado un baile que no olvidarán. ¡Yo me quedo con las llaves de todos los departamentos!'], ['parachico', '¡Alto ahí, forastero! Soy El Parachico, el mejor bailarín de la plaza. El Patrón me pagó para que no pases... ¡y yo no bailo gratis!'], ['p', 'Mira su capa y sus listones... seguro lanza cosas con ella.'], ['parachico', '¡Mis bolas mágicas te quitarán dos vidas! Gira, gira, gira... ¡como un trompo!'], ['p', 'Si le devuelvo la bola de otro color de una patada, ¡se va a marear! Y ahí le pego. ¡Vamos!']],
+    fin: { titulo: '¡VENCISTE AL PARACHICO!', lineas: ['La plaza de Tuxtla vuelve a sonar la marimba.', 'Entre sus listones cae un mapa: ¡el Patrón se esconde en Palenque!', 'El viaje por Chiapas continúa...'] },
     construir() {
       suelo(0, 13); suelo(17, 31); suelo(35, 49);
       caja(6, 8, 'c'); chocos(3, 5, 10); pinchos(10, 10);                                              // entrada: calle de Tuxtla
@@ -4003,7 +4062,7 @@ function lanzarOrbe(j) {                                    // bola mágica que 
   if (!j.volea) j.volea = { n: 0, devueltas: 0 };
   j.volea.n++; if (j.volea.n === 1) j.volea.esp = 1 + Math.floor(Math.random() * 3);
   const sx = j.x + j.w / 2 + j.dir * 12, tx = jugador.x + 13 + (Math.random() - 0.5) * 70;
-  proyJ.push({ tipo: 'orbe', x: sx - 12, y: j.y + 18, w: 24, h: 24, vx: Math.max(-6.5, Math.min(6.5, (tx - sx) / 54)), vy: -9, grav: 0.35, rot: 0, vida: 520, devuelto: false, especial: j.volea.n === j.volea.esp }); sfx('lanza');
+  proyJ.push({ tipo: 'orbe', x: sx - 12, y: j.y + 18, w: 24, h: 24, vx: Math.max(-5, Math.min(5, (tx - sx) / 82)), vy: -7.5, grav: 0.2, rot: 0, vida: 700, devuelto: false, especial: j.volea.n === j.volea.esp }); sfx('lanza');
 }
 function orbeDevuelto(j, x, y) {                            // la bola de otro color, devuelta, lo marea
   chispas(x, y, 18, '#e0a8ff', 5); sfx('golpe'); temblor = Math.max(temblor, 8);
@@ -4011,7 +4070,7 @@ function orbeDevuelto(j, x, y) {                            // la bola de otro c
 }
 function lanzarFueguito(j, k) {                             // fueguitos que caen en arco alrededor de ti
   const sx = j.x + j.w / 2 + j.dir * 10, tx = jugador.x + 13 + ((k % 2 ? 1 : -1) * Math.ceil(k / 2) * 38) + (Math.random() - 0.5) * 20;
-  proyJ.push({ tipo: 'fueguito', x: sx - 7, y: j.y + 22, w: 14, h: 16, vx: Math.max(-6.5, Math.min(6.5, (tx - sx) / 46)), vy: -6, grav: 0.3, rot: 0, vida: 260 }); sfx('lanza');
+  proyJ.push({ tipo: 'fueguito', x: sx - 7, y: j.y + 22, w: 14, h: 16, vx: Math.max(-5.5, Math.min(5.5, (tx - sx) / 58)), vy: -6, grav: 0.24, rot: 0, vida: 320 }); sfx('lanza');
 }
 function ondasZapateado(j) {                                // al caer de su salto, el zapateado manda dos ondas por el suelo (salta para esquivarlas)
   const cx = j.x + j.w / 2; temblor = Math.max(temblor, 14); sfx('golpe'); polvo(cx, j.y + j.h, 10);
@@ -4316,7 +4375,7 @@ function actualizarProyectiles(p, pata) {
     if (q.tipo === 'orbe') {                                           // bola mágica: si la pateas vuelve directo al Parachico
       const cq = q.x + q.w / 2, cy = q.y + q.h / 2;
       if (q.devuelto) {
-        const dx = jefe.x + jefe.w / 2 - cq, dy = jefe.y + 40 - cy, d = Math.hypot(dx, dy) || 1; q.vx = dx / d * 8.5; q.vy = dy / d * 8.5; q.grav = 0;
+        const dx = jefe.x + jefe.w / 2 - cq, dy = jefe.y + 40 - cy, d = Math.hypot(dx, dy) || 1; q.vx = dx / d * 6; q.vy = dy / d * 6; q.grav = 0;
         if (d < 34 && jefe.vivo) { q.vida = 0; orbeDevuelto(jefe, cq, cy); }
       } else {
         const zona = p.patada > 0 ? { x: p.mirando > 0 ? p.x - 4 : p.x - 56, y: p.y - 6, w: 86, h: p.h + 12 } : null;
@@ -4940,7 +4999,7 @@ function dibujarJuego() {
   ctx.restore();
   if (tema === 'tarde') { ctx.fillStyle = 'rgba(255,120,60,.10)'; ctx.fillRect(0, 0, W, H); }
   if (estado === 'jugando' && acuatico) dibujarAgua();
-  if (estado === 'jugando') dibujarMarcador();
+  if (estado === 'jugando') { dibujarVigneta(); dibujarMarcador(); }
   if (estado === 'jugando' && quema > 0) { ctx.fillStyle = 'rgba(150,30,10,.82)'; trazoRedondo(ctx, 8, 98, 176, 42, 12); ctx.fill(); ctx.strokeStyle = '#ffb36b'; ctx.lineWidth = 2; ctx.stroke(); texto('🔥 QUEMADURA  ' + Math.ceil(quema / 60) + 's', 96, 116, 14, '#fff', 'center'); texto('¡Toma la gota de agua!', 96, 132, 11, '#ffe0b0', 'center', true); }
   if (estado === 'jugando' && jefe && jefe.tipo === 'kukulkan' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡ATACA SOLO EL FUEGO VERDE!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
   if (estado === 'jugando' && msgHab.t > 0) { msgHab.t--; ctx.globalAlpha = Math.min(1, msgHab.t / 20); texto(msgHab.txt, W / 2, 380, 16, msgHab.col || '#ffb3b3', 'center', true); ctx.globalAlpha = 1; }
@@ -5016,7 +5075,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.40', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.41', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -5382,7 +5441,8 @@ function dibujarCine() {
   ctx.fillStyle = 'rgba(15,10,45,.78)'; trazoRedondo(ctx, W / 2 - 220, 10, 400, 34, 17); ctx.fill(); texto(N.nombre + ' · ' + N.lugar, W / 2 - 20, 33, 13, '#ffd43b', 'center');
   const rebote = q === 'p' && hablando ? Math.abs(Math.sin(estadoT * 0.35)) * 4 : 0;
   dibujarNino(ctx, personaje, 170, 12 * T + 2 - rebote, 1.55, 1, { estado: 'quieto', t: reloj, aire: false });
-  if (q !== 'p' && q !== 'kukulkan') cineJefe = true;
+  const llamada = q === 'patron' && N.jefe !== 'patron';
+  if (q !== 'p' && q !== 'kukulkan' && !llamada) cineJefe = true;
   if (cineJefe && N.jefe === 'tiburon') { ctx.save(); ctx.translate(655, 255); ctx.scale(0.95, 0.95); dibujarCabezaTiburon(ctx, q !== 'p' && hablando ? 0.5 + Math.sin(estadoT * 0.3) * 0.2 : 0.12, 0); ctx.restore(); }
   if (cineJefe && N.jefe === 'lagarto') { ctx.save(); ctx.translate(640, 12 * T + 2); ctx.scale(0.95, 0.95); dibujarLagartoTrono(ctx, q !== 'p' && hablando ? 0.55 + Math.sin(estadoT * 0.3) * 0.25 : 0.12, true, 0); ctx.restore(); }
   if (cineJefe && N.jefe !== 'kukulkan' && N.jefe !== 'tiburon' && N.jefe !== 'lagarto') {
@@ -5394,10 +5454,20 @@ function dibujarCine() {
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, 12 * T + 4); ctx.clip(); dibujarLlave(ctx, kx, ky, 1.5, u * 10); ctx.restore();
     if (u >= 1) { if (!cineSplash) { cineSplash = true; sfx('hielo'); } const r = Math.min(1, (estadoT - cineT0 - 110) / 40); ctx.strokeStyle = 'rgba(255,255,255,' + (1 - r).toFixed(2) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(kx, 12 * T + 2, 10 + r * 50, 3 + r * 10, 0, 0, 7); ctx.stroke(); }
   }
+  if (llamada) {                                            // el Patrón habla por una videollamada (pantallita con su cara)
+    const fx = 560, fy = 214, fw = 200, fh = 160;
+    ctx.save(); ctx.fillStyle = 'rgba(10,12,30,.92)'; trazoRedondo(ctx, fx, fy, fw, fh, 14); ctx.fill(); ctx.strokeStyle = '#ff9a7a'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.beginPath(); trazoRedondo(ctx, fx + 4, fy + 4, fw - 8, fh - 8, 11); ctx.clip();
+    ctx.fillStyle = 'rgba(80,40,40,.5)'; ctx.fillRect(fx, fy, fw, fh); ctx.fillStyle = 'rgba(255,255,255,.06)'; for (let y = fy; y < fy + fh; y += 4) ctx.fillRect(fx, y, fw, 1.5);
+    const sal = hablando ? Math.abs(Math.sin(estadoT * 0.35)) * 3 : 0, fp = { tipo: 'patron', x: fx + fw / 2 - 23, y: fy + fh + 6 - 78 - sal, w: 46, h: 78, vx: 0, vy: 0, fase: hablando ? 'aviso' : 'camina', dir: -1, cargaDir: -1, invul: 0, aturdido: 0, congelado: 0, hp: 1, muerte: 0, t: 0 };
+    ctx.translate(fx + fw / 2, fy + fh + 6); ctx.scale(0.95, 0.95); ctx.translate(-(fx + fw / 2), -(fy + fh + 6)); dibujarJefe(ctx, fp, reloj); ctx.restore();
+    texto('📞 EN LÍNEA', fx + fw / 2, fy + 18, 11, '#ffb09a', 'center');
+  }
+  const inf = llamada ? { ...info, nombre: '📞 EL PATRÓN' } : info;
   panelVidrio(30, 84, 740, 124);
-  ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText(info.nombre).width + 36;
-  ctx.fillStyle = info.col; trazoRedondo(ctx, 48, 62, wn, 30, 15); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-  texto(info.nombre, 48 + wn / 2, 83, 15, '#2a1a40', 'center', true);
+  ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText(inf.nombre).width + 36;
+  ctx.fillStyle = inf.col; trazoRedondo(ctx, 48, 62, wn, 30, 15); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+  texto(inf.nombre, 48 + wn / 2, 83, 15, '#2a1a40', 'center', true);
   const lin = envolver(L[1], 690, 21); let resto = Math.floor(vis);
   lin.forEach((l, i) => { const n = Math.max(0, Math.min(l.length, resto)); resto -= l.length + 1; texto(l.slice(0, n), 56, 124 + i * 28, 21, '#fff'); });
   if (!hablando) texto('▼', 742, 196 + Math.sin(reloj * 0.2) * 3, 18, '#ffd43b', 'center');

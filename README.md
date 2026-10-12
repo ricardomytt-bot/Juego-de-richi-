@@ -219,3 +219,10 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 ## Versión 3.40 — Pantalla bien puesta y música + efectos más estables
 - **Pantalla**: el tamaño del juego se calcula con lo que de verdad se ve en el celular (las barras de Safari cambian), se bloquea el scroll de la página y se reajusta al empezar cada nivel. Antes quedaba corrida hacia abajo.
 - **Sonido**: compresor más suave (la música ya no "aplasta" los efectos), música un poco más baja, y si el iPhone interrumpe el sonido, se reactiva solo (también al volver a la app) y la música arranca otra vez.
+
+## Versión 3.41 — Música nueva, sonido al salir de la app, bolas más lentas, historia con el Patrón y gráficos
+- **Música nueva por completo**: más épica y activa (130–158 BPM): bajo de sierra con fuerza, batería (bombo, caja, hi-hats, toms y platillos), arpegios brillantes, cuerdas, metales y una melodía de sintetizador con vibrato. Sin marimba ni instrumentos "de bebé". Cada nivel tiene su propia canción (menú, calle, tarde, playa, Chichén, Bufadora, puerto, mar, aeropuerto, sumidero, Tuxtla, jefes y cinemáticas).
+- **Salirse de la app no apaga el sonido**: ya no se corta al ir al inicio o abrir otra app (queda como app de audio en el Centro de control, con pausa/play). Solo se corta al cerrar la app.
+- **Bolas del Parachico más lentas** (y los fueguitos un poco más lentos).
+- **Historia con el Patrón**: la nota del Patrón aparece desde el nivel 7 ("vengan por mí a Chiapas"); en los niveles 8, 9 y 10 el Patrón habla por **videollamada** en las cinemáticas, y al terminar cada nivel hay pistas sobre él (Palenque será el siguiente destino).
+- **Gráficos más realistas sin perder el estilo animado**: luz de arriba y sombra abajo en personajes, enemigos, jefes y adornos; volumen y grano en el piso; cara con luz, sombra y mejillas; brillo en el pelo; viñeta suave y luz de sol (fría bajo el agua y en el avión).
