@@ -226,3 +226,9 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - **Bolas del Parachico más lentas** (y los fueguitos un poco más lentos).
 - **Historia con el Patrón**: la nota del Patrón aparece desde el nivel 7 ("vengan por mí a Chiapas"); en los niveles 8, 9 y 10 el Patrón habla por **videollamada** en las cinemáticas, y al terminar cada nivel hay pistas sobre él (Palenque será el siguiente destino).
 - **Gráficos más realistas sin perder el estilo animado**: luz de arriba y sombra abajo en personajes, enemigos, jefes y adornos; volumen y grano en el piso; cara con luz, sombra y mejillas; brillo en el pelo; viñeta suave y luz de sol (fría bajo el agua y en el avión).
+
+## Versión 3.42 — Música por ambiente y jefes súper épicos
+- **Niveles cálidos** (calle, tarde, playa, Chichén, puerto, Tuxtla, sumidero): tonos mayores, guitarra, acordes a contratiempo y ritmo de baile; más alegres.
+- **Nivel acuático** (mar): suave y tenue: seno suave, guitarra que resuena, cuerdas, casi sin batería.
+- **Niveles fríos** (Bufadora, aeropuerto): graves y pesados: octava más baja, bajo fuerte y batería lenta.
+- **Jefes**: orquesta épica de 24 compases: intro con taiko y coro, tema heroico con metales y cuerdas rápidas, puente con coro y subidas de tensión, y un clímax una nota más arriba. Hay 4 versiones: jefe (cálido), jefeAgua, jefeFrio y jefeSelva (tribal).

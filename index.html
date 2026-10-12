@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.41
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.42
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -349,70 +349,116 @@ function percusion(tipo, t, v) {
 const ESCALAS = { min: [0, 2, 3, 5, 7, 8, 10], arm: [0, 2, 3, 5, 7, 8, 11], frig: [0, 1, 4, 5, 7, 8, 10], mix: [0, 2, 4, 5, 7, 9, 10], may: [0, 2, 4, 5, 7, 9, 11], dor: [0, 2, 3, 5, 7, 9, 10] };
 const PROGRES = {
   heroica: ['0m', '8M', '3M', '10M', '0m', '8M', '10M', '7M'], oscura: ['0m', '0m', '8M', '10M', '0m', '5m', '8M', '7M'], frigia: ['0m', '1M', '0m', '10M', '0m', '1M', '10M', '0M'],
-  alegre: ['0M', '7M', '9m', '5M', '0M', '7M', '5M', '7M'], dorica: ['0m', '5M', '0m', '10M', '0m', '5M', '10M', '7m'], clima: ['0m', '10M', '8M', '7M', '0m', '10M', '8M', '7M'],
+  alegre: ['0M', '7M', '9m', '5M', '0M', '7M', '5M', '7M'], alegre2: ['0M', '5M', '7M', '5M', '0M', '9m', '5M', '7M'], alegre3: ['0M', '9m', '5M', '7M', '0M', '9m', '5M', '0M'],
+  sol: ['0M', '10M', '5M', '0M', '0M', '10M', '7M', '0M'], festiva: ['0M', '5M', '0M', '7M', '0M', '5M', '7M', '0M'], agua: ['0m', '8M', '5m', '10M', '0m', '8M', '3M', '10M'],
+  dorica: ['0m', '5M', '0m', '10M', '0m', '5M', '10M', '7m'], clima: ['0m', '10M', '8M', '7M', '0m', '10M', '8M', '7M'],
 };
 const BATERIAS = {
   epico: { k: 'x..x..x.x..x..x.', c: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', t: '' }, marcha: { k: 'x...x...x...x...', c: '....x.......x...', h: '..x...x...x...x.', t: '' },
   tribal: { k: 'x..x.x..x..x.x..', c: '....x.....x.x...', h: 'x.xxx.xxx.xxx.xx', t: '..x...x.....x..x' }, ligera: { k: 'x.......x.......', c: '....x.......x...', h: 'x.x.x.x.x.x.x.x.', t: '' },
-  ninguna: { k: '', c: '', h: '', t: '' },
+  pesada: { k: 'x.......x.x.....', c: '........x.......', h: 'x...x...x...x...', t: '' }, agua: { k: 'x.......x.......', c: '', h: '', t: '' }, ninguna: { k: '', c: '', h: '', t: '' },
 };
+// Cálidas y alegres: guitarra, ritmo de baile, tonos mayores · Acuáticas: suaves y tenues · Frías: graves y pesadas · Jefes: orquesta épica (coro, taiko, metales, cuerdas)
 const PISTAS = {
-  menu:       { bpm: 112, root: 110,   esc: 'arm',  prog: 'heroica', bat: 'ligera',  arp: 1, stab: 0, lead: 'saw', semilla: 11, pico: 0.55 },
-  calle:      { bpm: 132, root: 110,   esc: 'min',  prog: 'heroica', bat: 'epico',   arp: 2, stab: 1, lead: 'saw', semilla: 3 },
-  tarde:      { bpm: 124, root: 73.42, esc: 'min',  prog: 'oscura',  bat: 'marcha',  arp: 2, stab: 1, lead: 'sq',  semilla: 7 },
-  playa:      { bpm: 136, root: 98,    esc: 'mix',  prog: 'alegre',  bat: 'ligera',  arp: 2, stab: 1, lead: 'sq',  semilla: 21 },
-  chichen:    { bpm: 148, root: 82.41, esc: 'frig', prog: 'frigia',  bat: 'tribal',  arp: 2, stab: 1, lead: 'saw', semilla: 5 },
-  bufadora:   { bpm: 138, root: 73.42, esc: 'dor',  prog: 'dorica',  bat: 'epico',   arp: 2, stab: 1, lead: 'saw', semilla: 13 },
-  puerto:     { bpm: 128, root: 65.41, esc: 'mix',  prog: 'alegre',  bat: 'marcha',  arp: 1, stab: 1, lead: 'sq',  semilla: 17 },
-  mar:        { bpm: 104, root: 82.41, esc: 'min',  prog: 'clima',   bat: 'ligera',  arp: 1, stab: 0, lead: 'saw', semilla: 9, pico: 0.55 },
-  aeropuerto: { bpm: 150, root: 92.5,  esc: 'arm',  prog: 'heroica', bat: 'epico',   arp: 2, stab: 1, lead: 'sq',  semilla: 31 },
-  sumidero:   { bpm: 142, root: 73.42, esc: 'frig', prog: 'frigia',  bat: 'tribal',  arp: 2, stab: 1, lead: 'saw', semilla: 25 },
-  tuxtla:     { bpm: 126, root: 87.31, esc: 'may',  prog: 'alegre',  bat: 'marcha',  arp: 2, stab: 1, lead: 'sq',  semilla: 41 },
-  jefe:       { bpm: 158, root: 110,   esc: 'arm',  prog: 'clima',   bat: 'epico',   arp: 2, stab: 1, lead: 'saw', semilla: 2, intensa: 1 },
+  menu:       { bpm: 116, root: 98,    esc: 'may',  prog: 'alegre2', bat: 'ligera', arp: 1, guit: 1, sync: 1, stab: 0, lead: 'tri', semilla: 11, vd: 0.8, pico: 0.58 },
+  calle:      { bpm: 128, root: 98,    esc: 'may',  prog: 'alegre',  bat: 'marcha', arp: 2, guit: 1, sync: 1, stab: 1, lead: 'sq',  semilla: 3 },
+  tarde:      { bpm: 112, root: 73.42, esc: 'mix',  prog: 'sol',     bat: 'ligera', arp: 1, guit: 1, sync: 1, stab: 0, lead: 'tri', semilla: 7, vd: 0.85 },
+  playa:      { bpm: 140, root: 87.31, esc: 'may',  prog: 'festiva', bat: 'marcha', arp: 2, guit: 1, sync: 1, stab: 1, lead: 'sq',  semilla: 21 },
+  chichen:    { bpm: 134, root: 82.41, esc: 'mix',  prog: 'alegre3', bat: 'tribal', arp: 2, guit: 1, sync: 0, stab: 1, lead: 'tri', semilla: 5 },
+  puerto:     { bpm: 124, root: 65.41, esc: 'may',  prog: 'alegre2', bat: 'marcha', arp: 2, guit: 1, sync: 1, stab: 1, lead: 'tri', semilla: 17 },
+  tuxtla:     { bpm: 132, root: 98,    esc: 'may',  prog: 'festiva', bat: 'marcha', arp: 2, guit: 1, sync: 1, stab: 1, lead: 'sq',  semilla: 41 },
+  sumidero:   { bpm: 138, root: 73.42, esc: 'mix',  prog: 'sol',     bat: 'tribal', arp: 2, guit: 1, sync: 1, stab: 0, lead: 'tri', semilla: 25 },
+  mar:        { bpm: 90,  root: 82.41, esc: 'min',  prog: 'agua',    bat: 'agua',   arp: 1, guit: 1, sync: 0, stab: 0, lead: 'sin', semilla: 9, vd: 0.4, va: 0.7, suave: 1, pico: 0.5 },
+  bufadora:   { bpm: 108, root: 55,    esc: 'min',  prog: 'oscura',  bat: 'pesada', arp: 1, stab: 0, lead: 'saw', semilla: 13, grave: 1 },
+  aeropuerto: { bpm: 118, root: 61.74, esc: 'arm',  prog: 'heroica', bat: 'pesada', arp: 2, stab: 1, lead: 'saw', semilla: 31, grave: 1 },
+  jefe:       { epico: 1, bpm: 152, root: 110,   esc: 'arm',  prog: 'clima',   semilla: 2 },
+  jefeAgua:   { epico: 1, bpm: 134, root: 82.41, esc: 'min',  prog: 'oscura',  semilla: 14 },
+  jefeFrio:   { epico: 1, bpm: 144, root: 61.74, esc: 'min',  prog: 'heroica', semilla: 19, grave: 1 },
+  jefeSelva:  { epico: 1, bpm: 160, root: 73.42, esc: 'frig', prog: 'frigia',  semilla: 27, tribal: 1 },
   suspenso:   { bpm: 72,  root: 98,    esc: 'min',  prog: 'oscura',  bat: 'ninguna', arp: 0, stab: 0, lead: 'saw', semilla: 6, pico: 0.5 },
 };
-function componer(P) {                                       // devuelve la lista de notas de toda la canción (16 compases) y su duración en muestras
+const musicaJefe = () => ({ mar: 'jefeAgua', bufadora: 'jefeFrio', aeropuerto: 'jefeFrio', chichen: 'jefeSelva', sumidero: 'jefeSelva', tuxtla: 'jefeSelva' })[tema] || 'jefe';
+function melodiaCompas(P, esc, f, azar, b, tonos, plantillas, estado) {   // una frase de melodía para el compás b: sigue un hilo de notas de la escala y se apoya en las notas del acorde
+  const semitono = g => esc[((g % 7) + 7) % 7] + 12 * Math.floor(g / 7), pl = plantillas[Math.floor(azar() * plantillas.length)], notas = [];
+  pl.forEach((s0, i) => {
+    let mejor = estado.g + Math.floor(azar() * 5) - 2, bd = 99;
+    if (s0 === 0 || azar() < 0.4) for (let g = mejor - 2; g <= mejor + 2; g++) { const m = semitono(g) % 12, dist = Math.min(...tonos.map(x => Math.min(Math.abs(x - m), 12 - Math.abs(x - m)))) + Math.abs(g - mejor) * 0.2; if (dist < bd) { bd = dist; mejor = g; } }
+    estado.g = Math.max(2, Math.min(15, mejor));
+    const sig = pl[i + 1] !== undefined ? pl[i + 1] : 16, ultima = i === pl.length - 1 && b % 4 === 3;
+    notas.push({ s0, dur: ultima ? 14 : sig - s0, st: semitono(estado.g) });
+  });
+  return notas;
+}
+function componer(P) {                                       // devuelve la lista de notas de toda la canción y su duración en muestras
+  if (P.epico) return componerEpico(P);
   const d = 60 / P.bpm / 4, compases = 16, esc = ESCALAS[P.esc], prog = PROGRES[P.prog].map(x => [parseInt(x), x.endsWith('m') ? [0, 3, 7] : [0, 4, 7]]), ev = [], f = st => Math.pow(2, st / 12);
   let sem = P.semilla * 7919 + 13; const azar = () => { sem = (sem * 1103515245 + 12345) & 0x7fffffff; return sem / 0x7fffffff; };
   const bat = BATERIAS[P.bat], plantillas = [[0, 3, 6, 8, 10, 12, 14], [0, 2, 4, 6, 8, 10, 12, 14], [0, 4, 6, 8, 12], [0, 3, 6, 9, 12, 14], [0, 6, 8, 14]];
-  let grado = 7;                                             // el hilo de la melodía (en grados de la escala)
-  const semitono = g => esc[((g % 7) + 7) % 7] + 12 * Math.floor(g / 7);
+  const vd = P.vd || 1, va = P.va || 1, oc = P.grave ? 0.5 : 1, est = { g: 7 };
   for (let b = 0; b < compases; b++) {
     const [r, ct] = prog[b % prog.length], t0 = b * 16 * d, tonos = ct.map(c => (r + c) % 12), segunda = b >= 8, clima = b >= 12;
     for (let s = 0; s < 16; s++) {                           // batería
-      const t = t0 + s * d, fill = b % 4 === 3 && s >= 12;
-      if (bat.k[s] === 'x') ev.push({ k: 'x', tipo: 'bombo', t, v: 0.62 });
-      if (bat.c[s] === 'x' && !fill) ev.push({ k: 'x', tipo: 'caja', t, v: 0.26 });
-      if (bat.h[s] === 'x') ev.push({ k: 'x', tipo: 'hat', t, v: (s % 4 === 0 ? 0.07 : 0.045) });
-      if (bat.t[s] === 'x') ev.push({ k: 'x', tipo: 'tom', t, v: 0.3, f: 150 - (s % 8) * 5 });
-      if (fill && P.bat !== 'ninguna') ev.push({ k: 'x', tipo: s % 2 ? 'caja' : 'tom', t, v: 0.28, f: 190 - (s - 12) * 25 });
+      const t = t0 + s * d, fill = b % 4 === 3 && s >= 12 && P.bat !== 'agua';
+      if (bat.k[s] === 'x') ev.push({ k: 'x', tipo: 'bombo', t, v: 0.62 * vd });
+      if (bat.c[s] === 'x' && !fill) ev.push({ k: 'x', tipo: 'caja', t, v: 0.26 * vd });
+      if (bat.h[s] === 'x') ev.push({ k: 'x', tipo: 'hat', t, v: (s % 4 === 0 ? 0.07 : 0.045) * vd });
+      if (bat.t[s] === 'x') ev.push({ k: 'x', tipo: 'tom', t, v: 0.3 * vd, f: 150 - (s % 8) * 5 });
+      if (fill && P.bat !== 'ninguna') ev.push({ k: 'x', tipo: s % 2 ? 'caja' : 'tom', t, v: 0.28 * vd, f: 190 - (s - 12) * 25 });
     }
-    if (b % 4 === 0 && P.bat !== 'ninguna') ev.push({ k: 'x', tipo: 'crash', t: t0, v: 0.09 });
-    if (P.bat !== 'ninguna') for (let s = 0; s < 16; s += 2) {                                            // bajo con fuerza (corcheas)
-      const quinta = s % 8 === 6, oct = s === 10 || (P.intensa && s === 14);
-      ev.push({ k: 'b', t: t0 + s * d, f: P.root * 2 * f(r + (quinta ? 7 : 0) + (oct ? 12 : 0)), dur: d * 1.9, v: 0.21 });
-    } else if (b % 2 === 0) ev.push({ k: 'b', t: t0, f: P.root * 2 * f(r), dur: d * 14, v: 0.16 });
-    ct.forEach((c, i) => ev.push({ k: 'p', t: t0, f: P.root * 2 * f(r + c + (i === 2 ? 12 : 0)), dur: d * 16, v: P.bat === 'ninguna' ? 0.05 : 0.032 }));            // cuerdas
+    if (b % 4 === 0 && P.bat !== 'ninguna' && !P.suave) ev.push({ k: 'x', tipo: 'crash', t: t0, v: 0.09 * vd });
+    if (P.bat !== 'ninguna' && !P.suave) for (let s = 0; s < 16; s += 2) {                                 // bajo con fuerza (corcheas)
+      const quinta = s % 8 === 6, oct = s === 10;
+      ev.push({ k: 'b', t: t0 + s * d, f: P.root * 2 * f(r + (quinta ? 7 : 0) + (oct ? 12 : 0)), dur: d * 1.9, v: P.grave ? 0.27 : 0.2 });
+    } else if (b % 2 === 0) ev.push({ k: 'b', t: t0, f: P.root * 2 * f(r), dur: d * 14, v: P.suave ? 0.13 : 0.16 });
+    ct.forEach((c, i) => ev.push({ k: 'p', t: t0, f: P.root * 2 * f(r + c + (i === 2 ? 12 : 0)), dur: d * 16, v: P.suave ? 0.07 : P.bat === 'ninguna' ? 0.05 : 0.032 }));            // cuerdas
     if (P.arp) { const paso = P.arp === 2 ? 1 : 2, arr = [r, r + ct[1], r + 7, r + 12], seq = [0, 1, 2, 3, 2, 1, 2, 1];
-      for (let s = 0; s < 16; s += paso) ev.push({ k: 'a', t: t0 + s * d, f: P.root * 4 * f(arr[seq[(s / paso) % 8]] + (segunda ? 12 : 0)), dur: d * (paso === 1 ? 1.6 : 2.2), v: s % 4 === 0 ? 0.075 : 0.05 }); }
-    if (P.stab && b % 2 === 0) [0, 6].forEach(s => ct.forEach(c => ev.push({ k: 's', t: t0 + s * d, f: P.root * 4 * f(r + c), dur: d * 2.4, v: clima ? 0.065 : 0.05 })));            // metales
+      for (let s = 0; s < 16; s += paso) { const fr = P.root * 4 * oc * f(arr[seq[(s / paso) % 8]] + (segunda ? 12 : 0)), ac = s % 4 === 0;
+        if (P.guit) ev.push({ k: 'g', t: t0 + s * d, f: fr, dur: d * (paso === 1 ? 2.4 : 4), v: (ac ? 0.16 : 0.11) * va, sus: P.suave ? 0.9985 : 0.996 });
+        else ev.push({ k: 'a', t: t0 + s * d, f: fr, dur: d * (paso === 1 ? 1.6 : 2.2), v: (ac ? 0.075 : 0.05) * va }); } }
+    if (P.sync) [2, 6, 10, 14].forEach(s => ct.forEach(c => ev.push({ k: 'g', t: t0 + s * d, f: P.root * 2 * f(r + c + 12), dur: d * 1.6, v: 0.085, sus: 0.994 })));          // acordes a contratiempo (ritmo alegre)
+    if (P.stab && b % 2 === 0) [0, 6].forEach(s => ct.forEach(c => ev.push({ k: 's', t: t0 + s * d, f: P.root * 4 * oc * f(r + c), dur: d * 2.4, v: clima ? 0.065 : 0.05 })));            // metales
     if (P.bat !== 'ninguna' || b % 2 === 0) {                // melodía (frase A, A', A, clímax)
       const fr = Math.floor(b / 4), kind = fr === 1 ? 1 : fr === 3 ? 2 : 0, rng0 = sem;
-      sem = P.semilla * 104729 + kind * 7001 + (b % 4) * 31;
-      const pl = plantillas[Math.floor(azar() * plantillas.length)], notas = [];
-      if (b % 4 === 0) grado = kind === 2 ? 11 : 7;
-      pl.forEach((s0, i) => {
-        let mejor = grado + Math.floor(azar() * 5) - 2, bd = 99;
-        if (s0 === 0 || azar() < 0.4) for (let g = mejor - 2; g <= mejor + 2; g++) { const m = semitono(g) % 12, dist = Math.min(...tonos.map(x => Math.min(Math.abs(x - m), 12 - Math.abs(x - m)))) + Math.abs(g - mejor) * 0.2; if (dist < bd) { bd = dist; mejor = g; } }
-        grado = Math.max(2, Math.min(15, mejor));
-        const sig = pl[i + 1] !== undefined ? pl[i + 1] : 16, last = i === pl.length - 1 && b % 4 === 3;
-        notas.push({ s0, dur: last ? 14 : sig - s0, g: grado });
-      });
-      notas.forEach(n => ev.push({ k: 'l', t: t0 + n.s0 * d, f: P.root * 2 * f(semitono(n.g)), dur: d * Math.max(1, n.dur * 0.94), v: clima ? 0.15 : 0.125, w: P.lead }));
+      sem = P.semilla * 104729 + kind * 7001 + (b % 4) * 31; if (b % 4 === 0) est.g = kind === 2 ? 11 : 7;
+      melodiaCompas(P, esc, f, azar, b, tonos, plantillas, est).forEach(n => ev.push({ k: 'l', t: t0 + n.s0 * d, f: P.root * 2 * oc * f(n.st), dur: d * Math.max(1, n.dur * 0.94), v: (clima ? 0.15 : 0.125) * (P.lead === 'sin' ? 1.5 : P.lead === 'tri' ? 1.25 : 1), w: P.lead }));
       sem = rng0 + b;
     }
   }
   return { ev, N: Math.floor(compases * 16 * d * SR), pico: P.pico || 0.62 };
+}
+function componerEpico(P) {                                  // canción de jefe: intro con taiko y coro, tema heroico, puente, y un clímax una nota más arriba con la orquesta completa
+  const d = 60 / P.bpm / 4, compases = 24, esc = ESCALAS[P.esc], prog = PROGRES[P.prog].map(x => [parseInt(x), x.endsWith('m') ? [0, 3, 7] : [0, 4, 7]]), ev = [], f = st => Math.pow(2, st / 12);
+  let sem = P.semilla * 7919 + 13; const azar = () => { sem = (sem * 1103515245 + 12345) & 0x7fffffff; return sem / 0x7fffffff; };
+  const plantillas = [[0, 8], [0, 4, 8, 12], [0, 6, 8, 12, 14], [0, 3, 6, 8, 12], [0, 8, 12, 14]], est = { g: 7 };
+  for (let b = 0; b < compases; b++) {
+    const [r0, ct] = prog[b % prog.length], tr = b >= 16 ? 2 : 0, r = r0 + tr, t0 = b * 16 * d, tonos = ct.map(c => (r + c) % 12);
+    const sec = b < 4 ? 0 : b < 12 ? 1 : b < 16 ? 2 : 3;     // 0 intro · 1 tema · 2 puente · 3 clímax
+    const tk = (s, v) => ev.push({ k: 'x', tipo: 'taiko', t: t0 + s * d, v }), bm = s => ev.push({ k: 'x', tipo: 'bombo', t: t0 + s * d, v: 0.7 }), ca = (s, v) => ev.push({ k: 'x', tipo: 'caja', t: t0 + s * d, v: v || 0.3 });
+    if (sec === 0) { tk(0, 0.6 + b * 0.06); tk(8, 0.5 + b * 0.06); if (b === 3) for (let s = 10; s < 16; s++) tk(s, 0.35 + (s - 10) * 0.07); }
+    else if (sec === 1 || sec === 3) {
+      [0, 3, 6, 8, 11, 14].forEach(s => bm(s)); [4, 12].forEach(s => ca(s)); if (sec === 3) { ca(14, 0.18); ca(15, 0.2); [2, 10].forEach(s => bm(s)); }
+      for (let s = 0; s < 16; s += sec === 3 ? 1 : 2) ev.push({ k: 'x', tipo: 'hat', t: t0 + s * d, v: s % 4 === 0 ? 0.07 : 0.04 });
+      [0, 6, 10].forEach(s => tk(s, 0.7)); if (P.tribal) [2, 7, 12, 15].forEach(s => ev.push({ k: 'x', tipo: 'tom', t: t0 + s * d, v: 0.34, f: 120 + (s % 5) * 14 }));
+      if (b % 4 === 3) for (let s = 12; s < 16; s++) tk(s, 0.5 + (s - 12) * 0.12);
+    } else { bm(0); bm(8); ca(8, 0.34); tk(0, 0.75); tk(8, 0.75); }
+    if (b % 4 === 0 || (sec === 3 && b % 2 === 0)) ev.push({ k: 'x', tipo: 'crash', t: t0, v: 0.12 });
+    if (b === 3 || b === 11 || b === 15 || b === 23) ev.push({ k: 'r', t: t0 + 4 * d, dur: 12 * d, v: 0.13 });                  // subida de tensión antes de cada gran entrada
+    if (sec === 1 || sec === 3) for (let s = 0; s < 16; s += 2) ev.push({ k: 'b', t: t0 + s * d, f: P.root * 2 * f(r + (s % 8 === 6 ? 7 : 0) + (s === 10 ? 12 : 0)), dur: d * 1.9, v: 0.27 });
+    else ev.push({ k: 'b', t: t0, f: P.root * 2 * f(r), dur: d * 15, v: 0.22 });
+    if (sec !== 0 || b >= 2) for (let s = 0; s < 16; s += sec === 2 ? 4 : 1) ev.push({ k: 'a', t: t0 + s * d, f: P.root * 2 * f(r + (s % 8 === 6 ? 7 : s % 4 === 3 ? ct[1] : 0)), dur: d * 0.9, v: sec === 2 ? 0.035 : s % 4 === 0 ? 0.075 : 0.05 });   // cuerdas rápidas
+    ct.forEach((c, i) => ev.push({ k: 'c', t: t0, f: P.root * 2 * f(r + c + (i === 2 ? 12 : 0)), dur: d * 16 - 0.05, v: sec === 0 ? 0.045 : sec === 2 ? 0.075 : 0.06 }));                               // coro
+    if ((sec === 1 && b % 2 === 0) || sec === 3) { [0, 8].forEach(s => { if (sec === 1 && s === 8) return; [0, 7].forEach(o => ev.push({ k: 's', t: t0 + s * d, f: P.root * 2 * f(r + o), dur: d * (sec === 3 ? 7 : 5), dc: sec === 3 ? 1.5 : 2.4, v: 0.075 })); ct.forEach(c => ev.push({ k: 's', t: t0 + s * d, f: P.root * 4 * f(r + c), dur: d * 3, v: 0.055 })); }); }     // metales
+    if (sec !== 0) {                                         // melodía heroica
+      const fr = b % 4, rng0 = sem; sem = P.semilla * 104729 + (sec === 3 ? 7001 : 0) + fr * 31; if (fr === 0) est.g = sec === 3 ? 11 : 8;
+      melodiaCompas(P, esc, f, azar, b, tonos, plantillas, est).forEach(n => {
+        const fm = P.root * 2 * f(n.st + tr), dur = d * Math.max(1, n.dur * 0.96);
+        if (sec === 2) ev.push({ k: 'c', t: t0 + n.s0 * d, f: fm * 2, dur, v: 0.07 });
+        else { ev.push({ k: 'l', t: t0 + n.s0 * d, f: fm, dur, v: 0.15, w: 'saw' }); ev.push({ k: 'l', t: t0 + n.s0 * d, f: fm * 1.4983, dur, v: sec === 3 ? 0.085 : 0.05, w: 'saw' }); if (sec === 3) ev.push({ k: 'l', t: t0 + n.s0 * d, f: fm * 2, dur, v: 0.07, w: 'sq' }); }
+      });
+      sem = rng0 + b;
+    }
+  }
+  return { ev, N: Math.floor(compases * 16 * d * SR), pico: 0.7 };
 }
 let nombreMusica = null, pistaAct = null, pasoM = 0, proxT = 0;
 // En el iPhone la música (con un reproductor <audio>) no siempre sonaba aunque los efectos sí: ahora la música se toca con WebAudio, igual que los efectos.
@@ -540,7 +586,7 @@ function sintMusica(ev, N, pico) {                         // la canción comple
     if (e.k === 'l') {                                       // melodía: dos sierras (o cuadradas) un poco desafinadas, con vibrato
       const n = Math.floor(e.dur * SR), fr = e.f; let p1 = 0, p2 = 0, lp = 0;
       for (let i = 0; i < n; i++) { const a = i / SR, vib = 1 + 0.005 * Math.sin(T2 * 5.5 * a) * Math.min(1, a / 0.2); p1 += fr * vib * 0.997 / SR; p1 -= Math.floor(p1); p2 += fr * vib * 1.003 / SR; p2 -= Math.floor(p2);
-        const w = e.w === 'sq' ? ((p1 < 0.5 ? 1 : -1) + (p2 < 0.5 ? 1 : -1)) * 0.5 : p1 + p2 - 1; lp += 0.3 * (w - lp);
+        const w = e.w === 'sq' ? ((p1 < 0.5 ? 1 : -1) + (p2 < 0.5 ? 1 : -1)) * 0.5 : e.w === 'tri' ? (4 * Math.abs(p1 - 0.5) - 1 + 4 * Math.abs(p2 - 0.5) - 1) * 0.5 : e.w === 'sin' ? (Math.sin(T2 * p1) + Math.sin(T2 * p2)) * 0.5 : p1 + p2 - 1; lp += 0.3 * (w - lp);
         poner(n0 + i, lp * e.v * Math.min(1, a / 0.012) * Math.min(1, (n - i) / (0.07 * SR)) * (0.72 + 0.28 * Math.exp(-3 * a))); }
     } else if (e.k === 'a') {                                // arpegio: pulsos brillantes que se apagan rápido
       const n = Math.floor(e.dur * SR); let p1 = 0, lp = 0;
@@ -557,10 +603,22 @@ function sintMusica(ev, N, pico) {                         // la canción comple
     } else if (e.k === 's') {                                // metales: golpes cortos y llenos
       const n = Math.floor(e.dur * SR); let p1 = 0, p2 = 0, lp = 0;
       for (let i = 0; i < n; i++) { const u = i / n; p1 += e.f / SR; p1 -= Math.floor(p1); p2 += e.f * 1.005 / SR; p2 -= Math.floor(p2); lp += (0.42 - 0.2 * u) * (p1 + p2 - 1 - lp);
-        poner(n0 + i, lp * e.v * Math.exp(-4.2 * u) * Math.min(1, i / (0.005 * SR))); }
+        poner(n0 + i, lp * e.v * Math.exp(-(e.dc || 4.2) * u) * Math.min(1, i / (0.005 * SR))); }
+    } else if (e.k === 'g') {                                // guitarra / arpa (cuerda pulsada): suena cálida y natural
+      const L = Math.max(2, Math.round(SR / e.f)), cu = new Float32Array(L), n = Math.floor(e.dur * SR), sus = e.sus || 0.996; let idx = 0;
+      for (let i = 0; i < L; i++) cu[i] = Math.random() * 2 - 1;
+      for (let i = 0; i < n; i++) { const y = cu[idx], nx = cu[(idx + 1) % L]; cu[idx] = 0.5 * (y + nx) * sus; idx = (idx + 1) % L; poner(n0 + i, y * e.v * Math.min(1, i / (0.002 * SR)) * Math.min(1, (n - i) / (0.04 * SR))); }
+    } else if (e.k === 'c') {                                // coro: tres sierras suaves pasadas por dos "vocales" (ah)
+      const n = Math.floor((e.dur + 0.4) * SR), r1 = resonador(780, 4), r2 = resonador(1180, 5); let p1 = 0, p2 = 0, p3 = 0;
+      for (let i = 0; i < n; i++) { const a = i / SR, vib = 1 + 0.004 * Math.sin(T2 * 5.2 * a); p1 += e.f * 0.995 * vib / SR; p1 -= Math.floor(p1); p2 += e.f * vib / SR; p2 -= Math.floor(p2); p3 += e.f * 1.006 * vib / SR; p3 -= Math.floor(p3);
+        const w = (p1 + p2 + p3) * 2 - 3; poner(n0 + i, (r1(w) + 0.6 * r2(w)) * 2.6 * e.v * Math.min(1, a / 0.4, (e.dur + 0.4 - a) / 0.4)); }
+    } else if (e.k === 'r') {                                // subida de tensión: ruido que se va haciendo más agudo y fuerte
+      const n = Math.floor(e.dur * SR); let lp = 0;
+      for (let i = 0; i < n; i++) { const u = i / n, w = Math.random() * 2 - 1; lp += (0.03 + 0.55 * u) * (w - lp); poner(n0 + i, (w - lp) * e.v * u * u * 3); }
     } else if (e.k === 'x') {                                // batería
       if (e.tipo === 'bombo') { const n = Math.floor(0.22 * SR); let ph = 0; for (let i = 0; i < n; i++) { const u = i / SR; ph += (46 + 120 * Math.exp(-u * 32)) / SR; poner(n0 + i, Math.sin(T2 * ph) * e.v * Math.exp(-u * 17)); } }
       else if (e.tipo === 'caja') { const n = Math.floor(0.17 * SR); let lp = 0, ph = 0; for (let i = 0; i < n; i++) { const u = i / SR, w = Math.random() * 2 - 1; lp += 0.5 * (w - lp); ph += 190 / SR; poner(n0 + i, ((w - lp) * 1.4 + Math.sin(T2 * ph) * 0.5) * e.v * Math.exp(-u * 22)); } }
+      else if (e.tipo === 'taiko') { const n = Math.floor(0.55 * SR); let ph = 0, lp = 0; for (let i = 0; i < n; i++) { const u = i / SR, w = Math.random() * 2 - 1; lp += 0.12 * (w - lp); ph += (58 + 62 * Math.exp(-u * 18)) / SR; poner(n0 + i, (Math.sin(T2 * ph) * 1.1 + lp * (u < 0.05 ? 1.6 : 0)) * e.v * Math.exp(-u * 6.5)); } }
       else if (e.tipo === 'tom') { const n = Math.floor(0.26 * SR); let ph = 0; for (let i = 0; i < n; i++) { const u = i / SR; ph += ((e.f || 140) * (0.7 + 0.3 * Math.exp(-u * 12))) / SR; poner(n0 + i, Math.sin(T2 * ph) * e.v * Math.exp(-u * 11)); } }
       else if (e.tipo === 'crash') { const n = Math.floor(0.9 * SR); let lp = 0; for (let i = 0; i < n; i++) { const u = i / SR, w = Math.random() * 2 - 1; lp += 0.6 * (w - lp); poner(n0 + i, (w - lp) * e.v * Math.exp(-u * 3.2)); } }
       else { const n = Math.floor(0.05 * SR); let lp = 0; for (let i = 0; i < n; i++) { const w = Math.random() * 2 - 1; lp += 0.45 * (w - lp); poner(n0 + i, (w - lp) * e.v * 2.2 * Math.exp(-5 * i / n)); } }
@@ -3836,7 +3894,7 @@ function iaPescador(j) {
 function actualizarLagarto(p, pata, pisando) {
   const j = jefe;
   if (!j.vivo) { j.muerte++; j.lodos = []; j.mordida = null; j.coronas = []; for (const e of cocodrilos) if (e.mini) e.vivo = false; if (j.muerte >= 110 && (monedasJ.every(m => m.tomada) || j.muerte >= 520)) finDeJefe(); return; }
-  if (j.estadoJ === 'dormido') { if (p.x > arenaX + 100) { j.estadoJ = 'activo'; sfx('rugido'); temblor = 24; j.timer = 120; j.entra = 0; j.t = 0; j.tip = 460; musica('jefe'); } return; }
+  if (j.estadoJ === 'dormido') { if (p.x > arenaX + 100) { j.estadoJ = 'activo'; sfx('rugido'); temblor = 24; j.timer = 120; j.entra = 0; j.t = 0; j.tip = 460; musica(musicaJefe()); } return; }
   j.t++; if (j.invul > 0) j.invul--; if (j.flash > 0) j.flash--; if (j.tip > 0) j.tip--; if (j.rugido > 0) j.rugido--;
   if (j.entra < 1) { j.entra = Math.min(1, j.entra + 1 / 90); if (j.t % 24 === 0) temblor = Math.max(temblor, 5); return; }
   if (!j.corona && j.coronaT > 0 && --j.coronaT <= 0) { j.corona = true; sfx('diente'); chispas(j.x + 110, j.y + 10, 16, '#ffd23f', 4); }
@@ -4210,7 +4268,7 @@ function dibujarRayo(g, j) {
 function actualizarKukulkan(p) {
   const j = jefe;
   if (!j.vivo) { j.muerte++; if (j.muerte >= 110 && (monedasJ.every(m => m.tomada) || j.muerte >= 520)) finDeJefe(); return; }
-  if (j.estadoJ === 'dormido') { if (p.x > arenaX + 100) { j.estadoJ = 'activo'; sfx('rugido'); temblor = 24; j.timer = 210; j.baja = 0; j.t = 0; j.tip = 460; musica('jefe'); } return; }
+  if (j.estadoJ === 'dormido') { if (p.x > arenaX + 100) { j.estadoJ = 'activo'; sfx('rugido'); temblor = 24; j.timer = 210; j.baja = 0; j.t = 0; j.tip = 460; musica(musicaJefe()); } return; }
   j.t++; if (j.invul > 0) j.invul--; if (j.flash > 0) j.flash--; if (j.tip > 0) j.tip--;
   if (j.baja < 1) { j.baja = Math.min(1, j.baja + 1 / 170); if (j.t % 28 === 0) temblor = Math.max(temblor, 6); }
   const R = j.rayo, enR = !!R;
@@ -4242,7 +4300,7 @@ function dientesTiburon(j) {
 function actualizarTiburon(p, pata, pisando) {
   const j = jefe;
   if (!j.vivo) { j.muerte++; if (j.muerte >= 110 && (monedasJ.every(m => m.tomada) || j.muerte >= 520)) finDeJefe(); return; }
-  if (j.estadoJ === 'dormido') { if (p.x > arenaX + 100) { j.estadoJ = 'activo'; sfx('rugido'); temblor = 24; j.timer = 140; j.entra = 0; j.t = 0; j.tip = 460; musica('jefe'); } return; }
+  if (j.estadoJ === 'dormido') { if (p.x > arenaX + 100) { j.estadoJ = 'activo'; sfx('rugido'); temblor = 24; j.timer = 140; j.entra = 0; j.t = 0; j.tip = 460; musica(musicaJefe()); } return; }
   j.t++; if (j.invul > 0) j.invul--; if (j.flash > 0) j.flash--; if (j.tip > 0) j.tip--;
   if (j.entra < 1) { j.entra = Math.min(1, j.entra + 1 / 150); if (j.t % 24 === 0) temblor = Math.max(temblor, 6); }
   const ea = j.entra * j.entra * (3 - 2 * j.entra);
@@ -4345,7 +4403,7 @@ function actualizarJefe(p, pata, pisando) {
     if (j.muerte >= 110 && (monedasJ.every(m => m.tomada) || j.muerte >= 520)) finDeJefe();
     return;
   }
-  if (j.estadoJ === 'dormido') { if (p.x > arenaX + 100) { j.estadoJ = 'activo'; sfx('rugido'); temblor = 20; j.timer = 60; musica('jefe'); } return; }
+  if (j.estadoJ === 'dormido') { if (p.x > arenaX + 100) { j.estadoJ = 'activo'; sfx('rugido'); temblor = 20; j.timer = 60; musica(musicaJefe()); } return; }
   j.t++; if (j.invul > 0) j.invul--; if (j.aturdido > 0) j.aturdido--; if (j.congelado > 0) j.congelado--;
   if (j.tipo === 'piloto') actualizarFuegosPiloto(j, p);
   const dx = (p.x + p.w / 2) - (j.x + j.w / 2);
@@ -5075,7 +5133,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.41', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.42', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
