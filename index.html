@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.33
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.34
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -3012,7 +3012,7 @@ function cargarNivel(n) {
     de.forEach((t, i) => { const q = sitios[i]; if (q) stickersLista.push({ id: t.id, e: t.e, nombre: t.nombre, x: q[0] * T + 4, y: q[1] * T + 4, w: 24, h: 24, tomado: !!datos.stickers[t.id], t: Math.floor(Math.random() * 100) }); }); }
   { const A = { escarabajos, murcielagos, serpientes, cangrejos, erizos, gaviotas, dorados, ajolotes, almohadas, papeles, cafeteras, jaguares, cocodrilos, nahuales }; elitesLista = [];
     for (const [nom, i, el, tipo] of extras) if (el) { const o = A[nom][i]; o.elite = tipo; o.hp = o.hp ? o.hp + 2 : 2; elitesLista.push(o); } }
-  const hpJ = { patron: 6, patrona: 8, playero: 7, kukulkan: 14, chalan: 10, pescador: 8, tiburon: 7, piloto: 9, lagarto: 3 }[N.jefe];
+  const hpJ = { patron: 6, patrona: 8, playero: 7, kukulkan: 14, chalan: 10, pescador: 8, tiburon: 7, piloto: 9, lagarto: 10 }[N.jefe];
   jefe = { tipo: N.jefe, x: (COLS - 5) * T, y: 12 * T - 78, w: 46, h: 78, vx: 0, vy: 0, hp: hpJ, hpMax: hpJ, vivo: true, estadoJ: 'dormido',
     fase: 'camina', timer: 60, ciclo: 0, invul: 0, aturdido: 0, congelado: 0, dir: -1, t: 0, cargaDir: -1, muerte: 0, cayendo: false, saltoDir: 1 };
   if (N.jefe === 'tiburon') Object.assign(jefe, { w: 220, h: 130, x: arenaX + W - 230, y: 125, entra: 0, boca: 0, flash: 0, tip: 0, sangres: [], dientes: [], viento: null, timer: 120, ciclo: 0 });
@@ -3237,7 +3237,7 @@ function actualizarEnemigosAero(p, patear, pisando, pata) {
       const adel = e.dir > 0 ? e.x + e.w + 4 : e.x - 4;
       if (e.enSuelo && (!hayBloque(adel, e.y + e.h + 4) || hayPincho(adel, e.y + e.h - 4) || hayBloque(adel, e.y + e.h / 2))) e.dir = -e.dir;
       e.vx = e.dir * 0.7;
-      if (cerca && e.cd <= 0) { e.est = 'aviso'; e.timer = 40; e.vx = 0; e.dir = Math.sign(dxp) || e.dir; e.pego = false; sfx('escaneo'); }
+      if (cerca && e.cd <= 0) { e.est = 'aviso'; e.timer = 40; e.vx = 0; e.dir = Math.sign(dxp) || e.dir; e.pego = false; }
     } else if (e.est === 'aviso') { e.vx = 0; if (--e.timer <= 0) { e.est = 'vapor'; e.timer = 48; sfx('lanza'); } }
     else {
       e.vx = 0; const L = e.elite ? 120 : 96, zona = { x: e.dir > 0 ? e.x + e.w : e.x - L, y: e.y - 8, w: L, h: e.h + 10 };
@@ -3279,7 +3279,7 @@ function actualizarEnemigosChiapas(p, patear, pisando, pata) {
       const adel = e.dir > 0 ? e.x + e.w + 4 : e.x - 4;
       if (e.enSuelo && (!hayBloque(adel, e.y + e.h + 4) || hayPincho(adel, e.y + e.h - 4) || hayBloque(adel, e.y + e.h / 2))) e.dir = -e.dir;
       e.vx = e.dir * 0.6;
-      if (cerca && e.cd <= 0) { e.est = 'aviso'; e.timer = 28; e.vx = 0; e.dir = Math.sign(dxp) || e.dir; sfx('escaneo'); }
+      if (cerca && e.cd <= 0) { e.est = 'aviso'; e.timer = 28; e.vx = 0; e.dir = Math.sign(dxp) || e.dir; }
     } else if (e.est === 'aviso') { e.vx = 0; if (--e.timer <= 0) { e.est = 'muerde'; e.timer = 14; sfx('mordida'); } }
     else if (e.est === 'muerde') { const adel = e.dir > 0 ? e.x + e.w + 6 : e.x - 6; e.vx = hayBloque(adel, e.y + e.h + 4) && !hayBloque(adel, e.y + e.h / 2) ? e.dir * (e.elite ? 6 : 5) : 0; if (--e.timer <= 0) { e.est = 'cansado'; e.timer = 50; e.vx = 0; } }
     else { e.vx = 0; if (--e.timer <= 0) { e.est = 'camina'; e.cd = 90; } }
@@ -3295,7 +3295,7 @@ function actualizarEnemigosChiapas(p, patear, pisando, pata) {
       const dx = p.x + 13 - (e.x + 15), dy = Math.max(4 * T, Math.min(11 * T - 30, p.y + 10)) - e.y, lejos = Math.abs(dx) > 420, d = Math.hypot(dx, dy) || 1, v = e.est === 'fantasma' ? 1.9 : 1;
       if (lejos) { e.x += (e.x0 - e.x) * 0.02; e.y += (e.y0 - e.y) * 0.02; } else { e.x += dx / d * v; e.y += dy / d * v * 0.7; }
       e.dir = dx >= 0 ? 1 : -1;
-      if (--e.timer <= 0) { if (e.est === 'sol') { e.est = 'aviso'; e.timer = 28; sfx('escaneo'); } else if (e.est === 'aviso') { e.est = 'fantasma'; e.timer = 95; } else { e.est = 'sol'; e.timer = 150; } }
+      if (--e.timer <= 0) { if (e.est === 'sol') { e.est = 'aviso'; e.timer = 28; } else if (e.est === 'aviso') { e.est = 'fantasma'; e.timer = 95; } else { e.est = 'sol'; e.timer = 150; } }
     }
     if (e.est === 'fantasma') continue;
     if (patear(e, () => golpearAcuatico(e))) continue;
@@ -3552,7 +3552,7 @@ function actualizarLagarto(p, pata, pisando) {
   j.t++; if (j.invul > 0) j.invul--; if (j.flash > 0) j.flash--; if (j.tip > 0) j.tip--; if (j.rugido > 0) j.rugido--;
   if (j.entra < 1) { j.entra = Math.min(1, j.entra + 1 / 90); if (j.t % 24 === 0) temblor = Math.max(temblor, 5); return; }
   if (!j.corona && j.coronaT > 0 && --j.coronaT <= 0) { j.corona = true; sfx('diente'); chispas(j.x + 110, j.y + 10, 16, '#ffd23f', 4); }
-  const rabia = j.hp <= 1;
+  const rabia = j.hp <= 3;
   for (const l of j.lodos) {                                          // cascada de lodo: avisa y cae; si estás justo debajo, pierdes una vida
     l.t++;
     if (l.t === 56) { sfx('explota'); temblor = Math.max(temblor, 8); }
@@ -4730,7 +4730,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.33', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.34', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });

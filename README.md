@@ -190,3 +190,7 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - **Frisbee de Papá**: ahora es de corta distancia (un disco que gira frente a él, como el puño de Mamá pero un poco más ancho).
 - **Chiapas, enemigos nuevos**: el mono se cambió por el **jaguar** (se agacha con los ojos rojos y da un salto largo sobre ti) y la guacamaya por el **nahual** (máscara de jade voladora que a ratos se hace fantasma: no la puedes golpear, pero tampoco te toca, y atraviesa paredes). El cocodrilito queda igual.
 - **El Lagarto Rey rehecho**: ya no es un enemigo que camina. Está sentado en su trono al fondo (como el Tiburón y Kukulkán) y ataca con **cascadas de lodo** (3 de 6 columnas; ponte en una libre), un **rugido que hace aparecer 4 cocodrilitos** que hay que vencer, una **mordida gigante** (quita 2 vidas) y **lluvia de coronas**: las normales lastiman y hay una **morada** que debes romper de un golpe. Con 3 coronas moradas rotas, cae.
+
+## Versión 3.34 — Sin sonido de "disparo de hielo" y Lagarto Rey con 10 coronas
+- Quitado el sonido agudo "escaneo" (sonaba como un disparo de hielo cada vez que un cocodrilito, un nahual o una cafetera se preparaban). Ya no se usa en ningún lado.
+- **El Lagarto Rey ahora tiene 10 coronas moradas** que romper (antes 3). Cuando le quedan 3, se enfurece: 4 cascadas de lodo en vez de 3 y más coronas.
