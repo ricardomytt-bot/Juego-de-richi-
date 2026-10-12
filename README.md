@@ -197,3 +197,10 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 
 ## Versión 3.35 — El Lagarto Rey, al fondo y de frente
 - El Lagarto Rey está ahora en el **centro** de la arena, sentado en su trono **mirando de frente**, y se dibuja **hasta el fondo**: solo el fondo del cañón queda detrás de él; el suelo, las cosas, los enemigos, los ataques y el jugador pasan por delante.
+
+## Versión 3.36 — Mono lanzacocos, historia del avión y nivel 10: Tuxtla con El Parachico
+- **Mono lanzacocos**: reemplaza al nahual (la cabeza flotante). Cuelga de su liana, **no se puede vencer** y te tira cocos; cada coco quita 1 vida **una sola vez** y desaparece (también al caer al piso).
+- **Historia**: ahora hay una nota pegada a la llave ("vengan a buscarme a Chiapas — El Patrón"). El Piloto, contratado por el Patrón, pierde la pelea y el avión **se estrella en el Cañón del Sumidero**: al inicio del nivel 9 se ven los restos del avión, y el Lagarto Rey vigila que no salgas.
+- **Nivel 10: Tuxtla Gutiérrez** (la plaza): adoquín terracota, montañas y catedral al fondo, marimbas, ceibas y flamboyanes. Sin fondo aparte para la pelea.
+- **El Parachico** (8 de vida): solo se le hace daño cuando está **mareado**, y se marea si **devuelves las 3 bolas mágicas** de su capa (patéalas; cada una te quita 2 vidas si te pega). Ataques: **trompo** (gira cruzando la arena), **bolas mágicas**, **fueguitos** que caen en arco (esquívalos) y **zapateado** (salta y manda dos ondas por el suelo).
+- 2 stickers nuevos (álbum de 20, con 10 columnas).
