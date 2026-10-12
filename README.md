@@ -204,3 +204,8 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - **Nivel 10: Tuxtla Gutiérrez** (la plaza): adoquín terracota, montañas y catedral al fondo, marimbas, ceibas y flamboyanes. Sin fondo aparte para la pelea.
 - **El Parachico** (8 de vida): solo se le hace daño cuando está **mareado**, y se marea si **devuelves las 3 bolas mágicas** de su capa (patéalas; cada una te quita 2 vidas si te pega). Ataques: **trompo** (gira cruzando la arena), **bolas mágicas**, **fueguitos** que caen en arco (esquívalos) y **zapateado** (salta y manda dos ondas por el suelo).
 - 2 stickers nuevos (álbum de 20, con 10 columnas).
+
+## Versión 3.37 — Tuxtla según las fotos y plaza con kiosco para el jefe
+- **Nivel 10 rehecho con las fotos**: casonas coloniales crema con adornos, ventanas arqueadas con marcos de madera, frontones y a veces una torrecita con domo; **farolas de fierro verde con globos blancos**, bancas y botes de herrería, jardineras con setos, **taxis amarillos**, letreros verdes "2a. PONIENTE", árboles grandes de sombra y **banderines de papel picado** colgados entre los árboles. Adoquín gris en el piso.
+- **Tres kioscos** a lo largo del nivel (domo verde con cupulita, columnas blancas con encaje, base de piedra con escalones).
+- **La arena del Parachico es la plaza del kiosco**: kiosco grande al centro con luces y banderines, farolas, bancas, botes y jardineras.

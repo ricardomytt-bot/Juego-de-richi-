@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.36
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.37
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -1719,20 +1719,20 @@ const TILE_SUM_PLAT = crearTile(g => {                         // tronco / balsa
   g.strokeStyle = '#6b4a2a'; g.lineWidth = 2.4; [22, 36, 48].forEach(y => { g.beginPath(); g.moveTo(5, y); g.lineTo(59, y); g.stroke(); });
   g.fillStyle = '#d2a66e'; g.fillRect(4, 11, 56, 4); g.strokeStyle = '#3a2814'; g.lineWidth = 3; trazoRedondo(g, 1, 8, 62, 52, 8); g.stroke();
 });
-// --- Tuxtla Gutiérrez: adoquín de plaza color terracota ---
+// --- Tuxtla Gutiérrez: adoquín de plaza gris con juntas oscuras ---
 const TILE_TUX_TOP = crearTile(g => {
-  g.fillStyle = grad(g, 0, 0, 0, 64, [[0, '#d97a52'], [1, '#b85a3c']]); g.fillRect(0, 0, 64, 64); g.fillStyle = '#f0b88a'; g.fillRect(0, 0, 64, 7); g.fillStyle = '#fff1c8'; g.fillRect(0, 0, 64, 2);
-  g.strokeStyle = 'rgba(90,40,25,.45)'; g.lineWidth = 2; g.strokeRect(2, 12, 28, 22); g.strokeRect(34, 12, 28, 22); g.strokeRect(18, 38, 28, 22); g.beginPath(); g.moveTo(2, 38); g.lineTo(14, 38); g.moveTo(50, 38); g.lineTo(62, 38); g.stroke();
-  g.fillStyle = '#ffd34d'; [[16, 23], [48, 23], [32, 49]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 3, 0, 7); g.fill(); });
+  g.fillStyle = grad(g, 0, 0, 0, 64, [[0, '#b9b4a6'], [1, '#928d80']]); g.fillRect(0, 0, 64, 64); g.fillStyle = '#d8d3c4'; g.fillRect(0, 0, 64, 6); g.fillStyle = '#efeadb'; g.fillRect(0, 0, 64, 2);
+  g.strokeStyle = 'rgba(50,46,38,.55)'; g.lineWidth = 2; [[2, 11, 30, 22], [34, 11, 28, 22], [2, 37, 20, 24], [26, 37, 36, 24]].forEach(([x, y, w, h]) => g.strokeRect(x, y, w, h));
+  for (let i = 0; i < 16; i++) { g.fillStyle = i % 3 ? 'rgba(70,64,52,.3)' : 'rgba(255,255,245,.35)'; g.fillRect(azar(i + 3) * 60, 12 + azar(i + 31) * 48, 2.2, 2.2); }
 });
 const TILE_TUX_BASE = crearTile(g => {
-  g.fillStyle = grad(g, 0, 0, 0, 64, [[0, '#a8503a'], [1, '#7a3626']]); g.fillRect(0, 0, 64, 64);
-  g.strokeStyle = 'rgba(40,16,10,.5)'; g.lineWidth = 2; for (let y = 0; y < 64; y += 16) { g.beginPath(); g.moveTo(0, y); g.lineTo(64, y); g.stroke(); for (let x = (y / 16) % 2 ? 0 : 16; x < 64; x += 32) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 16); g.stroke(); } }
+  g.fillStyle = grad(g, 0, 0, 0, 64, [[0, '#8a857a'], [1, '#625e54']]); g.fillRect(0, 0, 64, 64);
+  g.strokeStyle = 'rgba(30,28,22,.5)'; g.lineWidth = 2; for (let y = 0; y < 64; y += 16) { g.beginPath(); g.moveTo(0, y); g.lineTo(64, y); g.stroke(); for (let x = (y / 16) % 2 ? 0 : 16; x < 64; x += 32) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 16); g.stroke(); } }
 });
-const TILE_TUX_PLAT = crearTile(g => {                         // tablón de puesto con franjas de colores
-  g.fillStyle = '#6b4a2a'; trazoRedondo(g, 0, 8, 64, 52, 8); g.fill(); g.fillStyle = '#a8743c'; trazoRedondo(g, 4, 11, 56, 46, 6); g.fill();
-  ['#d8403a', '#ffd34d', '#2f6fd6', '#4fae52'].forEach((c, k) => { g.fillStyle = c; g.fillRect(8 + k * 12, 13, 8, 40); });
-  g.strokeStyle = '#3a2814'; g.lineWidth = 3; trazoRedondo(g, 1, 8, 62, 52, 8); g.stroke();
+const TILE_TUX_PLAT = crearTile(g => {                         // banca de fierro verde
+  g.fillStyle = '#1f4a3a'; trazoRedondo(g, 0, 8, 64, 52, 8); g.fill(); g.fillStyle = '#2f6a50'; trazoRedondo(g, 4, 11, 56, 46, 6); g.fill();
+  g.fillStyle = '#1f4a3a'; [16, 28, 40].forEach(y => g.fillRect(6, y, 52, 5)); g.strokeStyle = '#d8e8d8'; g.lineWidth = 2; g.beginPath(); g.arc(32, 52, 10, Math.PI, 0); g.stroke();
+  g.strokeStyle = '#0e2a20'; g.lineWidth = 3; trazoRedondo(g, 1, 8, 62, 52, 8); g.stroke();
 });
 // --- Fondo del mar de Los Cabos: arena clara con rizos y roca de arrecife ---
 const TILE_MAR_TOP = crearTile(g => {
@@ -1958,13 +1958,13 @@ function pasosCapas(tema, C) {                               // cada paso dibuja
     }, sumi ? 150 : 296, H), tarde ? 'rgba(255,175,150,.2)' : 'rgba(255,255,255,.22)'); },
     () => { C.fach = velo(capaPartida(MAXC * 0.3 + W + 400, (g, x0, x1) => {
       const haze = { color: tarde ? 'rgba(120,50,110,.22)' : (playa ? 'rgba(255,255,255,.10)' : (bufa ? 'rgba(225,232,240,.22)' : chi ? 'rgba(200,235,210,.14)' : 'rgba(180,215,245,.22)')), noche: tarde };
-      if (aero) paredCabina(g, x0, x1); else for (const f of FACH) { const fx = f.x + 200; if (fx + f.w > x0 && fx < x1) { if (bufa) penasco(g, f, fx, base + 6, haze); else if (sumi) acantiladoSum(g, f, fx, base + 6, haze); else if (mar) arrecifeMar(g, f, fx, base + 6, haze); else if (puerto) barcoPuerto(g, f, fx, base + 6, haze); else if (playa) casaPlaya(g, f, fx, base + 6, haze); else if (chi) ruinaMaya(g, f, fx, base + 6, haze); else if (tarde) mansionPaseo(g, f, fx, base + 6, haze); else fachada(g, f, fx, base + 6, haze); } }
-    }, aero ? 30 : sumi ? 40 : 190, aero ? 230 : 414), tarde ? 'rgba(255,175,150,.10)' : 'rgba(255,255,255,.12)'); },
+      if (tux) bunting(g, x0, x1); if (aero) paredCabina(g, x0, x1); else for (const f of FACH) { const fx = f.x + 200; if (fx + f.w > x0 && fx < x1) { if (bufa) penasco(g, f, fx, base + 6, haze); else if (sumi) acantiladoSum(g, f, fx, base + 6, haze); else if (tux) casonaTux(g, f, fx, base + 6, haze); else if (mar) arrecifeMar(g, f, fx, base + 6, haze); else if (puerto) barcoPuerto(g, f, fx, base + 6, haze); else if (playa) casaPlaya(g, f, fx, base + 6, haze); else if (chi) ruinaMaya(g, f, fx, base + 6, haze); else if (tarde) mansionPaseo(g, f, fx, base + 6, haze); else fachada(g, f, fx, base + 6, haze); } }
+    }, aero ? 30 : sumi ? 40 : tux ? 60 : 190, aero ? 230 : 414), tarde ? 'rgba(255,175,150,.10)' : 'rgba(255,255,255,.12)'); },
     () => { C.arboles = capaPartida(MAXC * 0.52 + W + 300, (g, x0, x1) => {
       if (bufa) miradorBufa(g, x0, x1);
       for (let i = 0; i * 250 < x1 + 200; i++) {
         const sx = i * 250 + azar(i) * 90; if (sx + 130 < x0 || sx - 130 > x1) continue;
-        if (aero) asientosCabina(g, sx, i); else if (sumi) { if (i % 3 === 0) palma(g, sx, 400, 110 + azar(i + 3) * 60, (azar(i + 6) - 0.5) * 50, null); else arbusto(g, sx, 398, 0.9 + azar(i + 3) * 0.7); } else if (tux) { if (i % 3 === 0) ceiba(g, sx, 412, 0.9 + azar(i + 3) * 0.3); else flamboyan(g, sx, 410, 0.9); } else if (mar) algaMar(g, sx, i); else if (puerto) postesPuerto(g, sx, i); else if (bufa) { arbusto(g, sx, 398, 0.9 + azar(i + 3) * 0.7); if (i % 2) arbusto(g, sx + 34, 398, 0.6 + azar(i + 9) * 0.4); }
+        if (aero) asientosCabina(g, sx, i); else if (sumi) { if (i % 3 === 0) palma(g, sx, 400, 110 + azar(i + 3) * 60, (azar(i + 6) - 0.5) * 50, null); else arbusto(g, sx, 398, 0.9 + azar(i + 3) * 0.7); } else if (tux) { if (i % 3 === 0) ceiba(g, sx, 412, 0.9 + azar(i + 3) * 0.3); else laurel(g, sx, 412, 0.9 + azar(i + 3) * 0.3, false); } else if (mar) algaMar(g, sx, i); else if (puerto) postesPuerto(g, sx, i); else if (bufa) { arbusto(g, sx, 398, 0.9 + azar(i + 3) * 0.7); if (i % 2) arbusto(g, sx + 34, 398, 0.6 + azar(i + 9) * 0.4); }
         else if (chi) { if (i % 3 === 0) ceiba(g, sx, 412, 0.9 + azar(i + 3) * 0.3); else palma(g, sx, 412, 110 + azar(i + 3) * 60, (azar(i + 6) - 0.5) * 50, null); }
         else if (playa) palma(g, sx, 400, 130 + azar(i + 3) * 70, (azar(i + 6) - 0.5) * 60, null);
         else if (tarde) { if (i % 5 === 2) flamboyan(g, sx, 410, 0.9); else laurel(g, sx, 412, 0.85 + azar(i + 3) * 0.3, true); }
@@ -2228,6 +2228,98 @@ function acantiladoSum(g, f, x0, base, haze) {               // acantilado cerca
   g.strokeStyle = '#3f8a3a'; g.lineWidth = 2; for (let k = 0; k < 4; k++) { const vx = x + 10 + k * (w - 20) / 3; g.beginPath(); g.moveTo(vx, base - h + 16); g.lineTo(vx + 2, base - h + 40 + ((seed + k) % 4) * 14); g.stroke(); }
   if (seed % 3 === 0) { g.fillStyle = 'rgba(235,248,255,.85)'; g.fillRect(x + w * 0.55, base - h + 18, 12, h - 18); g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(x + w * 0.55 + 3, base - h + 18, 3, h - 18); }
   if (haze) { g.fillStyle = haze.color; g.fillRect(x - 6, base - h - 14, w + 12, h + 16); }
+}
+function banderines(g, xa, ya, xb, yb, caida, sem) {          // hilo con banderines de papel picado de colores
+  const cols = ['#e0322b', '#ffd34d', '#2f6fd6', '#4fae52', '#e86fa8', '#5fd0e8'], mx = (xa + xb) / 2, my = Math.max(ya, yb) + caida;
+  g.save(); g.strokeStyle = 'rgba(60,50,40,.7)'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(xa, ya); g.quadraticCurveTo(mx, my + caida, xb, yb); g.stroke();
+  const n = Math.max(4, Math.round(Math.abs(xb - xa) / 15));
+  for (let k = 1; k < n; k++) { const t = k / n, px = (1 - t) * (1 - t) * xa + 2 * t * (1 - t) * mx + t * t * xb, py = (1 - t) * (1 - t) * ya + 2 * t * (1 - t) * (my + caida) + t * t * yb; g.fillStyle = cols[(k + sem) % 6]; g.beginPath(); g.moveTo(px - 6, py); g.lineTo(px + 6, py + 1); g.lineTo(px + 0.5, py + 13); g.closePath(); g.fill(); g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 0.8; g.stroke(); }
+  g.restore();
+}
+function bunting(g, x0, x1) {                                  // banderines colgados entre los árboles de la plaza
+  const xa = Math.floor(x0 / 280) * 280 - 280;
+  for (let x = xa; x < x1 + 280; x += 280) { banderines(g, x, 84 + azar(x * 0.01) * 20, x + 280, 90 + azar((x + 280) * 0.01) * 20, 16, (x / 280) | 0); banderines(g, x + 90, 130 + azar(x * 0.02) * 16, x + 340, 124 + azar(x * 0.03) * 16, 14, ((x / 280) | 0) + 3); }
+}
+function casonaTux(g, f, x0, base, haze) {                     // casona colonial: fachada crema con adornos, ventanas arqueadas con marcos de madera y a veces torrecita con domo
+  const seed = f.seed, w = f.w * 0.92, x = x0 + f.w * 0.04, h = 120 + (seed % 3) * 26, cr = ['#efe6d0', '#f4e9c8', '#e8dcc0', '#f0e0b8'][seed % 4];
+  g.fillStyle = grad(g, x, 0, x + w, 0, [[0, aclarar(cr, 0.1)], [0.6, cr], [1, sombrear(cr, 0.86)]]); g.fillRect(x, base - h, w, h);
+  g.fillStyle = '#fff'; g.fillRect(x - 3, base - h - 7, w + 6, 8); g.fillStyle = '#7a3a2a'; g.fillRect(x - 3, base - h - 11, w + 6, 5);
+  g.fillStyle = sombrear(cr, 0.7); g.fillRect(x, base - 14, w, 14);
+  const cols = Math.max(2, Math.floor(w / 42));
+  for (let c = 0; c < cols; c++) { const wx = x + (c + 0.5) * w / cols - 8, wy = base - h + 22;
+    g.fillStyle = '#fff'; g.beginPath(); g.moveTo(wx - 2, wy + 34); g.lineTo(wx - 2, wy + 8); g.arc(wx + 8, wy + 8, 10, Math.PI, 0); g.lineTo(wx + 18, wy + 34); g.fill();
+    g.fillStyle = '#c98a4a'; g.beginPath(); g.moveTo(wx, wy + 34); g.lineTo(wx, wy + 8); g.arc(wx + 8, wy + 8, 8, Math.PI, 0); g.lineTo(wx + 16, wy + 34); g.fill();
+    g.fillStyle = '#7fb4d6'; g.fillRect(wx + 3, wy + 10, 10, 22); g.fillStyle = '#c98a4a'; g.fillRect(wx + 7.4, wy + 10, 1.4, 22);
+    if (h > 130) { const w2 = base - 62; g.fillStyle = '#fff'; g.fillRect(wx - 2, w2 - 2, 20, 30); g.fillStyle = '#c98a4a'; g.fillRect(wx, w2, 16, 28); g.fillStyle = '#7fb4d6'; g.fillRect(wx + 3, w2 + 3, 10, 22); }
+  }
+  if (seed % 2 === 0) { const mx = x + w / 2; g.fillStyle = '#fff'; g.beginPath(); g.moveTo(mx - 38, base - h - 7); g.lineTo(mx, base - h - 40); g.lineTo(mx + 38, base - h - 7); g.closePath(); g.fill(); g.fillStyle = '#7a3a2a'; g.fillRect(mx - 38, base - h - 9, 76, 4); g.fillStyle = '#c98a4a'; g.beginPath(); g.arc(mx, base - h - 20, 8, 0, 7); g.fill(); }
+  if (seed % 4 === 0) { g.fillStyle = cr; g.fillRect(x - 14, base - h - 40, 22, h + 40); g.fillStyle = '#fff'; g.fillRect(x - 16, base - h - 44, 26, 5); g.fillStyle = '#6fb59a'; g.beginPath(); g.moveTo(x - 14, base - h - 44); g.quadraticCurveTo(x - 3, base - h - 76, x + 8, base - h - 44); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(x - 3, base - h - 22, 6, 0, 7); g.fill(); g.strokeStyle = '#333'; g.lineWidth = 1; g.stroke(); }
+  if (haze) { g.fillStyle = haze.color; g.fillRect(x - 16, base - h - 80, w + 20, h + 84); }
+}
+function dibujarFarolaTux(g, x, y) {                           // farola de fierro verde con globos blancos
+  g.save(); g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 1.8;
+  g.fillStyle = '#1f4a3a'; g.beginPath(); g.moveTo(x - 9, y); g.lineTo(x - 5, y - 14); g.lineTo(x + 5, y - 14); g.lineTo(x + 9, y); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#2a5f48'; g.fillRect(x - 3, y - 96, 6, 82); g.strokeRect(x - 3, y - 96, 6, 82); g.fillRect(x - 5, y - 60, 10, 5); g.strokeRect(x - 5, y - 60, 10, 5);
+  g.strokeStyle = '#1f4a3a'; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y - 82); g.quadraticCurveTo(x - 16, y - 82, x - 16, y - 90); g.moveTo(x, y - 82); g.quadraticCurveTo(x + 16, y - 82, x + 16, y - 90); g.stroke(); g.strokeStyle = NEGRO; g.lineWidth = 1.8;
+  [[0, -104, 11], [-16, -98, 8], [16, -98, 8], [0, -122, 7]].forEach(([dx, dy, r]) => { resplandor(g, x + dx, y + dy, 16 + r, 'rgba(255,250,215,.35)'); g.fillStyle = '#fffdf0'; g.beginPath(); g.arc(x + dx, y + dy, r, 0, 7); g.fill(); g.stroke(); });
+  g.restore();
+}
+function dibujarBancaTux(g, x, y) {
+  g.save(); g.lineJoin = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 1.8;
+  g.fillStyle = '#1f4a3a'; [-20, 17].forEach(lx => { g.fillRect(lx, y - 14, 4, 14); g.strokeRect(lx, y - 14, 4, 14); });
+  g.fillStyle = '#2a5f48'; g.fillRect(x - 24, y - 18, 48, 5); g.strokeRect(x - 24, y - 18, 48, 5);
+  g.fillStyle = '#1f4a3a'; for (let k = 0; k < 6; k++) { g.fillRect(x - 22 + k * 8.4, y - 40, 3, 22); }
+  g.beginPath(); g.moveTo(x - 24, y - 40); g.quadraticCurveTo(x, y - 52, x + 24, y - 40); g.lineTo(x + 24, y - 36); g.quadraticCurveTo(x, y - 48, x - 24, y - 36); g.closePath(); g.fill(); g.stroke();
+  g.restore();
+}
+function dibujarBoteTux(g, x, y) {
+  g.save(); g.lineJoin = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 1.8;
+  g.fillStyle = '#1f4a3a'; trazoRedondo(g, x - 11, y - 30, 22, 30, 3); g.fill(); g.stroke(); g.fillStyle = '#2a5f48'; g.fillRect(x - 13, y - 33, 26, 5); g.strokeRect(x - 13, y - 33, 26, 5);
+  g.strokeStyle = '#8ab59a'; g.lineWidth = 1.4; for (let k = -6; k <= 6; k += 4) { g.beginPath(); g.moveTo(x + k, y - 26); g.lineTo(x + k, y - 3); g.stroke(); }
+  g.restore();
+}
+function dibujarJardinera(g, x, y) {
+  g.save(); g.lineJoin = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 1.8;
+  g.fillStyle = '#b9b4a6'; g.fillRect(x - 32, y - 12, 64, 12); g.strokeRect(x - 32, y - 12, 64, 12);
+  g.fillStyle = '#2f8a44'; [[-20, -18, 12], [-6, -22, 13], [10, -20, 12], [22, -17, 10]].forEach(([dx, dy, r]) => { g.beginPath(); g.arc(x + dx, y + dy, r, 0, 7); g.fill(); g.stroke(); });
+  g.fillStyle = '#ff6fa8'; [[-14, -24], [4, -28], [16, -23]].forEach(([dx, dy]) => { g.beginPath(); g.arc(x + dx, y + dy, 2.6, 0, 7); g.fill(); });
+  g.strokeStyle = '#1f4a3a'; g.lineWidth = 1.6; for (let k = -30; k <= 30; k += 6) { g.beginPath(); g.moveTo(x + k, y - 12); g.lineTo(x + k, y - 24); g.stroke(); } g.beginPath(); g.moveTo(x - 32, y - 24); g.lineTo(x + 32, y - 24); g.stroke();
+  g.restore();
+}
+function dibujarTaxi(g, x, y) {                                // taxi amarillo con letrero en el techo
+  g.save(); g.lineJoin = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 2;
+  g.fillStyle = '#ffd23f'; g.beginPath(); g.moveTo(x - 32, y - 6); g.lineTo(x - 32, y - 16); g.quadraticCurveTo(x - 30, y - 20, x - 22, y - 21); g.lineTo(x - 14, y - 32); g.lineTo(x + 12, y - 32); g.lineTo(x + 22, y - 21); g.quadraticCurveTo(x + 32, y - 20, x + 33, y - 14); g.lineTo(x + 33, y - 6); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#9ad0f0'; g.beginPath(); g.moveTo(x - 12, y - 21); g.lineTo(x - 8, y - 30); g.lineTo(x + 2, y - 30); g.lineTo(x + 2, y - 21); g.closePath(); g.fill(); g.stroke(); g.beginPath(); g.moveTo(x + 5, y - 21); g.lineTo(x + 5, y - 30); g.lineTo(x + 11, y - 30); g.lineTo(x + 19, y - 21); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#fff'; g.fillRect(x - 6, y - 36, 14, 5); g.strokeRect(x - 6, y - 36, 14, 5);
+  g.fillStyle = '#222'; [-20, 20].forEach(wx => { g.beginPath(); g.arc(x + wx, y - 4, 7, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#bbb'; g.beginPath(); g.arc(x + wx, y - 4, 3, 0, 7); g.fill(); g.fillStyle = '#222'; });
+  g.restore();
+}
+function dibujarKiosco(g, x, y, esc, festivo) {                // kiosco de la plaza: base de piedra, barandal y columnas blancas con encaje, techo verde con domo y cupulita
+  g.save(); g.translate(x, y); g.scale(esc, esc); g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 2.4;
+  g.fillStyle = '#b9ae98'; g.fillRect(-104, -34, 208, 34); g.strokeRect(-104, -34, 208, 34); g.fillStyle = '#a49a85'; g.fillRect(-104, -34, 208, 6);
+  g.fillStyle = '#cfc5ae'; g.fillRect(-36, -12, 72, 12); g.strokeRect(-36, -12, 72, 12); g.fillRect(-28, -24, 56, 12); g.strokeRect(-28, -24, 56, 12);
+  g.fillStyle = '#c98a4a'; g.fillRect(-90, -124, 180, 90);                                                                   // el fondo de madera
+  g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(-90, -124, 180, 14);
+  g.fillStyle = '#fff'; g.fillRect(-96, -64, 192, 5); g.strokeRect(-96, -64, 192, 5); g.fillRect(-96, -38, 192, 5); g.strokeRect(-96, -38, 192, 5);
+  g.lineWidth = 1.6; for (let k = -94; k <= 94; k += 9) { g.fillRect(k - 1.4, -60, 2.8, 22); g.strokeRect(k - 1.4, -60, 2.8, 22); } g.lineWidth = 2.4;
+  [-92, -56, -19, 19, 56, 92].forEach(cx => { g.fillStyle = '#fff'; g.fillRect(cx - 4, -134, 8, 98); g.strokeRect(cx - 4, -134, 8, 98); });
+  g.fillStyle = '#fff'; g.lineWidth = 1.8; for (let k = 0; k < 5; k++) { const a = -74 + k * 37; g.beginPath(); g.moveTo(a - 16, -126); g.quadraticCurveTo(a, -102, a + 16, -126); g.stroke(); g.beginPath(); g.arc(a, -116, 4, 0, 7); g.stroke(); } g.lineWidth = 2.4;
+  g.fillStyle = '#f4efe0'; g.fillRect(-112, -144, 224, 14); g.strokeRect(-112, -144, 224, 14); g.fillStyle = '#fff'; for (let k = -106; k < 108; k += 9) { g.beginPath(); g.arc(k, -137, 3, 0, 7); g.fill(); }
+  g.fillStyle = '#2f8f6a'; g.beginPath(); g.moveTo(-112, -144); g.lineTo(-70, -178); g.lineTo(70, -178); g.lineTo(112, -144); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#3aa37a'; g.beginPath(); g.ellipse(0, -178, 70, 38, 0, Math.PI, 0); g.fill(); g.stroke();
+  g.fillStyle = 'rgba(255,255,255,.28)'; g.beginPath(); g.ellipse(-24, -196, 22, 8, -0.4, 0, 7); g.fill();
+  g.fillStyle = '#f4efe0'; g.fillRect(-14, -222, 28, 14); g.strokeRect(-14, -222, 28, 14); g.fillStyle = '#2f8f6a'; g.beginPath(); g.ellipse(0, -222, 14, 12, 0, Math.PI, 0); g.fill(); g.stroke();
+  g.strokeStyle = '#1f4a3a'; g.lineWidth = 2.6; g.beginPath(); g.moveTo(0, -234); g.lineTo(0, -252); g.moveTo(-6, -246); g.lineTo(6, -246); g.stroke(); g.strokeStyle = NEGRO; g.lineWidth = 2.4;
+  if (festivo) { g.fillStyle = '#ffe9a0'; for (let k = -100; k <= 100; k += 16) { g.beginPath(); g.arc(k, -124 + Math.abs(k) * 0.02, 2.6, 0, 7); g.fill(); } }
+  g.restore();
+}
+function dibujarPlazaKiosco(x0) {                              // la plaza del jefe: kiosco al centro con banderines, farolas, bancas y jardineras
+  const g = ctx, y = 12 * T + 2, cx = x0 + W / 2;
+  dibujarFarolaTux(g, x0 + 54, y); dibujarFarolaTux(g, x0 + W - 54, y);
+  dibujarKiosco(g, cx, y - 2, 1.12, true);
+  dibujarJardinera(g, x0 + 160, y); dibujarJardinera(g, x0 + W - 160, y);
+  dibujarBancaTux(g, x0 + 250, y); dibujarBancaTux(g, x0 + W - 250, y); dibujarBoteTux(g, x0 + 290, y); dibujarBoteTux(g, x0 + W - 290, y);
+  banderines(g, x0 + 54, y - 124, cx - 20, y - 250, 14, 0); banderines(g, cx + 20, y - 250, x0 + W - 54, y - 124, 14, 2); banderines(g, x0 - 20, 80, x0 + W + 40, 84, 30, 4);
 }
 function lejosTux(g, x0, x1) {                               // montañas verdes de Chiapas y la catedral de la plaza
   const base = 392; g.fillStyle = '#8fc0a8';
@@ -2544,7 +2636,7 @@ function crearDecoraciones() {
     const r = azar(c * 3.7 + nivelActual * 17);
     let tipo = null;
     if (tema === 'playa') { if (r < 0.15) tipo = 'sombrilla'; else if (r < 0.27) tipo = 'castillo'; else if (r < 0.35) tipo = 'tabla'; else if (r < 0.42) tipo = 'cubeta'; else if (r < 0.48) tipo = 'salvavidas'; else if (r < 0.53) tipo = 'letrero'; else if (r < 0.66) tipo = 'palmita'; }
-    else if (tema === 'tuxtla') { if (r < 0.14) tipo = 'farola'; else if (r < 0.26) tipo = 'bugambilia'; else if (r < 0.34) tipo = 'banca'; else if (r < 0.4) tipo = 'bote'; else if (r < 0.46) tipo = 'letrero'; else if (r < 0.52) tipo = 'maceta'; else if (r < 0.64) tipo = 'marimba'; }
+    else if (tema === 'tuxtla') { if (r < 0.2) tipo = 'farolaTux'; else if (r < 0.34) tipo = 'bancaTux'; else if (r < 0.42) tipo = 'boteTux'; else if (r < 0.56) tipo = 'jardinera'; else if (r < 0.62) tipo = 'letreroTux'; else if (r < 0.72) tipo = 'taxi'; }
     else if (tema === 'sumidero') { if (r < 0.3) tipo = 'arbusto'; else if (r < 0.55) tipo = 'roca'; else if (r < 0.75) tipo = 'tronco'; }
     else if (tema === 'aeropuerto') { if (r < 0.4) tipo = 'maletaDeco'; else if (r < 0.7) tipo = 'cojin'; else if (r < 0.85) tipo = 'carritoDeco'; }
     else if (tema === 'mar') { if (r < 0.3) tipo = 'coral'; else if (r < 0.55) tipo = 'alga'; else if (r < 0.75) tipo = 'concha'; else if (r < 0.9) tipo = 'estrella'; }
@@ -2553,6 +2645,12 @@ function crearDecoraciones() {
     else if (tema === 'chichen') { if (r < 0.16) tipo = 'estela'; else if (r < 0.30) tipo = 'brasero'; else if (r < 0.40) tipo = 'vasija'; else if (r < 0.52) tipo = 'agave'; else if (r < 0.58) tipo = 'letrero'; else if (r < 0.68) tipo = 'palmita'; }
     else if (r < 0.14) tipo = 'farola'; else if (r < 0.26) tipo = 'bugambilia'; else if (r < 0.32) tipo = 'banca'; else if (r < 0.38) tipo = 'bote'; else if (r < 0.43) tipo = 'letrero'; else if (r < 0.5) tipo = 'maceta';
     if (tipo) { decoraciones.push({ x: c * T + 16, tipo }); ultima = c; }
+  }
+  if (tema === 'tuxtla') {                                    // tres kioscos a lo largo del nivel, en tramos planos
+    [0.2, 0.48, 0.74].forEach(fr => {
+      const t0 = Math.floor(COLS * fr);
+      for (let dc = 0; dc < 60; dc++) for (const sg of [1, -1]) { const c = t0 + dc * sg; if (c < 10 || c > COLS - 60) continue; let ok = true; for (let q = c - 6; q <= c + 6 && ok; q++) { if (mapa[12][q] !== '#') ok = false; for (let r = 8; r <= 11 && ok; r++) if (mapa[r][q] !== ' ') ok = false; } if (ok) { decoraciones = decoraciones.filter(d => Math.abs(d.x - c * T) > 150); decoraciones.push({ x: c * T + 16, tipo: 'kiosco' }); return; } }
+    });
   }
   if (tema === 'sumidero') decoraciones.push({ x: 200, tipo: 'avionRoto' });          // los restos del avión que se estrelló, al inicio del nivel
   if (tema === 'aeropuerto') {                               // en la arena del Piloto, las maletas y carritos tirados siempre están en el mismo lugar (ahí salen los pinchos con la turbulencia)
@@ -2571,6 +2669,13 @@ function dibujarDecoracion(d, tarde) {
     for (let k = 0; k < 4; k++) { const ph = (reloj * 0.02 + k / 4) % 1; g.fillStyle = 'rgba(60,60,70,' + ((1 - ph) * 0.5).toFixed(2) + ')'; g.beginPath(); g.arc(-20 + Math.sin(ph * 6 + k) * 10, -70 - ph * 60, 8 + ph * 12, 0, 7); g.fill(); }
     g.restore(); return;
   }
+  if (d.tipo === 'farolaTux') { dibujarFarolaTux(g, x, y); return; }
+  if (d.tipo === 'bancaTux') { dibujarBancaTux(g, x, y); return; }
+  if (d.tipo === 'boteTux') { dibujarBoteTux(g, x, y); return; }
+  if (d.tipo === 'jardinera') { dibujarJardinera(g, x, y); return; }
+  if (d.tipo === 'taxi') { dibujarTaxi(g, x, y); return; }
+  if (d.tipo === 'kiosco') { dibujarKiosco(g, x, y, 0.8, false); return; }
+  if (d.tipo === 'letreroTux') { g.strokeStyle = '#333a4a'; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y); g.lineTo(x, y - 58); g.stroke(); g.fillStyle = '#1f7a4a'; g.strokeStyle = '#fff'; g.lineWidth = 2; trazoRedondo(g, x - 34, y - 74, 68, 20, 4); g.fill(); g.stroke(); texto('2a. PONIENTE', x, y - 60, 9, '#fff', 'center'); return; }
   if (d.tipo === 'marimba') {                                // marimba: teclas de madera sobre tubos resonadores y patas
     g.save(); g.translate(x, y); g.lineJoin = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 2;
     g.fillStyle = '#6b4a2a'; [-26, 22].forEach(lx => { g.fillRect(lx, -22, 5, 22); g.strokeRect(lx, -22, 5, 22); });
@@ -2676,6 +2781,7 @@ function dibujarEdificioFinalRaw(x0, tarde) {
   if (tema === 'puerto') { dibujarTiendaFinal(x0); return; }
   if (tema === 'mar') { dibujarBarcoHundido(x0); return; }
   if (tema === 'aeropuerto') { dibujarCabinaAvion(x0); return; }
+  if (tema === 'tuxtla') { dibujarPlazaKiosco(x0); return; }
   if (tema === 'bufadora') { dibujarHotelFinal(x0); return; }
   if (tema === 'chichen') { dibujarPiramide(x0); return; }
   const g = ctx, base = 12 * T, col = nivelActual === 0 ? '#ef7b9a' : '#f4ead0', w = 700, x = x0 + 40, h = 225;
@@ -3146,7 +3252,7 @@ function precalentar() {
   }
   const N = NIVELES[nivelElegido];
   if (usarAlt()) { precargarMusica(N.musica); precargarMusica('jefe'); pedirSfx('ouch' + personaje.voz); }
-  const TIPOS_DECO = { aeropuerto: ['maletaDeco', 'cojin', 'carritoDeco'], sumidero: ['arbusto', 'roca', 'tronco'], tuxtla: ['farola', 'bugambilia', 'banca', 'bote', 'letrero', 'maceta', 'marimba'], mar: ['coral', 'alga', 'concha', 'estrella'], puerto: ['barandal', 'letrero', 'gaviota', 'boya', 'cajaPesca'], dia: ['farola', 'bugambilia', 'banca', 'bote', 'letrero', 'maceta'], tarde: ['farola', 'bugambilia', 'banca', 'bote', 'letrero', 'maceta'], playa: ['sombrilla', 'castillo', 'tabla', 'cubeta', 'salvavidas', 'letrero', 'palmita'], chichen: ['estela', 'vasija', 'agave', 'letrero', 'palmita'], bufadora: ['arbusto', 'roca', 'gaviota', 'letrero', 'barandal'] }[N.tema] || [];
+  const TIPOS_DECO = { aeropuerto: ['maletaDeco', 'cojin', 'carritoDeco'], sumidero: ['arbusto', 'roca', 'tronco'], tuxtla: ['farolaTux', 'bancaTux', 'boteTux', 'jardinera', 'letreroTux', 'taxi', 'kiosco'], mar: ['coral', 'alga', 'concha', 'estrella'], puerto: ['barandal', 'letrero', 'gaviota', 'boya', 'cajaPesca'], dia: ['farola', 'bugambilia', 'banca', 'bote', 'letrero', 'maceta'], tarde: ['farola', 'bugambilia', 'banca', 'bote', 'letrero', 'maceta'], playa: ['sombrilla', 'castillo', 'tabla', 'cubeta', 'salvavidas', 'letrero', 'palmita'], chichen: ['estela', 'vasija', 'agave', 'letrero', 'palmita'], bufadora: ['arbusto', 'roca', 'gaviota', 'letrero', 'barandal'] }[N.tema] || [];
   TIPOS_DECO.forEach(tp => tareas.push(() => pintarDeco({ tipo: tp, x: 0 }, N.tema === 'tarde', mudo)));
   if (N && N.jefe !== 'kukulkan' && N.jefe !== 'tiburon' && N.jefe !== 'lagarto') {
     const fj = (fase, vx) => ({ tipo: N.jefe, x: 0, y: 0, w: 46, h: 78, vx, vy: 0, fase, dir: -1, cargaDir: -1, invul: 0, aturdido: 0, congelado: 0 });
@@ -4690,7 +4796,7 @@ function dibujarNivel() {
   }
 }
 function pintarDeco(d, tarde, g = ctx) {
-  if (d.tipo === 'brasero') { if (g === ctx) dibujarDecoracion(d, tarde); return; }                     // la llama se mueve
+  if (d.tipo === 'brasero' || d.tipo === 'kiosco') { if (g === ctx) dibujarDecoracion(d, tarde); return; }                     // la llama se mueve
   const sp = sprite('dec|' + d.tipo + '|' + tema + '|' + (tarde ? 1 : 0), 130, 140, 65, 120, gg => { gg.translate(0, -(12 * T + 2)); dibujarDecoracion({ tipo: d.tipo, x: 0 }, tarde); });
   g.drawImage(sp.c, d.x - sp.ox, 12 * T + 2 - sp.oy, sp.w, sp.h);
 }
@@ -4754,7 +4860,7 @@ function dibujarJuego() {
   dibujarFondo(camara, tema); dibujarAmbiente(camara, tema === 'tarde');
   const sacudir = aj.temblor && temblor > 0, sx = sacudir ? (Math.random() - 0.5) * temblor * 0.6 : 0, sy = sacudir ? (Math.random() - 0.5) * temblor * 0.5 : 0;
   ctx.save(); ctx.translate(-Math.round(camara * ESC) / ESC + sx, sy);
-  if (tema !== 'aeropuerto' && tema !== 'sumidero' && tema !== 'tuxtla') dibujarEdificioFinal(arenaX, tema === 'tarde');          // en el avión no hay fondo de batalla: sigue el mismo de todo el nivel
+  if (tema !== 'aeropuerto' && tema !== 'sumidero') dibujarEdificioFinal(arenaX, tema === 'tarde');          // en el avión no hay fondo de batalla: sigue el mismo de todo el nivel
   if (jefe && jefe.tipo === 'lagarto') dibujarLagartoFondo(ctx, jefe);
   dibujarNivel();
   for (const st of stickersLista) {                          // el sticker escondido solo brilla cuando estás cerca
@@ -4878,7 +4984,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.36', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.37', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
