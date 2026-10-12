@@ -245,3 +245,10 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - **Ataques de Chac**: olas de agua por el suelo (se saltan), olas dobles desde las dos orillas, lluvia ácida (gotas verdes con sombra en el suelo), rayos del cielo (marca amarilla y luego cae), bolas de agua en arco, y salto con ondas al caer. Cuanto menos vida le queda, más rápido y más ataques.
 - Historia: el Patrón invocó a Chac; los hermanos no tienen otro lugar donde vivir y quieren demostrar que son los buenos.
 - Música propia de Palenque y de la pelea con Chac, 2 stickers nuevos.
+
+## Versión 3.45 — Chac volador, Palenque distinto, trampolín y niveles más variados
+- **Palenque con fondo propio**: selva brumosa con cerros verdes, cascadas y árboles gigantes con lianas (ya no se parece a Chichén Itzá). La batalla ya no es en una pirámide.
+- **Chac ahora es como el cocodrilo**: flota enojado al fondo, sobre su nube de tormenta, y no se le puede tocar; solo lo lastima su **rayo dorado devuelto** (cada 6 ataques).
+- **Ataques más rápidos y grandes**: rayos más anchos (y uno gigante que quita 2 vidas), lluvia ácida con gotas grandes y brillantes, olas más altas y rápidas (y dobles desde las dos orillas), **cocos que caen del cielo y explotan como bombas**, y bolas de agua.
+- **Trampolín** (objeto nuevo, como el tinaco): al pisarlo te lanza muy alto, a plataformas con monedas.
+- **Niveles 9, 10, 11 y 12 ya no son iguales**: cada uno arma sus tramos en distinto orden, con zonas nuevas (trampolín, colinas, plataformas altas, zigzag de bloques).
