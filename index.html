@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.34
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.35
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -3016,7 +3016,7 @@ function cargarNivel(n) {
   jefe = { tipo: N.jefe, x: (COLS - 5) * T, y: 12 * T - 78, w: 46, h: 78, vx: 0, vy: 0, hp: hpJ, hpMax: hpJ, vivo: true, estadoJ: 'dormido',
     fase: 'camina', timer: 60, ciclo: 0, invul: 0, aturdido: 0, congelado: 0, dir: -1, t: 0, cargaDir: -1, muerte: 0, cayendo: false, saltoDir: 1 };
   if (N.jefe === 'tiburon') Object.assign(jefe, { w: 220, h: 130, x: arenaX + W - 230, y: 125, entra: 0, boca: 0, flash: 0, tip: 0, sangres: [], dientes: [], viento: null, timer: 120, ciclo: 0 });
-  if (N.jefe === 'lagarto') Object.assign(jefe, { w: 220, h: 230, x: arenaX + W - 240, y: 12 * T - 230, entra: 0, boca: 0.1, flash: 0, tip: 0, lodos: [], mordida: null, coronas: [], rugido: 0, minisT: 0, corona: true, coronaT: 0, timer: 120, ciclo: 0 });
+  if (N.jefe === 'lagarto') Object.assign(jefe, { w: 220, h: 230, x: arenaX + W / 2 - 110, y: 12 * T - 230, entra: 0, boca: 0.1, flash: 0, tip: 0, lodos: [], mordida: null, coronas: [], rugido: 0, minisT: 0, corona: true, coronaT: 0, timer: 120, ciclo: 0 });
   if (N.jefe === 'kukulkan') Object.assign(jefe, { w: 60, h: 60, cx: arenaX + 400, hx: arenaX + 400, hy: 190, baja: 0, boca: 0, flash: 0, tip: 0, cuenta: 0, swv: 0, alt: 190, rayo: null });
   jugador.x = 2 * T; jugador.y = 12 * T - 54; jugador.vx = jugador.vy = 0; jugador.empuje = 0; jugador.patada = 0; jugador.invulnerable = 120;
   ultimo = { x: jugador.x, y: jugador.y };
@@ -3621,34 +3621,41 @@ function dibujarCoronaCaida(g, c) {
   g.fillStyle = c.especial ? '#ffe6ff' : '#d8403a'; g.beginPath(); g.arc(0, 3, 3, 0, 7); g.fill();
   g.restore();
 }
-function dibujarLagartoTrono(g, boca, corona, flash) {                // el Lagarto Rey sentado en su trono, mirando a la izquierda (el origen es el piso, en el centro del trono)
-  const ap = boca * 0.5;
+function dibujarLagartoTrono(g, boca, corona, flash) {                // el Lagarto Rey sentado en su trono, de frente (el origen es el piso, en el centro del trono)
+  const ab = boca * 26;
   g.save(); g.lineJoin = 'round'; g.lineCap = 'round'; g.strokeStyle = NEGRO; g.lineWidth = 3;
   g.fillStyle = '#7a7262'; trazoRedondo(g, -96, -236, 192, 200, 26); g.fill(); g.stroke();                             // respaldo del trono
   g.fillStyle = '#5e584a'; trazoRedondo(g, -76, -216, 152, 160, 18); g.fill();
-  g.strokeStyle = 'rgba(30,26,20,.55)'; g.lineWidth = 2.4; [[-50, -190, -50, -90], [0, -200, 0, -90], [50, -190, 50, -90]].forEach(([x0, y0, x1, y1]) => { g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); }); g.strokeStyle = NEGRO; g.lineWidth = 3;
-  g.strokeStyle = '#3f8a3a'; g.lineWidth = 3.4; [[-84, -234, -88, -170], [60, -236, 66, -180], [-30, -236, -26, -196]].forEach(([x0, y0, x1, y1]) => { g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo(x0 + 8, (y0 + y1) / 2, x1, y1); g.stroke(); }); g.strokeStyle = NEGRO; g.lineWidth = 3;   // lianas
-  g.fillStyle = '#b8232f'; g.beginPath(); g.moveTo(-58, -150); g.lineTo(58, -150); g.lineTo(86, -40); g.lineTo(-86, -40); g.closePath(); g.fill(); g.stroke();                  // capa roja
+  g.strokeStyle = 'rgba(30,26,20,.55)'; g.lineWidth = 2.4; [-56, 56].forEach(x => { g.beginPath(); g.moveTo(x, -196); g.lineTo(x, -80); g.stroke(); }); g.strokeStyle = NEGRO; g.lineWidth = 3;
+  g.strokeStyle = '#3f8a3a'; g.lineWidth = 3.4; [[-84, -234, -88, -170], [80, -236, 86, -176], [-30, -236, -26, -200], [34, -236, 30, -204]].forEach(([x0, y0, x1, y1]) => { g.beginPath(); g.moveTo(x0, y0); g.quadraticCurveTo(x0 + 8, (y0 + y1) / 2, x1, y1); g.stroke(); }); g.strokeStyle = NEGRO; g.lineWidth = 3;   // lianas
+  g.fillStyle = '#b8232f'; g.beginPath(); g.moveTo(-62, -150); g.lineTo(62, -150); g.lineTo(88, -40); g.lineTo(-88, -40); g.closePath(); g.fill(); g.stroke();                  // capa roja
   g.fillStyle = '#6a6354'; trazoRedondo(g, -110, -52, 220, 52, 12); g.fill(); g.stroke();                                // asiento
-  g.fillStyle = '#7a7262'; trazoRedondo(g, -118, -108, 44, 60, 10); g.fill(); g.stroke(); trazoRedondo(g, 74, -108, 44, 60, 10); g.fill(); g.stroke();   // brazos del trono
-  g.fillStyle = '#3b7a38'; g.beginPath(); g.moveTo(52, -62); g.quadraticCurveTo(110, -58, 126, -20); g.quadraticCurveTo(112, -30, 80, -34); g.closePath(); g.fill(); g.stroke();   // cola
-  g.fillStyle = '#4f9a45'; g.beginPath(); g.ellipse(0, -112, 48, 58, 0, 0, 7); g.fill(); g.stroke();                       // cuerpo
-  g.fillStyle = '#d6e08a'; g.beginPath(); g.ellipse(-8, -104, 28, 44, 0, 0, 7); g.fill(); g.strokeStyle = 'rgba(120,130,60,.5)'; g.lineWidth = 2; for (let y = -132; y < -70; y += 14) { g.beginPath(); g.moveTo(-30, y); g.lineTo(14, y); g.stroke(); } g.strokeStyle = NEGRO; g.lineWidth = 3;
-  [[-44, -118, -96, -78], [44, -118, 94, -78]].forEach(([x0, y0, x1, y1]) => { g.strokeStyle = NEGRO; g.lineWidth = 17; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.strokeStyle = '#4f9a45'; g.lineWidth = 12; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); g.fillStyle = '#4f9a45'; g.strokeStyle = NEGRO; g.lineWidth = 3; g.beginPath(); g.ellipse(x1, y1, 9, 7, 0, 0, 7); g.fill(); g.stroke(); });   // brazos
-  g.fillStyle = '#3b7a38'; [[-40, -8], [40, -8]].forEach(([x, y]) => { g.beginPath(); g.ellipse(x, y - 12, 26, 14, 0, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.lineWidth = 1.8; [-10, 0, 10].forEach(dx => { g.beginPath(); g.moveTo(x + dx - 3 + (x < 0 ? -22 : 14), y - 6); g.lineTo(x + dx + (x < 0 ? -22 : 14), y + 2); g.lineTo(x + dx + 3 + (x < 0 ? -22 : 14), y - 6); g.fill(); g.stroke(); }); g.fillStyle = '#3b7a38'; g.lineWidth = 3; });   // piernas
-  g.fillStyle = '#7a1024'; g.beginPath(); g.moveTo(-110, -190); g.lineTo(-10, -176); g.lineTo(-14 - Math.cos(ap) * 96, -168 + Math.sin(ap) * 96); g.closePath(); g.fill();   // adentro de la boca
-  g.save(); g.translate(-10, -176); g.rotate(ap);                                                                       // mandíbula de abajo
-  g.fillStyle = '#3b7a38'; g.beginPath(); g.moveTo(14, -2); g.lineTo(-100, -4); g.quadraticCurveTo(-106, 14, -70, 22); g.quadraticCurveTo(-20, 32, 28, 18); g.closePath(); g.fill(); g.stroke();
-  g.fillStyle = '#fff'; g.lineWidth = 1.8; for (let i = 0; i < 6; i++) { const x = -94 + i * 15; g.beginPath(); g.moveTo(x, -3); g.lineTo(x + 7, -17); g.lineTo(x + 14, -3); g.closePath(); g.fill(); g.stroke(); } g.restore();
-  g.lineWidth = 3; g.fillStyle = '#4f9a45'; g.beginPath(); g.moveTo(-112, -190); g.quadraticCurveTo(-60, -216, 8, -214); g.quadraticCurveTo(40, -210, 50, -178); g.lineTo(-10, -170); g.lineTo(-108, -176); g.closePath(); g.fill(); g.stroke();   // cabeza y hocico de arriba
-  g.fillStyle = '#fff'; g.lineWidth = 1.8; for (let i = 0; i < 6; i++) { const x = -102 + i * 15; g.beginPath(); g.moveTo(x, -176 + i * 0.6); g.lineTo(x + 7, -164 + i * 0.6); g.lineTo(x + 14, -176 + i * 0.6); g.closePath(); g.fill(); g.stroke(); }
-  g.fillStyle = '#4f9a45'; g.lineWidth = 3; g.beginPath(); g.arc(-34, -208, 17, 0, 7); g.fill(); g.stroke();                // bulto del ojo
-  g.fillStyle = '#ffe14d'; g.beginPath(); g.arc(-36, -208, 11, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#000'; g.fillRect(-37.4, -218, 3.4, 20);
-  g.lineWidth = 4.4; g.beginPath(); g.moveTo(-54, -228); g.lineTo(-18, -214); g.stroke();                                 // ceño enojado
-  g.fillStyle = '#3b7a38'; g.lineWidth = 2.4; for (let k = 0; k < 4; k++) { g.beginPath(); g.moveTo(-2 + k * 12, -212 + k * 3); g.lineTo(2 + k * 12, -226 + k * 4); g.lineTo(10 + k * 12, -208 + k * 3); g.closePath(); g.fill(); g.stroke(); }
-  if (corona) { g.lineWidth = 3; g.fillStyle = '#ffd24a'; g.beginPath(); g.moveTo(-58, -222); g.lineTo(-62, -254); g.lineTo(-44, -238); g.lineTo(-30, -262); g.lineTo(-16, -238); g.lineTo(2, -254); g.lineTo(-2, -222); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#d8403a'; g.beginPath(); g.arc(-30, -234, 4.4, 0, 7); g.fill(); g.fillStyle = '#c05bff'; g.beginPath(); g.arc(-48, -230, 3, 0, 7); g.arc(-12, -230, 3, 0, 7); g.fill(); }
-  if (flash > 0) { g.fillStyle = 'rgba(255,255,255,' + Math.min(0.7, flash / 40).toFixed(2) + ')'; g.beginPath(); g.ellipse(0, -130, 110, 130, 0, 0, 7); g.fill(); }
+  g.fillStyle = '#7a7262'; trazoRedondo(g, -120, -110, 44, 62, 10); g.fill(); g.stroke(); trazoRedondo(g, 76, -110, 44, 62, 10); g.fill(); g.stroke();   // brazos del trono
+  g.fillStyle = '#3b7a38'; g.beginPath(); g.moveTo(40, -48); g.quadraticCurveTo(96, -40, 112, -8); g.quadraticCurveTo(92, -16, 56, -22); g.closePath(); g.fill(); g.stroke();   // cola
+  g.fillStyle = '#4f9a45'; g.beginPath(); g.ellipse(0, -112, 50, 60, 0, 0, 7); g.fill(); g.stroke();                       // cuerpo
+  g.fillStyle = '#d6e08a'; g.beginPath(); g.ellipse(0, -104, 30, 46, 0, 0, 7); g.fill(); g.strokeStyle = 'rgba(120,130,60,.5)'; g.lineWidth = 2; for (let y = -134; y < -68; y += 14) { g.beginPath(); g.moveTo(-26, y); g.lineTo(26, y); g.stroke(); } g.strokeStyle = NEGRO; g.lineWidth = 3;
+  [-1, 1].forEach(l => { g.strokeStyle = NEGRO; g.lineWidth = 17; g.beginPath(); g.moveTo(l * 46, -134); g.lineTo(l * 92, -88); g.stroke(); g.strokeStyle = '#4f9a45'; g.lineWidth = 12; g.beginPath(); g.moveTo(l * 46, -134); g.lineTo(l * 92, -88); g.stroke(); g.fillStyle = '#4f9a45'; g.strokeStyle = NEGRO; g.lineWidth = 3; g.beginPath(); g.ellipse(l * 94, -84, 10, 8, 0, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.lineWidth = 1.6; [-5, 0, 5].forEach(dx => { g.beginPath(); g.moveTo(l * 94 + dx - 2, -80); g.lineTo(l * 94 + dx, -72); g.lineTo(l * 94 + dx + 2, -80); g.fill(); g.stroke(); }); });   // brazos y garras
+  [-1, 1].forEach(l => { g.fillStyle = '#3b7a38'; g.strokeStyle = NEGRO; g.lineWidth = 3; g.beginPath(); g.ellipse(l * 38, -16, 26, 15, 0, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.lineWidth = 1.6; [-10, 0, 10].forEach(dx => { g.beginPath(); g.moveTo(l * 38 + dx - 3, -4); g.lineTo(l * 38 + dx, 5); g.lineTo(l * 38 + dx + 3, -4); g.closePath(); g.fill(); g.stroke(); }); });   // piernas
+  g.fillStyle = '#3b7a38'; g.lineWidth = 2.4; for (let k = -3; k <= 3; k++) { g.beginPath(); g.moveTo(k * 15 - 5, -222 + Math.abs(k) * 4); g.lineTo(k * 15, -240 + Math.abs(k) * 3); g.lineTo(k * 15 + 5, -222 + Math.abs(k) * 4); g.closePath(); g.fill(); g.stroke(); }   // espinas de la cabeza
+  g.lineWidth = 3; g.fillStyle = '#4f9a45'; g.beginPath(); g.ellipse(0, -188, 58, 42, 0, 0, 7); g.fill(); g.stroke();      // cabeza
+  [-1, 1].forEach(l => { g.fillStyle = '#4f9a45'; g.lineWidth = 3; g.beginPath(); g.arc(l * 34, -216, 17, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#ffe14d'; g.beginPath(); g.arc(l * 34, -216, 11, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#000'; g.fillRect(l * 34 - 1.7, -226, 3.4, 20); g.lineWidth = 4.4; g.beginPath(); g.moveTo(l * 54, -238); g.lineTo(l * 18, -224); g.stroke(); });   // ojos y ceño enojado
+  g.lineWidth = 3; g.fillStyle = '#7a1024'; g.beginPath(); g.ellipse(0, -156 + ab / 2, 46, 5 + ab / 2, 0, 0, 7); g.fill(); g.stroke();                          // adentro de la boca
+  g.fillStyle = '#3b7a38'; trazoRedondo(g, -48, -154 + ab, 96, 26, 13); g.fill(); g.stroke();                                // mandíbula de abajo
+  g.fillStyle = '#5aa84e'; trazoRedondo(g, -42, -204, 84, 50, 20); g.fill(); g.stroke();                                // hocico
+  g.fillStyle = '#2a4a2a'; g.beginPath(); g.ellipse(-15, -190, 4.4, 6, 0, 0, 7); g.ellipse(15, -190, 4.4, 6, 0, 0, 7); g.fill();   // naricitas
+  g.fillStyle = '#fff'; g.lineWidth = 1.8; for (let i = 0; i < 7; i++) { const x = -39 + i * 13; g.beginPath(); g.moveTo(x, -156); g.lineTo(x + 6.5, -144 - ab * 0.15); g.lineTo(x + 13, -156); g.closePath(); g.fill(); g.stroke(); }
+  if (ab > 3) for (let i = 0; i < 6; i++) { const x = -33 + i * 13; g.beginPath(); g.moveTo(x, -154 + ab); g.lineTo(x + 6.5, -166 + ab); g.lineTo(x + 13, -154 + ab); g.closePath(); g.fill(); g.stroke(); }
+  if (corona) { g.lineWidth = 3; g.fillStyle = '#ffd24a'; g.beginPath(); g.moveTo(-42, -230); g.lineTo(-42, -262); g.lineTo(-31, -242); g.lineTo(-21, -258); g.lineTo(-10, -242); g.lineTo(0, -270); g.lineTo(10, -242); g.lineTo(21, -258); g.lineTo(31, -242); g.lineTo(42, -262); g.lineTo(42, -230); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#d8403a'; g.beginPath(); g.arc(0, -240, 4.6, 0, 7); g.fill(); g.fillStyle = '#c05bff'; g.beginPath(); g.arc(-24, -238, 3.2, 0, 7); g.arc(24, -238, 3.2, 0, 7); g.fill(); }
+  if (flash > 0) { g.fillStyle = 'rgba(255,255,255,' + Math.min(0.7, flash / 40).toFixed(2) + ')'; g.beginPath(); g.ellipse(0, -130, 112, 134, 0, 0, 7); g.fill(); }
   g.restore();
+}
+function dibujarLagartoFondo(g, j) {                                  // el Rey va al fondo: se dibuja antes que el suelo, las cosas y el jugador (todo queda delante de él)
+  if (j.estadoJ === 'dormido' && j.vivo) return;
+  if (j.vivo || j.muerte < 90) {
+    const bin = Math.round(j.boca * 6), fl = j.flash > 0 ? 1 : 0, ea = j.entra * j.entra * (3 - 2 * j.entra), dy = (1 - ea) * 300;
+    const sp = sprite('lagF|' + bin + '|' + (j.corona ? 1 : 0) + '|' + fl, 300, 300, 150, 282, gg => dibujarLagartoTrono(gg, bin / 6, j.corona, fl ? 30 : 0));
+    g.save(); if (!j.vivo) g.globalAlpha = Math.max(0, 1 - j.muerte / 90); g.drawImage(sp.c, j.x + 110 - sp.ox, 12 * T + 2 - sp.oy + dy + Math.sin(j.t * 0.04) * 2, sp.w, sp.h); g.restore();
+  }
 }
 function dibujarLagarto(g, j) {
   if (j.estadoJ === 'dormido' && j.vivo) return;
@@ -3677,11 +3684,6 @@ function dibujarLagarto(g, j) {
     }
   }
   for (const c of j.coronas) dibujarCoronaCaida(g, c);
-  if (j.vivo || j.muerte < 90) {
-    const bin = Math.round(j.boca * 6), fl = j.flash > 0 ? 1 : 0, ea = j.entra * j.entra * (3 - 2 * j.entra), dx = (1 - ea) * 260;
-    const sp = sprite('lag|' + bin + '|' + (j.corona ? 1 : 0) + '|' + fl, 300, 290, 150, 270, gg => dibujarLagartoTrono(gg, bin / 6, j.corona, fl ? 30 : 0));
-    g.save(); if (!j.vivo) g.globalAlpha = Math.max(0, 1 - j.muerte / 90); g.drawImage(sp.c, j.x + 110 + dx - sp.ox, 12 * T + 2 - sp.oy + Math.sin(j.t * 0.04) * 2, sp.w, sp.h); g.restore();
-  }
 }
 function iaPiloto(j) {
   const rabia = j.hp <= 4;
@@ -4609,6 +4611,7 @@ function dibujarJuego() {
   const sacudir = aj.temblor && temblor > 0, sx = sacudir ? (Math.random() - 0.5) * temblor * 0.6 : 0, sy = sacudir ? (Math.random() - 0.5) * temblor * 0.5 : 0;
   ctx.save(); ctx.translate(-Math.round(camara * ESC) / ESC + sx, sy);
   if (tema !== 'aeropuerto' && tema !== 'sumidero') dibujarEdificioFinal(arenaX, tema === 'tarde');          // en el avión no hay fondo de batalla: sigue el mismo de todo el nivel
+  if (jefe && jefe.tipo === 'lagarto') dibujarLagartoFondo(ctx, jefe);
   dibujarNivel();
   for (const st of stickersLista) {                          // el sticker escondido solo brilla cuando estás cerca
     if (st.tomado) continue; const d = Math.hypot(st.x + 12 - (jugador.x + 13), st.y + 12 - (jugador.y + 27));
@@ -4730,7 +4733,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.34', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.35', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });
@@ -5098,7 +5101,7 @@ function dibujarCine() {
   dibujarNino(ctx, personaje, 170, 12 * T + 2 - rebote, 1.55, 1, { estado: 'quieto', t: reloj, aire: false });
   if (q !== 'p' && q !== 'kukulkan') cineJefe = true;
   if (cineJefe && N.jefe === 'tiburon') { ctx.save(); ctx.translate(655, 255); ctx.scale(0.95, 0.95); dibujarCabezaTiburon(ctx, q !== 'p' && hablando ? 0.5 + Math.sin(estadoT * 0.3) * 0.2 : 0.12, 0); ctx.restore(); }
-  if (cineJefe && N.jefe === 'lagarto') { ctx.save(); ctx.translate(660, 12 * T + 2); ctx.scale(0.95, 0.95); dibujarLagartoTrono(ctx, q !== 'p' && hablando ? 0.55 + Math.sin(estadoT * 0.3) * 0.25 : 0.12, true, 0); ctx.restore(); }
+  if (cineJefe && N.jefe === 'lagarto') { ctx.save(); ctx.translate(640, 12 * T + 2); ctx.scale(0.95, 0.95); dibujarLagartoTrono(ctx, q !== 'p' && hablando ? 0.55 + Math.sin(estadoT * 0.3) * 0.25 : 0.12, true, 0); ctx.restore(); }
   if (cineJefe && N.jefe !== 'kukulkan' && N.jefe !== 'tiburon' && N.jefe !== 'lagarto') {
     const sal = q === 'p' ? 0 : (hablando ? Math.abs(Math.sin(estadoT * 0.35)) * 4 : 0), fj = { tipo: N.jefe, x: 640 - 23, y: 12 * T - 78 - sal, w: 46, h: 78, vx: 0, vy: 0, fase: q === 'p' || !hablando ? 'camina' : 'aviso', dir: -1, cargaDir: -1, invul: 0, aturdido: 0, congelado: 0, hp: 1, muerte: 0, t: 0 };
     ctx.save(); ctx.translate(640, 12 * T + 2); ctx.scale(1.35, 1.35); ctx.translate(-640, -(12 * T + 2)); dibujarJefe(ctx, fj, reloj); ctx.restore();

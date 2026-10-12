@@ -194,3 +194,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 ## Versión 3.34 — Sin sonido de "disparo de hielo" y Lagarto Rey con 10 coronas
 - Quitado el sonido agudo "escaneo" (sonaba como un disparo de hielo cada vez que un cocodrilito, un nahual o una cafetera se preparaban). Ya no se usa en ningún lado.
 - **El Lagarto Rey ahora tiene 10 coronas moradas** que romper (antes 3). Cuando le quedan 3, se enfurece: 4 cascadas de lodo en vez de 3 y más coronas.
+
+## Versión 3.35 — El Lagarto Rey, al fondo y de frente
+- El Lagarto Rey está ahora en el **centro** de la arena, sentado en su trono **mirando de frente**, y se dibuja **hasta el fondo**: solo el fondo del cañón queda detrás de él; el suelo, las cosas, los enemigos, los ataques y el jugador pasan por delante.
