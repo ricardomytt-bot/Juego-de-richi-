@@ -232,3 +232,9 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - **Nivel acuático** (mar): suave y tenue: seno suave, guitarra que resuena, cuerdas, casi sin batería.
 - **Niveles fríos** (Bufadora, aeropuerto): graves y pesados: octava más baja, bajo fuerte y batería lenta.
 - **Jefes**: orquesta épica de 24 compases: intro con taiko y coro, tema heroico con metales y cuerdas rápidas, puente con coro y subidas de tensión, y un clímax una nota más arriba. Hay 4 versiones: jefe (cálido), jefeAgua, jefeFrio y jefeSelva (tribal).
+
+## Versión 3.43 — Nivel 11: la caverna de Chiapas y El Minero
+- **Historia**: al vencer al Parachico cae un mapa que marca una caverna donde el Patrón escondió una llave. Al final del nivel la llave resulta ser FALSA: no abre el departamento en Mérida y hay una nota "Les mentí, estoy en Palenque".
+- **Nivel 11 (caverna)**: piso de roca oscura, andamios y faroles de mina, cristales azules y morados, carritos mineros y oscuridad con luz alrededor de tu lámpara. Enemigos: serpiente, erizo y murciélago.
+- **Jefe El Minero**: lanza dinamita (¡pátea la dinamita para devolvérsela!), salta y saca pinchos, y **se esconde bajo tierra** (como excavar): solo se ve un montículo que te persigue; un círculo rojo avisa dónde va a salir. Al salir lanza pinchos a los lados y queda aturdido: ¡es tu momento para pisarlo o patearlo!
+- Música propia de la caverna, 2 stickers nuevos y el mundo Chiapas ahora solo muestra Palenque como próximo.
