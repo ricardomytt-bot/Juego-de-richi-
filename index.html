@@ -46,7 +46,7 @@
 <div id="girar">📱↻<br><br>Gira tu celular para jugar</div>
 <script>
 // ============================================================
-//  LICHILÓN Y EL PATRÓN  -  Versión 3.37
+//  LICHILÓN Y EL PATRÓN  -  Versión 3.38
 //  Historia: el Patrón y la Patrona subieron la renta de los departamentos.
 //  Los tres hermanos tienen que derrotarlos para ganar su depa gratis.
 //
@@ -1429,7 +1429,7 @@ function avisoExplosion(g, x, y, R, u) {                    // el círculo rojo 
   g.strokeStyle = 'rgba(255,255,255,.8)'; g.lineWidth = 2; g.setLineDash([8, 6]); g.beginPath(); g.arc(x, y, R, 0, 7); g.stroke(); g.setLineDash([]);
 }
 function dibujarProyectil(g, q) {
-  if (q.tipo === 'orbe') { const cx = q.x + q.w / 2, cy = q.y + q.h / 2; resplandor(g, cx, cy, 24 + Math.round(Math.sin(reloj * 0.3) * 3), q.devuelto ? 'rgba(255,230,120,.8)' : 'rgba(205,120,255,.8)'); g.save(); g.translate(cx, cy); g.fillStyle = q.devuelto ? '#ffe27a' : '#c05bff'; g.strokeStyle = NEGRO; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, 11, 0, 7); g.fill(); g.stroke(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, 6, q.rot, q.rot + 4); g.stroke(); g.restore(); return; }
+  if (q.tipo === 'orbe') { const cx = q.x + q.w / 2, cy = q.y + q.h / 2; resplandor(g, cx, cy, 24 + Math.round(Math.sin(reloj * 0.3) * 3), q.especial ? 'rgba(90,230,255,.85)' : 'rgba(205,120,255,.8)'); g.save(); g.translate(cx, cy); g.fillStyle = q.especial ? '#4fe0ff' : '#c05bff'; g.strokeStyle = NEGRO; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, 11, 0, 7); g.fill(); g.stroke(); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, 6, q.rot, q.rot + 4); g.stroke(); g.restore(); return; }
   if (q.tipo === 'fueguito') { const cx = q.x + q.w / 2, cy = q.y + q.h / 2, fl = Math.sin(reloj * 0.6) * 1.5; g.save(); g.translate(cx, cy); g.fillStyle = '#ff6a1a'; g.strokeStyle = NEGRO; g.lineWidth = 1.8; g.beginPath(); g.moveTo(0, -11 + fl); g.quadraticCurveTo(10, -2, 6, 7); g.quadraticCurveTo(0, 11, -6, 7); g.quadraticCurveTo(-10, -2, 0, -11 + fl); g.fill(); g.stroke(); g.fillStyle = '#ffd34d'; g.beginPath(); g.ellipse(0, 3, 3.6, 5, 0, 0, 7); g.fill(); g.restore(); return; }
   if (q.tipo === 'ondaZap') { const d = Math.sign(q.vx) || 1; g.save(); g.translate(q.x + q.w / 2, q.y + q.h); g.strokeStyle = '#ffd34d'; g.lineWidth = 3.4; g.lineCap = 'round'; for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(-d * k * 7, 0, 18 - k * 3, d > 0 ? -1.6 : Math.PI - 1.6 + 0.2, d > 0 ? -0.1 : Math.PI + 1.4); g.stroke(); } g.restore(); return; }
   if (q.tipo === 'cocoMono') { g.save(); g.translate(q.x + q.w / 2, q.y + q.h / 2); g.rotate(q.rot); g.fillStyle = '#7a5a30'; g.strokeStyle = NEGRO; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, 8, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#3a2a14'; g.beginPath(); g.arc(-2.6, -2, 1.3, 0, 7); g.arc(2.6, -2, 1.3, 0, 7); g.arc(0, 2.4, 1.3, 0, 7); g.fill(); g.restore(); return; }
@@ -3967,15 +3967,13 @@ function iaParachico(j) {                                   // El Parachico: tro
 }
 function lanzarOrbe(j) {                                    // bola mágica que sale de su capa: si te pega quita 2 vidas; patéala de vuelta
   if (!j.volea) j.volea = { n: 0, devueltas: 0 };
-  j.volea.n++;
+  j.volea.n++; if (j.volea.n === 1) j.volea.esp = 1 + Math.floor(Math.random() * 3);
   const sx = j.x + j.w / 2 + j.dir * 12, tx = jugador.x + 13 + (Math.random() - 0.5) * 70;
-  proyJ.push({ tipo: 'orbe', x: sx - 12, y: j.y + 18, w: 24, h: 24, vx: Math.max(-6.5, Math.min(6.5, (tx - sx) / 54)), vy: -9, grav: 0.35, rot: 0, vida: 520, devuelto: false }); sfx('lanza');
+  proyJ.push({ tipo: 'orbe', x: sx - 12, y: j.y + 18, w: 24, h: 24, vx: Math.max(-6.5, Math.min(6.5, (tx - sx) / 54)), vy: -9, grav: 0.35, rot: 0, vida: 520, devuelto: false, especial: j.volea.n === j.volea.esp }); sfx('lanza');
 }
-function orbeDevuelto(j, x, y) {                            // las 3 bolas devueltas lo marean
+function orbeDevuelto(j, x, y) {                            // la bola de otro color, devuelta, lo marea
   chispas(x, y, 18, '#e0a8ff', 5); sfx('golpe'); temblor = Math.max(temblor, 8);
-  if (!j.volea) return;
-  j.volea.devueltas++;
-  if (j.volea.devueltas >= 3) { j.volea = null; marear(j); }
+  j.volea = null; marear(j);
 }
 function lanzarFueguito(j, k) {                             // fueguitos que caen en arco alrededor de ti
   const sx = j.x + j.w / 2 + j.dir * 10, tx = jugador.x + 13 + ((k % 2 ? 1 : -1) * Math.ceil(k / 2) * 38) + (Math.random() - 0.5) * 20;
@@ -4289,7 +4287,7 @@ function actualizarProyectiles(p, pata) {
       } else {
         const zona = p.patada > 0 ? { x: p.mirando > 0 ? p.x - 4 : p.x - 56, y: p.y - 6, w: 86, h: p.h + 12 } : null;
         if (q.y + q.h >= 12 * T && q.vy > 0) { q.vida = 0; chispas(cq, 12 * T - 6, 12, '#c05bff', 4); }
-        else if (zona && choca(zona, q)) { q.devuelto = true; q.vida = 700; sfx('patada'); chispas(cq, cy, 14, '#e0a8ff', 4); puntos += 100; registrar('patadas'); }
+        else if (zona && choca(zona, q)) { if (q.especial) { q.devuelto = true; q.vida = 700; sfx('patada'); chispas(cq, cy, 14, '#9ff0ff', 4); puntos += 100; registrar('patadas'); } else { q.vida = 0; sfx('patada'); chispas(cq, cy, 12, '#e0a8ff', 4); } }
         else if (tragando === 0 && choca(p, q)) { q.vida = 0; chispas(cq, cy, 14, '#c05bff', 4); recibirGolpe(true, Math.sign(q.vx || 1) * 5, 2); }
       }
       continue;
@@ -4912,7 +4910,7 @@ function dibujarJuego() {
   if (estado === 'jugando' && quema > 0) { ctx.fillStyle = 'rgba(150,30,10,.82)'; trazoRedondo(ctx, 8, 98, 176, 42, 12); ctx.fill(); ctx.strokeStyle = '#ffb36b'; ctx.lineWidth = 2; ctx.stroke(); texto('🔥 QUEMADURA  ' + Math.ceil(quema / 60) + 's', 96, 116, 14, '#fff', 'center'); texto('¡Toma la gota de agua!', 96, 132, 11, '#ffe0b0', 'center', true); }
   if (estado === 'jugando' && jefe && jefe.tipo === 'kukulkan' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡ATACA SOLO EL FUEGO VERDE!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
   if (estado === 'jugando' && msgHab.t > 0) { msgHab.t--; ctx.globalAlpha = Math.min(1, msgHab.t / 20); texto(msgHab.txt, W / 2, 380, 16, msgHab.col || '#ffb3b3', 'center', true); ctx.globalAlpha = 1; }
-  if (estado === 'jugando' && jefe && jefe.tipo === 'parachico' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip4', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡DEVUELVE LAS 3 BOLAS MÁGICAS!', W / 2, 424, 20, '#e0a8ff', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
+  if (estado === 'jugando' && jefe && jefe.tipo === 'parachico' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip4', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡DEVUELVE LA BOLA DE OTRO COLOR!', W / 2, 424, 20, '#e0a8ff', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
   if (estado === 'jugando' && jefe && jefe.tipo === 'lagarto' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip3', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡ROMPE LA CORONA MORADA!', W / 2, 424, 20, '#e0a8ff', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
   if (estado === 'jugando' && jefe && jefe.tipo === 'tiburon' && jefe.tip > 0) { ctx.globalAlpha = Math.min(1, jefe.tip / 30); const spt = sprite('tip2', 600, 44, 0, 0, gg => { gg.translate(-(W / 2 - 300), -398); texto('¡ROMPE EL DIENTE DORADO!', W / 2, 424, 20, '#ffd43b', 'center'); }); ctx.drawImage(spt.c, W / 2 - 300, 398, spt.w, spt.h); ctx.globalAlpha = 1; }
   if (banner > 0 && estado === 'jugando') {
@@ -4984,7 +4982,7 @@ function dibujarMenu() {
   [['ÁLBUM', 'dorado', () => irA('album')], ['PERFIL', 'azul', () => irA('perfil')], ['AJUSTES', 'gris', () => { ajustesVolver = 'menu'; irA('ajustes'); }]].forEach(([t, cc, f], i) => uiBoton(t, 165 + i * 160, 276, 150, 36, f, cc, 15));
   ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, 8, 10, 76, 30, 15); ctx.fill(); dibujarMoneda(ctx, 26, 25, 10, true); texto(String(datos.monedas), 42, 32, 17, '#ffd700');
   ctx.font = 'bold 15px "Trebuchet MS", sans-serif'; const wn = ctx.measureText('👤 ' + datos.nombre).width + 26; ctx.fillStyle = 'rgba(20,24,56,.55)'; trazoRedondo(ctx, W - 8 - wn, 10, wn, 30, 15); ctx.fill(); texto('👤 ' + datos.nombre, W - 21, 31, 15, '#ffe27a', 'right');
-  texto('Versión 3.37', W - 10, H - 10, 11, '#fff', 'right');
+  texto('Versión 3.38', W - 10, H - 10, 11, '#fff', 'right');
   if (ES_IOS) texto('iPhone: quita el silencio del botón lateral', W - 10, H - 26, 10, '#ffe27a', 'right');
   const es = estadoSonido(), txtS = { ok: 'Sonido activado', alt: 'Sonido (modo compatible)', toca: 'TOCA AQUÍ PARA ACTIVAR EL SONIDO', mute: 'Sonido apagado (M)' }[es];
   ui.rects.push({ tipo: 'boton', x: 8, y: H - 44, w: es === 'toca' ? 330 : 240, h: 36, accion: () => { if (es === 'mute') { silencio = false; aplicarVolumen(); } desbloquearAudio(); sfx('menu'); }, sinFoco: true });

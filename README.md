@@ -209,3 +209,6 @@ Juego de plataformas para el navegador, ambientado en Mérida, Yucatán. Abre `i
 - **Nivel 10 rehecho con las fotos**: casonas coloniales crema con adornos, ventanas arqueadas con marcos de madera, frontones y a veces una torrecita con domo; **farolas de fierro verde con globos blancos**, bancas y botes de herrería, jardineras con setos, **taxis amarillos**, letreros verdes "2a. PONIENTE", árboles grandes de sombra y **banderines de papel picado** colgados entre los árboles. Adoquín gris en el piso.
 - **Tres kioscos** a lo largo del nivel (domo verde con cupulita, columnas blancas con encaje, base de piedra con escalones).
 - **La arena del Parachico es la plaza del kiosco**: kiosco grande al centro con luces y banderines, farolas, bancas, botes y jardineras.
+
+## Versión 3.38 — Parachico: solo una bola de otro color
+- De las 3 bolas mágicas, **una es de otro color (azul brillante)**. Solo esa se devuelve de una patada y, al llegar al Parachico, lo marea. Las moradas se destruyen si las pateas (y siguen quitando 2 vidas si te pegan).
