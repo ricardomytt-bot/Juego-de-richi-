@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Richi World</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="hearts"></div>
+  <div class="stat">🪙 <b id="coins">0</b></div>
+  <div class="stat">🌙 <b id="moons">0</b>/5</div>
+  <div id="captureTag" class="hidden">👾 Capturado — <kbd>E</kbd> para soltar</div>
+</div>
+<div id="banner"></div>
+<div id="toast"></div>
+<div id="help" class="hidden">
+  <b>WASD</b> moverse · <b>Ratón/Flechas</b> cámara · <b>Espacio</b> saltar (¡encadena 3!) ·
+  <b>C/Shift</b> agacharse (+Espacio = salto largo, en el aire = aplastón) ·
+  <b>E/Clic</b> lanzar gorra / capturar · <b>R</b> volver al checkpoint · <b>H</b> ocultar ayuda
+</div>
+
+<div id="title" class="overlay">
+  <h1>RICHI<span>WORLD</span></h1>
+  <p class="sub">Reúne las 5 Power Moons del Reino de Richi</p>
+  <button id="play">▶ JUGAR</button>
+  <ul>
+    <li><b>WASD</b> mover &nbsp; <b>Ratón</b> cámara &nbsp; <b>Espacio</b> saltar (hasta triple salto)</li>
+    <li><b>C / Shift</b> agacharse · con <b>Espacio</b> = salto largo · en el aire = aplastón</li>
+    <li><b>E / Clic</b> lanzar la gorra: recoge monedas lejanas y <b>captura</b> a los Gumbis</li>
+    <li>Salta sobre los enemigos para derrotarlos. Cada 10 monedas recuperas un corazón.</li>
+  </ul>
+</div>
+
+<div id="pause" class="overlay hidden"><h2>Pausa</h2><p>Haz clic para continuar</p></div>
+<div id="win" class="overlay hidden">
+  <h1>¡LO LOGRASTE!</h1>
+  <p class="sub">Richi reunió las 5 Power Moons</p>
+  <p id="winStats"></p>
+  <button id="again">↻ Jugar de nuevo</button>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

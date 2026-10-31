@@ -1,0 +1,28 @@
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#8fd0ff;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;color:#fff;user-select:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hidden{display:none!important}
+#hud{position:fixed;top:14px;left:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;pointer-events:none}
+#hearts{font-size:30px;text-shadow:0 2px 0 #0006;letter-spacing:2px}
+.stat{background:#0007;padding:6px 14px;border-radius:999px;font-size:20px;border:2px solid #fff4}
+.stat b{font-size:24px}
+#captureTag{background:#e8262bcc;padding:6px 14px;border-radius:999px;font-weight:bold}
+kbd{background:#fff;color:#000;border-radius:4px;padding:0 6px}
+#banner{position:fixed;left:0;right:0;top:22%;text-align:center;font-size:clamp(28px,6vw,64px);font-weight:900;color:#ffe14a;
+  -webkit-text-stroke:2px #7a4a00;text-shadow:0 5px 0 #7a4a00,0 0 30px #ffd400;opacity:0;transform:scale(.6);transition:all .35s;pointer-events:none}
+#banner.show{opacity:1;transform:scale(1)}
+#banner small{display:block;font-size:.4em;color:#fff;-webkit-text-stroke:0;text-shadow:0 2px 4px #000}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#000a;padding:10px 20px;border-radius:12px;font-size:18px;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center}
+#toast.show{opacity:1}
+#help{position:fixed;left:0;right:0;bottom:0;padding:8px 14px;background:#0008;font-size:13px;text-align:center;pointer-events:none}
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
+  background:radial-gradient(ellipse at center,#0a2a6a99,#041030dd);z-index:5}
+.overlay h1{margin:0;font-size:clamp(48px,11vw,130px);line-height:.9;font-weight:900;color:#ff3b3b;-webkit-text-stroke:3px #fff;text-shadow:0 8px 0 #7a0d0d,0 0 40px #ff3b3b88;letter-spacing:2px}
+.overlay h1 span{display:block;color:#ffd400;text-shadow:0 8px 0 #8a5a00,0 0 40px #ffd40088}
+.overlay h2{font-size:48px;margin:0}
+.sub{font-size:clamp(16px,2.5vw,24px);margin:18px 0 24px}
+button{font:inherit;font-size:28px;font-weight:900;color:#fff;background:linear-gradient(#ff5a5a,#d01616);border:4px solid #fff;border-radius:16px;padding:12px 44px;cursor:pointer;box-shadow:0 6px 0 #7a0d0d;transition:transform .1s}
+button:hover{transform:translateY(-2px) scale(1.04)}
+button:active{transform:translateY(4px);box-shadow:0 2px 0 #7a0d0d}
+.overlay ul{list-style:none;padding:0;margin:30px 0 0;max-width:720px;line-height:1.9;font-size:15px;opacity:.95}
+.overlay b{color:#ffd400}
