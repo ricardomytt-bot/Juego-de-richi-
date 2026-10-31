@@ -36,3 +36,5 @@ button:hover{transform:translateY(-2px) scale(1.04)}
 button:active{transform:translateY(4px);box-shadow:0 2px 0 #7a0d0d}
 .overlay ul{list-style:none;padding:0;margin:30px 0 0;max-width:720px;line-height:1.9;font-size:15px;opacity:.95}
 .overlay b{color:#ffd400}
+#c{filter:saturate(1.14) contrast(1.05)}
+#vig{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(10,20,60,.38) 100%)}
