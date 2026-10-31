@@ -87,6 +87,16 @@ function baseTex(kind) {
   else if (kind === 'dirt') { sp(70, 'rgba(60,30,0,.14)', 12, 7); sp(40, 'rgba(255,230,190,.3)', 5, 4); x.fillStyle = 'rgba(60,30,0,.18)'; x.fillRect(0, 60, 128, 3); }
   else if (kind === 'brick') { x.fillStyle = 'rgba(70,60,40,.35)'; for (let r = 0; r < 4; r++) { x.fillRect(0, r * 32, 128, 3); for (let k = 0; k < 2; k++) x.fillRect(((r % 2) * 32 + k * 64) % 128, r * 32, 3, 32); } sp(30, 'rgba(0,0,0,.06)', 10, 8); }
   else if (kind === 'check') { x.fillStyle = 'rgba(0,0,0,.12)'; x.fillRect(0, 0, 64, 64); x.fillRect(64, 64, 64, 64); x.fillStyle = 'rgba(0,0,0,.28)'; x.fillRect(0, 0, 128, 4); x.fillRect(0, 0, 4, 128); }
+  else if (kind === 'asphalt') { sp(220, 'rgba(0,0,0,.16)', 3, 3); sp(120, 'rgba(255,255,255,.14)', 2, 2); }
+  else if (kind === 'sidewalk') { sp(60, 'rgba(0,0,0,.06)', 8, 6); x.fillStyle = 'rgba(0,0,0,.22)'; x.fillRect(0, 0, 128, 3); x.fillRect(0, 0, 3, 128); x.fillRect(0, 64, 128, 2); x.fillRect(64, 0, 2, 128); }
+  else if (kind === 'roof') { sp(160, 'rgba(0,0,0,.12)', 6, 5); x.fillStyle = 'rgba(0,0,0,.3)'; x.fillRect(0, 0, 128, 6); x.fillRect(0, 0, 6, 128); }
+  else if (kind === 'facade') {
+    x.fillStyle = 'rgba(0,0,0,.18)'; x.fillRect(0, 0, 128, 128); x.fillStyle = 'rgba(255,255,255,.55)'; x.fillRect(0, 118, 128, 10);
+    for (let cx = 0; cx < 2; cx++) for (let cy = 0; cy < 3; cy++) {
+      const lit = Math.random() < 0.28; x.fillStyle = lit ? '#fff1b0' : 'rgba(25,38,62,.88)'; x.fillRect(12 + cx * 60, 8 + cy * 38, 40, 28);
+      x.fillStyle = 'rgba(255,255,255,.5)'; x.fillRect(12 + cx * 60, 8 + cy * 38, 40, 3);
+    }
+  }
   else if (kind === 'crate') {
     x.fillStyle = '#e0a02a'; x.fillRect(0, 0, 128, 128); x.fillStyle = '#ffd24d'; x.fillRect(10, 10, 108, 108);
     x.fillStyle = '#b87a10'; x.beginPath(); x.arc(64, 64, 30, 0, TAU); x.fill(); x.fillStyle = '#fff3a0'; x.beginPath(); x.arc(64, 64, 22, 0, TAU); x.fill();
@@ -104,8 +114,9 @@ const solids = [];
 function addBox(cx, cz, w, d, top, h, opt = {}) {
   const sc = opt.side ?? 0x9a6a44, tc = opt.top ?? 0x62d25a;
   const sk = opt.sideTex ?? (sc === 0x9a6a44 ? 'dirt' : 'brick'), tk = opt.topTex ?? (tc === 0x62d25a || tc === 0x6edc5f ? 'grass' : 'check');
-  const sx = texMat(sk, sc, Math.max(1, d / 4), Math.max(1, h / 4)), sz = texMat(sk, sc, Math.max(1, w / 4), Math.max(1, h / 4));
-  const topM = texMat(tk, tc, Math.max(1, w / 4), Math.max(1, d / 4));
+  const U = opt.unit ?? 4, mx = v => Math.max(1, v / U);
+  const sx = texMat(sk, sc, mx(d), mx(h)), sz = texMat(sk, sc, mx(w), mx(h));
+  const topM = texMat(tk, tc, mx(w), mx(d));
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [sx, sx, topM, sz, sz, sz]);
   m.position.set(cx, top - h / 2, cz); m.castShadow = true; m.receiveShadow = true; scene.add(m);
   const b = { mesh: m, w, d, h, min: new V3(cx - w / 2, top - h, cz - d / 2), max: new V3(cx + w / 2, top, cz + d / 2), delta: new V3() };
@@ -174,6 +185,7 @@ function buildWorld() {
   // Montañas lejanas, islas flotantes y sol
   for (let i = 0; i < 18; i++) {
     const a = i / 18 * TAU + rnd(0.2), r = rnd(300, 380), hgt = rnd(60, 150);
+    if (Math.sin(a) * r > 40) continue;
     const mt = new THREE.Mesh(new THREE.ConeGeometry(rnd(45, 85), hgt, 6), new THREE.MeshLambertMaterial({ color: [0x6fb7a8, 0x7ac27a, 0x8aa9d6][i % 3] }));
     mt.position.set(Math.cos(a) * r, hgt / 2 - 12, Math.sin(a) * r); scene.add(mt);
   }
@@ -200,7 +212,7 @@ function buildWorld() {
   for (let i = 0; i < 16; i++) {
     const g = new THREE.Group(), n = 3 + (i % 3);
     for (let k = 0; k < n; k++) mesh(new THREE.SphereGeometry(rnd(2.5, 4.5), 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }), k * 3.4, rnd(-0.5, 0.8), rnd(-1, 1), g, false);
-    g.position.set(rnd(-170, 170), rnd(28, 55), rnd(-170, 170)); g.userData.s = rnd(0.5, 1.5); scene.add(g); world.clouds.push(g);
+    g.position.set(rnd(-170, 170), rnd(28, 55), rnd(-170, 170) + (i % 2 ? 300 : 0)); g.userData.s = rnd(0.5, 1.5); scene.add(g); world.clouds.push(g);
   }
   // Cartel de bienvenida
   const c = document.createElement('canvas'); c.width = 512; c.height = 256;
@@ -265,7 +277,7 @@ function buildRichi() {
     legs.push(l);
     const a = new THREE.Group(); a.position.set(x * 2.4, 1.12, 0); body.add(a);
     mesh(new THREE.BoxGeometry(0.22, 0.46, 0.24), red, 0, -0.2, 0, a);
-    mesh(new THREE.SphereGeometry(0.15, 8, 6), white, 0, -0.5, 0, a);
+    mesh(new THREE.SphereGeometry(0.21, 10, 8), white, 0, -0.52, 0, a);
     arms.push(a);
   });
   const head = new THREE.Group(); head.position.y = 1.5; body.add(head);
@@ -304,12 +316,12 @@ const MODES = {
   gumbi: { speed: 12.5, jump: 19, r: 0.55, h: 1.25 },
 };
 const P = {
-  pos: new V3(0, 0.05, 4), vel: new V3(), yaw: Math.PI, mode: 'richi', r: 0.45, h: 1.7,
+  pos: new V3(0, 0.07, 350), vel: new V3(), yaw: Math.PI, mode: 'richi', r: 0.45, h: 1.7,
   onGround: false, groundBox: null, coyote: 0, jumpBuf: 0, chain: 0, chainTimer: 0,
   crouching: false, longJump: false, jumpCut: false, pound: 0, poundT: 0, invuln: 0,
   flip: 0, squash: 0, anim: 0, cap: null,
 };
-let checkpoint = new V3(0, 0.05, 4);
+let checkpoint = new V3(0, 0.07, 350);
 const cam = { yaw: 0, pitch: 0.38, dist: 9, shake: 0, focus: new V3(0, 2, 4) };
 const richi = buildRichi(); scene.add(richi.root);
 const coins = [], moons = [], enemies = [], flags = [];
@@ -324,7 +336,8 @@ function addCoin(x, y, z, p = false) {
   coins.push({ mesh: m, taken: false, ph: rnd(TAU), p });
 }
 const coinLine = (a, b, n) => { for (let i = 0; i < n; i++) { const t = n === 1 ? 0 : i / (n - 1); addCoin(lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)); } };
-const MOON_NAMES = ['Escalera al cielo', 'La torre de Richi', 'Saltos flotantes', '¡Cazador de Gumbis!', 'Un salto muy largo'];
+const MOON_NAMES = ['Escalera al cielo', 'La torre de Richi', 'Saltos flotantes', '¡Cazador de Gumbis!', 'Un salto muy largo', 'Escalera de incendios', 'La grúa de Richi', 'Tejados bajos'];
+const TOTAL_MOONS = 8;
 function addMoon(i, x, y, z, active = true) {
   const g = new THREE.Group(), mat = new THREE.MeshLambertMaterial({ color: 0xffe14a, emissive: 0xc79a00 });
   const cres = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.3, 12, 28, Math.PI * 1.5), mat); cres.rotation.z = Math.PI * 0.75; g.add(cres);
@@ -468,7 +481,7 @@ function updateHUD() {
 
 /* ---------------------------------------------------------------- gorra y captura */
 const hat = { on: false, state: 0, pos: new V3(), dir: new V3(), dist: 0, t: 0, used: false, m: makeHat(true) };
-hat.m.scale.setScalar(1.35); hat.m.visible = false; scene.add(hat.m);
+hat.m.scale.setScalar(2.1); hat.m.visible = false; scene.add(hat.m);
 function throwHat() {
   if (P.mode !== 'richi') { releaseCapture(); return; }
   if (hat.on || P.pound) return;
@@ -519,7 +532,7 @@ function releaseCapture(silent) {
 /* ---------------------------------------------------------------- recolectables */
 function collectCoin(c) {
   c.taken = true; c.mesh.visible = false;
-  if (c.p) { G.pcoins++; SFX.flag(); burst(c.mesh.position, 0xc07aff, 12, 3, 4, 0.9); toast(`Moneda de Richi ${G.pcoins}/8`, 1.6); updateHUD(); return; }
+  if (c.p) { G.pcoins++; SFX.flag(); burst(c.mesh.position, 0xc07aff, 12, 3, 4, 0.9); toast(`Moneda de Richi ${G.pcoins}/12`, 1.6); updateHUD(); return; }
   G.coins++; SFX.coin();
   burst(c.mesh.position, 0xffe14a, 6, 2, 3, 0.7);
   if (G.coins % 10 === 0 && G.hearts < 3) { G.hearts++; toast('❤️ ¡Corazón recuperado!'); }
@@ -530,7 +543,7 @@ function collectMoon(m) {
   burst(m.pos, 0xffe14a, 40, 7, 8, 1.4);
   banner('¡POWER MOON!', MOON_NAMES[m.i], 3.2); updateHUD();
   const fl = $('flash'); fl.style.transition = 'none'; fl.style.opacity = 0.85; requestAnimationFrame(() => { fl.style.transition = 'opacity 1.4s'; fl.style.opacity = 0; });
-  if (G.moons >= 5) { G.state = 'ending'; G.endT = 4.5; }
+  if (G.moons >= TOTAL_MOONS) { G.state = 'ending'; G.endT = 4.5; }
 }
 function registerDefeat() {
   G.defeated++;
@@ -657,6 +670,12 @@ function updatePlayer(dt) {
   for (const f of flags) if (!f.on && P.pos.distanceTo(f.pos) < 2.6) {
     f.on = true; f.cloth.material.color.set(0x38d95a); checkpoint = new V3(f.pos.x, f.pos.y + 0.05, f.pos.z + 1.2); SFX.flag(); toast(`🚩 Checkpoint: ${f.tag}`);
   }
+  // Portales entre reinos
+  G.portalCd = Math.max(0, (G.portalCd || 0) - dt);
+  if (!G.portalCd) for (const pt of portals) if (Math.hypot(P.pos.x - pt.pos.x, P.pos.z - pt.pos.z) < 1.8 && Math.abs(P.pos.y - pt.pos.y) < 3) {
+    P.pos.copy(pt.dest); P.vel.set(0, 0, 0); checkpoint = pt.dest.clone(); cam.focus.copy(P.pos); G.portalCd = 2; SFX.capture();
+    burst(P.pos.clone().setY(P.pos.y + 1), 0x7ae8ff, 30, 5, 6); toast(pt.dest.z > 100 ? 'Reino: Ciudad Richi' : 'Reino: Isla de Richi', 2.5); break;
+  }
   // Monedas y lunas
   const chest = tmpV.copy(P.pos); chest.y += P.h * 0.5;
   for (const c of coins) if (!c.taken && c.mesh.position.distanceTo(chest) < 1.3) collectCoin(c);
@@ -761,9 +780,9 @@ function frame() {
     }
     updateCamera(dt);
   } else if (G.state === 'title') {
-    updateMovers(t); cam.yaw += dt * 0.15; cam.focus.set(0, 2, 0); cam.pitch = 0.3;
+    updateMovers(t); cam.yaw += dt * 0.12; cam.focus.set(0, 9, CZ + 20); cam.pitch = 0.22;
     const cp = Math.cos(cam.pitch);
-    camera.position.set(Math.sin(cam.yaw) * cp * 22, 2 + Math.sin(cam.pitch) * 22, Math.cos(cam.yaw) * cp * 22);
+    camera.position.set(Math.sin(cam.yaw) * cp * 24 * 0 + Math.sin(cam.yaw * 2) * 6, 9 + Math.sin(cam.pitch) * 24, CZ + 20 + Math.cos(cam.pitch) * 24);
     camera.lookAt(cam.focus); animatePlayer(dt, t);
   }
   // Animaciones ambientales
@@ -807,7 +826,7 @@ function start() {
   $('title').classList.add('hidden'); $('hud').classList.remove('hidden'); $('help').classList.remove('hidden');
   G.state = 'play'; cam.yaw = 0; cam.pitch = 0.38; cam.focus.copy(P.pos).setY(2);
   updateHUD(); canvas.requestPointerLock?.();
-  toast('¡Encuentra las 5 Power Moons! 🌙', 3.5);
+  toast('¡Encuentra las 8 Power Moons! 🌙', 3.5);
   tone(440, 880, 0.2, 'triangle', 0.08);
   setInterval(() => { if (G.state === 'play' && musicOn) musicTick(); }, 190);
 }
@@ -825,8 +844,118 @@ addEventListener('keydown', e => { if (e.code === 'KeyM') { musicOn = !musicOn; 
 $('play').addEventListener('click', start);
 $('again').addEventListener('click', () => location.reload());
 
+/* ---------------------------------------------------------------- Ciudad Richi (segundo reino) */
+const CX = 0, CZ = 300;
+function addSolidMesh(g, cx, cz, w, d, top, h) {
+  g.position.set(cx, top - h / 2, cz); scene.add(g);
+  const b = { mesh: g, w, d, h, min: new V3(cx - w / 2, top - h, cz - d / 2), max: new V3(cx + w / 2, top, cz + d / 2), delta: new V3() };
+  solids.push(b); return b;
+}
+function billboardTex(title, sub, bg, fg, w = 256, h = 360) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d');
+  x.fillStyle = bg; x.fillRect(0, 0, w, h); x.strokeStyle = fg; x.lineWidth = 10; x.strokeRect(8, 8, w - 16, h - 16);
+  x.fillStyle = fg; x.textAlign = 'center'; x.font = `bold ${Math.floor(w / 5.2)}px sans-serif`;
+  title.split(' ').forEach((wd, i, a) => x.fillText(wd, w / 2, h * 0.42 + (i - (a.length - 1) / 2) * w / 4.6));
+  x.font = `bold ${Math.floor(w / 11)}px sans-serif`; x.fillText(sub, w / 2, h - 34);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function makeTaxi() {
+  const _o = OL; OL = true; const g = new THREE.Group();
+  mesh(new THREE.BoxGeometry(2.2, 0.9, 4.6), lam(0xffc400), 0, -0.35, 0, g);
+  mesh(new THREE.BoxGeometry(1.9, 0.7, 2.4), lam(0xffd84d), 0, 0.45, -0.2, g);
+  mesh(new THREE.BoxGeometry(1.96, 0.42, 2.0), lam(0x1d2a3a), 0, 0.5, -0.2, g, false);
+  mesh(new THREE.BoxGeometry(0.7, 0.25, 0.35), lam(0xffffff), 0, 0.93, -0.2, g, false);
+  [[-1.1, 1.5], [1.1, 1.5], [-1.1, -1.5], [1.1, -1.5]].forEach(([x, z]) => mesh(new THREE.CylinderGeometry(0.4, 0.4, 0.3, 12).rotateZ(Math.PI / 2), lam(0x1a1a1a), x, -0.4, z, g, false));
+  [-0.7, 0.7].forEach(x => mesh(new THREE.SphereGeometry(0.2, 8, 6), lam(0xfff6b0), x, -0.25, 2.3, g, false));
+  OL = _o; return g;
+}
+function makeHydrant() {
+  const _o = OL; OL = true; const g = new THREE.Group(), red = lam(0xc8321e);
+  mesh(new THREE.CylinderGeometry(0.28, 0.32, 0.7, 12), red, 0, -0.1, 0, g);
+  mesh(new THREE.SphereGeometry(0.28, 12, 8), red, 0, 0.25, 0, g);
+  mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.1, 12), lam(0x8a2210), 0, 0.02, 0, g);
+  [-1, 1].forEach(s => mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.7, 8).rotateZ(Math.PI / 2), lam(0xb82a18), 0, 0.05, 0, g, false));
+  mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.1, 10).rotateX(Math.PI / 2), lam(0xcfcfcf), 0, 0.05, 0.3, g, false);
+  OL = _o; return g;
+}
+function addPortal(x, y, z, dest, label, color) {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.TorusGeometry(1.8, 0.22, 10, 32), new THREE.MeshBasicMaterial({ color })));
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(1.6, 32), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.4, side: THREE.DoubleSide, depthWrite: false })); g.add(disc);
+  g.position.set(x, y + 2.1, z); scene.add(g);
+  const c = document.createElement('canvas'); c.width = 256; c.height = 64; const cx = c.getContext('2d');
+  cx.fillStyle = '#fff'; cx.font = 'bold 40px sans-serif'; cx.textAlign = 'center'; cx.fillText(label, 128, 44);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true })); sp.scale.set(4, 1, 1); sp.position.y = 2.7; g.add(sp);
+  portals.push({ g, pos: new V3(x, y, z), dest });
+}
+const portals = [];
+function buildCity() {
+  const ROWS = [-63, -21, 21, 63];
+  // Suelo, calle, aceras
+  addBox(CX, CZ, 360, 360, 0, 6, { top: 0x9fa2ad, side: 0x6d707a, topTex: 'sidewalk', sideTex: 'brick', unit: 6 });
+  addBox(CX, CZ, 30, 172, 0.06, 0.3, { top: 0x4b4e57, side: 0x4b4e57, topTex: 'asphalt', sideTex: 'asphalt', unit: 12 });
+  [-23.5, 23.5].forEach(x => addBox(CX + x, CZ, 17, 172, 0.4, 0.6, { top: 0xd2cfc6, side: 0xaaa79e, topTex: 'sidewalk', sideTex: 'sidewalk', unit: 5 }));
+  // Marcas viales
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0xf2d24a }), whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  for (let z = -80; z < 80; z += 8) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 4), lineMat); m.rotation.x = -Math.PI / 2; m.position.set(CX, 0.1, CZ + z); scene.add(m); }
+  [-48, 8, 44].forEach(z => { for (let x = -13; x <= 13; x += 2.2) { const m = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 6), whiteMat); m.rotation.x = -Math.PI / 2; m.position.set(CX + x, 0.1, CZ + z); scene.add(m); } });
+  // Edificios
+  const colL = [0xd8cbb8, 0xc9b9a6, 0xbfb3a8, 0xcfc2b0], colR = [0xb9c3cf, 0xd2c6b4, 0xc8bcae, 0xaeb8c6];
+  const hL = [46, 30, 38, 54], hR = [58, 70, 10, 42];
+  ROWS.forEach((r, i) => {
+    addBox(CX - 47, CZ + r, 30, 40, hL[i], hL[i], { top: 0x5a5d66, topTex: 'roof', side: colL[i], sideTex: 'facade', unit: 8 });
+    addBox(CX + 47, CZ + r, 30, 40, hR[i], hR[i], { top: 0x5a5d66, topTex: 'roof', side: colR[i], sideTex: 'facade', unit: 8 });
+  });
+  // Carteles de marcas inventadas
+  const bb = (tex, w, h, x, y, z, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex })); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); };
+  bb(billboardTex('GORRAS CHUY', 'las mejores', '#8a2fc9', '#ffe14a'), 14, 20, CX - 31.9, 24, CZ - 63, Math.PI / 2);
+  bb(billboardTex('RICHI COLA', 'bien fría', '#d6242b', '#fff'), 12, 17, CX - 31.9, 24, CZ + 21, Math.PI / 2);
+  bb(billboardTex('PIZZA LUNA', 'abierto 24h', '#ffc400', '#a3170f'), 14, 20, CX + 31.9, 30, CZ - 63, -Math.PI / 2);
+  bb(billboardTex('TEATRO LUNA', 'hoy función', '#a3170f', '#fff', 128, 480), 5, 30, CX + 31.9, 30, CZ - 21, -Math.PI / 2);
+  bb(billboardTex('NOTICIAS 24', 'en vivo', '#1b6fd6', '#fff'), 12, 17, CX + 31.9, 24, CZ + 63, -Math.PI / 2);
+  // Escalera de incendios (luna 5) en la fachada del edificio de 30 m
+  for (let i = 0; i < 12; i++) addBox(CX - 30.5, CZ - 21 + (i % 2 ? 3.5 : -3.5), 3, 4, 2.4 * (i + 1), 0.6, { top: 0x7a808c, side: 0x4a4f5a, topTex: 'check', sideTex: 'check' });
+  // Grúa en espiral en medio de la calle (luna 6)
+  addBox(CX, CZ - 10, 4, 4, 28, 28, { top: 0xf0e8d4, side: 0xcfc4a8, topTex: 'brick' });
+  for (let i = 0; i < 12; i++) { const a = i * 0.96 + 0.3; addBox(CX + Math.cos(a) * 4, CZ - 10 + Math.sin(a) * 4, 3.5, 3.5, 2.2 * (i + 1), 1, { top: 0xff8a3d, side: 0xb55a1f, topTex: 'check' }); }
+  // Escaleras al techo bajo (luna 7)
+  for (let i = 0; i < 5; i++) addBox(CX + 30, CZ + 15 + i * 3, 3, 3, 2 + 1.9 * i, 2, { top: 0x4aa8d6, side: 0x2a6f95, topTex: 'check' });
+  // Taxis aparcados y uno en movimiento (también se puede pisar)
+  [[12, 30], [12, -5], [12, -32], [12, 50]].forEach(([x, z]) => addSolidMesh(makeTaxi(), CX + x, CZ + z, 2.2, 4.6, 1.66, 1.6));
+  const tx = addSolidMesh(makeTaxi(), CX - 8, CZ, 2.2, 4.6, 1.66, 1.6); tx.mesh.rotation.y = 0;
+  addMover(tx, t => [CX - 8, 1.66, CZ + Math.sin(t * 0.35) * 40]);
+  // Hidrantes, farolas, semáforos
+  for (let i = 0; i < 8; i++) { const z = -70 + i * 20, s = i % 2 ? 1 : -1; addSolidMesh(makeHydrant(), CX + s * 17, CZ + z, 0.7, 0.7, 1.3, 0.9); }
+  for (let i = 0; i < 9; i++) {
+    const z = -80 + i * 20, s = i % 2 ? 1 : -1, g = new THREE.Group();
+    mesh(new THREE.CylinderGeometry(0.1, 0.14, 7, 8), lam(0x1f5a46), 0, 3.5, 0, g, false);
+    mesh(new THREE.BoxGeometry(2.2, 0.12, 0.12), lam(0x1f5a46), -s * 1.1, 7, 0, g, false);
+    mesh(new THREE.SphereGeometry(0.34, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff1b0 }), -s * 2.1, 6.85, 0, g, false);
+    g.position.set(CX + s * 15.6, 0.4, CZ + z); scene.add(g);
+  }
+  // Skyline lejano
+  for (let i = 0; i < 26; i++) {
+    const a = i / 26 * TAU + rnd(0.2), r = rnd(110, 175), x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (Math.abs(x) < 70 && Math.abs(z) < 100) continue;
+    const w = rnd(24, 40), hh = rnd(70, 170), c = [0xa7b3c6, 0xbdb3a6, 0x9fb0be][i % 3];
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, hh, w), [0, 1, 2, 3, 4, 5].map(k => k === 2 ? lam(0x5a5d66) : texMat('facade', c, w / 8, hh / 8)));
+    m.position.set(CX + x, hh / 2, CZ + z); scene.add(m);
+  }
+  // Monedas, cajas, enemigos, lunas, checkpoints, portales
+  coinLine([0, 1, CZ + 44], [0, 1, CZ - 50], 18);
+  coinLine([-22, 1.7, CZ + 40], [-22, 1.7, CZ - 40], 10); coinLine([22, 1.7, CZ + 40], [22, 1.7, CZ - 40], 10);
+  [[2, 40], [4, 40], [8, 30], [18, 5], [-20, -10], [10, -30], [20, -42]].forEach(([x, z]) => addCrate(CX + x, CZ + z, Math.abs(x) < 15 ? 0.06 : 0.4));
+  [[-5, 30], [6, 10], [-8, -5], [8, -25], [0, -45]].forEach(([x, z]) => addEnemy(CX + x, CZ + z));
+  [[CX - 30.5, 2.4 * 6 + 1.4, CZ - 17.5], [CX + Math.cos(6.06) * 4, 2.2 * 7 + 1.5, CZ - 10 + Math.sin(6.06) * 4], [CX + 47, 11.6, CZ + 27], [CX + 8, 1.2, CZ - 56]].forEach(c => addCoin(c[0], c[1], c[2], true));
+  addMoon(5, CX - 47, 31.6, CZ - 21); addMoon(6, CX, 29.6, CZ - 10); addMoon(7, CX + 47, 11.6, CZ + 21);
+  addFlag(CX + 18, 0.4, CZ + 44, 'Ciudad'); addFlag(CX + 18, 0.4, CZ - 35, 'Avenida');
+  addPortal(CX, 0.06, CZ - 66, new V3(-6, 0.05, 10), 'ISLA', 0x44e0ff);
+  addPortal(-6, 0, 6, new V3(CX, 0.07, CZ - 54), 'CIUDAD', 0xff7ad8);
+  G.totalEnemies = enemies.length;
+}
+
 /* ---------------------------------------------------------------- arranque */
-buildWorld(); populate();
+buildWorld(); populate(); buildCity();
 richi.root.position.copy(P.pos);
 window.RICHI = { G, P, cam, solids, enemies, moons, coins, keys, pressed, start, hat };
 frame();
