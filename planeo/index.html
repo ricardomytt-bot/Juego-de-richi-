@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#2a3a7a">
 <title>Planeo · la ardilla planeadora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,9 +28,12 @@
     <span id="stAcorns">🌰 0</span>
     <span id="stTime">⏱ 0:00</span>
   </div>
+  <div id="bossbar" class="hidden"><div id="bossName">Jefe</div><div id="bossPips"></div></div>
+  <div id="lvTitle"></div>
 </div>
 <div id="banner"></div>
 <div id="toast"></div>
+<button id="btnSkip" class="hidden">Saltar ⏭</button>
 
 <!-- MENÚ -->
 <section id="screen-menu" class="screen">
@@ -36,14 +42,48 @@
     <h1>Planeo</h1>
     <p class="sub">Una ardilla, un avioncito y el cielo entero para bajar con calma.</p>
     <label class="field">Tu nombre
-      <input id="inName" maxlength="14" placeholder="Ardilla" autocomplete="off">
+      <input id="inName" maxlength="14" placeholder="Nuki" autocomplete="off">
     </label>
-    <button id="btnPlay" class="big">Jugar</button>
+    <button id="btnStory" class="big">📖 Modo historia</button>
+    <button id="btnInf" class="big alt1">♾️ Modo infinito</button>
+    <button id="btnMulti" class="big alt2">👻 Multijugador</button>
     <div class="row">
-      <button id="btnGhosts" class="soft">👻 Fantasmas <span id="ghostCount"></span></button>
       <button id="btnHelp" class="soft">¿Cómo se juega?</button>
+      <button id="btnMute2" class="soft">🔊 Sonido</button>
     </div>
     <p class="best" id="bestLine"></p>
+  </div>
+</section>
+
+<!-- HISTORIA -->
+<section id="screen-story" class="screen hidden">
+  <div class="panel wide">
+    <h2>📖 Modo historia</h2>
+    <p class="sub">Ayuda a Nuki a recuperar las tres Bellotas Doradas antes de que el Pueblo Ardilla toque el suelo.</p>
+    <div id="chapters"></div>
+    <div class="row">
+      <button id="btnStoryGo" class="big">Continuar</button>
+      <button class="soft back">Volver</button>
+    </div>
+  </div>
+</section>
+
+<!-- MULTIJUGADOR -->
+<section id="screen-multi" class="screen hidden">
+  <div class="panel wide">
+    <h2>👻 Multijugador</h2>
+    <p class="sub">Corre contra los fantasmas de tus amigos. Cada nivel tiene los suyos. Compártelos con un código.</p>
+    <div id="tabs" class="tabs"></div>
+    <div id="ghostList"></div>
+    <div class="paste">
+      <textarea id="inCode" rows="2" placeholder="Pega aquí el código de un amigo"></textarea>
+      <button id="btnAddCode" class="soft">Añadir fantasma</button>
+    </div>
+    <div class="row">
+      <button id="btnCopyMine" class="soft">📋 Copiar mi mejor fantasma</button>
+      <button id="btnMultiGo" class="big">Correr</button>
+      <button class="soft back">Volver</button>
+    </div>
   </div>
 </section>
 
@@ -52,33 +92,15 @@
   <div class="panel">
     <h2>Cómo se juega</h2>
     <ul class="help">
-      <li>🪂 Baja planeando desde el cielo hasta el suelo y cruza la meta.</li>
+      <li>🪂 Baja planeando desde el cielo hasta el suelo. Al final te espera un <b>mini jefe</b>.</li>
       <li>↔️ Hay <b>5 carriles</b>: <kbd>←</kbd> <kbd>→</kbd> (o <kbd>A</kbd> <kbd>D</kbd>). En el móvil, <b>toca</b> la izquierda o la derecha, o <b>desliza</b>.</li>
-      <li>⬇️ <b>Picada</b> (<kbd>↓</kbd> / desliza abajo): vas más rápido y las bellotas valen el doble.</li>
-      <li>⬆️ <b>Freno</b> (<kbd>↑</kbd> / desliza arriba): ganas tiempo para pensar.</li>
-      <li>☁️ Esquiva nubes, nubarrones y pajaritos. Más abajo: árboles, arbustos y erizos.</li>
-      <li>🌰 Sigue el rastro de bellotas: te lleva al hueco libre. Los corazones te curan.</li>
-      <li>🚩 Si pierdes las 3 vidas, vuelves al último punto de control. Sin drama.</li>
-      <li>👻 Tu mejor partida queda como <b>fantasma</b>. Pásala a tus amigos con un código y corred contra ellos.</li>
+      <li>⬇️ <b>Picada</b> (<kbd>↓</kbd> / desliza abajo): más velocidad y bellotas dobles.</li>
+      <li>⬆️ <b>Freno</b> (<kbd>↑</kbd> / desliza arriba): más tiempo para pensar.</li>
+      <li>⚠️ Con el jefe, las franjas rojas avisan por dónde viene el golpe. <b>Recoge las bellotas doradas</b> grandes para devolvérselas.</li>
+      <li>🚀 Cada nivel dura unos 2 minutos y va <b>cada vez más rápido</b>.</li>
+      <li>♾️ <b>Infinito</b>: sin checkpoints. Si pierdes las 3 vidas, se acaba. ¿Hasta dónde llegas?</li>
     </ul>
     <button class="big back">Entendido</button>
-  </div>
-</section>
-
-<!-- FANTASMAS -->
-<section id="screen-ghosts" class="screen hidden">
-  <div class="panel wide">
-    <h2>👻 Fantasmas</h2>
-    <p class="sub">Compite contra partidas guardadas. Compártelas con un código o un enlace.</p>
-    <div id="ghostList"></div>
-    <div class="paste">
-      <textarea id="inCode" rows="2" placeholder="Pega aquí el código o el enlace de un amigo"></textarea>
-      <button id="btnAddCode" class="soft">Añadir fantasma</button>
-    </div>
-    <div class="row">
-      <button id="btnCopyMine" class="soft">📋 Copiar mi mejor fantasma</button>
-      <button class="big back">Volver</button>
-    </div>
   </div>
 </section>
 
@@ -97,17 +119,26 @@
 <!-- FIN -->
 <section id="screen-end" class="screen hidden">
   <div class="panel wide">
-    <h2 id="endTitle">¡Aterrizaste!</h2>
+    <h2 id="endTitle">¡Jefe derrotado!</h2>
     <div id="endStats"></div>
     <div id="endRank"></div>
     <div class="row">
-      <button id="btnShare" class="soft">🔗 Compartir fantasma</button>
-      <button id="btnAgain" class="big">Otra vez</button>
+      <button id="btnNext" class="big">Continuar ▶</button>
+      <button id="btnAgain" class="soft">Otra vez</button>
+      <button id="btnShare" class="soft">📋 Copiar fantasma</button>
       <button id="btnEndMenu" class="soft">Menú</button>
     </div>
   </div>
 </section>
 
-<script src="game.js"></script>
+<script src="js/01-core.js"></script>
+<script src="js/02-audio.js"></script>
+<script src="js/03-level.js"></script>
+<script src="js/04-art.js"></script>
+<script src="js/05-render.js"></script>
+<script src="js/06-ghost.js"></script>
+<script src="js/07-boss.js"></script>
+<script src="js/08-cine.js"></script>
+<script src="js/09-main.js"></script>
 </body>
 </html>
