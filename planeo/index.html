@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2a3a7a">
+<title>Planeo · la ardilla planeadora</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div id="hud-top">
+    <div id="hearts" aria-label="Vidas"></div>
+    <div id="progress"><div id="pfill"></div><div id="markers"></div></div>
+    <div id="hud-btns">
+      <button id="btnMute" class="icon" aria-label="Sonido">🔊</button>
+      <button id="btnPause" class="icon" aria-label="Pausa">⏸</button>
+    </div>
+  </div>
+  <div id="hud-stats">
+    <span id="stAlt">⛅ 1800 m</span>
+    <span id="stAcorns">🌰 0</span>
+    <span id="stTime">⏱ 0:00</span>
+  </div>
+</div>
+<div id="banner"></div>
+<div id="toast"></div>
+
+<!-- MENÚ -->
+<section id="screen-menu" class="screen">
+  <div class="panel">
+    <div class="logo">🐿️</div>
+    <h1>Planeo</h1>
+    <p class="sub">Una ardilla, un avioncito y el cielo entero para bajar con calma.</p>
+    <label class="field">Tu nombre
+      <input id="inName" maxlength="14" placeholder="Ardilla" autocomplete="off">
+    </label>
+    <button id="btnPlay" class="big">Jugar</button>
+    <div class="row">
+      <button id="btnGhosts" class="soft">👻 Fantasmas <span id="ghostCount"></span></button>
+      <button id="btnHelp" class="soft">¿Cómo se juega?</button>
+    </div>
+    <p class="best" id="bestLine"></p>
+  </div>
+</section>
+
+<!-- AYUDA -->
+<section id="screen-help" class="screen hidden">
+  <div class="panel">
+    <h2>Cómo se juega</h2>
+    <ul class="help">
+      <li>🪂 Baja planeando desde el cielo hasta el suelo y cruza la meta.</li>
+      <li>↔️ Hay <b>5 carriles</b>: <kbd>←</kbd> <kbd>→</kbd> (o <kbd>A</kbd> <kbd>D</kbd>). En el móvil, <b>toca</b> la izquierda o la derecha, o <b>desliza</b>.</li>
+      <li>⬇️ <b>Picada</b> (<kbd>↓</kbd> / desliza abajo): vas más rápido y las bellotas valen el doble.</li>
+      <li>⬆️ <b>Freno</b> (<kbd>↑</kbd> / desliza arriba): ganas tiempo para pensar.</li>
+      <li>☁️ Esquiva nubes, nubarrones y pajaritos. Más abajo: árboles, arbustos y erizos.</li>
+      <li>🌰 Sigue el rastro de bellotas: te lleva al hueco libre. Los corazones te curan.</li>
+      <li>🚩 Si pierdes las 3 vidas, vuelves al último punto de control. Sin drama.</li>
+      <li>👻 Tu mejor partida queda como <b>fantasma</b>. Pásala a tus amigos con un código y corred contra ellos.</li>
+    </ul>
+    <button class="big back">Entendido</button>
+  </div>
+</section>
+
+<!-- FANTASMAS -->
+<section id="screen-ghosts" class="screen hidden">
+  <div class="panel wide">
+    <h2>👻 Fantasmas</h2>
+    <p class="sub">Compite contra partidas guardadas. Compártelas con un código o un enlace.</p>
+    <div id="ghostList"></div>
+    <div class="paste">
+      <textarea id="inCode" rows="2" placeholder="Pega aquí el código o el enlace de un amigo"></textarea>
+      <button id="btnAddCode" class="soft">Añadir fantasma</button>
+    </div>
+    <div class="row">
+      <button id="btnCopyMine" class="soft">📋 Copiar mi mejor fantasma</button>
+      <button class="big back">Volver</button>
+    </div>
+  </div>
+</section>
+
+<!-- PAUSA -->
+<section id="screen-pause" class="screen hidden">
+  <div class="panel">
+    <h2>Pausa</h2>
+    <button id="btnResume" class="big">Seguir</button>
+    <div class="row">
+      <button id="btnRestart" class="soft">Reiniciar</button>
+      <button id="btnQuit" class="soft">Menú</button>
+    </div>
+  </div>
+</section>
+
+<!-- FIN -->
+<section id="screen-end" class="screen hidden">
+  <div class="panel wide">
+    <h2 id="endTitle">¡Aterrizaste!</h2>
+    <div id="endStats"></div>
+    <div id="endRank"></div>
+    <div class="row">
+      <button id="btnShare" class="soft">🔗 Compartir fantasma</button>
+      <button id="btnAgain" class="big">Otra vez</button>
+      <button id="btnEndMenu" class="soft">Menú</button>
+    </div>
+  </div>
+</section>
+
+<script src="game.js"></script>
+</body>
+</html>

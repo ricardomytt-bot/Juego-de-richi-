@@ -19,3 +19,8 @@ Abre `index.html` en el navegador (Chrome/Edge/Firefox) y pulsa **JUGAR**.
 Reúne las **5 Power Moons**: escalera al cielo, la torre en espiral, el recorrido de plataformas flotantes
 (con una móvil), derrotar a todos los Gumbis, y un salto largo sobre el vacío.
 Cada 10 monedas recuperas un corazón. Si caes al agua pierdes un corazón.
+
+---
+
+## 🐿️ Planeo (nuevo)
+Un juego 2.5D relajante de planeo con una ardilla, 5 carriles y fantasmas para competir con amigos. Está en [`planeo/`](planeo/README.md).
