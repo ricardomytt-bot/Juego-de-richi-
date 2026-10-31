@@ -1,7 +1,7 @@
 /* 09 · juego principal: estado, modos (historia / infinito / multijugador), HUD, entrada, bucle */
 'use strict';
 const G = {
-  state: 'menu', mode: 'story', ch: 0, infN: 0, t: 0, P: 0, vP: 0, x: 2, tgt: 2, bank: 0, hearts: 3, acorns: 0, combo: 0, deaths: 0,
+  state: 'menu', mode: 'story', ch: 0, infN: 0, t: 0, P: 0, vP: 0, x: MID, tgt: MID, bank: 0, hearts: 3, acorns: 0, combo: 0, deaths: 0,
   inv: 0, slow: 0, diveT: 0, brakeT: 0, fallT: 0, cp: 20, shake: 0, cd: 0, cdShown: 4, flash: 0, lightning: 0, lightT: 5, fade: 0,
   recT: 0, Ps: [], Xs: [], ghosts: [], tAnim: 0, endT: 0, boss: null, bossDone: false, kills: 0, totalDist: 0, lastCode: null, t0: 0, dying: false,
   multiIdx: 0, noPlane: false
@@ -12,7 +12,7 @@ const Story = {
   d: store.get('planeo2.story', { unlocked: 1, done: [false, false, false], best: {} }),
   save(){ store.set('planeo2.story', this.d); }
 };
-let Inf = store.get('planeo2.inf', { score: 0, level: 0 });
+let Inf = store.get('planeo3.inf', { score: 0, level: 0 });
 
 function diving(){ return !G.boss && (keys.dive || G.diveT > 0); }
 function braking(){ return !G.boss && !diving() && (keys.brake || G.brakeT > 0); }
@@ -85,7 +85,7 @@ async function startLevel(mode, idx, carry){
   G.mode = mode; G.ch = mode === 'inf' ? G.infN % 3 : idx;
   G.ghosts = mode === 'multi' ? await Ghosts.runtime(cfg.seed) : [];
   const keep = !!(carry && mode === 'inf');
-  Object.assign(G, { state: 'countdown', P: 0, vP: 0, x: 2, tgt: 2, bank: 0, inv: 0, slow: 0, diveT: 0, brakeT: 0, fallT: 0, cp: 20, shake: 0,
+  Object.assign(G, { state: 'countdown', P: 0, vP: 0, x: MID, tgt: MID, bank: 0, inv: 0, slow: 0, diveT: 0, brakeT: 0, fallT: 0, cp: 20, shake: 0,
     cd: keep ? 1.8 : 3.4, cdShown: 4, flash: 0, lightning: 0, lightT: 4, fade: keep ? 1 : 0, recT: 0, boss: null, bossDone: false, endT: 0, t0: 0, dying: false, noPlane: false });
   if (!keep) Object.assign(G, { t: 0, hearts: 3, acorns: 0, combo: 0, deaths: 0, kills: 0, totalDist: 0, Ps: [], Xs: [] });
   else G.hearts = Math.min(3, G.hearts + 1);
@@ -125,7 +125,7 @@ function hurt(o){
   o.hit = true; G.hearts--; G.inv = 1.8; G.slow = 0.9; G.shake = 14; G.combo = 0; G.flash = 0.35;
   Sound.sfx('hit');
   const p = playerScreen();
-  burst(p.x, p.y, o.type === 'bird' ? '#9cc7ff' : (o.type === 'storm' ? '#ffe36b' : '#ffffff'), 22, 260, 9);
+  burst(p.x, p.y, o.type === 'bee' ? '#ffd23f' : o.type === 'thunderbox' || o.type === 'storm' ? '#ffe36b' : o.type === 'crystal' ? '#9fe7ff' : o.type === 'crate' ? '#e0a060' : '#ffffff', 22, 260, 9);
   if (G.hearts <= 0){
     G.fallT = 1.6; G.vP = 0; Sound.sfx('fall');
     if (G.mode === 'inf'){ G.dying = true; banner('¡Se acabó el vuelo!', 1500); }
@@ -163,7 +163,7 @@ async function showEnd(win){
   $('btnNext').classList.add('hidden'); $('btnShare').classList.add('hidden'); $('btnAgain').classList.remove('hidden');
   if (G.mode === 'inf'){
     const dist = Math.round(G.totalDist + Math.min(G.P, L)), score = Math.round(dist / 10 + G.acorns * 10 + G.kills * 300);
-    const rec = score > Inf.score; if (rec){ Inf = { score, level: G.infN + 1 }; store.set('planeo2.inf', Inf); }
+    const rec = score > Inf.score; if (rec){ Inf = { score, level: G.infN + 1 }; store.set('planeo3.inf', Inf); }
     $('endTitle').textContent = rec ? '¡Nuevo récord! 🏆' : 'Fin del vuelo';
     $('endStats').innerHTML = stat(G.infN + 1, 'NIVEL') + stat(dist + ' m', 'DISTANCIA') + stat(G.acorns + ' 🌰', 'BELLOTAS') + stat(G.kills, 'JEFES') + stat(score + (rec ? ' ⭐' : ''), 'PUNTOS');
     $('endRank').innerHTML = `<p class="sub">Récord: ${Inf.score} puntos · nivel ${Inf.level}. Cada nivel es más rápido y más difícil que el anterior.</p>`;
@@ -248,7 +248,7 @@ function update(dt){
     const p = particles[i]; p.life -= dt; if (p.life <= 0 || p.y > H + 40){ particles.splice(i, 1); continue; }
     p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt;
   }
-  if (G.state === 'menu'){ G.P = (G.tAnim * 40) % (L_SKY - 300); G.vP = 18; G.x = 2; G.bank = 0; G.boss = null; return; }
+  if (G.state === 'menu'){ G.P = (G.tAnim * 40) % (L_SKY - 300); G.vP = 18; G.x = MID; G.bank = 0; G.boss = null; return; }
   if (G.state === 'paused' || G.state === 'ended') return;
   if (G.state === 'transition'){
     G.fade += dt * 1.6; G.vP += (30 - G.vP) * Math.min(1, dt * 2); G.P += G.vP * dt;
@@ -284,7 +284,7 @@ function update(dt){
       if (G.dying){ gameOverInf(); return; }
       G.hearts = 3; G.inv = 3; G.deaths++; G.combo = 0; G.vP = 8;
       if (G.boss){ const B = G.boss; B.warns.length = B.projs.length = B.haz.length = B.gifts.length = 0; B.cool = 2; }
-      else { G.P = G.cp; G.x = G.tgt = 2; LV.objs.forEach(o => { if (o.P > G.cp - 2 && o.P < G.cp + 60) o.hit = false; }); }
+      else { G.P = G.cp; G.x = G.tgt = MID; LV.objs.forEach(o => { if (o.P > G.cp - 2 && o.P < G.cp + 60) o.hit = false; }); }
       banner('¡Otra vez!', 900);
     }
   } else {
@@ -314,7 +314,7 @@ function update(dt){
   G.bank = lerp(G.bank, (G.tgt - G.x) * 0.9, Math.min(1, dt * 10));
   Sound.intensity = G.boss ? 1 : prog;
   G.recT += dt;
-  while (G.recT >= 0.25){ G.recT -= 0.25; G.Ps.push(Math.round(G.P * 10)); G.Xs.push(Math.round(clamp(G.x, 0, 4) * 8)); }
+  while (G.recT >= 0.25){ G.recT -= 0.25; G.Ps.push(Math.round(G.P * 10)); G.Xs.push(Math.round(clamp(G.x, 0, LANES - 1) * 8)); }
   updateHud();
 }
 
@@ -361,6 +361,8 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) pause
 window.addEventListener('blur', () => { pauseGame(); keys.dive = keys.brake = false; });
 ['gesturestart', 'dblclick'].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
 
+function refreshMusicBtn(){ const t = (Sound.musicOn ? '🎵 Música: sí' : '🔇 Música: no'); $('btnMusic').textContent = t; $('btnMusicP').textContent = t; }
+function toggleMusic(){ Sound.init(); Sound.startMusic(); Sound.setMusic(!Sound.musicOn); refreshMusicBtn(); }
 function toggleMute(){ Sound.init(); Sound.setMuted(!Sound.muted); const t = Sound.muted ? '🔇' : '🔊'; $('btnMute').textContent = t; $('btnMute2').textContent = t + ' Sonido'; }
 
 /* botones */
@@ -376,7 +378,7 @@ $('btnStoryGo').onclick = () => {
   else playChapter(next < 0 ? 0 : next);
 };
 $('btnMultiGo').onclick = () => startLevel('multi', G.multiIdx, false);
-$('btnPause').onclick = pauseGame; $('btnResume').onclick = resumeGame; $('btnMute').onclick = toggleMute; $('btnMute2').onclick = toggleMute;
+$('btnPause').onclick = pauseGame; $('btnResume').onclick = resumeGame; $('btnMute').onclick = toggleMute; $('btnMusic').onclick = toggleMusic; $('btnMusicP').onclick = toggleMusic; $('btnMute2').onclick = toggleMute;
 $('btnRestart').onclick = restartLevel; $('btnQuit').onclick = goMenu;
 $('btnAgain').onclick = restartLevel; $('btnEndMenu').onclick = goMenu;
 $('btnNext').onclick = () => afterChapter(G.ch);
@@ -415,7 +417,7 @@ function frame(now){
 }
 try { document.fonts && document.fonts.load('600 20px Fredoka'); document.fonts.load('700 20px Fredoka'); } catch (e) {}
 setLevel(genLevel(LEVELS[0])); AMB.init(THEME.amb);
-refreshMenu();
+refreshMenu(); refreshMusicBtn();
 requestAnimationFrame(frame);
 
 // ganchos para pruebas

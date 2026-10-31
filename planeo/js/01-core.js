@@ -22,7 +22,7 @@ function shade(hex, amt){
 function hex2rgb(h){ const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }
 
 /* ---------------------------------------------------------------- constantes */
-const LANES = 5;
+const LANES = 3, MID = 1;   // 3 carriles; el del centro es el 1
 const VIEW = 190;              // distancia de dibujo (m)
 const Z0 = 26;                 // factor de perspectiva
 const GHOST_COLORS = ['#4aa3ff', '#7bdc65', '#c78bff', '#ffd23f', '#ff8fb5', '#38d6c2'];
@@ -61,9 +61,9 @@ const THEMES = {
 
 /* niveles de la historia (también sirven para infinito y multijugador) */
 const LEVELS = [
-  { id: 0, seed: 101, theme: 'dawn',  name: 'Amanecer sobre las nubes', short: 'Amanecer',  boss: 'crow',  bossName: 'Capitán Grajo',   skyLen: 1700, groundLen: 550, spd0: 19, spd1: 33, diff0: 0.20, span: 0.60 },
-  { id: 1, seed: 202, theme: 'storm', name: 'Tormenta de verano',       short: 'Tormenta',  boss: 'storm', bossName: 'Nubarrón Trueno', skyLen: 1700, groundLen: 550, spd0: 21, spd1: 36, diff0: 0.40, span: 0.60 },
-  { id: 2, seed: 303, theme: 'dusk',  name: 'Bosque dorado',            short: 'Atardecer', boss: 'owl',   bossName: 'Don Búho',        skyLen: 1700, groundLen: 550, spd0: 23, spd1: 39, diff0: 0.60, span: 0.60 }
+  { id: 0, seed: 111, theme: 'dawn',  name: 'Amanecer sobre las nubes', short: 'Amanecer',  boss: 'crow',  bossName: 'Capitán Grajo',   skyLen: 1700, groundLen: 550, spd0: 19, spd1: 33, diff0: 0.20, span: 0.60 },
+  { id: 1, seed: 222, theme: 'storm', name: 'Tormenta de verano',       short: 'Tormenta',  boss: 'storm', bossName: 'Nubarrón Trueno', skyLen: 1700, groundLen: 550, spd0: 21, spd1: 36, diff0: 0.40, span: 0.60 },
+  { id: 2, seed: 333, theme: 'dusk',  name: 'Bosque dorado',            short: 'Atardecer', boss: 'owl',   bossName: 'Don Búho',        skyLen: 1700, groundLen: 550, spd0: 23, spd1: 39, diff0: 0.60, span: 0.60 }
 ];
 const LEVEL_SEEDS = LEVELS.map(l => l.seed);
 const START_ALT = 1800;
@@ -85,7 +85,7 @@ function resize(){
   W = window.innerWidth; H = window.innerHeight;
   canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  laneW = Math.min(W / 5.4, H * 0.2);
+  laneW = Math.min(W / 3.6, H * 0.3);
   yH = H * 0.4; sY = H * 0.8; cx = W / 2;
   vignette = document.createElement('canvas'); vignette.width = Math.max(2, Math.round(W / 4)); vignette.height = Math.max(2, Math.round(H / 4));
   const v = vignette.getContext('2d'), g = v.createRadialGradient(vignette.width / 2, vignette.height * 0.5, Math.min(vignette.width, vignette.height) * 0.35, vignette.width / 2, vignette.height * 0.5, Math.hypot(vignette.width, vignette.height) * 0.55);

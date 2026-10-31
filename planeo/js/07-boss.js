@@ -8,7 +8,7 @@ const BOSS_DEF = {
 };
 function createBoss(type, lvl){
   const def = BOSS_DEF[type], hp = def.hp + Math.floor((lvl || 0) / 3);
-  return { type, def, hp, maxhp: hp, state: 'intro', t: 0, bz: 150, bx: 2, tx: 2, hurt: 0, cool: 1.6, warns: [], projs: [], gifts: [], haz: [], thrown: [], giftIn: -1, dieT: 0, atkN: 0, last: '', lvl: lvl || 0 };
+  return { type, def, hp, maxhp: hp, state: 'intro', t: 0, bz: 150, bx: MID, tx: MID, hurt: 0, cool: 1.6, warns: [], projs: [], gifts: [], haz: [], thrown: [], giftIn: -1, dieT: 0, atkN: 0, last: '', lvl: lvl || 0 };
 }
 function bossStart(){
   const cfg = LV.cfg;
@@ -33,13 +33,13 @@ function launchAttack(){
     const n = 1 + (er > 0.34 ? 1 : 0) + (er > 0.67 ? 1 : 0);
     for (let k = 0; k < n; k++) B.warns.push({ kind: 'shot', lane: null, delay: k * 0.62, t: 0.95 - 0.15 * er, pick: k });
   } else if (kind === 'wall'){
-    const nh = er > 0.5 ? 1 : 2, holes = new Set();
-    while (holes.size < nh) holes.add(R(5));
-    for (let l = 0; l < 5; l++) if (!holes.has(l)) B.warns.push({ kind: 'wall', lane: l, delay: 0, t: 1.15 - 0.25 * er });
+    const nh = er > 0.4 ? 1 : 2, holes = new Set();
+    while (holes.size < nh) holes.add(R(LANES));
+    for (let l = 0; l < LANES; l++) if (!holes.has(l)) B.warns.push({ kind: 'wall', lane: l, delay: 0, t: 1.15 - 0.25 * er });
     B.tx = [...holes][0];
   } else {
-    const n = Math.min(3, 1 + Math.floor(er * 3.2)), lanes = new Set([clamp(G.tgt, 0, 4)]);
-    while (lanes.size < n) lanes.add(R(5));
+    const n = Math.min(2, 1 + Math.floor(er * 2.4)), lanes = new Set([clamp(G.tgt, 0, LANES - 1)]);
+    while (lanes.size < n) lanes.add(R(LANES));
     for (const l of lanes) B.warns.push({ kind: 'strike', lane: l, delay: 0, t: 1.0 - 0.15 * er });
     B.tx = [...lanes][0];
   }
@@ -49,7 +49,7 @@ function launchAttack(){
 }
 function spawnGift(){
   const B = G.boss, busy = bossLanes(B), safe = [];
-  for (let l = 0; l < 5; l++) if (!busy.has(l)) safe.push(l);
+  for (let l = 0; l < LANES; l++) if (!busy.has(l)) safe.push(l);
   if (!safe.length) return;
   // si había un solo disparo, también valen los carriles de al lado
   B.gifts.push({ lane: safe[Math.floor(Math.random() * safe.length)], z: BOSS_Z - 4 });
@@ -87,8 +87,8 @@ function updateBoss(dt){
   for (let i = B.warns.length - 1; i >= 0; i--){
     const w = B.warns[i];
     if (w.delay > 0){ w.delay -= dt; if (w.delay <= 0 && w.kind === 'shot'){
-      const base = clamp(G.tgt, 0, 4), off = w.pick === 0 ? 0 : (Math.random() < 0.5 ? -1 : 1) * (1 + Math.floor(Math.random() * 1.9));
-      w.lane = clamp(base + off, 0, 4); B.tx = w.lane; Sound.sfx('warn'); } continue; }
+      const base = clamp(G.tgt, 0, LANES - 1), off = w.pick === 0 ? 0 : (Math.random() < 0.5 ? -1 : 1);
+      w.lane = clamp(base + off, 0, LANES - 1); B.tx = w.lane; Sound.sfx('warn'); } continue; }
     if (w.lane === null) continue;
     w.t -= dt;
     if (w.t <= 0){
@@ -117,20 +117,20 @@ function updateBoss(dt){
   for (let i = B.thrown.length - 1; i >= 0; i--){ const th = B.thrown[i]; th.t += dt; if (th.t >= th.dur){ B.thrown.splice(i, 1); bossHit(); } }
 }
 function bossScreen(){
-  const B = G.boss; return proj(B.bz, B.bx - 2, 0.9 * laneW + Math.sin(G.tAnim * 2) * 0.07 * laneW);
+  const B = G.boss; return proj(B.bz, B.bx - MID, 0.9 * laneW + Math.sin(G.tAnim * 2) * 0.07 * laneW);
 }
 /* franjas rojas en el suelo que avisan de dónde vendrá el golpe */
 function bossGround(drop){
   const B = G.boss, pul = 0.5 + 0.5 * Math.sin(G.tAnim * 16);
   const strip = (lane, col) => {
-    const l0 = lane - 2 - 0.5, l1 = lane - 2 + 0.5, a = proj(0, l0, -drop), b = proj(0, l1, -drop), c = proj(BOSS_Z, l1, -drop), d = proj(BOSS_Z, l0, -drop);
+    const l0 = lane - MID - 0.5, l1 = lane - MID + 0.5, a = proj(0, l0, -drop), b = proj(0, l1, -drop), c = proj(BOSS_Z, l1, -drop), d = proj(BOSS_Z, l0, -drop);
     const a2 = proj(-14, l0, -drop), b2 = proj(-14, l1, -drop);
     ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(a2.x, a2.y); ctx.lineTo(d.x, d.y); ctx.lineTo(c.x, c.y); ctx.lineTo(b2.x, b2.y); ctx.closePath(); ctx.fill();
   };
   for (const w of B.warns){
     if (w.delay > 0 || w.lane === null) continue;
     strip(w.lane, `rgba(255,${w.kind === 'strike' ? 210 : 60},${w.kind === 'strike' ? 40 : 60},${0.16 + 0.16 * pul})`);
-    const m = proj(9, w.lane - 2, -drop); ctx.fillStyle = `rgba(255,255,255,${0.55 + 0.4 * pul})`; ctx.font = '800 ' + Math.round(laneW * 0.5 * m.s) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.fillText('!', m.x, m.y - laneW * 0.1 * m.s);
+    const m = proj(9, w.lane - MID, -drop); ctx.fillStyle = `rgba(255,255,255,${0.55 + 0.4 * pul})`; ctx.font = '800 ' + Math.round(laneW * 0.5 * m.s) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.fillText('!', m.x, m.y - laneW * 0.1 * m.s);
   }
   for (const h of B.haz) strip(h.lane, `rgba(255,240,120,${0.35 + 0.3 * pul})`);
 }
@@ -138,7 +138,7 @@ function bossItems(items, airH){
   const B = G.boss, ph = playerScreen().h;
   items.push({ z: B.bz, k: 4, fn: (z) => {
     const p = bossScreen(), s = laneW * 0.85 * p.s;
-    const gp = proj(B.bz, B.bx - 2, 0);
+    const gp = proj(B.bz, B.bx - MID, 0);
     ctx.fillStyle = 'rgba(20,40,30,.25)'; ell(ctx, gp.x, gp.y, laneW * 1.1 * p.s, laneW * 0.16 * p.s);
     ctx.save();
     if (B.state === 'dying'){ ctx.globalAlpha = clamp(1 - B.dieT / 2.4, 0, 1); ctx.translate(p.x, p.y); ctx.rotate(B.dieT * 4); ctx.translate(-p.x, -p.y); }
@@ -148,10 +148,10 @@ function bossItems(items, airH){
     drawBossSprite(B.type, ctx, p.x, p.y, s, G.tAnim, { mood, flap: B.def.flap });
     ctx.restore();
   } });
-  for (const pr of B.projs) items.push({ z: pr.z, k: 4, fn: (z) => { const p = proj(Math.max(z, -4), pr.lane - 2, ph); ctx.globalAlpha = clamp((VIEW - z) / 40, 0, 1); drawBossShot(B.type, ctx, p.x, p.y, laneW * 0.62 * p.s, G.tAnim, pr.seed); ctx.globalAlpha = 1; } });
-  for (const g of B.gifts) items.push({ z: g.z, k: 4, fn: (z) => { const p = proj(Math.max(z, -4), g.lane - 2, ph + laneW * 0.05); drawGift(ctx, p.x, p.y, laneW * 0.7 * p.s, G.tAnim); } });
+  for (const pr of B.projs) items.push({ z: pr.z, k: 4, fn: (z) => { const p = proj(Math.max(z, -4), pr.lane - MID, ph); ctx.globalAlpha = clamp((VIEW - z) / 40, 0, 1); drawBossShot(B.type, ctx, p.x, p.y, laneW * 0.62 * p.s, G.tAnim, pr.seed); ctx.globalAlpha = 1; } });
+  for (const g of B.gifts) items.push({ z: g.z, k: 4, fn: (z) => { const p = proj(Math.max(z, -4), g.lane - MID, ph + laneW * 0.05); drawGift(ctx, p.x, p.y, laneW * 0.7 * p.s, G.tAnim); } });
   for (const h of B.haz) items.push({ z: 4, k: 4, fn: () => {
-    const top = proj(4, h.lane - 2, 0), x = top.x, y = top.y;
+    const top = proj(4, h.lane - MID, 0), x = top.x, y = top.y;
     ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     const pts = []; for (let i = 0; i <= 8; i++) pts.push([x + (i === 0 || i === 8 ? 0 : (Math.sin(i * 12.9 + Math.floor(G.tAnim * 30)) * 0.22 * laneW)), -10 + (y + 10) * i / 8]);
     ctx.strokeStyle = 'rgba(255,230,90,.35)'; ctx.lineWidth = laneW * 0.4; ctx.beginPath(); pts.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.stroke();

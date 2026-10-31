@@ -9,7 +9,7 @@ async function pipeBytes(bytes, stream){
   return new Uint8Array(await new Response(stream.readable).arrayBuffer());
 }
 async function encodeGhost(g){
-  const a = [2];
+  const a = [3];
   for (let i = 0; i < 4; i++) a.push((g.seed >>> (8 * i)) & 255);
   pushVar(a, Math.round(g.time * 100)); pushVar(a, g.acorns);
   const nm = new TextEncoder().encode(g.name.slice(0, 14)); a.push(nm.length); nm.forEach(b => a.push(b));
@@ -32,7 +32,7 @@ async function decodeGhost(code){
     raw = await pipeBytes(raw, new DecompressionStream('deflate-raw'));
   }
   let p = 0; const rv = () => { let n = 0, mul = 1, b; do { b = raw[p++]; n += (b & 127) * mul; mul *= 128; } while (b & 128); return n; };
-  if (raw[p++] !== 2) throw new Error('Ese fantasma es de una versión anterior');
+  if (raw[p++] !== 3) throw new Error('Ese fantasma es de una versión anterior');
   let seed = 0; for (let i = 0; i < 4; i++) seed += raw[p++] * Math.pow(2, 8 * i);
   const time = rv() / 100, acorns = rv();
   const nl = raw[p++]; const name = new TextDecoder().decode(raw.subarray(p, p + nl)); p += nl;
@@ -43,8 +43,8 @@ async function decodeGhost(code){
   return { name: name || 'Fantasma', time, acorns, seed: seed >>> 0, Ps, Xs };
 }
 const Ghosts = {
-  list: store.get('planeo2.ghosts', []).filter(g => LEVEL_SEEDS.includes(g.seed)),   // [{id,seed,name,time,acorns,code,mine}]
-  save(){ store.set('planeo2.ghosts', this.list.map(g => ({ id: g.id, seed: g.seed, name: g.name, time: g.time, acorns: g.acorns, code: g.code, mine: !!g.mine }))); },
+  list: store.get('planeo3.ghosts', []).filter(g => LEVEL_SEEDS.includes(g.seed)),   // [{id,seed,name,time,acorns,code,mine}]
+  save(){ store.set('planeo3.ghosts', this.list.map(g => ({ id: g.id, seed: g.seed, name: g.name, time: g.time, acorns: g.acorns, code: g.code, mine: !!g.mine }))); },
   forSeed(seed){ return this.list.filter(g => g.seed === seed); },
   mine(seed){ return this.list.find(g => g.mine && g.seed === seed); },
   async add(code, mine){

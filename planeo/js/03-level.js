@@ -1,4 +1,4 @@
-/* 03 · generación determinista del nivel (depende de la distancia, no del tiempo) */
+/* 03 · generación determinista del nivel (3 carriles; depende de la distancia, no del tiempo) */
 'use strict';
 function genLevel(cfg, o){
   o = o || {};
@@ -7,16 +7,17 @@ function genLevel(cfg, o){
   const rnd = mulberry32(cfg.seed + (o.seedAdd || 0));
   const R = (a, b) => a + Math.floor(rnd() * (b - a + 1));
   const objs = [], scenery = [];
-  let P = 90, safe = 2, prevP = 30;
+  let P = 90, safe = MID, prevP = 30;
 
-  const pushWall = (rowP, free, d) => {
+  // un bloque en cada carril que no esté libre
+  const pushBlocks = (rowP, free, d) => {
     const ground = rowP >= calmB;
     for (let l = 0; l < LANES; l++){
       if (free.has(l)) continue;
       let type;
-      if (ground) type = rnd() < 0.7 ? 'tree' : 'bush';
-      else type = (d > 0.5 && rnd() < 0.35) ? 'storm' : 'cloud';
-      objs.push({ type, P: rowP, lane: l, v: rnd(), sc: 0.95 + rnd() * 0.22 });
+      if (ground) type = (d > 0.3 && rnd() < 0.45) ? 'spikerock' : 'crate';
+      else type = (d > 0.45 && rnd() < 0.4) ? 'thunderbox' : 'crystal';
+      objs.push({ type, P: rowP, lane: l, v: rnd(), sc: 1 });
     }
   };
 
@@ -25,60 +26,46 @@ function genLevel(cfg, o){
     const d = cfg.diff0 + diffAdd + prog * cfg.span;
     const calm = P > calmA && P < calmB;
     const ground = P >= calmB;
-    const gap = lerp(40, 29, clamp(prog, 0, 1)) + R(0, 6);
+    const gap = lerp(36, 25, clamp(prog, 0, 1)) + R(0, 5);
     let kind;
     if (calm) kind = 'trail';
     else {
       const r = rnd();
-      if (d > 0.45 && r < 0.14) kind = 'slalom';
-      else if (r < 0.6) kind = 'wall';
-      else if (r < 0.84 && d > 0.05) kind = 'mover';
+      if (d > 0.4 && r < 0.14) kind = 'slalom';
+      else if (r < 0.58) kind = 'wall';
+      else if (r < 0.82 && d > 0.05) kind = 'mover';
       else kind = 'trail';
     }
     let newSafe = safe, extra = 0;
     if (kind === 'wall'){
-      newSafe = clamp(safe + R(-2, 2), 0, 4);
-      const n = d < 0.35 ? R(1, 2) : d < 0.65 ? R(2, 3) : d < 0.95 ? (rnd() < 0.35 ? 4 : R(2, 3)) : (rnd() < 0.55 ? 4 : 3);
+      newSafe = clamp(safe + R(-2, 2), 0, LANES - 1);
+      const n = d < 0.3 ? 1 : d < 0.6 ? (rnd() < 0.5 ? 1 : 2) : (rnd() < 0.78 ? 2 : 1);   // carriles bloqueados
       const free = new Set([newSafe]);
-      while (free.size < 5 - n) free.add(R(0, 4));
-      pushWall(P, free, d);
+      while (free.size < LANES - n) free.add(R(0, LANES - 1));
+      pushBlocks(P, free, d);
     } else if (kind === 'slalom'){
       let s = safe, dir = rnd() < 0.5 ? -1 : 1;
       for (let k = 0; k < 3; k++){
-        let s2 = s + dir; if (s2 < 0 || s2 > 4){ dir = -dir; s2 = s + dir; }
-        pushWall(P + k * 17, new Set([s, s2]), d);
+        let s2 = s + dir; if (s2 < 0 || s2 > LANES - 1){ dir = -dir; s2 = s + dir; }
+        pushBlocks(P + k * 17, new Set([s2]), d);   // un solo hueco que se va desplazando
         s = s2;
       }
       newSafe = s; extra = 34;
     } else if (kind === 'mover'){
-      const two = d > 0.35 && rnd() < 0.55;
-      const mt = ground ? 'hog' : 'bird';
-      const base = (ground ? 3.3 : 2.2) * (1 - 0.28 * Math.min(1, d));
-      let free;
-      if (two){
-        const combos = [[0, 2, 4], [0, 3, 2], [1, 3, 0]];
-        const c = combos[R(0, 2)];
-        for (let k = 0; k < 2; k++) objs.push({ type: mt, P, a: c[k], b: c[k] + 1, per: base + rnd() * 0.8, ph: rnd() * 6.28, v: rnd(), sc: 1 });
-        free = c[2];
-      } else {
-        const w = (d > 0.25 && rnd() < 0.55) ? 2 : 1;
-        const a0 = R(0, 4 - w);
-        objs.push({ type: mt, P, a: a0, b: a0 + w, per: base + rnd() * 0.8, ph: rnd() * 6.28, v: rnd(), sc: 1 });
-        let best = -1, bd = 99;
-        for (let l = 0; l < LANES; l++){
-          if (l >= a0 && l <= a0 + w) continue;
-          if (Math.abs(l - safe) < bd){ bd = Math.abs(l - safe); best = l; }
-        }
-        free = best;
-        if (d > 0.3 && rnd() < 0.55){
-          const cand = []; for (let l = 0; l < LANES; l++) if (l !== free && (l < a0 || l > a0 + w)) cand.push(l);
-          if (cand.length) objs.push({ type: ground ? 'bush' : 'cloud', P, lane: cand[R(0, cand.length - 1)], v: rnd(), sc: 1 });
-        }
-        if (rnd() < 0.55) objs.push({ type: 'gold', P: P - 11, lane: a0 + R(0, w), taken: false });
+      const mt = ground ? 'slime' : 'bee';
+      const base = (ground ? 3.4 : 2.3) * (1 - 0.25 * Math.min(1, d));
+      const full = d > 0.5 && rnd() < 0.4;               // recorre los 3 carriles: hay que cronometrar
+      const a0 = full ? 0 : R(0, LANES - 2), b0 = full ? LANES - 1 : a0 + 1;
+      objs.push({ type: mt, P, a: a0, b: b0, per: base + (full ? 1.0 : 0) + rnd() * 0.6, ph: rnd() * 6.28, v: rnd(), sc: 1 });
+      if (full){ newSafe = MID; }
+      else {
+        let free = 0; for (let l = 0; l < LANES; l++) if (l < a0 || l > b0) free = l;
+        newSafe = free;
+        if (d > 0.8 && rnd() < 0.25) pushBlocks(P, new Set([a0, b0]), d);   // bloque en el carril libre: obliga a cronometrar
       }
-      newSafe = free;
+      if (rnd() < 0.6) objs.push({ type: 'gold', P: P - 11, lane: a0 + R(0, b0 - a0), taken: false });
     } else {
-      newSafe = clamp(safe + R(-2, 2), 0, 4);
+      newSafe = clamp(safe + R(-1, 1), 0, LANES - 1);
     }
     // rastro de bellotas desde la fila anterior hasta esta, guiando hacia el hueco libre
     if (kind === 'trail' || rnd() < 0.7){
@@ -89,7 +76,7 @@ function genLevel(cfg, o){
         const special = rnd();
         for (let i = 0; i < n; i++){
           const t = i / (n - 1);
-          const lane = Math.round(lerp(safe, kind === 'slalom' ? safe : newSafe, smooth(t)));
+          const lane = clamp(Math.round(lerp(safe, kind === 'slalom' ? safe : newSafe, smooth(t))), 0, LANES - 1);
           let type = 'acorn';
           if (i === (n >> 1)){ if (special < 0.07 && !calm) type = 'heart'; else if (special < 0.17) type = 'gold'; }
           objs.push({ type, P: from + i * step, lane, taken: false });
@@ -101,15 +88,15 @@ function genLevel(cfg, o){
   }
   objs.sort((a, b) => a.P - b.P);
 
-  // decoración lateral (no colisiona)
+  // decoración lateral fuera de la pista (no colisiona)
   for (let p = 30; p < Lend + 520; p += R(13, 24)){
     const side = rnd() < 0.5 ? -1 : 1;
-    const lat = side * (3.3 + rnd() * 5.5);
+    const lat = side * (2.4 + rnd() * 5.5);
     if (p < skyLen - 100 || rnd() < 0.18) scenery.push({ type: 'puff', P: p, lat, h: R(-40, 420), sc: 0.8 + rnd() * 1.2, v: rnd() });
-    if (p > skyLen - 100) scenery.push({ type: rnd() < 0.8 ? 'stree' : 'srock', P: p, lat: side * (3.2 + rnd() * 4.5), sc: 0.8 + rnd() * 0.7, v: rnd() });
+    if (p > skyLen - 100) scenery.push({ type: rnd() < 0.8 ? 'stree' : 'srock', P: p, lat: side * (2.3 + rnd() * 4.5), sc: 0.8 + rnd() * 0.7, v: rnd() });
   }
   for (let p = skyLen - 80; p < Lend + 520; p += R(4, 8)){
-    const lat = (rnd() < 0.5 ? -1 : 1) * (0.6 + rnd() * 7.5);
+    const lat = (rnd() < 0.5 ? -1 : 1) * (1.8 + rnd() * 7);
     scenery.push({ type: rnd() < 0.5 ? 'flower' : 'tuft', P: p, lat, sc: 0.7 + rnd() * 0.7, v: rnd() });
   }
   scenery.sort((a, b) => a.P - b.P);
@@ -134,7 +121,8 @@ function laneOf(o, t){
   if (o.a === undefined) return o.lane;
   return o.a + (o.b - o.a) * (0.5 + 0.5 * Math.sin(6.2832 * t / o.per + o.ph));
 }
-function hitRadius(o){ return o.type === 'bird' ? 0.62 : o.type === 'hog' ? 0.6 : o.type === 'bush' ? 0.6 : 0.68; }
+const isPickup = o => o.type === 'acorn' || o.type === 'gold' || o.type === 'heart';
+function hitRadius(o){ return o.type === 'bee' ? 0.58 : o.type === 'slime' ? 0.58 : 0.62; }
 
 /* nivel n del modo infinito: va rotando los 3 mundos y subiendo la dificultad sin techo */
 function infConfig(n){
