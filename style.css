@@ -26,7 +26,7 @@ kbd{background:#fff;color:#000;border-radius:4px;padding:0 6px}
 #toast.show{opacity:1}
 #help{position:fixed;left:0;right:0;bottom:0;padding:8px 14px;background:#0008;font-size:13px;text-align:center;pointer-events:none}
 .overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;
-  background:radial-gradient(ellipse at center,#0a2a6a99,#041030dd);z-index:5}
+  background:linear-gradient(#0a2a6a44,#0410308a);z-index:5}
 .overlay h1{margin:0;font-size:clamp(48px,11vw,130px);line-height:.9;font-weight:900;color:#ff3b3b;-webkit-text-stroke:3px #fff;text-shadow:0 8px 0 #7a0d0d,0 0 40px #ff3b3b88;letter-spacing:2px}
 .overlay h1 span{display:block;color:#ffd400;text-shadow:0 8px 0 #8a5a00,0 0 40px #ffd40088}
 .overlay h2{font-size:48px;margin:0}
