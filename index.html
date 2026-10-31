@@ -9,18 +9,31 @@
 <body>
 <canvas id="c"></canvas>
 
+<div id="flash"></div>
 <div id="hud" class="hidden">
-  <div id="hearts"></div>
-  <div class="stat">🪙 <b id="coins">0</b></div>
-  <div class="stat">🌙 <b id="moons">0</b>/5</div>
-  <div id="captureTag" class="hidden">👾 Capturado — <kbd>E</kbd> para soltar</div>
+  <div id="gauge">
+    <svg viewBox="0 0 100 100" aria-label="Vida">
+      <circle cx="50" cy="50" r="47" fill="#0a1230" stroke="#fff" stroke-width="4"/>
+      <path id="seg0" d="M50 50 L50 8 A42 42 0 0 1 86.4 71 Z" fill="#3fd6ff"/>
+      <path id="seg1" d="M50 50 L86.4 71 A42 42 0 0 1 13.6 71 Z" fill="#3fd6ff"/>
+      <path id="seg2" d="M50 50 L13.6 71 A42 42 0 0 1 50 8 Z" fill="#3fd6ff"/>
+      <circle cx="50" cy="50" r="19" fill="#0a1230" stroke="#fff" stroke-width="3"/>
+    </svg>
+    <span id="hp">3</span>
+  </div>
+  <div id="moonCount"><svg viewBox="0 0 120 120"><path d="M78 14a46 46 0 1 0 28 66A38 38 0 0 1 78 14z" fill="#ffe14a" stroke="#c79a00" stroke-width="7"/></svg><b id="moons">0</b><i>/5</i></div>
+  <div id="coinCount">
+    <span class="coin"></span><b id="coins">0</b>
+    <span class="coin purple"></span><b id="pcoins">0</b><i>/8</i>
+  </div>
+  <div id="captureTag" class="hidden">Capturado — <kbd>E</kbd> para soltar</div>
 </div>
 <div id="banner"></div>
 <div id="toast"></div>
 <div id="help" class="hidden">
   <b>WASD</b> moverse · <b>Ratón/Flechas</b> cámara · <b>Espacio</b> saltar (¡encadena 3!) ·
   <b>C/Shift</b> agacharse (+Espacio = salto largo, en el aire = aplastón) ·
-  <b>E/Clic</b> lanzar gorra / capturar · <b>R</b> volver al checkpoint · <b>H</b> ocultar ayuda
+  <b>E/Clic</b> lanzar gorra / capturar (¡salta sobre ella en el aire!) · <b>R</b> checkpoint · <b>M</b> música · <b>H</b> ocultar ayuda
 </div>
 
 <div id="title" class="overlay">

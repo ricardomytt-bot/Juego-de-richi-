@@ -2,11 +2,21 @@
 html,body{margin:0;height:100%;overflow:hidden;background:#8fd0ff;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;color:#fff;user-select:none}
 #c{position:fixed;inset:0;width:100%;height:100%;display:block}
 .hidden{display:none!important}
-#hud{position:fixed;top:14px;left:16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;pointer-events:none}
-#hearts{font-size:30px;text-shadow:0 2px 0 #0006;letter-spacing:2px}
-.stat{background:#0007;padding:6px 14px;border-radius:999px;font-size:20px;border:2px solid #fff4}
-.stat b{font-size:24px}
-#captureTag{background:#e8262bcc;padding:6px 14px;border-radius:999px;font-weight:bold}
+#hud{position:fixed;inset:0;pointer-events:none}
+#flash{position:fixed;inset:0;background:radial-gradient(#fff,#ffe14a);opacity:0;pointer-events:none;z-index:4}
+#gauge{position:absolute;top:16px;right:20px;width:104px;height:104px;filter:drop-shadow(0 4px 0 #0005)}
+#gauge svg{width:100%;height:100%}
+#gauge span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:900;text-shadow:0 2px 0 #000}
+#gauge.low{animation:pulse .6s infinite alternate}
+@keyframes pulse{to{transform:scale(1.12)}}
+#moonCount,#coinCount{position:absolute;display:flex;align-items:center;gap:8px;font-size:34px;font-weight:900;text-shadow:0 3px 0 #0008,0 0 12px #0006}
+#moonCount{top:20px;left:22px}
+#moonCount svg{width:46px;height:46px}
+#coinCount{bottom:48px;left:22px}
+#coinCount i,#moonCount i{font-size:22px;font-style:normal;opacity:.85}
+.coin{width:34px;height:34px;border-radius:50%;background:#ffd400;border:5px solid #c79a00;box-sizing:border-box;display:inline-block}
+.coin.purple{background:#a24dff;border-color:#5a1fa8;border-radius:8px;margin-left:16px;transform:rotate(45deg) scale(.9)}
+#captureTag{position:absolute;top:24px;left:50%;transform:translateX(-50%);background:#e8262bcc;padding:6px 18px;border-radius:999px;font-weight:bold;font-size:18px}
 kbd{background:#fff;color:#000;border-radius:4px;padding:0 6px}
 #banner{position:fixed;left:0;right:0;top:22%;text-align:center;font-size:clamp(28px,6vw,64px);font-weight:900;color:#ffe14a;
   -webkit-text-stroke:2px #7a4a00;text-shadow:0 5px 0 #7a4a00,0 0 30px #ffd400;opacity:0;transform:scale(.6);transition:all .35s;pointer-events:none}
