@@ -364,7 +364,7 @@ function g3Frame(dt){
   const shx = G.shake > 0 ? (Math.random() - 0.5) * G.shake * 0.05 : 0, shy = G.shake > 0 ? (Math.random() - 0.5) * G.shake * 0.05 : 0;
   const cxp = PL.cx * 0.6 + shx, camY = PLAY_Y + 2.9 + shy, dive = diving() ? 1 : 0;
   CAM3.fov += ((H > W ? 70 : 60) + dive * 9 + (G.starT > 0 ? 4 : 0) - CAM3.fov) * Math.min(1, dt * 5); CAM3.updateProjectionMatrix();
-  CAM3.position.set(cxp, camY, -P + 8.8); CAM3.lookAt(PL.cx * 0.55, PLAY_Y + 0.15 + ascK * 3.5, -P - 15); CAM3.rotateZ(-G.bank * 0.06);
+  CAM3.position.set(cxp, camY, -P + 8.8); CAM3.lookAt(PL.cx * 0.55, PLAY_Y + 0.15 + ascK * 3.5 + (window.__camLift || 0), -P - 15); CAM3.rotateZ(-G.bank * 0.06);
   SK.dome.position.copy(CAM3.position); SK.mount.position.set(CAM3.position.x, CAM3.position.y - 8, CAM3.position.z);
   g3RenderScene();
   g3Overlay(dt, a);

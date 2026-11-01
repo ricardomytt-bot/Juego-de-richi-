@@ -36,7 +36,7 @@ function setModelStyle(id, first){
   initBossModels();
   styleModels(A); styleBosses(A);
   // Low-poly: personajes más pequeños para que no tapen la pantalla (~1 carril de ancho). El peluche se queda como estaba.
-  window.__bossK = A ? 1 : 0.55; window.__playerK = A ? 1 : 0.86;
+  window.__bossK = A ? 1 : 0.55; window.__playerK = A ? 1 : 0.5; window.__camLift = A ? 0 : 1.3;
   if (!A){
     const K = { bee: 0.62, comet: 0.55, bat: 0.7, drone: 0.68, slime: 0.62, boulder: 0.92, bunny: 0.95, mole: 0.8 };
     for (const id in K){ const mk = MK[id], k = K[id], base = mk.make;
