@@ -60,6 +60,9 @@ Los modelos 3D se rehicieron en dos estilos, elegibles con `#estilo=A` / `#estil
 En el estilo B los enemigos, los jefes y el avión se dibujan más pequeños (~1 carril de ancho) para no tapar la pantalla.
 `galeria.html` muestra todos los modelos (enemigos, bloques, objetos, jefes, avión, personajes, decorado) de cada estilo.
 
+## Mejoras gráficas del low-poly
+Terreno **facetado** (cada triángulo de un solo color, con luz y sombra por cara), montañas de caras planas iluminadas en dos anillos, arcoíris de caras planas, luz de contorno (rim light) en todos los modelos, viñeta y gradación de color más marcadas.
+
 ## Gráficos en 3D (estilo caricatura)
 Todos los modelos son **redondeados** (esferas suaves y cajas de esquinas blandas); la abeja es un círculo con aros de rayas y mejillas rosas. La tierra es un terreno suave con campos de bordes curvos, surcos, ríos y lagos (sin cuadrículas).
 

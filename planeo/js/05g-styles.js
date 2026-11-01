@@ -9,7 +9,7 @@ function setModelStyle(id, first){
   const A = id === 'A';
   if (!STYLE.base) STYLE.base = { GEO: Object.assign({}, GEO), plane: buildPlaneModel, fig: typeof buildFigure === 'function' ? buildFigure : null };
   for (const k in STYLE.base.GEO) GEO[k] = STYLE.base.GEO[k];
-  STYLE.id = id; window.__postOff = !A;
+  STYLE.id = id; window.__postOff = false; window.__edgeAmt = A ? 1 : 0; window.__facet = !A; window.__sat = A ? 1.22 : 1.34; window.__con = A ? 1.07 : 1.12; window.__vig = A ? 0.35 : 0.5; MAT.rim.value = A ? 0.16 : 0.42;
   const K = 'st' + id, LPK = k => gcache(K + k, null);
   const flat = g => { g.userData.flat = true; return g; };
   const hexg = (r, h, s) => flat(new THREE.CylinderGeometry(r, r, h, s));

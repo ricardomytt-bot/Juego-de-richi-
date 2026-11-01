@@ -112,6 +112,8 @@ function g3Init(){
     CAM3 = new THREE.PerspectiveCamera(62, 1, 0.3, 1400);
     makeTextures();
     MAT.toon = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: LT.grad });
+    MAT.rim = { value: 0.3 }; MAT.rimCol = { value: new THREE.Color(0xbfe6ff) };
+    MAT.toon.onBeforeCompile = sh => { sh.uniforms.uRim = MAT.rim; sh.uniforms.uRimCol = MAT.rimCol; sh.fragmentShader = 'uniform float uRim; uniform vec3 uRimCol;\n' + sh.fragmentShader.replace('#include <opaque_fragment>', 'outgoingLight += uRimCol * uRim * pow(1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0), 2.6);\n#include <opaque_fragment>'); };
     MAT.emit = new THREE.MeshBasicMaterial({ vertexColors: true });
     MAT.outl = new THREE.MeshBasicMaterial({ color: 0x10122f, side: THREE.BackSide });
     LT.hemi = new THREE.HemisphereLight(0xffffff, 0x88aa88, 0.9); S3.add(LT.hemi); S3.add(new THREE.AmbientLight(0xffffff, 0.12));
@@ -141,12 +143,16 @@ function buildSky(){
   });
   SK.dome = new THREE.Mesh(new THREE.SphereGeometry(900, 28, 18), SK.mat); SK.dome.renderOrder = -10; SK.dome.frustumCulled = false; S3.add(SK.dome);
   // cordillera lejana con cumbres nevadas (no recibe niebla: se tiñe a mano como en el render 2D)
-  SK.mount = new THREE.Group(); SK.mmat = new THREE.MeshBasicMaterial({ color: 0x9aaad0, fog: false }); SK.smat = new THREE.MeshBasicMaterial({ color: 0xf6f9ff, fog: false });
-  for (let i = 0; i < 26; i++){
-    const a = (i / 26) * Math.PI * 2 + (i % 3) * 0.07, r = 640 + (i % 4) * 30, hgt = 70 + ((i * 53) % 95), wd = 70 + ((i * 29) % 60);
-    const m = new THREE.Mesh(new THREE.ConeGeometry(wd, hgt, 6 + (i % 2)), SK.mmat); m.position.set(Math.cos(a) * r, hgt / 2 - 14, Math.sin(a) * r); SK.mount.add(m);
-    const sc = new THREE.Mesh(new THREE.ConeGeometry(wd * 0.36, hgt * 0.34, 6 + (i % 2)), SK.smat); sc.position.set(m.position.x, hgt * 0.83 - 14, m.position.z); SK.mount.add(sc);
+  SK.mount = new THREE.Group(); SK.mmat = new THREE.MeshToonMaterial({ color: 0x9aaad0, gradientMap: LT.grad, fog: false }); SK.smat = new THREE.MeshToonMaterial({ color: 0xf6f9ff, gradientMap: LT.grad, fog: false });
+  const flatCone = (r, h, seg) => { const g = new THREE.ConeGeometry(r, h, seg, 1).toNonIndexed(); g.computeVertexNormals(); return g; };
+  for (let i = 0; i < 44; i++){
+    const ring = i % 2, a = (i / 44) * Math.PI * 2 + (i % 3) * 0.05, r = (ring ? 760 : 600) + (i % 5) * 26, hgt = (ring ? 130 : 95) + ((i * 53) % 120), wd = 70 + ((i * 29) % 80), seg = 5 + (i % 3);
+    const m = new THREE.Mesh(flatCone(wd, hgt, seg), SK.mmat); m.position.set(Math.cos(a) * r, hgt / 2 - 14, Math.sin(a) * r); m.rotation.y = i; SK.mount.add(m);
+    const sc = new THREE.Mesh(flatCone(wd * 0.34, hgt * 0.36, seg), SK.smat); sc.position.set(m.position.x, hgt * 0.82 - 14, m.position.z); sc.rotation.y = i; SK.mount.add(sc);
   }
+  // arcoíris de caras planas (se ve cuando hay sol)
+  SK.rainbow = new THREE.Group(); ['ff5a5a', 'ffa24a', 'ffe55a', '7ddc6a', '5ab8ff', '7a7aff', 'c07aff'].forEach((c, i) => { const t = new THREE.Mesh(new THREE.TorusGeometry(210 + i * 7, 3.6, 3, 24, Math.PI), new THREE.MeshBasicMaterial({ color: parseInt(c, 16), transparent: true, opacity: 0.5, depthWrite: false, fog: false })); SK.rainbow.add(t); });
+  SK.rainbow.visible = false; SK.rainbow.traverse(o => { o.frustumCulled = false; }); S3.add(SK.rainbow);
   SK.mount.traverse(o => { o.frustumCulled = false; }); S3.add(SK.mount);
 }
 
@@ -159,12 +165,16 @@ function buildGround(){
   GR.mat = new THREE.ShaderMaterial({
     fog: false, side: THREE.DoubleSide,
     uniforms: { uPatch: { value: 1 }, uCover: { value: 0 }, uHill: { value: 1 }, uGrass: { value: new THREE.Color() }, uLand: { value: Array.from({ length: 8 }, () => new THREE.Color()) }, uSea: { value: Array.from({ length: 5 }, () => new THREE.Color()) },
-      uFogColor: { value: new THREE.Color() }, uFogNear: { value: 60 }, uFogFar: { value: 260 }, uTime: { value: 0 }, uSun: { value: new THREE.Vector3(-0.4, 0.8, 0.3).normalize() }, uSkyBot: { value: new THREE.Color() } },
-    vertexShader: `uniform float uHill; varying vec3 vW; varying float vE;
+      uFogColor: { value: new THREE.Color() }, uFogNear: { value: 60 }, uFogFar: { value: 260 }, uTime: { value: 0 }, uFacet: { value: 0 }, uSun: { value: new THREE.Vector3(-0.4, 0.8, 0.3).normalize() }, uSkyBot: { value: new THREE.Color() } },
+    vertexShader: `uniform float uHill, uPatch; uniform vec3 uGrass; uniform vec3 uLand[8]; flat varying vec3 vFacet; varying vec3 vW; varying float vE;
+      ${GLSL_NOISE}
       float elev(float lat, float z){ float a = abs(lat); float amp = smoothstep(0.0, 1.0, clamp((a - 2.6) / 3.2, 0.0, 1.0));
         float n = 0.5 + 0.28 * sin(z * 0.019 + lat * 0.8) + 0.22 * sin(z * 0.047 - lat * 1.7 + 1.3); return amp * n * ${HH} * uHill; }
-      void main(){ vec4 w = modelMatrix * vec4(position, 1.0); float e = elev(w.x / ${LW_}, -w.z); w.y += e; vE = e; vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
-    fragmentShader: `uniform float uPatch, uCover, uTime; uniform vec3 uGrass, uFogColor, uSun, uSkyBot; uniform vec3 uLand[8]; uniform vec3 uSea[5]; uniform float uFogNear, uFogFar; varying vec3 vW; varying float vE;
+      void main(){ vec4 w = modelMatrix * vec4(position, 1.0);
+        vec2 q = vec2(w.x, -w.z) * 0.0125; vec2 wp = vec2(fbm(q * 1.7 + 3.1), fbm(q * 1.7 + 9.4)); float rg = fbm(q + wp * 1.35); float rf = rg * 7.0; int i0 = int(floor(rf)); float fk = smoothstep(0.30, 0.70, fract(rf));
+        vec3 rc = mix(uLand[int(mod(float(i0), 8.0))], uLand[int(mod(float(i0 + 1), 8.0))], fk); vFacet = mix(uGrass, rc, uPatch) * (0.86 + 0.28 * fbm(q * 7.0 + 5.0));   // color PLANO por triángulo (varying "flat")
+        float e = elev(w.x / ${LW_}, -w.z); w.y += e; vE = e; vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform float uPatch, uCover, uTime, uFacet; flat varying vec3 vFacet; uniform vec3 uGrass, uFogColor, uSun, uSkyBot; uniform vec3 uLand[8]; uniform vec3 uSea[5]; uniform float uFogNear, uFogFar; varying vec3 vW; varying float vE;
       ${GLSL_NOISE}
       void main(){
         float lat = vW.x / ${LW_}, zA = -vW.z;
@@ -176,10 +186,11 @@ function buildGround(){
         vec3 m = mix(uGrass, rc, uPatch); m *= 0.93 + 0.14 * fine + 0.05 * (fine2 - 0.5);
         float cropMask = smoothstep(0.55, 0.75, fbm(q * 2.3 + 17.0)) * step(0.3, uPatch);
         float rowsA = sin((vW.x * 0.8 + vW.z * 0.25) * 2.2) * 0.5 + 0.5; m = mix(m, m * (0.9 + 0.16 * rowsA), cropMask * 0.8);   // surcos de cultivo suaves
+        if (uFacet > 0.5) m = vFacet;   // low-poly: cada triángulo del terreno es de un solo color
         float stripe = 1.0 + 0.025 * sin(zA * 0.31); float road = (abs(lat) < 1.6 && uPatch < 0.7) ? 1.05 : 1.0; float hv = rg;
         bool lake = false;
         if (lake){ m = vec3(0.30, 0.59, 0.86); float sp = sin(uTime * 1.6 + vW.x * 2.1 + vW.z * 1.7) * sin(uTime * 1.1 + vW.x * 1.3 - vW.z * 2.3); m += vec3(0.25) * smoothstep(0.55, 0.95, sp); }
-        vec3 n = normalize(cross(dFdx(vW), dFdy(vW))); if (n.y < 0.0) n = -n; float lit = 0.62 + 0.5 * max(dot(n, uSun), 0.0);
+        vec3 n = normalize(cross(dFdx(vW), dFdy(vW))); if (n.y < 0.0) n = -n; float lit = uFacet > 0.5 ? 0.5 + 0.62 * max(dot(n, uSun), 0.0) : 0.62 + 0.5 * max(dot(n, uSun), 0.0);
         float sn = clamp((vE / ${HH} - 0.5) * 3.0, 0.0, 1.0); m = mix(m, vec3(0.93, 0.95, 0.99), sn * 0.85);
         // río serpenteante
         float rz = zA; float rx = 70.0 * sin(rz * 0.0033 + 0.6) + 34.0 * sin(rz * 0.0105 + 2.0) + 20.0; float dr = abs(vW.x - rx);
@@ -335,7 +346,7 @@ function g3Frame(dt){
   LT.sun.color.setRGB(...rgb3(mix(sc, [255, 255, 255], 0.4))); LT.sun.intensity = THEME.hasSun ? lerp(0.62, 0.82, su) : 0.55;
   LT.sun.position.set(-sdir.x * 60 * -1, 40 + sdir.y * 60, 35).add(new THREE.Vector3(wxOf(G.x), 0, -P)); LT.sun.target.position.set(wxOf(G.x), 0, -P);
   // --- suelo
-  const U = GR.mat.uniforms; U.uPatch.value = clamp(drop2 / 180, 0, 1); U.uCover.value = clamp((a - 0.55) / 0.25, 0, 1); U.uHill.value = clamp(1 - drop2 / 140, 0, 1); U.uTime.value = t;
+  const U = GR.mat.uniforms; U.uPatch.value = clamp(drop2 / 180, 0, 1); U.uCover.value = clamp((a - 0.55) / 0.25, 0, 1); U.uHill.value = clamp(1 - drop2 / 140, 0, 1); U.uTime.value = t; U.uFacet.value = window.__facet ? 1 : 0; U.uFacet.value = window.__facet ? 1 : 0; GR.matFar.uniforms.uFacet.value = U.uFacet.value;
   if (!THEME._lrgb) THEME._lrgb = THEME.land.map(hex2rgb);
   U.uGrass.value.setRGB(...rgb3(THEME.grass)); THEME._lrgb.forEach((c, i) => U.uLand.value[i].setRGB(...rgb3(c)));
   THEME.sea.forEach((h, i) => { const c = hex2rgb(h); U.uSea.value[i].setRGB(...rgb3(c)); });
@@ -343,7 +354,8 @@ function g3Frame(dt){
   GR.mesh.position.set(0, -D3, Math.floor((-P - 240) / 4) * 4); GR.far.position.set(0, -D3 - 0.45, -P - 800);
   // --- cordillera
   const hill = clamp((0.62 - a) / 0.5, 0, 1); SK.mount.visible = hill > 0.02;
-  SK.mmat.color.setRGB(...rgb3(mix(sky.bot, [150, 168, 212], 0.55))); SK.mmat.color.lerp(SK.mat.uniforms.uBot.value, 0.0);
+  SK.rainbow.visible = THEME !== THEMES.storm && a > 0.18 && a < 0.7; SK.rainbow.position.set(CAM3.position.x + 90, CAM3.position.y - 70, CAM3.position.z - 560); SK.rainbow.children.forEach(t => { t.material.opacity = 0.42 * (a > 0.55 ? (0.7 - a) / 0.15 : a < 0.3 ? (a - 0.18) / 0.12 : 1); });
+  SK.mmat.color.setRGB(...rgb3(mix(sky.bot, [150, 168, 212], 0.45), 1.12)); SK.smat.color.setRGB(...rgb3(mix(sky.bot, [250, 252, 255], 0.75), 1.05));
   // --- pista
   updateTrack(P, air);
   // --- avión
@@ -402,9 +414,9 @@ function postInit(){
     const dt = new THREE.DepthTexture(2, 2); dt.type = THREE.UnsignedIntType;
     POST.rt = new THREE.WebGLRenderTarget(2, 2, { depthTexture: dt, samples: 4, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
     POST.mat = new THREE.ShaderMaterial({ depthTest: false, depthWrite: false, toneMapped: false,
-      uniforms: { tC: { value: null }, tD: { value: null }, uPx: { value: new THREE.Vector2(1, 1) }, uNear: { value: 0.3 }, uFar: { value: 1400 }, uSat: { value: 1.22 }, uEdge: { value: 1.3 }, uOut: { value: new THREE.Color(0x14183c) } },
+      uniforms: { tC: { value: null }, tD: { value: null }, uPx: { value: new THREE.Vector2(1, 1) }, uNear: { value: 0.3 }, uFar: { value: 1400 }, uSat: { value: 1.22 }, uEdge: { value: 1.3 }, uEdgeAmt: { value: 1 }, uVig: { value: 0.35 }, uCon: { value: 1.07 }, uOut: { value: new THREE.Color(0x14183c) } },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
-      fragmentShader: `uniform sampler2D tC, tD; uniform vec2 uPx; uniform float uNear, uFar, uSat, uEdge; uniform vec3 uOut; varying vec2 vUv;
+      fragmentShader: `uniform sampler2D tC, tD; uniform vec2 uPx; uniform float uNear, uFar, uSat, uEdge, uEdgeAmt, uVig, uCon; uniform vec3 uOut; varying vec2 vUv;
         float lin(float d){ float z = d * 2.0 - 1.0; return (2.0 * uNear * uFar) / (uFar + uNear - z * (uFar - uNear)); }
         void main(){
           vec3 c = texture2D(tC, vUv).rgb; vec2 o = uPx * uEdge;
@@ -413,8 +425,9 @@ function postInit(){
           float e = smoothstep(0.8, 1.6, diff / (d0 * 0.34 + 0.9));
           e *= 1.0 - smoothstep(70.0, 190.0, d0);                      // sin contorno en lo muy lejano
           float l = dot(c, vec3(0.299, 0.587, 0.114)); c = mix(vec3(l), c, uSat);   // color más vivo
-          c = (c - 0.5) * 1.07 + 0.5;                                    // algo más de contraste
-          c = mix(c, uOut, e * 0.92);
+          c = (c - 0.5) * uCon + 0.5;                                    // algo más de contraste
+          c = mix(c, uOut, e * 0.92 * uEdgeAmt);
+          vec2 vv = vUv - 0.5; c *= 1.0 - uVig * dot(vv, vv) * 1.5;      // viñeta suave
           gl_FragColor = vec4(max(c, 0.0), 1.0);
         }`
     });
@@ -424,6 +437,7 @@ function postInit(){
 }
 function postSize(){ if (!POST.ok) return; const pr = R3.getPixelRatio(), w = Math.max(2, Math.floor(W * pr)), h = Math.max(2, Math.floor(H * pr)); if (POST.rt.width !== w || POST.rt.height !== h){ POST.rt.setSize(w, h); } POST.mat.uniforms.uPx.value.set(1 / w, 1 / h); POST.mat.uniforms.uEdge.value = Math.max(1, pr) * 1.15; POST.mat.uniforms.uNear.value = CAM3.near; POST.mat.uniforms.uFar.value = CAM3.far; }
 function g3RenderScene(){
+  if (POST.ok){ const u = POST.mat.uniforms; u.uEdgeAmt.value = window.__edgeAmt === undefined ? 1 : window.__edgeAmt; u.uSat.value = window.__sat || 1.22; u.uCon.value = window.__con || 1.07; u.uVig.value = window.__vig === undefined ? 0.35 : window.__vig; }
   if (POST.ok && POST.on && !window.__postOff && !(typeof Q !== 'undefined' && Q.low)){
     postSize(); R3.setRenderTarget(POST.rt); R3.render(S3, CAM3); R3.setRenderTarget(null);
     POST.mat.uniforms.tC.value = POST.rt.texture; POST.mat.uniforms.tD.value = POST.rt.depthTexture; R3.render(POST.scene, POST.cam);
