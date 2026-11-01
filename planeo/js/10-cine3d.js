@@ -1,12 +1,6 @@
 /* 10 · CINEMÁTICAS EN 3D (versión de prueba): escenas con personajes 3D, cámara en movimiento, música, y voces por personaje.
    Usa los mismos guiones que el juego (CINE en 08-cine.js) y el mismo motor 3D (Three.js + modelos de 05b/05c/05e). */
 'use strict';
-const Story = { d: { done: [false, false, false], unlocked: 3, best: {} } };       // el módulo de logros lo necesita
-const particles = [];
-const G = { up: 1, tAnim: 0, state: 'cine', P: 0, vP: 0, x: MID, shake: 0, fade: 0, hearts: 3, starT: 0, magT: 0 };
-function playerName(){ return (store.get('planeo2.name', '') || 'Nuki').slice(0, 14); }
-function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2400); }
-
 /* ------------------------------------------------------------------ utilidades 3D */
 const C3 = { ok: false, T: 0, t: 0, i: 0, shots: null, key: null, txt: '', chars: 0, talkT: -9, scenes: {}, cur: null, curKey: '', flash: 0, camPos: new THREE.Vector3(), camLook: new THREE.Vector3(), speaker: '' };
 const T3 = (geo, color, p, s, r, o) => pt(geo, color, p, s, r, o);
@@ -248,4 +242,38 @@ function c3Frame(now){
     const fade = clamp(1 - C3.t / 0.5, 0, 1); document.getElementById('veil').style.opacity = fade;
   } else { setTod('dawn', 0); if (C3.menuBg){ C3.menuBg.update(C3.menuBg.o, { glow: 1 }, 2 + C3.T * 0.15); } CAM3.position.lerp(C3.camPos, 0.05); CAM3.lookAt(C3.camLook); SK.dome.position.copy(CAM3.position); C3.moon.position.set(CAM3.position.x + 46, 58, CAM3.position.z - 150); C3.moonGlow.position.copy(C3.moon.position); }
   R3.render(S3, CAM3); requestAnimationFrame(c3Frame);
+}
+
+
+/* ------------------------------------------------------------------ uso dentro del juego (reutiliza el sistema de cinemáticas de 08-cine.js) */
+function c3Ready(){
+  if (C3.ready) return true; if (typeof G3 === 'undefined' || !G3.ok) return false;
+  try {
+    if (!BM.crow) initBossModels();
+    C3.moon = new THREE.Mesh(new THREE.SphereGeometry(7, 24, 16), new THREE.MeshBasicMaterial({ color: 0xf4f1e6, fog: false })); C3.moon.position.set(46, 58, -150); C3.moon.visible = false; S3.add(C3.moon);
+    C3.moonGlow = glowSprite(0xd2e1ff, 70, 0.55); C3.moonGlow.position.copy(C3.moon.position); C3.moonGlow.visible = false; S3.add(C3.moonGlow);
+    C3.root = new THREE.Group(); S3.add(C3.root); C3.ready = true; return true;
+  } catch (e){ console.warn('cinemáticas 3D no disponibles', e); return false; }
+}
+/* al empezar una cinemática se oculta el mundo del juego; al terminar se restaura tal como estaba */
+function c3Hide(){
+  C3.saved = []; const keep = new Set([SK.dome, C3.root, C3.moon, C3.moonGlow]);
+  for (const o of S3.children){ if (keep.has(o) || o.isLight) continue; C3.saved.push([o, o.visible]); o.visible = false; }
+  C3.on = true; C3.curKey = ''; C3.lookCur = null; C3.lastShot = -1;
+}
+function c3Restore(){
+  if (!C3.on) return; for (const [o, v] of C3.saved || []) o.visible = v; C3.saved = []; C3.on = false;
+  if (C3.cur) C3.cur.grp.visible = false; C3.curKey = ''; C3.moon.visible = false; C3.moonGlow.visible = false; CAM3.fov = H > W ? 70 : 60; CAM3.updateProjectionMatrix();
+}
+/* dibuja el fondo 3D de la toma actual (el cuadro de diálogo lo sigue pintando drawCine en 2D) */
+function c3Render(s, shotIdx, t, T, talkT, chars, txtLen, dt){
+  C3.T = T; if (C3.lastShot !== shotIdx){ C3.lastShot = shotIdx; c3Scene(s.sc); C3.cur.def.show && C3.cur.def.show(C3.cur.o, s); C3.t0shot = t; C3.lookCur = null; }
+  const speak = clamp(1 - (T - talkT) / 0.14, 0, 1) * (chars < txtLen ? 1 : 0);
+  setTod(s.tod || 'dawn', C3.flash); C3.flash = Math.max(0, C3.flash - dt * 2.6);
+  C3.cur.def.update(C3.cur.o, s, t, dt, speak);
+  const k = 1 - Math.pow(0.0008, dt), snap = t < 0.05 || !C3.lookCur;
+  CAM3.position.lerp(C3.camPos, snap ? 1 : k); if (!C3.lookCur) C3.lookCur = C3.camLook.clone(); C3.lookCur.lerp(C3.camLook, snap ? 1 : k); CAM3.lookAt(C3.lookCur);
+  CAM3.fov = 55; CAM3.updateProjectionMatrix();
+  SK.dome.position.copy(CAM3.position); C3.moon.position.set(CAM3.position.x + 46, 58, CAM3.position.z - 150); C3.moonGlow.position.copy(C3.moon.position);
+  R3.render(S3, CAM3);
 }

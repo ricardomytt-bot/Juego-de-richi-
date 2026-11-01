@@ -1,5 +1,11 @@
 /* 11 · arranque de la página de cinemáticas 3D */
 'use strict';
+const Story = { d: { done: [false, false, false], unlocked: 3, best: {} } };       // el módulo de logros lo necesita
+const particles = [];
+const G = { up: 1, tAnim: 0, state: 'cine', P: 0, vP: 0, x: MID, shake: 0, fade: 0, hearts: 3, starT: 0, magT: 0 };
+function playerName(){ return (store.get('planeo2.name', '') || 'Nuki').slice(0, 14); }
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2400); }
+
 (function(){
   const $$ = id => document.getElementById(id);
   const ok = c3Init();

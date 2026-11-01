@@ -474,7 +474,8 @@ function frame(now){
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   qAcc += dt; if (++qN >= 120){ if (qAcc / qN > 0.03) Q.bloom = false; if (qAcc / qN > 0.045 && !Q.low && G.state === 'playing'){ Q.low = true; if (G3.ok) g3Resize(); } qAcc = 0; qN = 0; }   // calidad adaptable: si el dispositivo va justo, se apaga el resplandor
   if (G.state === 'menu' && !screens.menu.classList.contains('hidden')) drawLogo();
-  if (G.state === 'cine'){ if (glCv) glCv.style.display = 'none'; updateCine(dt); drawCine(); }
+  G.dtLast = dt;
+  if (G.state === 'cine'){ if (glCv) glCv.style.display = (typeof C3 !== 'undefined' && C3.on) ? 'block' : 'none'; updateCine(dt); drawCine(); }
   else if (G3.ok){ glCv.style.display = 'block'; update(dt); g3Frame(dt); }
   else { update(dt); drawScene(dt); }
   requestAnimationFrame(frame);

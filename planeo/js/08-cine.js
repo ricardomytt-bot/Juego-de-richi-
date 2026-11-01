@@ -60,7 +60,8 @@ function startCine(key, onDone){
   const shots = CINE[key]; if (!shots){ onDone && onDone(); return; }
   C = { key, shots, i: 0, T: 0, t: 0, chars: 0, onDone, blip: 0, wrapped: null, tick: 0 };
   G.state = 'cine'; showScreen(null); el.hud.classList.add('hidden'); el.banner.classList.remove('show'); $('btnSkip').classList.remove('hidden');
-  Sound.init(); Sound.startMusic(); cineEnter();
+  Sound.init(); Sound.startMusic(); if (typeof c3Ready === 'function' && c3Ready()) c3Hide();   // escenas en 3D cuando hay WebGL
+  cineEnter();
 }
 const cineWho = s => s.who === 'Nuki' ? playerName() : s.who;                 // el personaje principal usa el nombre que pusiste
 const cineTxt = s => s.txt.replace(/Nuki/g, playerName());
@@ -73,7 +74,7 @@ function cineAdvance(){
   C.i++; cineEnter(); Sound.sfx('ui');
 }
 function endCine(){
-  const d = C && C.onDone; C = null; $('btnSkip').classList.add('hidden'); if (d) d();
+  const d = C && C.onDone; C = null; $('btnSkip').classList.add('hidden'); if (typeof c3Restore === 'function') c3Restore(); if (d) d();
 }
 function updateCine(dt){
   if (!C) return; C.T += dt; C.t += dt;
@@ -262,7 +263,8 @@ function drawPortrait(who, mood, px, py, R, T){
 function drawCine(){
   if (!C) return;
   const s = C.shots[C.i], T = C.T;
-  drawCineScene(s, C.t, T);
+  if (typeof C3 !== 'undefined' && C3.on){ ctx.clearRect(0, 0, W, H); c3Render(s, C.i, C.t, T, C.talkT === undefined ? -9 : C.talkT, C.chars, C.txt.length, Math.min(0.05, G.dtLast || 0.016)); }
+  else drawCineScene(s, C.t, T);
   // barras de cine
   const bar = H * 0.075 * smooth(Math.min(1, T * 1.4));
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, bar); ctx.fillRect(0, H - bar, W, bar);

@@ -15,8 +15,8 @@ HTML5 Canvas, sin dependencias ni instalación. Funciona en navegador de escrito
 Abuelo Roble (completa la historia), Pipa (ciclo 3 del infinito), Chispa (ciclo 6) y la Capitana Rama (ciclo 10). Cada uno tiene su avión, su aspecto y sus accesorios,
 tanto en el juego 3D como en los retratos. Se eligen en *Logros y personajes*.
 
-## 🎬 Cinemáticas 3D (versión de prueba): `planeo/cine.html`
-Las 7 cinemáticas de la historia con personajes y escenarios en 3D (isla flotante, hangar, tormenta, bosque, jefes, fuegos artificiales), cámara en movimiento
+## 🎬 Cinemáticas 3D (en el juego y en `planeo/cine.html`)
+Las cinemáticas del modo historia se ven ahora en 3D dentro del juego (con respaldo 2D si no hay WebGL); `cine.html` es el visor independiente. Las 7 cinemáticas de la historia con personajes y escenarios en 3D (isla flotante, hangar, tormenta, bosque, jefes, fuegos artificiales), cámara en movimiento
 y **la voz de cada personaje** al hablar (Nuki aguda, Abuelo grave, Grajo rasposo, Nubarrón con retumbo, Búho que ulula, narrador suave). Escribe tu nombre y elige personaje.
 
 ## Controles
