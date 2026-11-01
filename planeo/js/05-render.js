@@ -1,5 +1,11 @@
 /* 05 · render: fondo, suelo en perspectiva, ambiente, escena completa */
 'use strict';
+/* relieve: colinas suaves a los lados de la pista (la pista y los carriles son siempre planos) */
+function elevAt(zAbs, lat){
+  const a = Math.abs(lat), amp = smooth(clamp((a - 2.6) / 3.2, 0, 1)); if (amp <= 0) return 0;
+  const n = 0.5 + 0.28 * Math.sin(zAbs * 0.019 + lat * 0.8) + 0.22 * Math.sin(zAbs * 0.047 - lat * 1.7 + 1.3);
+  return amp * n * laneW * 0.95;
+}
 function skyAt(a){
   const K = THEME.sky;
   for (let i = 0; i < K.length - 1; i++){
@@ -94,6 +100,14 @@ function drawBackground(a, sky){
   // colinas lejanas y banco de nubes en el horizonte
   const hill = clamp((0.62 - a) / 0.5, 0, 1);
   const par = (G.x - MID) * 14;
+  if (hill > 0){   // cordillera lejana con cumbres nevadas
+    const amp3 = H * 0.17 * hill, pts = [];
+    for (let x = 0; x <= W + 10; x += 10){ const xx = x - par * 0.35; const n = Math.abs(Math.sin(xx * 0.0035 + 0.7)) * 0.7 + Math.abs(Math.sin(xx * 0.0091 + 2.1)) * 0.3; pts.push([x, yH - amp3 * Math.pow(n, 1.25)]); }
+    ctx.fillStyle = rgb(mix(sky.bot, [150, 168, 212], 0.55)); ctx.beginPath(); ctx.moveTo(0, yH + 3); for (const p of pts) ctx.lineTo(p[0], p[1]); ctx.lineTo(W, yH + 3); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(247,250,255,.9)'; ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]));
+    for (let i = pts.length - 1; i >= 0; i--){ const p = pts[i], dep = yH - p[1], sn = dep > amp3 * 0.38 ? (dep - amp3 * 0.38) * 0.6 + Math.sin(p[0] * 0.09) * 3 : 0; ctx.lineTo(p[0], p[1] + Math.max(0, sn)); }
+    ctx.closePath(); ctx.fill();
+  }
   if (hill > 0){
     for (let layer = 0; layer < 2; layer++){
       const amp = H * (layer ? 0.05 : 0.09) * hill, off = layer ? 1.7 : 0.4;
@@ -127,7 +141,7 @@ function drawGround(a, sky){
     g.addColorStop(0, rgb(mix(sky.bot, [255, 255, 255], 0.12))); g.addColorStop(1, rgb(mix(sky.bot, [235, 240, 255], 0.42)));
     ctx.fillStyle = g; ctx.fillRect(0, yH, W, H - yH);
   } else {
-    const BAND = 10, base = Math.floor(P / BAND), grass = THEME.grass; const segs = [];
+    const BAND = 10, base = Math.floor(P / BAND), grass = THEME.grass; const segs = [], wsegs = []; const hillK = clamp(1 - drop / 140, 0, 1);
     for (let i = Math.ceil(VIEW / BAND) + 1; i >= -3; i--){
       const idx = base + i;
       let z0 = idx * BAND - P, z1 = z0 + BAND; if (z1 <= -18) continue; z0 = Math.max(z0, -18);
@@ -137,16 +151,29 @@ function drawGround(a, sky){
       for (let j = -9; j <= 9; j++){
         const hv = hash2(idx * 7 + 3, j + 31), rc = THEME._lrgb[Math.floor(hv * THEME._lrgb.length)];
         const lake = hv > 0.93 && patch > 0.35 && Math.abs(j * 2) > 3;
-        const m = lake ? [78, 150, 220] : mix(grass, rc, patch), tr = (Math.abs(j * 2) < 3 && patch < 0.7) ? 1.05 : 1;
-        ctx.fillStyle = rgb([m[0] * stripe * tr, m[1] * stripe * tr, m[2] * stripe * tr]);
         const l0 = j * 2 - 1, l1 = j * 2 + 1.04;
+        let eN0 = 0, eN1 = 0, eF0 = 0, eF1 = 0;
+        if (hillK > 0 && Math.abs(j) >= 1 && !lake){ const zA0 = P + z0, zA1 = P + z1; eN0 = elevAt(zA0, l0) * hillK; eN1 = elevAt(zA0, l1) * hillK; eF0 = elevAt(zA1, l0) * hillK; eF1 = elevAt(zA1, l1) * hillK; }
+        const eAvg = (eN0 + eN1 + eF0 + eF1) / 4;
+        let m = lake ? [78, 150, 220] : mix(grass, rc, patch); const tr = (Math.abs(j * 2) < 3 && patch < 0.7) ? 1.05 : 1;
+        let sh = stripe * tr;
+        if (eAvg > 0.5){   // luz y sombra según la pendiente, y nieve en las cumbres
+          sh *= clamp(1 + ((eF0 + eF1) - (eN0 + eN1)) / laneW * 0.55, 0.74, 1.28);
+          const sn = clamp((eAvg / (laneW * 0.9) - 0.5) * 3.2, 0, 1); if (sn > 0) m = mix(m, [238, 243, 252], sn * 0.85);
+        }
+        ctx.fillStyle = rgb([m[0] * sh, m[1] * sh, m[2] * sh]);
         ctx.beginPath();
-        ctx.moveTo(cx + l0 * laneW * s0, y0); ctx.lineTo(cx + l1 * laneW * s0, y0);
-        ctx.lineTo(cx + l1 * laneW * s1, y1); ctx.lineTo(cx + l0 * laneW * s1, y1); ctx.closePath(); ctx.fill();
+        ctx.moveTo(cx + l0 * laneW * s0, y0 - eN0 * s0); ctx.lineTo(cx + l1 * laneW * s0, y0 - eN1 * s0);
+        ctx.lineTo(cx + l1 * laneW * s1, y1 - eF1 * s1); ctx.lineTo(cx + l0 * laneW * s1, y1 - eF0 * s1); ctx.closePath(); ctx.fill();
+        if (lake){   // destellos de agua
+          for (let q = 0; q < 2; q++){ const f = (G.tAnim * 0.22 + hv * 5 + q * 0.5) % 1, wy = lerp(y0, y1, f), sx = lerp(s0, s1, f), wx = cx + (l0 + (l1 - l0) * (0.2 + 0.4 * ((hv * 13 + q * 0.37) % 1))) * laneW * sx;
+            wsegs.push(wx, wy, wx + (l1 - l0) * laneW * sx * 0.28, wy); }
+        }
         if (patch > 0.3 && (hv * 7 | 0) % 2 === 0){   // surcos de cultivo
           for (const f of [0.3, 0.55, 0.8]){ const lf = lerp(l0, l1, f); segs.push(cx + lf * laneW * s0, y0, cx + lf * laneW * s1, y1); }
         }
       }
+      if (wsegs.length){ ctx.strokeStyle = 'rgba(255,255,255,.42)'; ctx.lineWidth = Math.max(1, 2 * s0); ctx.lineCap = 'round'; ctx.beginPath(); for (let q = 0; q < wsegs.length; q += 4){ ctx.moveTo(wsegs[q], wsegs[q + 1]); ctx.lineTo(wsegs[q + 2], wsegs[q + 3]); } ctx.stroke(); wsegs.length = 0; }
       if (segs.length){ ctx.strokeStyle = 'rgba(20,70,20,.10)'; ctx.lineWidth = Math.max(1, 2.2 * s0); ctx.beginPath(); for (let q = 0; q < segs.length; q += 4){ ctx.moveTo(segs[q], segs[q + 1]); ctx.lineTo(segs[q + 2], segs[q + 3]); } ctx.stroke(); segs.length = 0; }
     }
   }
@@ -326,6 +353,13 @@ function drawPlates(P, gt){
 }
 
 /* resplandor (bloom): reduce la imagen, se queda con lo más brillante y lo suma desenfocado */
+let fbCv = null, fbCx = null, fbOn = false;
+function motionBlur(on){
+  if (!fbCv){ fbCv = document.createElement('canvas'); fbCx = fbCv.getContext('2d'); }
+  if (fbCv.width !== canvas.width || fbCv.height !== canvas.height){ fbCv.width = canvas.width; fbCv.height = canvas.height; fbOn = false; }
+  if (on && fbOn){ ctx.save(); ctx.globalAlpha = 0.3; ctx.imageSmoothingEnabled = true; ctx.translate(cx, yH + 10); ctx.scale(1.02, 1.02); ctx.translate(-cx, -(yH + 10)); ctx.drawImage(fbCv, 0, 0, W, H); ctx.restore(); }
+  if (on){ fbCx.globalCompositeOperation = 'copy'; fbCx.drawImage(canvas, 0, 0); fbOn = true; } else fbOn = false;
+}
 let bloomCv = null, bloomCx = null;
 const Q = { bloom: true };
 function drawBloom(strength){
@@ -347,7 +381,7 @@ function drawScene(dt){
   if (G.boss) bossGround(drop);
 
   const items = [], P = G.P, t = G.tAnim, gt = G.t;
-  const airH = 0.38 * laneW;
+  const airH = 0.38 * laneW, hK = clamp(1 - drop / 140, 0, 1);
   const o = LV.objs;
   for (let i = lowerBound(o, P - 6); i < o.length && o[i].P < P + VIEW; i++){
     const ob = o[i]; if (ob.taken || ob.dead) continue;
@@ -374,7 +408,7 @@ function drawScene(dt){
       ctx.fillStyle = `rgba(20,40,30,${al})`; ell(ctx, pl.x, sh + 2, laneW * (0.5 - clamp(hh / 1500, 0, 0.2)), laneW * 0.08);
     }
     const blink = G.inv > 0 && Math.floor(G.tAnim * 14) % 2 === 0;
-    const u = laneW * 0.23, dv = diving() ? 1 : braking() ? -0.4 : 0;
+    const u = laneW * 0.25, dv = diving() ? 1 : braking() ? -0.4 : 0;
     ctx.save(); ctx.translate(pl.x, pl.y + (G.fallT > 0 ? (1.6 - G.fallT) * 160 : 0));
     if (G.fallT > 0) ctx.rotate((1.6 - G.fallT) * 3);
     // estela de las puntas de las alas
@@ -419,13 +453,13 @@ function drawScene(dt){
     if (it.k === 1){
       if (ob.type === 'islet'){ const p = proj(z, ob.lat, ob.h); if (a > 0.45) drawIsland(p.x, p.y, laneW * 1.7 * ob.sc * p.s, { T: t + ob.v * 9, glow: 0 }); }
       else if (ob.type === 'balloon'){ const p = proj(z, ob.lat, ob.h); if (a > 0.1) drawBalloon(ctx, p.x, p.y, laneW * 1.3 * ob.sc * p.s, t, ob.v); }
-      else if (ob.type === 'house' || ob.type === 'windmill'){ const gp = proj(z, ob.lat, -drop); if (drop < 90){ if (ob.type === 'house') drawHouse(ctx, gp.x, gp.y, laneW * 1.4 * ob.sc * gp.s, ob.v); else drawWindmill(ctx, gp.x, gp.y, laneW * 1.7 * ob.sc * gp.s, t, ob.v); } }
+      else if (ob.type === 'house' || ob.type === 'windmill'){ const gp = proj(z, ob.lat, -drop); gp.y -= elevAt(ob.P, ob.lat) * hK * gp.s; if (drop < 90){ if (ob.type === 'house') drawHouse(ctx, gp.x, gp.y, laneW * 1.4 * ob.sc * gp.s, ob.v); else drawWindmill(ctx, gp.x, gp.y, laneW * 1.7 * ob.sc * gp.s, t, ob.v); } }
       else if (ob.type === 'flock'){ const p = proj(z, ob.lat, ob.h); if (a > 0.2) drawFlock(ctx, p.x, p.y, laneW * 0.9 * ob.sc * p.s, t, ob.v); }
       else if (ob.type === 'puff'){
         const p = proj(z, ob.lat, ob.h);
         if (!(ob.h < -drop * 0.5 && a > 0.5) && !(drop < 150 && ob.h < 150)) drawCloud(ctx, p.x, p.y, laneW * 1.3 * ob.sc * p.s, false, t, ob.v);
       } else {
-        const gp = proj(z, ob.lat, -drop);
+        const gp = proj(z, ob.lat, -drop); gp.y -= elevAt(ob.P, ob.lat) * hK * gp.s;
         if (ob.type === 'stree') drawTree(ctx, gp.x, gp.y, laneW * 1.1 * ob.sc * gp.s, ob.v, THEME.leaf);
         else if (ob.type === 'srock') drawRock(ctx, gp.x, gp.y, laneW * 0.9 * ob.sc * gp.s);
         else if (ob.type === 'flower') { if (drop < 120) drawFlower(ctx, gp.x, gp.y, laneW * 0.5 * ob.sc * gp.s, ob.v); }
@@ -477,6 +511,7 @@ function drawScene(dt){
   if (G.flash > 0.2){ ctx.fillStyle = `rgba(255,255,255,${(G.flash - 0.2) * 1.2})`; ctx.fillRect(0, 0, W, H); }
   if (G.inv > 0 && G.fallT <= 0 && G.slow > 0){ ctx.fillStyle = `rgba(255,80,80,${G.slow * 0.12})`; ctx.fillRect(0, 0, W, H); }
   if (G.fade > 0){ ctx.fillStyle = `rgba(255,255,255,${clamp(G.fade, 0, 1)})`; ctx.fillRect(0, 0, W, H); }
+  if (Q.bloom) motionBlur(diving() || G.starT > 0); else fbOn = false;
   if (vignette) ctx.drawImage(vignette, 0, 0, W, H);
   ctx.restore();
 }

@@ -11,7 +11,7 @@ const CINE = {
     { sc: 'takeoff', tod: 'dawn', who: 'Narrador', m: 'dawn', txt: 'Y así, con las gafas bien puestas, Nuki saltó al vacío.' }
   ],
   post0: [
-    { sc: 'bossTalk', boss: 'crow', bm: 'hurt', tod: 'dawn', gift: true, who: 'Capitán Grajo', mood: 'angry', m: 'sad', txt: '¡Graaak! Eres más rápida de lo que pensaba, ardilla... Está bien. Quédate tu bellota.' },
+    { sc: 'bossTalk', boss: 'crow', bm: 'hurt', tod: 'dawn', gift: true, who: 'Capitán Grajo', mood: 'angry', m: 'sad', txt: '¡Graaak! Eres más veloz de lo que pensaba, ardilla... Está bien. Quédate tu bellota.' },
     { sc: 'bossTalk', boss: 'crow', bm: 'hurt', tod: 'dawn', gift: true, who: 'Nuki', mood: 'happy', m: 'happy', txt: '¡Una recuperada! Faltan dos.' },
     { sc: 'bossTalk', boss: 'crow', bm: 'angry', flee: true, tod: 'dawn', who: 'Capitán Grajo', mood: 'angry', m: 'storm', txt: 'Los otros no serán tan amables. Nubarrón Trueno ya te espera... ¡Graaak!' }
   ],
@@ -31,14 +31,14 @@ const CINE = {
     { sc: 'forestIntro', tod: 'dusk', who: 'Nuki', mood: 'worry', txt: 'La última bellota... y la guarda Don Búho. Dicen que nunca duerme.' }
   ],
   post2: [
-    { sc: 'bossTalk', boss: 'owl', bm: 'sad', tod: 'dusk', gift: true, who: 'Don Búho', mood: 'sad', m: 'sad', txt: 'Lo siento, pequeña. Sin las bellotas, mi bosque se apagó y se quedó muy frío. Por eso las tomé.' },
+    { sc: 'bossTalk', boss: 'owl', bm: 'sad', tod: 'dusk', gift: true, who: 'Don Búho', mood: 'sad', m: 'sad', txt: 'Lo siento, ardilla. Sin las bellotas, mi bosque se apagó y se quedó muy frío. Por eso las tomé.' },
     { sc: 'bossTalk', boss: 'owl', bm: 'sad', tod: 'dusk', gift: true, who: 'Nuki', mood: 'happy', m: 'story', txt: 'Con las tres bellotas podemos replantar el bosque entero, y el pueblo seguirá en el cielo.' },
     { sc: 'bossTalk', boss: 'owl', bm: 'happy', tod: 'dusk', gift: true, who: 'Don Búho', mood: 'happy', m: 'happy', txt: '¿Me dejarías ayudar? Soy muy bueno cuidando árboles... y desvelándome.' },
     { sc: 'bossTalk', boss: 'owl', bm: 'happy', tod: 'dusk', gift: true, who: 'Nuki', mood: 'happy', txt: '¡Claro! Pero esta vez, nada de robar. ¡Vamos!' }
   ],
   outro: [
     { sc: 'ending', tod: 'night', who: 'Narrador', m: 'happy', txt: 'Esa noche, las tres bellotas volvieron a brillar. El Pueblo Ardilla se elevó de nuevo, y el bosque de abajo se llenó de luz.' },
-    { sc: 'ending', tod: 'night', who: 'Abuelo', mood: 'happy', txt: '¡Esa es mi nieta! ¿Ves? Frenar de vez en cuando no le hace daño a nadie.' },
+    { sc: 'ending', tod: 'night', who: 'Abuelo', mood: 'happy', txt: '¡Así se hace, Nuki! ¿Ves? Frenar de vez en cuando no le hace daño a nadie.' },
     { sc: 'ending', tod: 'night', who: 'Nuki', mood: 'happy', txt: 'Abuelo... mañana volveré a planear. Solo por diversión.' },
     { sc: 'ending', tod: 'night', who: 'Narrador', fin: true, txt: 'FIN. ¿Te animas con el Modo Infinito?' }
   ]
@@ -62,11 +62,13 @@ function startCine(key, onDone){
   G.state = 'cine'; showScreen(null); el.hud.classList.add('hidden'); el.banner.classList.remove('show'); $('btnSkip').classList.remove('hidden');
   Sound.init(); Sound.startMusic(); cineEnter();
 }
-function cineEnter(){ const s = C.shots[C.i]; C.t = 0; C.chars = 0; C.wrapped = null; if (s.m) Sound.setMood(s.m); }
+const cineWho = s => s.who === 'Nuki' ? playerName() : s.who;                 // el personaje principal usa el nombre que pusiste
+const cineTxt = s => s.txt.replace(/Nuki/g, playerName());
+function cineEnter(){ const s = C.shots[C.i]; C.t = 0; C.chars = 0; C.wrapped = null; C.txt = cineTxt(s); if (s.m) Sound.setMood(s.m); }
 function cineAdvance(){
   if (!C) return;
   const s = C.shots[C.i];
-  if (C.chars < s.txt.length){ C.chars = s.txt.length; return; }
+  if (C.chars < C.txt.length){ C.chars = C.txt.length; return; }
   if (C.i >= C.shots.length - 1){ endCine(); return; }
   C.i++; cineEnter(); Sound.sfx('ui');
 }
@@ -77,9 +79,9 @@ function updateCine(dt){
   if (!C) return; C.T += dt; C.t += dt;
   const s = C.shots[C.i], sp = SPEAKERS[s.who] || SPEAKERS['Narrador'];
   const before = Math.floor(C.chars);
-  C.chars = Math.min(s.txt.length, C.chars + dt * (s.who === 'Narrador' ? 34 : 30));
+  C.chars = Math.min(C.txt.length, C.chars + dt * (s.who === 'Narrador' ? 34 : 30));
   const now = Math.floor(C.chars);
-  if (now > before && now % 2 === 0 && s.txt[now - 1] !== ' ' && s.who !== 'Narrador') Sound.sfx('blip', sp.voice);
+  if (now > before && now % 2 === 0 && C.txt[now - 1] !== ' ' && s.who !== 'Narrador') Sound.sfx('blip', sp.voice);
   if (G.state === 'cine') G.tAnim += dt;
 }
 
@@ -270,19 +272,19 @@ function drawCine(){
   const maxW = Math.min(W * 0.92, 880), boxX = (W - maxW) / 2, hasPort = s.who !== 'Narrador', portR = Math.min(46, maxW * 0.09), pad = 16;
   ctx.font = '600 ' + Math.round(clamp(W * 0.045, 16, 24)) + 'px ' + FONT;
   const lh = Math.round(clamp(W * 0.045, 16, 24) * 1.35), textX = boxX + pad + (hasPort ? portR * 2 + 14 : 0), textW = maxW - pad * 2 - (hasPort ? portR * 2 + 14 : 0);
-  if (!C.wrapped || C.wrappedFor !== C.i + ':' + W){ C.wrapped = wrapLines(s.txt, textW); C.wrappedFor = C.i + ':' + W; }
+  if (!C.wrapped || C.wrappedFor !== C.i + ':' + W){ C.wrapped = wrapLines(C.txt, textW); C.wrappedFor = C.i + ':' + W; }
   const boxH = Math.max(C.wrapped.length * lh + pad * 2 + 18, hasPort ? portR * 2 + pad * 2 : 0), boxY = H - bar - boxH - 14;
   ctx.fillStyle = 'rgba(14,16,40,.78)'; ctx.beginPath(); ctx.roundRect(boxX, boxY, maxW, boxH, 20); ctx.fill();
   ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 2; ctx.stroke();
   const sp = SPEAKERS[s.who] || SPEAKERS['Narrador'];
   if (hasPort) drawPortrait(s.who, s.mood, boxX + pad + portR, boxY + pad + portR, portR, T);
   // etiqueta con el nombre
-  ctx.font = '700 14px ' + FONT; const nw = ctx.measureText(s.who).width + 22;
+  const whoName = cineWho(s); ctx.font = '700 14px ' + FONT; const nw = ctx.measureText(whoName).width + 22;
   ctx.fillStyle = sp.col; ctx.beginPath(); ctx.roundRect(boxX + 18, boxY - 13, nw, 26, 13); ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.fillText(s.who, boxX + 29, boxY + 5);
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.fillText(whoName, boxX + 29, boxY + 5);
   ctx.font = '600 ' + Math.round(clamp(W * 0.045, 16, 24)) + 'px ' + FONT; ctx.fillStyle = '#fff'; ctx.textBaseline = 'alphabetic';
   let left = Math.floor(C.chars);
   C.wrapped.forEach((ln, i) => { if (left <= 0) return; const part = ln.slice(0, left); left -= ln.length + 1; ctx.fillText(part, textX, boxY + pad + 14 + 8 + i * lh); });
-  if (C.chars >= s.txt.length){ ctx.fillStyle = `rgba(255,255,255,${0.5 + 0.5 * Math.sin(T * 6)})`; ctx.font = '700 16px ' + FONT; ctx.textAlign = 'right'; ctx.fillText('▶', boxX + maxW - 18, boxY + boxH - 12); ctx.textAlign = 'left'; }
+  if (C.chars >= C.txt.length){ ctx.fillStyle = `rgba(255,255,255,${0.5 + 0.5 * Math.sin(T * 6)})`; ctx.font = '700 16px ' + FONT; ctx.textAlign = 'right'; ctx.fillText('▶', boxX + maxW - 18, boxY + boxH - 12); ctx.textAlign = 'left'; }
   if (s.fin){ const k = clamp((C.t - 1) / 1.5, 0, 1); ctx.globalAlpha = k; ctx.fillStyle = '#fff'; ctx.font = '700 ' + Math.round(Math.min(W * 0.2, 110)) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = 8; ctx.strokeText('FIN', W / 2, H * 0.34); ctx.fillText('FIN', W / 2, H * 0.34); ctx.textAlign = 'left'; ctx.globalAlpha = 1; }
 }

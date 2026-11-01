@@ -41,7 +41,11 @@ Todos ocupan un carril, tienen contorno grueso y una **placa de color en el suel
 
 **Power-ups:** 🛡 escudo (aguanta un golpe) · ⭐ estrella (6 s invencible, revienta enemigos) · 🧲 imán (atrae las bellotas)
 
+## Tu nombre
+El nombre que escribes en el menú sustituye a "Nuki" en **todos los diálogos y cinemáticas** (etiqueta, texto y pantalla de historia). Si lo dejas vacío, se llama Nuki.
+
 ## Gráficos
+Colinas con relieve (con luz, sombra y nieve en las cumbres) a los lados de la pista, cordillera nevada al fondo, destellos en los lagos, desenfoque de movimiento en las picadas.
 Resplandor (bloom) adaptativo, gradación de color por mundo, luces de navegación en el avión, globos aerostáticos, bandadas,
 islotes flotantes, casas, molinos, lagos y surcos de cultivo, estrellas fugaces, jirones de nube, bruma atmosférica y partículas
 de ambiente (lluvia, hojas, polvo de luz). Si el dispositivo va justo, el resplandor se apaga solo.

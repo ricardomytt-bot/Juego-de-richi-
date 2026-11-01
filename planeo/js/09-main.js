@@ -234,6 +234,7 @@ function afterChapter(i){
   });
 }
 function refreshStory(){
+  document.querySelectorAll('.pname').forEach(n => { n.textContent = playerName(); });
   const box = $('chapters'); box.innerHTML = '';
   LEVELS.forEach((lv, i) => {
     const open = i < Story.d.unlocked, done = Story.d.done[i], best = Story.d.best[lv.id];
@@ -440,6 +441,7 @@ $('ghostList').addEventListener('click', async e => {
   else if (t.dataset.copy){ const g = Ghosts.list.find(x => x.id === t.dataset.copy); if (g) toast((await copyText(g.code)) ? 'Código copiado' : 'No se pudo copiar'); }
 });
 $('inName').value = store.get('planeo2.name', '');
+$('inName').addEventListener('input', saveName);   // el nombre se guarda al escribir y se usa en todos los diálogos
 $('btnMute').textContent = Sound.muted ? '🔇' : '🔊'; $('btnMute2').textContent = (Sound.muted ? '🔇' : '🔊') + ' Sonido';
 
 /* ---------------------------------------------------------------- bucle */
