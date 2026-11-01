@@ -61,6 +61,13 @@ function drawBackground(a, sky){
     for (const s of STARS){ ctx.globalAlpha = sa * (0.5 + 0.5 * Math.sin(G.tAnim * 1.5 + s.p)); circ(ctx, s.x * W, s.y * yH * 0.95, s.r); }
     ctx.globalAlpha = 1;
   }
+  // estrellas fugaces (solo en lo más alto, de noche)
+  if (sa > 0.3){
+    const k = Math.floor(G.tAnim / 4.1), ph = G.tAnim / 4.1 - k;
+    if (ph < 0.16){ const q = ph / 0.16, x0 = hash2(k, 1) * W * 0.9, y0 = hash2(k, 2) * yH * 0.55, dx = 170 * q, dy = 70 * q;
+      const sg = ctx.createLinearGradient(x0 + dx, y0 + dy, x0 + dx - 90, y0 + dy - 38); sg.addColorStop(0, `rgba(255,255,255,${1 - q * 0.6})`); sg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.strokeStyle = sg; ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x0 + dx, y0 + dy); ctx.lineTo(x0 + dx - 90, y0 + dy - 38); ctx.stroke(); }
+  }
   // sol, rayos de luz y destello
   if (THEME.hasSun && a < 0.9 && a > 0.05){
     const su = clamp((0.88 - a) / 0.6, 0, 1);
@@ -117,7 +124,7 @@ function drawGround(a, sky){
   const yOf = z => yH + k / (1 + z / Z0);
   if (a > 0.8){
     const g = ctx.createLinearGradient(0, yH, 0, H);
-    g.addColorStop(0, rgb(mix(sky.bot, [255, 255, 255], 0.3))); g.addColorStop(1, rgb(mix(sky.bot, [255, 255, 255], 0.72)));
+    g.addColorStop(0, rgb(mix(sky.bot, [255, 255, 255], 0.12))); g.addColorStop(1, rgb(mix(sky.bot, [235, 240, 255], 0.42)));
     ctx.fillStyle = g; ctx.fillRect(0, yH, W, H - yH);
   } else {
     const BAND = 10, base = Math.floor(P / BAND), grass = THEME.grass; const segs = [];
@@ -129,7 +136,8 @@ function drawGround(a, sky){
       const stripe = (idx & 1) ? 0.95 : 1.03;
       for (let j = -9; j <= 9; j++){
         const hv = hash2(idx * 7 + 3, j + 31), rc = THEME._lrgb[Math.floor(hv * THEME._lrgb.length)];
-        const m = mix(grass, rc, patch), tr = (Math.abs(j * 2) < 3 && patch < 0.7) ? 1.05 : 1;
+        const lake = hv > 0.93 && patch > 0.35 && Math.abs(j * 2) > 3;
+        const m = lake ? [78, 150, 220] : mix(grass, rc, patch), tr = (Math.abs(j * 2) < 3 && patch < 0.7) ? 1.05 : 1;
         ctx.fillStyle = rgb([m[0] * stripe * tr, m[1] * stripe * tr, m[2] * stripe * tr]);
         const l0 = j * 2 - 1, l1 = j * 2 + 1.04;
         ctx.beginPath();
@@ -166,6 +174,7 @@ function drawGround(a, sky){
   ctx.fillStyle = fg; ctx.fillRect(0, yH - 2, W, H * 0.18 + 2);
 }
 
+const wisps = Array.from({ length: 9 }, () => ({ sx: Math.random() < 0.5 ? -1 : 1, k: 0.35 + Math.random() * 0.9, r: Math.random(), sp: 0.5 + Math.random() * 0.7 }));
 const streaks = Array.from({ length: 38 }, () => ({ a: Math.random() * 6.283, r: Math.random(), sp: 0.6 + Math.random() * 0.8 }));
 function drawStreaks(a, dt){
   const dv = diving() ? 1 : braking() ? 0.15 : 0.45;
@@ -173,6 +182,13 @@ function drawStreaks(a, dt){
   const vx = cx, vy = yH + 10, maxR = Math.hypot(W, H);
   ctx.lineCap = 'round';
   const spf = (0.35 + G.vP / 22 * 0.9) * (diving() ? 2.2 : 1);
+  if (a > 0.08){   // jirones suaves de nube que pasan junto al avión
+    for (const w of wisps){
+      w.r += dt * w.sp * spf * (0.12 + w.r * 1.4); if (w.r > 1){ w.r = 0.05; w.sx = Math.random() < 0.5 ? -1 : 1; w.k = 0.35 + Math.random() * 0.9; w.sp = 0.5 + Math.random() * 0.7; }
+      const rr = w.r * Math.hypot(W, H) * 0.7, x = vx + w.sx * w.k * rr * 0.95, y = vy + rr * (0.35 + w.k * 0.25);
+      ctx.fillStyle = `rgba(255,255,255,${0.13 * Math.sin(Math.PI * w.r)})`; ell(ctx, x, y, 30 + w.r * 260, 8 + w.r * 56);
+    }
+  }
   for (const s of streaks){
     s.r += dt * s.sp * spf * (0.2 + s.r * 1.6);
     if (s.r > 1){ s.r = 0.03; s.a = Math.random() * 6.283; s.sp = 0.6 + Math.random() * 0.8; }
@@ -205,7 +221,7 @@ function planeQuad(l0, l1, z0, z1, fill){
 function lanesAir(alpha){
   // CIELO: corrientes de aire luminosas (nada de asfalto): cintas de luz, estelas de viento y destellos
   const P = G.P, zN = -18, zF = VIEW, h = LANES / 2, rc = THEME.rail, t = G.tAnim;
-  for (let i = 0; i < LANES; i++) planeQuad(i - MID - 0.5, i - MID + 0.5, zN, zF, rgb(i % 2 ? [70, 120, 255] : [255, 255, 255], (i % 2 ? 0.19 : 0.24) * alpha));
+  for (let i = 0; i < LANES; i++) planeQuad(i - MID - 0.5, i - MID + 0.5, zN, zF, rgb(i % 2 ? [40, 90, 235] : [255, 255, 255], (i % 2 ? 0.30 : 0.16) * alpha));
   // estelas de viento que corren por cada carril
   for (let i = 0; i < LANES; i++){
     for (let k = 0; k < 5; k++){
@@ -220,7 +236,7 @@ function lanesAir(alpha){
   for (const sg of [-1, 1]){
     const b = sg * h;
     planeQuad(b - 0.16, b + 0.16, zN, zF, rgb(rc, 0.20 * alpha));
-    planeQuad(b - 0.07, b + 0.07, zN, zF, rgb([40, 90, 190], 0.22 * alpha));
+    planeQuad(b - 0.085, b + 0.085, zN, zF, rgb([30, 70, 180], 0.42 * alpha));
     planeQuad(b - 0.045, b + 0.045, zN, zF, rgb(mix(rc, [255, 255, 255], 0.6), 0.95 * alpha));
   }
   // separadores interiores: hilos de luz que parpadean
@@ -309,6 +325,17 @@ function drawPlates(P, gt){
   }
 }
 
+/* resplandor (bloom): reduce la imagen, se queda con lo más brillante y lo suma desenfocado */
+let bloomCv = null, bloomCx = null;
+const Q = { bloom: true };
+function drawBloom(strength){
+  const bw = Math.max(48, (W / 7) | 0), bh = Math.max(32, (H / 7) | 0);
+  if (!bloomCv){ bloomCv = document.createElement('canvas'); bloomCx = bloomCv.getContext('2d'); }
+  if (bloomCv.width !== bw || bloomCv.height !== bh){ bloomCv.width = bw; bloomCv.height = bh; }
+  bloomCx.globalCompositeOperation = 'copy'; bloomCx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, bw, bh);
+  bloomCx.globalCompositeOperation = 'source-over'; bloomCx.fillStyle = 'rgba(0,0,0,.8)'; bloomCx.fillRect(0, 0, bw, bh);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = strength; ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(bloomCv, 0, 0, W, H); ctx.restore();
+}
 function drawScene(dt){
   const a = altFrac(G.P), sky = skyAt(a), drop = dropOf(G.P);
   ctx.save();
@@ -391,6 +418,8 @@ function drawScene(dt){
     ctx.globalAlpha = fog;
     if (it.k === 1){
       if (ob.type === 'islet'){ const p = proj(z, ob.lat, ob.h); if (a > 0.45) drawIsland(p.x, p.y, laneW * 1.7 * ob.sc * p.s, { T: t + ob.v * 9, glow: 0 }); }
+      else if (ob.type === 'balloon'){ const p = proj(z, ob.lat, ob.h); if (a > 0.1) drawBalloon(ctx, p.x, p.y, laneW * 1.3 * ob.sc * p.s, t, ob.v); }
+      else if (ob.type === 'house' || ob.type === 'windmill'){ const gp = proj(z, ob.lat, -drop); if (drop < 90){ if (ob.type === 'house') drawHouse(ctx, gp.x, gp.y, laneW * 1.4 * ob.sc * gp.s, ob.v); else drawWindmill(ctx, gp.x, gp.y, laneW * 1.7 * ob.sc * gp.s, t, ob.v); } }
       else if (ob.type === 'flock'){ const p = proj(z, ob.lat, ob.h); if (a > 0.2) drawFlock(ctx, p.x, p.y, laneW * 0.9 * ob.sc * p.s, t, ob.v); }
       else if (ob.type === 'puff'){
         const p = proj(z, ob.lat, ob.h);
@@ -412,7 +441,7 @@ function drawScene(dt){
       case 'slime': { const p = proj(z, lat, -drop); drawSlime(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v); break; }
       case 'crate': { const p = proj(z, lat, -drop); drawCrate(ctx, p.x, p.y, laneW * 1.0 * p.s); break; }
       case 'spikerock': { const p = proj(z, lat, -drop); drawSpikeRock(ctx, p.x, p.y, laneW * 1.0 * p.s); break; }
-      case 'comet': { const p = proj(z, lat, airH); drawComet(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v); break; }
+      case 'comet': { const p = proj(z, lat, airH); if (p.s > 0.2 && Math.random() < 0.7) particles.push({ x: p.x + (Math.random() - 0.5) * laneW * 0.3 * p.s, y: p.y - Math.random() * laneW * 0.3 * p.s, vx: (Math.random() - 0.5) * 70, vy: -30 - Math.random() * 80, life: 0.4, max: 1, color: Math.random() < 0.5 ? '#ffb02e' : '#ff6a2a', size: 1.5 + 3.5 * p.s, g: 0 }); drawComet(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v); break; }
       case 'bat': { const p = proj(z, lat, airH); airShadow(z, lat, laneW * 0.7 * p.s, drop); drawBat(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v, hopK(ob, gt), hopWarn(ob, gt)); break; }
       case 'drone': { const p = proj(z, lat, airH); airShadow(z, lat, laneW * 0.7 * p.s, drop); drawDrone(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v, clamp((G.x - lane) * 0.9, -1, 1), !!ob.locked); break; }
       case 'boulder': { const p = proj(z, lat, -drop); drawBoulder(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v); break; }
@@ -440,6 +469,9 @@ function drawScene(dt){
   // post-proceso: bruma de nubes, tinte de ambiente, relámpago y viñeta
   const mist = Math.max(0, 1 - Math.abs(a - 0.77) / 0.05) * 0.55;
   if (mist > 0){ ctx.fillStyle = `rgba(255,255,255,${mist})`; ctx.fillRect(0, 0, W, H); }
+  // gradación de color (luz cálida arriba, fría abajo) y resplandor
+  if (THEME.grade){ const gg = ctx.createLinearGradient(0, 0, 0, H); gg.addColorStop(0, THEME.grade[0]); gg.addColorStop(1, THEME.grade[1]); ctx.save(); ctx.globalCompositeOperation = 'soft-light'; ctx.fillStyle = gg; ctx.fillRect(0, 0, W, H); ctx.restore(); }
+  if (Q.bloom) drawBloom(0.42);
   if (THEME.tint){ ctx.fillStyle = rgb(THEME.tint, THEME.tint[3]); ctx.fillRect(0, 0, W, H); }
   if (G.lightning > 0){ ctx.fillStyle = `rgba(235,240,255,${Math.min(0.75, G.lightning * 2.4)})`; ctx.fillRect(0, 0, W, H); }
   if (G.flash > 0.2){ ctx.fillStyle = `rgba(255,255,255,${(G.flash - 0.2) * 1.2})`; ctx.fillRect(0, 0, W, H); }

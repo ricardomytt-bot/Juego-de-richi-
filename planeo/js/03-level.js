@@ -157,6 +157,12 @@ function genLevel(cfg, o){
     if (rnd() < 0.5) scenery.push({ type: 'islet', P: p, lat: side * (6 + rnd() * 7), h: R(60, 340), sc: 0.9 + rnd() * 0.9, v: rnd() });
     else scenery.push({ type: 'flock', P: p, lat: side * (3 + rnd() * 6), h: R(160, 420), sc: 0.8 + rnd() * 0.6, v: rnd() });
   }
+  for (let p = 120; p < skyLen - 100; p += R(80, 170)){   // globos aerostáticos
+    const side = rnd() < 0.5 ? -1 : 1; scenery.push({ type: 'balloon', P: p, lat: side * (4 + rnd() * 6), h: R(90, 340), sc: 0.9 + rnd() * 0.7, v: rnd() });
+  }
+  for (let p = skyLen - 60; p < Lend + 520; p += R(35, 80)){   // casas y molinos junto a la pista
+    const side = rnd() < 0.5 ? -1 : 1; scenery.push({ type: rnd() < 0.4 ? 'windmill' : 'house', P: p, lat: side * (3.4 + rnd() * 5), sc: 0.9 + rnd() * 0.5, v: rnd() });
+  }
   for (let p = skyLen - 80; p < Lend + 520; p += R(4, 8)){
     const lat = (rnd() < 0.5 ? -1 : 1) * (1.8 + rnd() * 7);
     scenery.push({ type: rnd() < 0.5 ? 'flower' : 'tuft', P: p, lat, sc: 0.7 + rnd() * 0.7, v: rnd() });

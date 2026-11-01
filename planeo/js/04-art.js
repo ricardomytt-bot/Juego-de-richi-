@@ -109,6 +109,11 @@ function drawPlane(c, u, bank, wingCol, t, alpha, dive, flash){
   c.beginPath(); c.moveTo(2.3 * u, -0.5 * u); c.lineTo(0.3 * u, -0.6 * u); c.lineTo(0.3 * u, -0.42 * u); c.lineTo(2.2 * u, -0.3 * u); c.closePath(); c.fill();
   c.fillStyle = '#fff6e0';
   for (const sg of [-1, 1]){ c.beginPath(); c.moveTo(sg * 1.55 * u, -0.54 * u); c.lineTo(sg * 2.3 * u, -0.5 * u); c.lineTo(sg * 2.5 * u, 0.0); c.lineTo(sg * 1.7 * u, 0.0); c.closePath(); c.fill(); }
+  // luces de navegación (rojo izquierda, verde derecha) y brillo del borde de ataque
+  const bl = 0.55 + 0.45 * Math.sin(t * 7);
+  glow(c, -2.45 * u, -0.1 * u, u * 1.2 * bl + u * 0.3, 'rgba(255,60,60,A)'); glow(c, 2.45 * u, -0.1 * u, u * 1.2 * bl + u * 0.3, 'rgba(60,255,120,A)');
+  c.fillStyle = '#ff4a4a'; circ(c, -2.45 * u, -0.1 * u, u * 0.11); c.fillStyle = '#4aff8a'; circ(c, 2.45 * u, -0.1 * u, u * 0.11);
+  c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = u * 0.05; c.lineCap = 'round'; c.beginPath(); c.moveTo(-2.25 * u, -0.5 * u); c.lineTo(-0.35 * u, -0.62 * u); c.moveTo(0.35 * u, -0.62 * u); c.lineTo(2.25 * u, -0.5 * u); c.stroke();
   // cola
   c.fillStyle = wingD; c.beginPath(); c.moveTo(-0.38 * u, 0.4 * u); c.lineTo(0.38 * u, 0.4 * u); c.lineTo(0.28 * u, 1.6 * u); c.lineTo(-0.28 * u, 1.6 * u); c.closePath(); c.fill();
   c.fillStyle = wing; c.beginPath(); c.moveTo(-1.2 * u, 1.65 * u); c.lineTo(-0.2 * u, 1.35 * u); c.lineTo(0.2 * u, 1.35 * u); c.lineTo(1.2 * u, 1.65 * u); c.lineTo(0.9 * u, 1.9 * u); c.lineTo(-0.9 * u, 1.9 * u); c.closePath(); c.fill();
@@ -683,4 +688,40 @@ function drawFlock(c, x, y, w, t, seed){
   for (let i = 0; i < 7; i++){ const row = Math.ceil(i / 2), sg = i % 2 ? 1 : -1, bx = sg * row * w * 0.2, by = row * w * 0.1, fl = Math.sin(t * 7 + i * 1.7 + seed * 6) * w * 0.05;
     c.beginPath(); c.moveTo(bx - w * 0.09, by - fl); c.quadraticCurveTo(bx - w * 0.03, by - w * 0.06, bx, by); c.quadraticCurveTo(bx + w * 0.03, by - w * 0.06, bx + w * 0.09, by - fl); c.stroke(); }
   c.restore();
+}
+
+/* ============================================================ MÁS DECORADO ============================================================ */
+function drawBalloon(c, x, y, w, t, seed){
+  c.save(); c.translate(x + Math.sin(t * 0.8 + seed * 9) * w * 0.04, y + Math.sin(t * 1.1 + seed * 5) * w * 0.05); c.lineJoin = 'round';
+  const lw = Math.max(1.5, w * 0.025), cols = [['#ff5a4a', '#ffd23f'], ['#4aa3ff', '#ffffff'], ['#7bdc65', '#ffd23f'], ['#c78bff', '#ffffff']][Math.floor(seed * 4) % 4];
+  // cuerdas y cesta
+  c.strokeStyle = 'rgba(40,30,60,.8)'; c.lineWidth = lw * 0.7; c.beginPath(); c.moveTo(-w * 0.12, w * 0.3); c.lineTo(-w * 0.07, w * 0.5); c.moveTo(w * 0.12, w * 0.3); c.lineTo(w * 0.07, w * 0.5); c.stroke();
+  c.fillStyle = '#b57a3a'; c.strokeStyle = OUT; c.lineWidth = lw; c.beginPath(); c.roundRect(-w * 0.09, w * 0.5, w * 0.18, w * 0.11, w * 0.02); c.fill(); c.stroke();
+  // globo con gajos
+  c.save(); c.beginPath(); c.moveTo(0, w * 0.34); c.bezierCurveTo(-w * 0.1, w * 0.3, -w * 0.4, w * 0.1, -w * 0.38, -w * 0.12); c.bezierCurveTo(-w * 0.36, -w * 0.44, w * 0.36, -w * 0.44, w * 0.38, -w * 0.12); c.bezierCurveTo(w * 0.4, w * 0.1, w * 0.1, w * 0.3, 0, w * 0.34); c.closePath(); c.clip();
+  for (let i = 0; i < 7; i++){ c.fillStyle = i % 2 ? cols[1] : cols[0]; c.fillRect(-w * 0.4 + i * w * 0.115, -w * 0.5, w * 0.12, w * 0.9); }
+  const g = c.createRadialGradient(-w * 0.15, -w * 0.2, w * 0.03, 0, 0, w * 0.45); g.addColorStop(0, 'rgba(255,255,255,.4)'); g.addColorStop(1, 'rgba(0,0,40,.25)'); c.fillStyle = g; c.fillRect(-w * 0.5, -w * 0.5, w, w); c.restore();
+  c.strokeStyle = OUT; c.lineWidth = lw; c.beginPath(); c.moveTo(0, w * 0.34); c.bezierCurveTo(-w * 0.1, w * 0.3, -w * 0.4, w * 0.1, -w * 0.38, -w * 0.12); c.bezierCurveTo(-w * 0.36, -w * 0.44, w * 0.36, -w * 0.44, w * 0.38, -w * 0.12); c.bezierCurveTo(w * 0.4, w * 0.1, w * 0.1, w * 0.3, 0, w * 0.34); c.stroke();
+  c.fillStyle = `rgba(255,170,60,${0.7 + 0.3 * Math.sin(t * 9 + seed * 7)})`; ell(c, 0, w * 0.4, w * 0.03, w * 0.05);   // llama del quemador
+  c.restore();
+}
+function drawHouse(c, x, y, w, v){
+  c.save(); c.translate(x, y); c.lineJoin = 'round'; const lw = Math.max(1.5, w * 0.03);
+  c.fillStyle = 'rgba(20,40,20,.25)'; ell(c, 0, 0, w * 0.5, w * 0.08);
+  const wall = ['#f4dcae', '#f6e6c4', '#f2d1b0'][Math.floor(v * 3) % 3], roof = ['#e0583f', '#4a79c9', '#8a5ad6'][Math.floor(v * 7) % 3];
+  c.fillStyle = wall; c.strokeStyle = OUT; c.lineWidth = lw; c.beginPath(); c.rect(-w * 0.34, -w * 0.4, w * 0.68, w * 0.4); c.fill(); c.stroke();
+  c.fillStyle = roof; c.beginPath(); c.moveTo(-w * 0.43, -w * 0.38); c.lineTo(0, -w * 0.76); c.lineTo(w * 0.43, -w * 0.38); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#7a5235'; c.fillRect(w * 0.14, -w * 0.64, w * 0.1, w * 0.2); c.strokeRect(w * 0.14, -w * 0.64, w * 0.1, w * 0.2);
+  c.fillStyle = '#ffd86b'; c.fillRect(-w * 0.24, -w * 0.3, w * 0.16, w * 0.16); c.strokeRect(-w * 0.24, -w * 0.3, w * 0.16, w * 0.16);
+  c.fillStyle = '#7a5235'; c.beginPath(); c.roundRect(w * 0.05, -w * 0.28, w * 0.17, w * 0.28, w * 0.04); c.fill(); c.stroke();
+  c.restore();
+}
+function drawWindmill(c, x, y, w, t, seed){
+  c.save(); c.translate(x, y); c.lineJoin = 'round'; const lw = Math.max(1.5, w * 0.03);
+  c.fillStyle = 'rgba(20,40,20,.25)'; ell(c, 0, 0, w * 0.4, w * 0.07);
+  c.fillStyle = '#f2ead8'; c.strokeStyle = OUT; c.lineWidth = lw; c.beginPath(); c.moveTo(-w * 0.22, 0); c.lineTo(-w * 0.13, -w * 0.78); c.lineTo(w * 0.13, -w * 0.78); c.lineTo(w * 0.22, 0); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = '#d9533f'; c.beginPath(); c.moveTo(-w * 0.17, -w * 0.78); c.lineTo(0, -w * 0.98); c.lineTo(w * 0.17, -w * 0.78); c.closePath(); c.fill(); c.stroke();
+  c.translate(0, -w * 0.82); c.rotate(t * 0.9 + seed * 6);
+  for (let i = 0; i < 4; i++){ c.save(); c.rotate(i * Math.PI / 2); c.fillStyle = '#fff'; c.strokeStyle = OUT; c.lineWidth = lw * 0.8; c.beginPath(); c.rect(w * 0.02, -w * 0.07, w * 0.5, w * 0.14); c.fill(); c.stroke(); c.strokeStyle = 'rgba(80,80,110,.5)'; c.beginPath(); c.moveTo(w * 0.04, 0); c.lineTo(w * 0.5, 0); c.stroke(); c.restore(); }
+  c.fillStyle = '#7a5235'; circ(c, 0, 0, w * 0.06); c.restore();
 }

@@ -450,8 +450,10 @@ function drawLogo(){
   glow(c, 130, 120, 120, 'rgba(255,200,120,A)');
   c.save(); c.translate(0, Math.sin(G.tAnim * 1.6) * 4); drawSquirrelFront(c, 122, 92, 46, { t: G.tAnim, mood: 'happy', look: Math.sin(G.tAnim * 0.7) * 0.6 }); c.restore();
 }
+let qAcc = 0, qN = 0;
 function frame(now){
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  qAcc += dt; if (++qN >= 120){ if (qAcc / qN > 0.03) Q.bloom = false; qAcc = 0; qN = 0; }   // calidad adaptable: si el dispositivo va justo, se apaga el resplandor
   if (G.state === 'menu' && !screens.menu.classList.contains('hidden')) drawLogo();
   if (G.state === 'cine'){ updateCine(dt); drawCine(); }
   else { update(dt); drawScene(dt); }

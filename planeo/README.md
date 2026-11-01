@@ -41,12 +41,20 @@ Todos ocupan un carril, tienen contorno grueso y una **placa de color en el suel
 
 **Power-ups:** 🛡 escudo (aguanta un golpe) · ⭐ estrella (6 s invencible, revienta enemigos) · 🧲 imán (atrae las bellotas)
 
+## Gráficos
+Resplandor (bloom) adaptativo, gradación de color por mundo, luces de navegación en el avión, globos aerostáticos, bandadas,
+islotes flotantes, casas, molinos, lagos y surcos de cultivo, estrellas fugaces, jirones de nube, bruma atmosférica y partículas
+de ambiente (lluvia, hojas, polvo de luz). Si el dispositivo va justo, el resplandor se apaga solo.
+
 ## Carriles
 En el cielo son **corrientes de aire luminosas** (cintas de luz y estelas de viento); al aterrizar se convierten en carretera.
 
 ## Música
-Cada ambiente tiene su propia canción compuesta (melodía, bajo, acordes y batería): amanecer, tormenta, atardecer, jefe, menú y cinemáticas.
-Se puede apagar solo la música con el botón 🎵 (los efectos siguen).
+Música **electrónica** sintetizada en tiempo real (sin instrumentos acústicos ni archivos de audio): supersaws, arpegiadores,
+bajos con efecto de bombeo (sidechain), bajo "reese" rugoso, campanas FM, ondas de pulso tipo chiptune y batería electrónica
+(bombo 808, palmas, hi-hats, risers y toms). Cada ambiente tiene su estilo: amanecer (synthwave), tormenta (electro oscuro),
+atardecer (chillwave), jefe (electro duro a 160 bpm), menú y cinemáticas (ambient), victoria (chiptune).
+La música añade capas a medida que avanza el nivel y sube de intensidad con la velocidad. Botón 🎵 para apagar solo la música.
 
 ## Jefes
 Un aviso rojo en el suelo indica por dónde viene el golpe (disparos, muros con huecos, rayos). Tras cada ataque aparece
