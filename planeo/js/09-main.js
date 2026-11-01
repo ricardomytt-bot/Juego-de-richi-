@@ -457,12 +457,20 @@ function frame(now){
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   qAcc += dt; if (++qN >= 120){ if (qAcc / qN > 0.03) Q.bloom = false; qAcc = 0; qN = 0; }   // calidad adaptable: si el dispositivo va justo, se apaga el resplandor
   if (G.state === 'menu' && !screens.menu.classList.contains('hidden')) drawLogo();
-  if (G.state === 'cine'){ updateCine(dt); drawCine(); }
+  if (G.state === 'cine'){ if (glCv) glCv.style.display = 'none'; updateCine(dt); drawCine(); }
+  else if (G3.ok){ glCv.style.display = 'block'; update(dt); g3Frame(dt); }
   else { update(dt); drawScene(dt); }
   requestAnimationFrame(frame);
 }
 try { document.fonts && document.fonts.load('600 20px Fredoka'); document.fonts.load('700 20px Fredoka'); } catch (e) {}
 setLevel(genLevel(LEVELS[0])); AMB.init(THEME.amb);
+G3.ok = g3Init();   // render 3D (Three.js); si no hay WebGL se usa el render 2D
+if (G3.ok){
+  window.playerScreen = function(){ const p = g3Project(wxOf(G.x), PLAY_Y + 0.7, -G.P); return { x: p.x, y: p.y, h: 0 }; };
+  window.bossScreen = function(){ const B = G.boss; return g3Project(wxOf(B.bx), 4.2, -(G.P + B.bz)); };
+  window.addEventListener('resize', g3Resize);
+  setTimeout(g3Warm, 50);
+}
 refreshMenu(); refreshMusicBtn();
 requestAnimationFrame(frame);
 

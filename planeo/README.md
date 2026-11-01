@@ -1,4 +1,4 @@
-# 🐿️ Planeo — la ardilla planeadora (v2)
+# 🐿️ Planeo — la ardilla planeadora (v3 · en 3D)
 
 Nuki, una ardilla con gafas de aviador, baja planeando en su avioncito desde el Pueblo Ardilla (flotando en las nubes)
 hasta el suelo para recuperar las tres Bellotas Doradas. **3 carriles** muy marcados (pista luminosa con rieles, rayas y flechas), estilo *Subway Surfers*, pero en el cielo.
@@ -44,7 +44,14 @@ Todos ocupan un carril, tienen contorno grueso y una **placa de color en el suel
 ## Tu nombre
 El nombre que escribes en el menú sustituye a "Nuki" en **todos los diálogos y cinemáticas** (etiqueta, texto y pantalla de historia). Si lo dejas vacío, se llama Nuki.
 
-## Gráficos
+## Gráficos en 3D
+El mundo se dibuja con **Three.js (WebGL)**: cámara en perspectiva detrás del avión, modelos con volumen (avión, ardilla, 10 enemigos, 3 jefes,
+bloques, power-ups, árboles, casas, molinos, globos, islotes), sombreado de dibujo animado con contorno negro, sol y estrellas en la cúpula del cielo,
+colinas reales con nieve, cordillera, lagos con destellos, mar de nubes procedural y niebla. La capa 2D encima pone lluvia, hojas, partículas y viñeta.
+Si el dispositivo no tiene WebGL, el juego usa automáticamente el render 2D anterior (`05-render.js`).
+Three.js está en `../vendor/three.min.js` (r160, licencia MIT).
+
+### Gráficos (versión 2D, respaldo)
 Colinas con relieve (con luz, sombra y nieve en las cumbres) a los lados de la pista, cordillera nevada al fondo, destellos en los lagos, desenfoque de movimiento en las picadas.
 Resplandor (bloom) adaptativo, gradación de color por mundo, luces de navegación en el avión, globos aerostáticos, bandadas,
 islotes flotantes, casas, molinos, lagos y surcos de cultivo, estrellas fugaces, jirones de nube, bruma atmosférica y partículas
@@ -65,7 +72,7 @@ Un aviso rojo en el suelo indica por dónde viene el golpe (disparos, muros con 
 una **bellota dorada grande**: recógela y se la devuelves al jefe. Cuando se le acaban los corazones, ¡victoria!
 
 ## Cómo está hecho (`planeo/js/`)
-`01-core` utilidades y temas · `02-audio` canciones y efectos sintetizados · `03-level` niveles deterministas ·
+`05b-gfx3d` · `05c-models3d` · `05d-world3d` · `05e-boss3d` render 3D (escena, modelos, sincronización del mundo, jefes) · `01-core` utilidades y temas · `02-audio` canciones y efectos sintetizados · `03-level` niveles deterministas ·
 `04-art` todos los sprites en Canvas · `05-render` pseudo-3D, ambiente, post-proceso · `06-ghost` fantasmas y códigos ·
 `07-boss` jefes · `08-cine` cinemáticas · `09-main` modos, HUD y entrada.
 
