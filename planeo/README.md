@@ -57,6 +57,7 @@ El nombre que escribes en el menú sustituye a "Nuki" en **todos los diálogos y
 Los modelos 3D se rehicieron en dos estilos, elegibles con `#estilo=A` / `#estilo=B` en `index.html`:
 - **A · Peluche**: formas gorditas y suaves, colores caramelo, contorno de tinta y post-proceso cartoon.
 - **B · Papercraft low-poly**: facetas planas, colores vivos y limpios, sombreado duro y sin contorno.
+En el estilo B los enemigos, los jefes y el avión se dibujan más pequeños (~1 carril de ancho) para no tapar la pantalla.
 `galeria.html` muestra todos los modelos (enemigos, bloques, objetos, jefes, avión, personajes, decorado) de cada estilo.
 
 ## Gráficos en 3D (estilo caricatura)

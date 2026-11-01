@@ -46,10 +46,10 @@ function syncBoss(dt, P, D3){
   const B = G.boss, t = G.tAnim, bzAbs = P + B.bz;
   // --- jefe
   const g = acquire('boss_' + B.type, BM[B.type]); const bob = Math.sin(t * 2) * 0.35;
-  g.position.set(wxOf(B.bx), 3.8 + bob, -bzAbs); g.rotation.set(0, 0, 0); g.scale.setScalar(1.35);
+  const bk = window.__bossK || 1; g.position.set(wxOf(B.bx), (3.8 + bob) * (0.55 + 0.45 * bk), -bzAbs); g.rotation.set(0, 0, 0); g.scale.setScalar(1.35 * bk);
   if (g.userData.wl){ const f = Math.sin(t * g.userData.flap) * 0.55; g.userData.wl.rotation.z = 0.35 + f; g.userData.wr.rotation.z = -0.35 - f; }
   if (g.userData.bolts) g.userData.bolts.forEach((b, i) => { b.visible = Math.sin(t * 9 + i * 2) > -0.2 && B.state === 'fight'; });
-  if (B.state === 'dying'){ g.rotation.z = B.dieT * 4; g.position.y -= B.dieT * B.dieT * 2.2; g.scale.setScalar(1.35 * clamp(1 - B.dieT / 2.4, 0.05, 1)); }
+  if (B.state === 'dying'){ g.rotation.z = B.dieT * 4; g.position.y -= B.dieT * B.dieT * 2.2; g.scale.setScalar(1.35 * bk * clamp(1 - B.dieT / 2.4, 0.05, 1)); }
   if (B.hurt > 0) g.visible = Math.floor(t * 20) % 2 === 0;
   // --- avisos rojos en el suelo, signos de exclamación y rayos
   BX.exN = 0; const pulse = 0.5 + 0.5 * Math.sin(t * 16);

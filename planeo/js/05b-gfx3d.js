@@ -352,7 +352,7 @@ function g3Frame(dt){
   PL.root.position.set(px, PLAY_Y - (G.fallT > 0 ? (1.6 - G.fallT) * 7 : 0), -P);
   const ascK = (LV.asc && P - LV.base < LV.asc) ? Math.max(0, 1 - (P - LV.base) / LV.asc) : 0;   // morro hacia arriba mientras sube
   PL.root.rotation.set(0.1 * dv + 0.34 * ascK + (G.fallT > 0 ? (1.6 - G.fallT) * 1.2 : 0), 0, -G.bank * 0.5 + (G.fallT > 0 ? (1.6 - G.fallT) * 3 : 0));
-  PL.plane.userData.prop.rotation.z = t * 42; PL.plane.userData.scarf.rotation.y = Math.sin(t * 9) * 0.35; PL.plane.userData.scarf.rotation.x = Math.sin(t * 7) * 0.1;
+  PL.plane.scale.setScalar(window.__playerK || 1); PL.plane.userData.prop.rotation.z = t * 42; PL.plane.userData.scarf.rotation.y = Math.sin(t * 9) * 0.35; PL.plane.userData.scarf.rotation.x = Math.sin(t * 7) * 0.1;
   PL.root.visible = !(G.inv > 0 && Math.floor(t * 14) % 2 === 0 && G.fallT <= 0);
   PL.shield.visible = !!G.shield; if (G.shield){ PL.shield.material.opacity = 0.17 + 0.06 * Math.sin(t * 6); PL.shield.scale.setScalar(1 + 0.02 * Math.sin(t * 8)); }
   PL.rings.forEach((r, i) => { r.visible = G.starT > 0; if (r.visible){ r.material.color.setHSL(((t * 0.7) + i * 0.3) % 1, 0.95, 0.62); r.rotation.x = Math.PI / 2; r.scale.setScalar(1 + 0.08 * Math.sin(t * 9 + i)); } });

@@ -35,6 +35,13 @@ function setModelStyle(id, first){
   if (first){ buildPools(); } else { initModels(); initModelsPlus(); }
   initBossModels();
   styleModels(A); styleBosses(A);
+  // Low-poly: personajes más pequeños para que no tapen la pantalla (~1 carril de ancho). El peluche se queda como estaba.
+  window.__bossK = A ? 1 : 0.55; window.__playerK = A ? 1 : 0.86;
+  if (!A){
+    const K = { bee: 0.62, comet: 0.55, bat: 0.7, drone: 0.68, slime: 0.62, boulder: 0.92, bunny: 0.95, mole: 0.8 };
+    for (const id in K){ const mk = MK[id], k = K[id], base = mk.make;
+      mk.make = function(){ const inner = base(), g = new THREE.Group(); inner.scale.setScalar(k); g.add(inner); g.userData = inner.userData; g.userData.hy = (inner.userData.hy || 0) * k; return g; }; }
+  }
   buildPlaneModel = A ? planeA : planeB;
   if (typeof buildFigure === 'function') buildFigure = STYLE.base.fig;   // la figura de las cinemáticas usa las geometrías ya cambiadas
 }
