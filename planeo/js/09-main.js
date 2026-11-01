@@ -4,7 +4,7 @@ const G = {
   state: 'menu', mode: 'story', ch: 0, infN: 0, t: 0, P: 0, vP: 0, x: MID, tgt: MID, bank: 0, hearts: 3, acorns: 0, combo: 0, deaths: 0,
   inv: 0, slow: 0, diveT: 0, brakeT: 0, fallT: 0, cp: 20, shake: 0, cd: 0, cdShown: 4, flash: 0, lightning: 0, lightT: 5, fade: 0,
   recT: 0, Ps: [], Xs: [], ghosts: [], tAnim: 0, endT: 0, boss: null, bossDone: false, kills: 0, totalDist: 0, lastCode: null, t0: 0, dying: false,
-  multiIdx: 0, noPlane: false, shield: false, starT: 0, magT: 0, up: 1, cyc: null, cycHits: 0, bossHits: 0, diveOn: false
+  multiIdx: 0, noPlane: false, shield: false, starT: 0, magT: 0, up: 1, cyc: null, skyBlend: 1, skyFrom: null, pendingTheme: null, cycHits: 0, bossHits: 0, diveOn: false
 };
 const keys = { dive: false, brake: false };
 const particles = [];
@@ -58,7 +58,7 @@ function updateHud(){
   const inSky = G.P < L_SKY;
   let alt;
   if (G.boss) alt = '¡Jefe!';
-  else if (G.mode === 'inf') alt = 'Ciclo ' + (G.infN + 1) + (G.cyc && G.cyc.switched ? ' · subiendo' : inSky ? ' · ' + Math.round(START_ALT * altFrac(G.P)) + ' m' : ' · en tierra');
+  else if (G.mode === 'inf') alt = 'Ciclo ' + (G.infN + 1) + ((LV.asc && G.P - LV.base < LV.asc) ? ' · subiendo ↑ ' + Math.round(START_ALT * altFrac(G.P)) + ' m' : inSky ? ' · ' + Math.round(START_ALT * altFrac(G.P)) + ' m' : ' · en tierra');
   else alt = inSky ? 'Altitud ' + Math.round(START_ALT * altFrac(G.P)) + ' m' : 'Jefe a ' + Math.max(0, Math.round(L - G.P)) + ' m';
   setText(el.alt, 'alt', alt);
   setHtml(el.acorns, 'ac', SVG_ACORN + '<b>' + G.acorns + '</b>');
@@ -68,14 +68,14 @@ function updateHud(){
   if (G.starT > 0) pw += `<div class="pw">${SVG_PW.star}<span>Invencible ${Math.ceil(G.starT)}</span></div>`;
   if (G.magT > 0) pw += `<div class="pw">${SVG_PW.magnet}<span>Imán ${Math.ceil(G.magT)}</span></div>`;
   setHtml($('powers'), 'pw', pw);
-  el.pfill.style.width = (clamp(G.P / L, 0, 1) * 100).toFixed(1) + '%';
+  const lvProg = clamp((G.P - (LV.base || 0)) / (L - (LV.base || 0)), 0, 1); el.pfill.style.width = (lvProg * 100).toFixed(1) + '%';
   const ms = el.markers.children;
   for (let i = 0; i < G.ghosts.length; i++){
     const g = G.ghosts[i], node = ms[i + 1]; if (!node) continue;
     const s = ghostAt(g, G.t);
     node.style.left = (s ? clamp(s.P / L, 0, 1) * 100 : 100) + '%';
   }
-  if (ms[0]) ms[0].style.left = (clamp(G.P / L, 0, 1) * 100).toFixed(1) + '%';
+  if (ms[0]) ms[0].style.left = (lvProg * 100).toFixed(1) + '%';
 }
 function buildMarkers(){
   el.markers.innerHTML = '';
@@ -121,10 +121,12 @@ function pauseGame(){
 }
 function resumeGame(){ if (G.state !== 'paused') return; G.state = G.prevState || 'playing'; showScreen(null); }
 function nextCycle(){
-  const C = G.cyc; C.switched = true; C.t0 = C.t;
-  if (G.cycHits === 0){ ST.cleanCycles++; } G.cycHits = 0; G.infN++; ST.maxCycle = Math.max(ST.maxCycle, G.infN + 1); const ic = infConfig(G.infN); setLevel(genLevel(ic.cfg, ic.opts)); AMB.init(THEME.amb);
-  G.boss = null; G.bossDone = false; showBossBar(false); G.P = 0; G.cp = 20; G.up = 0; G.hearts = Math.min(3, G.hearts + 1); G.inv = 2.5; G.ch = G.infN % 3;
-  Sound.setMood(ic.cfg.theme); showLevelTitle('Ciclo ' + (G.infN + 1) + ' · ' + ic.cfg.name); Sound.sfx('whoosh'); achCheck('cycle');
+  // sin cortes: el siguiente ciclo empieza donde estás. Primero un ASCENSO jugable hasta las nubes y después el nuevo descenso.
+  if (G.cycHits === 0){ ST.cleanCycles++; } G.cycHits = 0; G.infN++; ST.maxCycle = Math.max(ST.maxCycle, G.infN + 1);
+  const ic = infConfig(G.infN), lv = shiftLevel(genLevel(ic.cfg, ic.opts), G.P), oldTheme = THEME;
+  setLevel(lv); G.pendingTheme = THEME; G.pendingMood = ic.cfg.theme; G.pendingTitle = 'Ciclo ' + (G.infN + 1) + ' · ' + ic.cfg.name; THEME = oldTheme;   // el cambio de ambiente se hace al cruzar las nubes
+  G.boss = null; G.bossDone = false; showBossBar(false); G.cp = lv.base + 20; G.hearts = Math.min(3, G.hearts + 1); G.inv = 2.5; G.ch = G.infN % 3;
+  showLevelTitle('Ciclo ' + (G.infN + 1) + ' · Ascenso'); Sound.sfx('whoosh'); achCheck('cycle');
 }
 function restartLevel(){ if (G.mode === 'inf') startLevel('inf', 0, false); else startLevel(G.mode, G.ch, false); }
 
@@ -185,7 +187,7 @@ function collect(o){
 function onBossDefeated(){
   ST.bosses++; if (G.bossHits === 0) ST.bossNoHit++; achCheck();
   if (G.mode === 'inf'){   // no hay pantalla de nivel: el avión atraviesa una bruma, sube y vuelve a bajar
-    G.kills++; G.totalDist += L; G.cyc = { t: 0, switched: false }; Sound.sfx('level'); toast('¡Jefe derrotado! Subimos otra vez…'); achCheck('boss');
+    G.kills++; G.totalDist += L - (LV.base || 0); Sound.sfx('level'); toast('¡Jefe derrotado! ¡A subir otra vez!'); achCheck('boss'); nextCycle();
     return;
   }
   G.state = 'ended'; showEnd(true);
@@ -304,17 +306,16 @@ function update(dt){
   }
   if (G.state !== 'playing') return;
 
-  if (G.cyc){   // ascenso del modo infinito (fase A: bruma blanca · cambio de ciclo · fase B: sube y vuelve a bajar)
-    const C = G.cyc; C.t += dt;
-    if (!C.switched){ G.fade = clamp(C.t / 1.7, 0, 1); G.vP += (24 - G.vP) * Math.min(1, dt); if (C.t >= 1.7) nextCycle(); }
-    else { const k = C.t - C.t0; G.fade = clamp(1 - k / 1.0, 0, 1); G.up = smooth(clamp(k / 5.5, 0, 1)); if (k >= 5.5){ G.up = 1; G.cyc = null; G.fade = 0; } }
+  if (G.pendingTheme && altFrac(G.P) > 0.84){   // ya estamos sobre el mar de nubes: se cambia de mundo sin que se note
+    G.skyFrom = THEME; G.skyBlend = 0; THEME = G.pendingTheme; G.pendingTheme = null; AMB.init(THEME.amb); Sound.setMood(G.pendingMood); showLevelTitle(G.pendingTitle);
   }
+  if (G.skyBlend < 1) G.skyBlend = Math.min(1, G.skyBlend + dt / 1.8);
   G.diveOn = diving(); statsTick(dt, G);
   G.t += dt;
   G.inv = Math.max(0, G.inv - dt); G.slow = Math.max(0, G.slow - dt);
   G.starT = Math.max(0, G.starT - dt); G.magT = Math.max(0, G.magT - dt);
   G.diveT = Math.max(0, G.diveT - dt); G.brakeT = Math.max(0, G.brakeT - dt);
-  const prog = clamp(G.P / L, 0, 1);
+  const prog = clamp((G.P - (LV.base || 0)) / (L - (LV.base || 0)), 0, 1);
 
   // relámpagos de la tormenta
   if (THEME.lightning){

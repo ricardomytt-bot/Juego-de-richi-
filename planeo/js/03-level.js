@@ -18,7 +18,7 @@ const PICKUPS = ['acorn', 'gold', 'heart', 'shield', 'star', 'magnet'];
 function genLevel(cfg, o){
   o = o || {};
   const diffAdd = o.diffAdd || 0, spdAdd = o.spdAdd || 0;
-  const skyLen = cfg.skyLen, Lend = skyLen + cfg.groundLen, calmA = skyLen - 200, calmB = skyLen + 90;
+  const A = o.asc || 0, skyLen = A + cfg.skyLen, Lend = skyLen + cfg.groundLen, calmA = skyLen - 200, calmB = skyLen + 90;   // A = metros de ascenso al principio (modo infinito)
   const rnd = mulberry32(cfg.seed + (o.seedAdd || 0));
   const R = (a, b) => a + Math.floor(rnd() * (b - a + 1));
   const objs = [], dyn = [], scenery = [];
@@ -167,15 +167,25 @@ function genLevel(cfg, o){
     const lat = (rnd() < 0.5 ? -1 : 1) * (1.8 + rnd() * 7);
     scenery.push({ type: rnd() < 0.5 ? 'flower' : 'tuft', P: p, lat, sc: 0.7 + rnd() * 0.7, v: rnd() });
   }
+  if (A > 0){   // al empezar el ascenso aún se ve el suelo: árboles, flores y casas a los lados para que la unión con el ciclo anterior sea continua
+    for (let p = 6; p < A * 0.6; p += R(10, 18)){ const side = rnd() < 0.5 ? -1 : 1; scenery.push({ type: rnd() < 0.8 ? 'stree' : 'srock', P: p, lat: side * (2.3 + rnd() * 4.5), sc: 0.8 + rnd() * 0.7, v: rnd() }); }
+    for (let p = 6; p < A * 0.55; p += R(35, 80)){ const side = rnd() < 0.5 ? -1 : 1; scenery.push({ type: rnd() < 0.4 ? 'windmill' : 'house', P: p, lat: side * (3.4 + rnd() * 5), sc: 0.9 + rnd() * 0.5, v: rnd() }); }
+    for (let p = 4; p < A * 0.5; p += R(4, 8)){ const lat = (rnd() < 0.5 ? -1 : 1) * (1.8 + rnd() * 7); scenery.push({ type: rnd() < 0.5 ? 'flower' : 'tuft', P: p, lat, sc: 0.7 + rnd() * 0.7, v: rnd() }); }
+  }
   scenery.sort((a, b) => a.P - b.P);
 
   return {
-    cfg, objs, dyn, scenery, skyLen, groundLen: cfg.groundLen, L: Lend, calmA, calmB,
+    cfg, objs, dyn, scenery, skyLen, skyRel: cfg.skyLen, asc: A, base: 0, groundLen: cfg.groundLen, L: Lend, calmA, calmB,
     cps: [skyLen * 0.33, skyLen * 0.66, skyLen + 60],
-    spd0: cfg.spd0 + spdAdd, spd1: cfg.spd1 + spdAdd, bossLevel: o.bossLevel || 0
+    spd0: Math.max(cfg.spd0 + spdAdd, o.spdFloor || 0), spd1: cfg.spd1 + spdAdd, bossLevel: o.bossLevel || 0
   };
 }
 
+/* desplaza todo el nivel para que empiece justo donde estás (el mundo no se reinicia: los bosques y aldeas siguen en su sitio) */
+function shiftLevel(lv, base){
+  lv.base = base; for (const o of lv.objs) o.P += base; for (const d of lv.dyn){ d.P += base; d.pe += base; } for (const s of lv.scenery) s.P += base;
+  lv.skyLen += base; lv.L += base; lv.calmA += base; lv.calmB += base; lv.cps = lv.cps.map(c => c + base); return lv;
+}
 function setLevel(lv){
   LV = lv; L_SKY = lv.skyLen; L_GROUND = lv.groundLen; L = lv.L; CALM_A = lv.calmA; CALM_B = lv.calmB; CHECKPOINTS = lv.cps;
   THEME = THEMES[lv.cfg.theme];
@@ -222,5 +232,6 @@ function updateDyn(d, dt){
 function infConfig(n){
   const base = LEVELS[n % 3];
   const cfg = Object.assign({}, base, { seed: base.seed + Math.floor(n / 3) * 17 + n });
-  return { cfg, opts: { diffAdd: n * 0.16, spdAdd: Math.min(n * 1.7, 14), bossLevel: n, startP: n > 0 ? 170 : 90 } };
+  const prev = n > 0 ? LEVELS[(n - 1) % 3].spd1 + Math.min((n - 1) * 1.7, 14) : 0;   // la velocidad no se reinicia al cambiar de ciclo
+  return { cfg, opts: { diffAdd: n * 0.16, spdAdd: Math.min(n * 1.7, 14), bossLevel: n, startP: n > 0 ? 150 : 90, asc: n > 0 ? 380 : 0, spdFloor: prev * 0.92 } };
 }

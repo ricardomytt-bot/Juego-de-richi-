@@ -241,7 +241,7 @@ function c3Frame(now){
     if (C3.t < 0.5 || (s.who !== 'Narrador' && Math.floor(C3.T * 6) !== C3._pf)){ C3._pf = Math.floor(C3.T * 6); c3Portrait(s); }
     const fade = clamp(1 - C3.t / 0.5, 0, 1); document.getElementById('veil').style.opacity = fade;
   } else { setTod('dawn', 0); if (C3.menuBg){ C3.menuBg.update(C3.menuBg.o, { glow: 1 }, 2 + C3.T * 0.15); } CAM3.position.lerp(C3.camPos, 0.05); CAM3.lookAt(C3.camLook); SK.dome.position.copy(CAM3.position); C3.moon.position.set(CAM3.position.x + 46, 58, CAM3.position.z - 150); C3.moonGlow.position.copy(C3.moon.position); }
-  R3.render(S3, CAM3); requestAnimationFrame(c3Frame);
+  g3RenderScene(); requestAnimationFrame(c3Frame);
 }
 
 
@@ -275,5 +275,5 @@ function c3Render(s, shotIdx, t, T, talkT, chars, txtLen, dt){
   CAM3.position.lerp(C3.camPos, snap ? 1 : k); if (!C3.lookCur) C3.lookCur = C3.camLook.clone(); C3.lookCur.lerp(C3.camLook, snap ? 1 : k); CAM3.lookAt(C3.lookCur);
   CAM3.fov = 55; CAM3.updateProjectionMatrix();
   SK.dome.position.copy(CAM3.position); C3.moon.position.set(CAM3.position.x + 46, 58, CAM3.position.z - 150); C3.moonGlow.position.copy(C3.moon.position);
-  R3.render(S3, CAM3);
+  g3RenderScene();
 }

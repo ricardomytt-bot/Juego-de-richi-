@@ -108,5 +108,11 @@ const store = {
 
 /* ---------------------------------------------------------------- nivel activo (se rellena en 03-level.js) */
 let LV = null, L_SKY = 1700, L_GROUND = 550, L = 2250, CALM_A = 1500, CALM_B = 1790, CHECKPOINTS = [], THEME = THEMES.dawn;
-function altFrac(P){ return clamp(1 - P / L_SKY, 0, 1) * (typeof G === 'undefined' ? 1 : G.up); }   // G.up < 1 mientras el avión sube en el modo infinito
+/* perfil de altitud del nivel: opcionalmente empieza con un ASCENSO (modo infinito) y luego desciende hasta el suelo */
+function altFrac(P){
+  const b = LV ? (LV.base || 0) : 0, A = LV ? (LV.asc || 0) : 0, rel = P - b;
+  if (A > 0 && rel < A) return smooth(clamp(rel / A, 0, 1));
+  const sky = LV && LV.skyRel ? LV.skyRel : L_SKY;
+  return clamp(1 - (rel - A) / sky, 0, 1);
+}
 function dropOf(P){ return 520 * Math.pow(altFrac(P), 0.75); }

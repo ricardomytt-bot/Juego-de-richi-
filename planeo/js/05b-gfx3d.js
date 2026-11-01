@@ -62,7 +62,7 @@ function build(parts, o){
     c = { gl, ge, hy: o.center === false ? 0 : hy }; _bc.set(key, c);
   }
   const grp = new THREE.Group();
-  if (c.gl){ grp.add(new THREE.Mesh(c.gl, MAT.toon)); if (o.outline !== 0){ const ol = new THREE.Mesh(c.gl, MAT.outl); ol.scale.setScalar(o.outline || 1.055); grp.add(ol); } }
+  if (c.gl){ grp.add(new THREE.Mesh(c.gl, MAT.toon)); if (o.outline !== 0){ const ol = new THREE.Mesh(c.gl, MAT.outl); ol.scale.setScalar(1 + ((o.outline || 1.055) - 1) * 1.55); grp.add(ol); } }
   if (c.ge) grp.add(new THREE.Mesh(c.ge, MAT.emit));
   grp.userData.hy = c.hy; return grp;
 }
@@ -84,7 +84,7 @@ function makeTextures(){
   LT.arrowTex = canvasTex(128, 256, (c, w, h) => { c.clearRect(0, 0, w, h); c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.moveTo(w / 2, 40); c.lineTo(w / 2 + 34, 110); c.lineTo(w / 2, 90); c.lineTo(w / 2 - 34, 110); c.closePath(); c.fill(); });
   LT.dashTex = canvasTex(32, 128, (c, w, h) => { c.clearRect(0, 0, w, h); c.fillStyle = '#fff'; c.fillRect(8, 8, 16, 56); });
   LT.exTex = canvasTex(64, 64, (c, w, h) => { c.clearRect(0, 0, w, h); c.fillStyle = '#fff'; c.font = '800 54px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('!', w / 2, h / 2 + 3); });
-  const grad = new THREE.DataTexture(new Uint8Array([120, 172, 224, 255]), 4, 1, THREE.RedFormat); grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.needsUpdate = true; LT.grad = grad;
+  const grad = new THREE.DataTexture(new Uint8Array([105, 165, 235, 255]), 4, 1, THREE.RedFormat); grad.minFilter = grad.magFilter = THREE.NearestFilter; grad.needsUpdate = true; LT.grad = grad;
 }
 
 /* ---------------------------------------------------------------- inicialización */
@@ -104,7 +104,7 @@ function g3Init(){
     LT.hemi = new THREE.HemisphereLight(0xffffff, 0x88aa88, 0.9); S3.add(LT.hemi); S3.add(new THREE.AmbientLight(0xffffff, 0.12));
     LT.sun = new THREE.DirectionalLight(0xffffff, 1.0); LT.sun.position.set(-30, 60, 25); S3.add(LT.sun); S3.add(LT.sun.target);
     buildSky(); buildGround(); buildTrack(); buildPlayer(); buildPools();
-    g3Resize(); return true;
+    postInit(); g3Resize(); return true;
   } catch (e){ console.warn('3D no disponible:', e); return false; }
 }
 function g3Resize(){
@@ -332,7 +332,8 @@ function g3Frame(dt){
   const px = wxOf(G.x), dv = diving() ? 1 : braking() ? -0.4 : 0;
   PL.cx += (px - PL.cx) * Math.min(1, dt * 9);
   PL.root.position.set(px, PLAY_Y - (G.fallT > 0 ? (1.6 - G.fallT) * 7 : 0), -P);
-  PL.root.rotation.set(0.1 * dv + (G.fallT > 0 ? (1.6 - G.fallT) * 1.2 : 0), 0, -G.bank * 0.5 + (G.fallT > 0 ? (1.6 - G.fallT) * 3 : 0));
+  const ascK = (LV.asc && P - LV.base < LV.asc) ? Math.max(0, 1 - (P - LV.base) / LV.asc) : 0;   // morro hacia arriba mientras sube
+  PL.root.rotation.set(0.1 * dv + 0.34 * ascK + (G.fallT > 0 ? (1.6 - G.fallT) * 1.2 : 0), 0, -G.bank * 0.5 + (G.fallT > 0 ? (1.6 - G.fallT) * 3 : 0));
   PL.plane.userData.prop.rotation.z = t * 42; PL.plane.userData.scarf.rotation.y = Math.sin(t * 9) * 0.35; PL.plane.userData.scarf.rotation.x = Math.sin(t * 7) * 0.1;
   PL.root.visible = !(G.inv > 0 && Math.floor(t * 14) % 2 === 0 && G.fallT <= 0);
   PL.shield.visible = !!G.shield; if (G.shield){ PL.shield.material.opacity = 0.17 + 0.06 * Math.sin(t * 6); PL.shield.scale.setScalar(1 + 0.02 * Math.sin(t * 8)); }
@@ -345,9 +346,9 @@ function g3Frame(dt){
   const shx = G.shake > 0 ? (Math.random() - 0.5) * G.shake * 0.05 : 0, shy = G.shake > 0 ? (Math.random() - 0.5) * G.shake * 0.05 : 0;
   const cxp = PL.cx * 0.6 + shx, camY = PLAY_Y + 2.9 + shy, dive = diving() ? 1 : 0;
   CAM3.fov += ((H > W ? 70 : 60) + dive * 9 + (G.starT > 0 ? 4 : 0) - CAM3.fov) * Math.min(1, dt * 5); CAM3.updateProjectionMatrix();
-  CAM3.position.set(cxp, camY, -P + 8.8); CAM3.lookAt(PL.cx * 0.55, PLAY_Y + 0.15, -P - 15); CAM3.rotateZ(-G.bank * 0.06);
+  CAM3.position.set(cxp, camY, -P + 8.8); CAM3.lookAt(PL.cx * 0.55, PLAY_Y + 0.15 + ascK * 3.5, -P - 15); CAM3.rotateZ(-G.bank * 0.06);
   SK.dome.position.copy(CAM3.position); SK.mount.position.set(CAM3.position.x, CAM3.position.y - 8, CAM3.position.z);
-  R3.render(S3, CAM3);
+  g3RenderScene();
   g3Overlay(dt, a);
 }
 
@@ -374,3 +375,39 @@ function g3Overlay(dt, a){
 /* cambia el aspecto del avión cuando eliges otra skin */
 function skin3dRefresh(){ if (!PL || !PL.root || !PL.plane) return; PL.root.remove(PL.plane); PL.plane = buildPlaneModel(curSkin(), false); PL.root.add(PL.plane); }
 window.__skinHook = skin3dRefresh;
+
+
+/* ------------------------------------------------------------------ aspecto CARICATURA: contorno por detección de bordes en la profundidad + color vivo */
+const POST = { ok: false, on: true };
+function postInit(){
+  try {
+    const dt = new THREE.DepthTexture(2, 2); dt.type = THREE.UnsignedIntType;
+    POST.rt = new THREE.WebGLRenderTarget(2, 2, { depthTexture: dt, samples: 4, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+    POST.mat = new THREE.ShaderMaterial({ depthTest: false, depthWrite: false, toneMapped: false,
+      uniforms: { tC: { value: null }, tD: { value: null }, uPx: { value: new THREE.Vector2(1, 1) }, uNear: { value: 0.3 }, uFar: { value: 1400 }, uSat: { value: 1.22 }, uEdge: { value: 1.3 }, uOut: { value: new THREE.Color(0x14183c) } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+      fragmentShader: `uniform sampler2D tC, tD; uniform vec2 uPx; uniform float uNear, uFar, uSat, uEdge; uniform vec3 uOut; varying vec2 vUv;
+        float lin(float d){ float z = d * 2.0 - 1.0; return (2.0 * uNear * uFar) / (uFar + uNear - z * (uFar - uNear)); }
+        void main(){
+          vec3 c = texture2D(tC, vUv).rgb; vec2 o = uPx * uEdge;
+          float d0 = lin(texture2D(tD, vUv).r), dl = lin(texture2D(tD, vUv - vec2(o.x, 0.0)).r), dr = lin(texture2D(tD, vUv + vec2(o.x, 0.0)).r), du = lin(texture2D(tD, vUv + vec2(0.0, o.y)).r), dd = lin(texture2D(tD, vUv - vec2(0.0, o.y)).r);
+          float diff = abs(dl - d0) + abs(dr - d0) + abs(du - d0) + abs(dd - d0);
+          float e = smoothstep(0.8, 1.6, diff / (d0 * 0.34 + 0.9));
+          e *= 1.0 - smoothstep(70.0, 190.0, d0);                      // sin contorno en lo muy lejano
+          float l = dot(c, vec3(0.299, 0.587, 0.114)); c = mix(vec3(l), c, uSat);   // color más vivo
+          c = (c - 0.5) * 1.07 + 0.5;                                    // algo más de contraste
+          c = mix(c, uOut, e * 0.92);
+          gl_FragColor = vec4(max(c, 0.0), 1.0);
+        }`
+    });
+    POST.scene = new THREE.Scene(); POST.scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), POST.mat)); POST.scene.children[0].frustumCulled = false; POST.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    POST.ok = true;
+  } catch (e){ POST.ok = false; console.warn('post-proceso no disponible', e); }
+}
+function postSize(){ if (!POST.ok) return; const pr = R3.getPixelRatio(), w = Math.max(2, Math.floor(W * pr)), h = Math.max(2, Math.floor(H * pr)); if (POST.rt.width !== w || POST.rt.height !== h){ POST.rt.setSize(w, h); } POST.mat.uniforms.uPx.value.set(1 / w, 1 / h); POST.mat.uniforms.uEdge.value = Math.max(1, pr) * 1.15; POST.mat.uniforms.uNear.value = CAM3.near; POST.mat.uniforms.uFar.value = CAM3.far; }
+function g3RenderScene(){
+  if (POST.ok && POST.on && !(typeof Q !== 'undefined' && Q.low)){
+    postSize(); R3.setRenderTarget(POST.rt); R3.render(S3, CAM3); R3.setRenderTarget(null);
+    POST.mat.uniforms.tC.value = POST.rt.texture; POST.mat.uniforms.tD.value = POST.rt.depthTexture; R3.render(POST.scene, POST.cam);
+  } else R3.render(S3, CAM3);
+}

@@ -7,7 +7,12 @@ function elevAt(zAbs, lat){
   return amp * n * laneW * 0.95;
 }
 function skyAt(a){
-  const K = THEME.sky;
+  const s = skyAtT(THEME, a);
+  if (typeof G !== 'undefined' && G.skyBlend < 1 && G.skyFrom){ const o = skyAtT(G.skyFrom, a), k = smooth(G.skyBlend); return { top: mix(o.top, s.top, k), bot: mix(o.bot, s.bot, k) }; }
+  return s;
+}
+function skyAtT(TH, a){
+  const K = TH.sky;
   for (let i = 0; i < K.length - 1; i++){
     const k0 = K[i], k1 = K[i + 1];
     if (a <= k0.a && a >= k1.a){ const t = (k0.a - a) / (k0.a - k1.a); return { top: mix(k0.top, k1.top, t), bot: mix(k0.bot, k1.bot, t) }; }

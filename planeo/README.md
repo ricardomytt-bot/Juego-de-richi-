@@ -53,7 +53,9 @@ Todos ocupan un carril, tienen contorno grueso y una **placa de color en el suel
 ## Tu nombre
 El nombre que escribes en el menú sustituye a "Nuki" en **todos los diálogos y cinemáticas** (etiqueta, texto y pantalla de historia). Si lo dejas vacío, se llama Nuki.
 
-## Gráficos en 3D
+## Gráficos en 3D (estilo caricatura)
+Contorno negro de dibujo animado por detección de bordes en la profundidad (post-proceso), sombreado de dibujo animado con saltos de luz marcados, color más vivo y contornos más gruesos en los modelos. Se desactiva solo si el dispositivo va justo.
+
 El mundo se dibuja con **Three.js (WebGL)**: cámara en perspectiva detrás del avión, modelos con volumen (avión, ardilla, 10 enemigos, 3 jefes,
 bloques, power-ups, árboles, casas, molinos, globos, islotes), sombreado de dibujo animado con contorno negro, sol y estrellas en la cúpula del cielo,
 colinas reales con nieve, cordillera, lagos con destellos, mar de nubes procedural y niebla. La capa 2D encima pone lluvia, hojas, partículas y viñeta.
