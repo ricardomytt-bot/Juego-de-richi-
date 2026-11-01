@@ -24,10 +24,25 @@ Cada nivel dura ~2 minutos: ~1:30 de descenso y ~20-30 s de jefe. La velocidad s
 (19 → 33 m/s en el primero, hasta 39 en el tercero) y los obstáculos se vuelven más densos: muros que dejan un solo hueco,
 slaloms, abejorros y babas que cruzan de carril.
 
-## Bloques y enemigos (todos nuevos)
-Cada uno ocupa un carril entero, con contorno grueso y una **placa de color en el suelo** que marca exactamente en qué línea está.
-- Cielo: 🧊 cristal de hielo · ⚡ caja de tormenta · 🐝 abejorro (cruza de carril)
-- Tierra: 📦 caja de madera con franja de peligro · 🪨 roca con pinchos · 🟣 baba morada (cruza de carril)
+## Bloques, enemigos y power-ups
+Todos ocupan un carril, tienen contorno grueso y una **placa de color en el suelo** que marca en qué línea están.
+
+**Bloques (quietos):** 🧊 cristal de hielo · ⚡ caja de tormenta (cielo) · 📦 caja con franja de peligro · 🪨 roca con pinchos (tierra)
+
+**Enemigos (10, cada uno se mueve distinto):**
+| | Cielo | Tierra |
+|---|---|---|
+| Cruza de carril | 🐝 abejorro | 🟣 baba |
+| Se lanza hacia ti | ☄️ cometa | 🪨 bola rodante |
+| Salta de carril en carril | 🦇 murciélago | 🐰 conejo gruñón |
+| Te sigue y se fija | 👁 dron vigía | — |
+| Sale de la tierra al acercarte | — | 🦫 topo emboscador |
+| Parpadea (cruzar cuando se apaga) | ⚡ valla eléctrica | ⚡ valla eléctrica |
+
+**Power-ups:** 🛡 escudo (aguanta un golpe) · ⭐ estrella (6 s invencible, revienta enemigos) · 🧲 imán (atrae las bellotas)
+
+## Carriles
+En el cielo son **corrientes de aire luminosas** (cintas de luz y estelas de viento); al aterrizar se convierten en carretera.
 
 ## Música
 Cada ambiente tiene su propia canción compuesta (melodía, bajo, acordes y batería): amanecer, tormenta, atardecer, jefe, menú y cinemáticas.

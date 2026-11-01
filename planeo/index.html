@@ -24,10 +24,11 @@
     </div>
   </div>
   <div id="hud-stats">
-    <span id="stAlt">⛅ 1800 m</span>
-    <span id="stAcorns">🌰 0</span>
-    <span id="stTime">⏱ 0:00</span>
+    <span id="stAlt" class="chip">Altitud 1800 m</span>
+    <span id="stAcorns" class="chip"></span>
+    <span id="stTime" class="chip"></span>
   </div>
+  <div id="powers"></div>
   <div id="bossbar" class="hidden"><div id="bossName">Jefe</div><div id="bossPips"></div></div>
   <div id="lvTitle"></div>
 </div>
@@ -38,7 +39,7 @@
 <!-- MENÚ -->
 <section id="screen-menu" class="screen">
   <div class="panel">
-    <div class="logo">🐿️</div>
+    <canvas id="logoCv" class="logoCv" width="260" height="230" aria-label="Nuki, la ardilla"></canvas>
     <h1>Planeo</h1>
     <p class="sub">Una ardilla, un avioncito y el cielo entero para bajar con calma.</p>
     <label class="field">Tu nombre
@@ -98,6 +99,7 @@
       <li>⬇️ <b>Picada</b> (<kbd>↓</kbd> / desliza abajo): más velocidad y bellotas dobles.</li>
       <li>⬆️ <b>Freno</b> (<kbd>↑</kbd> / desliza arriba): más tiempo para pensar.</li>
       <li>⚠️ Con el jefe, las franjas rojas avisan por dónde viene el golpe. <b>Recoge las bellotas doradas</b> grandes para devolvérselas.</li>
+      <li>✨ <b>Power-ups</b>: escudo (aguanta un golpe), estrella (invencible y revienta enemigos) e imán (atrae las bellotas).</li>
       <li>🚀 Cada nivel dura unos 2 minutos y va <b>cada vez más rápido</b>.</li>
       <li>♾️ <b>Infinito</b>: sin checkpoints. Si pierdes las 3 vidas, se acaba. ¿Hasta dónde llegas?</li>
     </ul>

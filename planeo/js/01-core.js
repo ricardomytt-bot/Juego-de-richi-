@@ -37,7 +37,7 @@ const THEMES = {
       { a: 0.0, top: [72, 178, 255], bot: [228, 247, 255] }],
     land: ['#78c47a', '#8fd07e', '#6cbb77', '#a4d77f', '#e3d489', '#c8bb7a', '#74b8a8', '#9bcf6f'],
     grass: [128, 207, 116], sea: ['#ffffff', '#f7f0ff', '#ffe9ee', '#eaf1ff', '#fff4e6'],
-    tint: null, amb: 'sparkle', sun: [255, 245, 200], sunWarm: [255, 150, 100], hasSun: true, stars: 0.62, leaf: '#3f9d5a'
+    tint: null, rail: [120, 215, 255], amb: 'sparkle', sun: [255, 245, 200], sunWarm: [255, 150, 100], hasSun: true, stars: 0.62, leaf: '#3f9d5a'
   },
   storm: {
     sky: [
@@ -46,7 +46,7 @@ const THEMES = {
       { a: 0.0, top: [98, 114, 142], bot: [178, 192, 210] }],
     land: ['#4f8f66', '#5c9e6e', '#447f5c', '#6aa870', '#7e9b62', '#5d8c7d', '#3f7a64', '#6f9e72'],
     grass: [84, 150, 96], sea: ['#d3d9e8', '#bfc8de', '#e1e5f0', '#aeb9d2', '#c9cfe0'],
-    tint: [30, 44, 80, 0.14], amb: 'rain', sun: [220, 230, 255], sunWarm: [200, 210, 240], hasSun: false, stars: 0.9, lightning: true, leaf: '#3b7f58'
+    tint: [30, 44, 80, 0.14], rail: [140, 170, 255], amb: 'rain', sun: [220, 230, 255], sunWarm: [200, 210, 240], hasSun: false, stars: 0.9, lightning: true, leaf: '#3b7f58'
   },
   dusk: {
     sky: [
@@ -55,7 +55,7 @@ const THEMES = {
       { a: 0.0, top: [96, 96, 168], bot: [255, 208, 154] }],
     land: ['#a1a35a', '#c09a52', '#8f9a4f', '#b7864a', '#7a8f58', '#c4a65f', '#9a7e4a', '#b3a860'],
     grass: [156, 172, 86], sea: ['#ffd9c2', '#ffc3b8', '#ffe6cf', '#e9b6d4', '#ffcfa3'],
-    tint: [255, 140, 70, 0.07], amb: 'leaves', sun: [255, 220, 160], sunWarm: [255, 120, 70], hasSun: true, stars: 0.7, leaf: '#c9792f'
+    tint: [255, 140, 70, 0.07], rail: [255, 160, 205], amb: 'leaves', sun: [255, 220, 160], sunWarm: [255, 120, 70], hasSun: true, stars: 0.7, leaf: '#c9792f'
   }
 };
 

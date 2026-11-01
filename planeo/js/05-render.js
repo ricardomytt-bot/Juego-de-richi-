@@ -120,7 +120,7 @@ function drawGround(a, sky){
     g.addColorStop(0, rgb(mix(sky.bot, [255, 255, 255], 0.3))); g.addColorStop(1, rgb(mix(sky.bot, [255, 255, 255], 0.72)));
     ctx.fillStyle = g; ctx.fillRect(0, yH, W, H - yH);
   } else {
-    const BAND = 10, base = Math.floor(P / BAND), grass = THEME.grass;
+    const BAND = 10, base = Math.floor(P / BAND), grass = THEME.grass; const segs = [];
     for (let i = Math.ceil(VIEW / BAND) + 1; i >= -3; i--){
       const idx = base + i;
       let z0 = idx * BAND - P, z1 = z0 + BAND; if (z1 <= -18) continue; z0 = Math.max(z0, -18);
@@ -135,7 +135,11 @@ function drawGround(a, sky){
         ctx.beginPath();
         ctx.moveTo(cx + l0 * laneW * s0, y0); ctx.lineTo(cx + l1 * laneW * s0, y0);
         ctx.lineTo(cx + l1 * laneW * s1, y1); ctx.lineTo(cx + l0 * laneW * s1, y1); ctx.closePath(); ctx.fill();
+        if (patch > 0.3 && (hv * 7 | 0) % 2 === 0){   // surcos de cultivo
+          for (const f of [0.3, 0.55, 0.8]){ const lf = lerp(l0, l1, f); segs.push(cx + lf * laneW * s0, y0, cx + lf * laneW * s1, y1); }
+        }
       }
+      if (segs.length){ ctx.strokeStyle = 'rgba(20,70,20,.10)'; ctx.lineWidth = Math.max(1, 2.2 * s0); ctx.beginPath(); for (let q = 0; q < segs.length; q += 4){ ctx.moveTo(segs[q], segs[q + 1]); ctx.lineTo(segs[q + 2], segs[q + 3]); } ctx.stroke(); segs.length = 0; }
     }
   }
   // mar de nubes (se disuelve al bajar)
@@ -194,62 +198,114 @@ function airShadow(z, lat, w, drop){
 
 /* ------------------------------------------------------------ carriles MUY marcados: pista luminosa con rieles, rayas y flechas */
 function planeQuad(l0, l1, z0, z1, fill){
+  if (z1 <= -16) return; if (z0 < -16) z0 = -16;   // nunca dibujar detrás de la cámara (la perspectiva se invierte)
   const a = proj(z0, l0, 0), b = proj(z0, l1, 0), c = proj(z1, l1, 0), d = proj(z1, l0, 0);
   ctx.fillStyle = fill; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath(); ctx.fill();
 }
-function drawLanes(patch){
+function lanesAir(alpha){
+  // CIELO: corrientes de aire luminosas (nada de asfalto): cintas de luz, estelas de viento y destellos
+  const P = G.P, zN = -18, zF = VIEW, h = LANES / 2, rc = THEME.rail, t = G.tAnim;
+  for (let i = 0; i < LANES; i++) planeQuad(i - MID - 0.5, i - MID + 0.5, zN, zF, rgb(i % 2 ? [70, 120, 255] : [255, 255, 255], (i % 2 ? 0.19 : 0.24) * alpha));
+  // estelas de viento que corren por cada carril
+  for (let i = 0; i < LANES; i++){
+    for (let k = 0; k < 5; k++){
+      const lat = i - MID + (k - 2) * 0.19, per = 34 + k * 9, sp = 0.8 + k * 0.12, off = (P * sp + hash2(i * 7 + k, 3) * per) % per;
+      for (let q = 0; q < Math.ceil((zF - zN) / per) + 1; q++){
+        const z0 = q * per - off + zN, len = 9 + hash2(i + k, q) * 10;
+        planeQuad(lat - 0.012, lat + 0.012, z0, z0 + len, rgb([255, 255, 255], (0.30 + 0.2 * hash2(k, q)) * alpha));
+      }
+    }
+  }
+  // cintas de luz en los bordes (con contorno suave para que se vean sobre las nubes blancas)
+  for (const sg of [-1, 1]){
+    const b = sg * h;
+    planeQuad(b - 0.16, b + 0.16, zN, zF, rgb(rc, 0.20 * alpha));
+    planeQuad(b - 0.07, b + 0.07, zN, zF, rgb([40, 90, 190], 0.22 * alpha));
+    planeQuad(b - 0.045, b + 0.045, zN, zF, rgb(mix(rc, [255, 255, 255], 0.6), 0.95 * alpha));
+  }
+  // separadores interiores: hilos de luz que parpadean
+  for (let i = 1; i < LANES; i++){
+    const b = i - MID - 0.5, per = 6, off = P % per;
+    for (let k = 0; k < Math.ceil((zF - zN) / per) + 1; k++){ const z0 = k * per - off + zN; planeQuad(b - 0.045, b + 0.045, z0, z0 + 3.0, rgb(mix(rc, [255, 255, 255], 0.5), (0.8 + 0.2 * Math.sin(t * 5 + k)) * alpha)); }
+  }
+  // destellos que viajan por los bordes
+  for (const sg of [-1, 1]){
+    for (let k = 0; k < 16; k++){
+      const z = ((k * 13 - P * 1.0) % 208 + 208) % 208 - 15, p = proj(z, sg * h, 0);
+      ctx.fillStyle = `rgba(255,255,255,${(0.35 + 0.5 * Math.sin(t * 6 + k * 2)) * alpha})`; circ(ctx, p.x, p.y, Math.max(1, 6 * p.s));
+    }
+  }
+}
+function lanesRoad(alpha){
+  // TIERRA: carretera con rieles, rayas, flechas y postes
   const P = G.P, zN = -18, zF = VIEW, h = LANES / 2;
-  // franjas alternadas (clara / oscura) para distinguir cada carril de un vistazo
-  planeQuad(-h - 0.12, h + 0.12, zN, zF, 'rgba(14,22,70,.34)');                       // base oscura: la pista destaca sobre cualquier fondo
-  for (let i = 0; i < LANES; i++) planeQuad(i - MID - 0.5, i - MID + 0.5, zN, zF, i % 2 ? 'rgba(120,170,255,.10)' : 'rgba(255,255,255,.16)');
-  // flechas que avanzan hacia ti por el centro de cada carril
-  const off = P % 14;
-  ctx.fillStyle = 'rgba(255,255,255,.34)';
+  planeQuad(-h - 0.12, h + 0.12, zN, zF, `rgba(14,22,70,${0.34 * alpha})`);
+  for (let i = 0; i < LANES; i++) planeQuad(i - MID - 0.5, i - MID + 0.5, zN, zF, i % 2 ? `rgba(120,170,255,${0.10 * alpha})` : `rgba(255,255,255,${0.16 * alpha})`);
+  const off = P % 14; ctx.fillStyle = `rgba(255,255,255,${0.34 * alpha})`;
   for (let k = 0; k < Math.ceil((zF - zN) / 14) + 1; k++){
-    const z0 = k * 14 - off + zN;
+    const z0 = k * 14 - off + zN; if (z0 < -15) continue;
     for (let i = 0; i < LANES; i++){
       const l = i - MID, a = proj(z0, l - 0.17, 0), b = proj(z0 + 3.2, l, 0), c = proj(z0, l + 0.17, 0), d = proj(z0 + 1.2, l, 0);
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath(); ctx.fill();
     }
   }
-  // rieles exteriores con brillo
   for (const sg of [-1, 1]){
     const b = sg * h;
-    planeQuad(b - 0.20, b + 0.20, zN, zF, 'rgba(255,170,40,.28)');
-    planeQuad(b - 0.075, b + 0.075, zN, zF, 'rgba(255,196,64,.98)');
-    planeQuad(b - 0.03, b + 0.03, zN, zF, 'rgba(255,255,255,.98)');
+    planeQuad(b - 0.20, b + 0.20, zN, zF, `rgba(255,170,40,${0.28 * alpha})`);
+    planeQuad(b - 0.075, b + 0.075, zN, zF, `rgba(255,196,64,${0.98 * alpha})`);
+    planeQuad(b - 0.03, b + 0.03, zN, zF, `rgba(255,255,255,${0.98 * alpha})`);
   }
-  // separadores interiores a rayas que se desplazan
   const per = 8, doff = P % per;
   for (let i = 1; i < LANES; i++){
     const b = i - MID - 0.5;
-    for (let k = 0; k < Math.ceil((zF - zN) / per) + 1; k++){ const z0 = k * per - doff + zN; planeQuad(b - 0.05, b + 0.05, z0, z0 + 4.2, 'rgba(255,255,255,.95)'); }
+    for (let k = 0; k < Math.ceil((zF - zN) / per) + 1; k++){ const z0 = k * per - doff + zN; planeQuad(b - 0.05, b + 0.05, z0, z0 + 4.2, `rgba(255,255,255,${0.95 * alpha})`); }
   }
-  // postes con luz a los lados
   const pp = 22, poff = P % pp, t = G.tAnim;
   for (let k = 0; k < Math.ceil((zF - zN) / pp) + 1; k++){
-    const z = k * pp - poff + zN;
+    const z = k * pp - poff + zN; if (z < -15) continue;
     for (const sg of [-1, 1]){
       const b = proj(z, sg * (h + 0.16), 0), top = proj(z, sg * (h + 0.16), laneW * 0.3);
-      ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = Math.max(1, 5 * b.s); ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(top.x, top.y); ctx.stroke();
-      ctx.fillStyle = `rgba(255,${200 + 40 * Math.sin(t * 4 + k)},120,.95)`; circ(ctx, top.x, top.y, Math.max(1.5, 8 * top.s));
+      ctx.strokeStyle = `rgba(255,255,255,${0.8 * alpha})`; ctx.lineWidth = Math.max(1, 5 * b.s); ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(top.x, top.y); ctx.stroke();
+      ctx.fillStyle = `rgba(255,${200 + 40 * Math.sin(t * 4 + k)},120,${0.95 * alpha})`; circ(ctx, top.x, top.y, Math.max(1.5, 8 * top.s));
     }
   }
 }
+/* mezcla suave entre el estilo "aire" (volando) y el "carretera" (ya en tierra) */
+function drawLanes(){
+  const air = clamp(dropOf(G.P) / 70, 0, 1);
+  if (air > 0.01) lanesAir(air);
+  if (air < 0.99) lanesRoad(1 - air);
+}
 /* placa de color en el carril de cada obstáculo: se ve exactamente en qué línea está */
-const PLATE = { crystal: [90, 220, 255], thunderbox: [255, 220, 60], crate: [255, 150, 50], spikerock: [255, 80, 80], bee: [255, 205, 40], slime: [200, 90, 255] };
+const PLATE = { crystal: [90, 220, 255], thunderbox: [255, 220, 60], crate: [255, 150, 50], spikerock: [255, 80, 80], bee: [255, 205, 40], slime: [200, 90, 255],
+  comet: [255, 90, 40], boulder: [230, 140, 70], bat: [220, 70, 170], bunny: [255, 150, 190], drone: [70, 255, 200], mole: [210, 150, 90], gate: [255, 230, 60] };
+function plateAt(lat, z, col, fade, pulse, w0){
+  planeQuad(lat - 0.5, lat + 0.5, z - 1.8, z + 1.8, rgb(col, (0.46 + 0.16 * pulse) * fade));
+  planeQuad(lat - 0.5, lat + 0.5, z - 0.16, z + 0.16, rgb([255, 255, 255], 0.8 * fade));
+  planeQuad(lat - 0.5, lat + 0.5, z - 1.8, z - 1.55, rgb([255, 255, 255], 0.55 * fade)); planeQuad(lat - 0.5, lat + 0.5, z + 1.55, z + 1.8, rgb([255, 255, 255], 0.55 * fade));
+}
 function drawPlates(P, gt){
   const o = LV.objs;
   for (let i = lowerBound(o, P - 2); i < o.length && o[i].P < P + VIEW; i++){
-    const ob = o[i], col = PLATE[ob.type]; if (!col) continue;
+    const ob = o[i], col = PLATE[ob.type]; if (!col || ob.dead) continue;
     const z = ob.P - P, fade = clamp((VIEW - z) / 60, 0, 1); if (fade <= 0.02) continue;
-    const lat = laneOf(ob, gt) - MID, pulse = 0.5 + 0.5 * Math.sin(G.tAnim * 7 + ob.P);
-    if (ob.a !== undefined){   // enemigos que se mueven: banda del recorrido + placa que los sigue
-      planeQuad(ob.a - MID - 0.5, ob.b - MID + 0.5, z - 1.4, z + 1.4, rgb(col, 0.13 * fade));
+    const pulse = 0.5 + 0.5 * Math.sin(G.tAnim * 7 + ob.P);
+    if (ob.type === 'gate'){
+      const on = gateOn(ob, gt), fl = gateFlicker(ob, gt);
+      planeQuad(ob.ga - 0.5, ob.gb + 0.5, z - 1.8, z + 1.8, rgb(on ? [255, 230, 60] : fl ? [255, 150, 40] : [120, 220, 140], (on ? 0.55 : 0.30) * fade));
+      planeQuad(ob.ga - 0.5, ob.gb + 0.5, z - 0.16, z + 0.16, rgb([255, 255, 255], 0.8 * fade)); continue;
     }
-    planeQuad(lat - 0.5, lat + 0.5, z - 1.8, z + 1.8, rgb(col, (0.46 + 0.16 * pulse) * fade));
-    planeQuad(lat - 0.5, lat + 0.5, z - 0.16, z + 0.16, rgb([255, 255, 255], 0.8 * fade));
-    planeQuad(lat - 0.5, lat + 0.5, z - 1.8, z - 1.55, rgb([255, 255, 255], 0.55 * fade)); planeQuad(lat - 0.5, lat + 0.5, z + 1.55, z + 1.8, rgb([255, 255, 255], 0.55 * fade));
+    if (ob.type === 'mole'){ if (z > 16){ plateAt(ob.lane - MID, z, col, fade, pulse); } else plateAt(ob.lane - MID, z, [255, 70, 50], fade, pulse); continue; }
+    const lat = laneOf(ob, gt) - MID;
+    if (ob.a !== undefined) planeQuad(ob.a - MID - 0.5, ob.b - MID + 0.5, z - 1.4, z + 1.4, rgb(col, (ob.hop ? 0.10 : 0.13) * fade));
+    plateAt(lat, z, col, fade, pulse);
+  }
+  for (const d of LV.dyn){
+    if (d.dead) continue;
+    const col = PLATE[d.type], z = d.pe - P, fade = clamp((VIEW - z) / 60, 0, 1); if (z < -2 || fade <= 0.02) continue;
+    const pulse = 0.5 + 0.5 * Math.sin(G.tAnim * 12 + d.P);
+    if (d.vr) planeQuad(laneOf(d, gt) - MID - 0.5, laneOf(d, gt) - MID + 0.5, z, Math.min(VIEW, z + 60), rgb(col, 0.10 * fade));   // pista por donde se lanzará
+    plateAt(laneOf(d, gt) - MID, z, d.locked ? [255, 40, 40] : col, fade, pulse);
   }
 }
 
@@ -259,7 +315,7 @@ function drawScene(dt){
   if (G.shake > 0) ctx.translate((Math.random() - 0.5) * G.shake, (Math.random() - 0.5) * G.shake);
   drawBackground(a, sky);
   drawGround(a, sky);
-  drawLanes(clamp(drop / 180, 0, 1));
+  drawLanes();
   drawStreaks(a, dt);
   if (G.boss) bossGround(drop);
 
@@ -267,9 +323,10 @@ function drawScene(dt){
   const airH = 0.38 * laneW;
   const o = LV.objs;
   for (let i = lowerBound(o, P - 6); i < o.length && o[i].P < P + VIEW; i++){
-    const ob = o[i]; if (ob.taken) continue;
+    const ob = o[i]; if (ob.taken || ob.dead) continue;
     items.push({ z: ob.P - P, ob, k: 0 });
   }
+  for (const d of LV.dyn){ if (d.dead) continue; const z = d.pe - P; if (z > -4 && z < VIEW) items.push({ z, ob: d, k: 0 }); }
   const sc = LV.scenery;
   for (let i = lowerBound(sc, P - 6); i < sc.length && sc[i].P < P + VIEW; i++) items.push({ z: sc[i].P - P, ob: sc[i], k: 1 });
   for (const g of G.ghosts){
@@ -303,7 +360,16 @@ function drawScene(dt){
         ctx.strokeStyle = gl; ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx - sg * 0.4 * u, gy - 2.6 * u * sp); ctx.stroke();
       }
     }
-    if (!G.noPlane) drawPlane(ctx, u, G.bank, '#ff5a4a', t, blink ? 0.45 : 1, dv, G.flash > 0.2);
+    if (!G.noPlane){
+      if (G.starT > 0){ for (let i = 0; i < 3; i++){ ctx.strokeStyle = `hsla(${(t * 260 + i * 90) % 360},95%,62%,.55)`; ctx.lineWidth = u * 0.3; ctx.beginPath(); ctx.arc(0, 0.3 * u, (2.7 + i * 0.35 + 0.15 * Math.sin(t * 9 + i)) * u, 0, TAU); ctx.stroke(); } glow(ctx, 0, 0.3 * u, u * 5.5, 'rgba(255,230,90,A)'); }
+      if (G.magT > 0){ for (let i = 0; i < 3; i++){ const k = ((t * 1.1 + i / 3) % 1); ctx.strokeStyle = `rgba(${i % 2 ? '90,170,255' : '255,90,90'},${(1 - k) * 0.8})`; ctx.lineWidth = u * 0.18; ctx.beginPath(); ctx.arc(0, 0.3 * u, (1.8 + k * 5) * u, 0, TAU); ctx.stroke(); } }
+      drawPlane(ctx, u, G.bank, '#ff5a4a', t, blink ? 0.45 : 1, dv, G.flash > 0.2);
+      if (G.shield){
+        const bg = ctx.createRadialGradient(-u * 0.9, -u * 1.1, u * 0.3, 0, 0.2 * u, u * 3.1); bg.addColorStop(0, 'rgba(255,255,255,.35)'); bg.addColorStop(0.7, 'rgba(110,200,255,.14)'); bg.addColorStop(1, 'rgba(70,160,255,.38)');
+        ctx.fillStyle = bg; ctx.strokeStyle = `rgba(255,255,255,${0.7 + 0.2 * Math.sin(t * 6)})`; ctx.lineWidth = u * 0.14; ctx.beginPath(); ctx.arc(0, 0.2 * u, 3.0 * u, 0, TAU); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = u * 0.22; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, 0.2 * u, 2.5 * u, 3.6, 4.4); ctx.stroke();
+      }
+    }
     ctx.restore();
   };
 
@@ -324,7 +390,9 @@ function drawScene(dt){
     const ob = it.ob;
     ctx.globalAlpha = fog;
     if (it.k === 1){
-      if (ob.type === 'puff'){
+      if (ob.type === 'islet'){ const p = proj(z, ob.lat, ob.h); if (a > 0.45) drawIsland(p.x, p.y, laneW * 1.7 * ob.sc * p.s, { T: t + ob.v * 9, glow: 0 }); }
+      else if (ob.type === 'flock'){ const p = proj(z, ob.lat, ob.h); if (a > 0.2) drawFlock(ctx, p.x, p.y, laneW * 0.9 * ob.sc * p.s, t, ob.v); }
+      else if (ob.type === 'puff'){
         const p = proj(z, ob.lat, ob.h);
         if (!(ob.h < -drop * 0.5 && a > 0.5) && !(drop < 150 && ob.h < 150)) drawCloud(ctx, p.x, p.y, laneW * 1.3 * ob.sc * p.s, false, t, ob.v);
       } else {
@@ -344,6 +412,14 @@ function drawScene(dt){
       case 'slime': { const p = proj(z, lat, -drop); drawSlime(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v); break; }
       case 'crate': { const p = proj(z, lat, -drop); drawCrate(ctx, p.x, p.y, laneW * 1.0 * p.s); break; }
       case 'spikerock': { const p = proj(z, lat, -drop); drawSpikeRock(ctx, p.x, p.y, laneW * 1.0 * p.s); break; }
+      case 'comet': { const p = proj(z, lat, airH); drawComet(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v); break; }
+      case 'bat': { const p = proj(z, lat, airH); airShadow(z, lat, laneW * 0.7 * p.s, drop); drawBat(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v, hopK(ob, gt), hopWarn(ob, gt)); break; }
+      case 'drone': { const p = proj(z, lat, airH); airShadow(z, lat, laneW * 0.7 * p.s, drop); drawDrone(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v, clamp((G.x - lane) * 0.9, -1, 1), !!ob.locked); break; }
+      case 'boulder': { const p = proj(z, lat, -drop); drawBoulder(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v); break; }
+      case 'bunny': { const p = proj(z, lat, -drop); drawBunny(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v, hopK(ob, gt), hopWarn(ob, gt)); break; }
+      case 'mole': { const p = proj(z, lat, -drop); drawMole(ctx, p.x, p.y, laneW * 1.0 * p.s, t, ob.v, clamp((18 - it.z) / 5, 0, 1)); break; }
+      case 'gate': { const l = proj(z, ob.ga - MID - 0.5, -drop), r2 = proj(z, ob.gb - MID + 0.5, -drop); drawGate(ctx, l.x, r2.x, l.y, l.s, laneW, gateOn(ob, gt), gateFlicker(ob, gt), t, ob.v); break; }
+      case 'shield': case 'star': case 'magnet': { const p = proj(z, lat, drop > 90 ? airH : airH * 0.9); drawPowerup(ctx, p.x, p.y, laneW * 0.8 * p.s, ob.type, t, ob.P); break; }
       case 'acorn': case 'gold': case 'heart': { const p = proj(z, lat, drop > 90 ? airH : airH * 0.85); drawAcorn(ctx, p.x, p.y, laneW * (ob.type === 'gold' ? 0.62 : 0.5) * p.s, ob.type, t, ob.P); break; }
     }
     ctx.globalAlpha = 1;
@@ -351,6 +427,9 @@ function drawScene(dt){
   if (!playerDone) drawPlayer();
   if (G.boss) bossOverlay(pl);
 
+  // bruma atmosférica: lo lejano se funde con el cielo
+  const hz = ctx.createLinearGradient(0, yH - 6, 0, yH + H * 0.17); hz.addColorStop(0, rgb(sky.bot, 0.6)); hz.addColorStop(1, rgb(sky.bot, 0));
+  ctx.fillStyle = hz; ctx.fillRect(0, yH - 6, W, H * 0.17 + 6);
   // ambiente + partículas
   AMB.draw();
   for (const p of particles){

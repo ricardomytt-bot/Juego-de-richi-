@@ -203,6 +203,9 @@ const Sound = {
       case 'bossHurt': this.tone(240, t, 0.4, 'sawtooth', 0.12); this.tone(120, t, 0.5, 'sine', 0.35); this.noise(t, 0.3, 1200, 0.2); [0, 4, 7].forEach((n, i) => this.tone(700 * Math.pow(2, n / 12), t + 0.1 + i * 0.07, 0.3, 'triangle', 0.12)); break;
       case 'bossDie': [12, 9, 7, 4, 0, -5].forEach((n, i) => this.tone(520 * Math.pow(2, n / 12), t + i * 0.12, 0.5, 'triangle', 0.17)); this.noise(t, 1.2, 1500, 0.2, 200); break;
       case 'win': [0, 4, 7, 12, 7, 12, 16, 19, 24].forEach((n, i) => this.tone(392 * Math.pow(2, n / 12), t + i * 0.13, 0.9, 'triangle', 0.17)); break;
+      case 'power': [0, 4, 7, 12, 16].forEach((n, i) => this.tone(600 * Math.pow(2, n / 12), t + i * 0.05, 0.3, 'triangle', 0.16)); this.noise(t, 0.3, 3000, 0.1); break;
+      case 'pop': this.tone(900, t, 0.12, 'sine', 0.3); this.tone(420, t + 0.03, 0.2, 'triangle', 0.2); this.noise(t, 0.18, 3500, 0.18); break;
+      case 'smash': this.tone(180, t, 0.2, 'sawtooth', 0.15); this.noise(t, 0.25, 1500, 0.3, 300); [0, 7, 12].forEach((n, i) => this.tone(700 * Math.pow(2, n / 12), t + 0.04 + i * 0.04, 0.2, 'square', 0.06)); break;
       case 'whoosh': this.noise(t, 0.7, 500, 0.2, 2200); break;
       case 'level': [0, 5, 9, 12].forEach((n, i) => this.tone(523 * Math.pow(2, n / 12), t + i * 0.1, 0.5, 'sine', 0.2)); break;
     }
