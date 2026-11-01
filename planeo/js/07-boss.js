@@ -38,22 +38,25 @@ function launchAttack(){
     for (let l = 0; l < LANES; l++) if (!holes.has(l)) B.warns.push({ kind: 'wall', lane: l, delay: 0, t: 1.0 - 0.22 * er });
     B.tx = [...holes][0];
   } else if (kind === 'sweep'){   // una barrida de rayos que recorre los carriles, en un sentido u otro
-    const dir = Math.random() < 0.5 ? 1 : -1, gap = 0.5 - 0.08 * er;
-    for (let k = 0; k < LANES; k++){ const lane = dir > 0 ? k : LANES - 1 - k; B.warns.push({ kind: 'strike', lane, delay: k * gap, t: 0.8 - 0.1 * er }); }
-    B.tx = dir > 0 ? 0 : LANES - 1;
+    // barrida fácil: siempre queda UN carril seguro (el que tú elijas), los otros dos caen de uno en uno y con mucho aviso
+    const safe = R(LANES), order = []; for (let l = 0; l < LANES; l++) if (l !== safe) order.push(l); if (Math.random() < 0.5) order.reverse();
+    order.forEach((lane, k) => B.warns.push({ kind: 'strike', lane, delay: k * 1.0, t: 1.35 - 0.15 * er }));
+    B.tx = safe;
   } else if (kind === 'rain'){    // lluvia de proyectiles, el primero justo donde estás
     const n = 3 + Math.floor(er * 2.4); let prev = clamp(G.tgt, 0, LANES - 1);
     for (let k = 0; k < n; k++){ const lane = k === 0 ? prev : (prev = (prev + 1 + R(LANES - 1)) % LANES); B.warns.push({ kind: 'rainshot', lane, delay: k * 0.5, t: 0.8 - 0.1 * er }); }
     B.tx = prev;
   } else {
-    const n = Math.min(LANES - 1, 1 + Math.floor(er * 3)), lanes = new Set([clamp(G.tgt, 0, LANES - 1)]);
+    // rayos sueltos: 1 carril (2 cuando está enfadado), nunca los 3, con 1,5 s de aviso para poder moverte
+    const n = Math.min(2, 1 + Math.floor(er * 1.8)), lanes = new Set([clamp(G.tgt, 0, LANES - 1)]);
     while (lanes.size < n) lanes.add(R(LANES));
-    for (const l of lanes) B.warns.push({ kind: 'strike', lane: l, delay: 0, t: 0.85 - 0.15 * er });
+    for (const l of lanes) B.warns.push({ kind: 'strike', lane: l, delay: 0, t: 1.5 - 0.2 * er });
     B.tx = [...lanes][0];
   }
   if (Math.random() < 0.28 * er && kind !== 'sweep' && kind !== 'rain') B.warns.push({ kind: 'shot', lane: null, delay: 0.9, t: 0.7, pick: 0 });   // golpe doble cuando está enfadado
   B.cool = def.cool - 1.1 * er - Math.min(0.7, B.lvl * 0.06);
-  B.giftIn = kind === 'sweep' || kind === 'rain' ? 2.2 : 1.0;
+  if (kind === 'sweep') B.cool += 1.4;   // tras una barrida, un respiro antes del siguiente ataque
+  B.giftIn = kind === 'sweep' ? 3.0 : kind === 'rain' ? 2.2 : 1.0;
   Sound.sfx('warn');
 }
 function spawnGift(){
@@ -102,7 +105,7 @@ function updateBoss(dt){
     w.t -= dt;
     if (w.t <= 0){
       B.warns.splice(i, 1);
-      if (w.kind === 'strike'){ B.haz.push({ lane: w.lane, act: 0.5, hit: false }); Sound.sfx('zap'); G.lightning = 0.18; G.shake = Math.max(G.shake, 6); }
+      if (w.kind === 'strike'){ B.haz.push({ lane: w.lane, act: 0.35, hit: false }); Sound.sfx('zap'); G.lightning = 0.18; G.shake = Math.max(G.shake, 6); }
       else { B.projs.push({ lane: w.lane, z: BOSS_Z - 1, v: spd, done: false, seed: Math.random() * 9 }); if (w.kind === 'shot' || w.kind === 'rainshot') Sound.sfx('whoosh'); }
     }
   }
@@ -113,7 +116,7 @@ function updateBoss(dt){
   }
   for (let i = B.haz.length - 1; i >= 0; i--){
     const h = B.haz[i]; h.act -= dt;
-    if (!h.hit && Math.abs(h.lane - G.x) < 0.6 && G.inv <= 0 && G.fallT <= 0){ h.hit = true; hurt({ type: 'storm' }); }
+    if (!h.hit && Math.abs(h.lane - G.x) < 0.5 && G.inv <= 0 && G.fallT <= 0){ h.hit = true; hurt({ type: 'storm' }); }
     if (h.act <= 0) B.haz.splice(i, 1);
   }
   for (let i = B.gifts.length - 1; i >= 0; i--){
