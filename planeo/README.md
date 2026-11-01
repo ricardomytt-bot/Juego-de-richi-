@@ -54,6 +54,8 @@ Todos ocupan un carril, tienen contorno grueso y una **placa de color en el suel
 El nombre que escribes en el menú sustituye a "Nuki" en **todos los diálogos y cinemáticas** (etiqueta, texto y pantalla de historia). Si lo dejas vacío, se llama Nuki.
 
 ## Gráficos en 3D (estilo caricatura)
+Todos los modelos son **redondeados** (esferas suaves y cajas de esquinas blandas); la abeja es un círculo con aros de rayas y mejillas rosas. La tierra es un terreno suave con campos de bordes curvos, surcos, ríos y lagos (sin cuadrículas).
+
 Contorno negro de dibujo animado por detección de bordes en la profundidad (post-proceso), sombreado de dibujo animado con saltos de luz marcados, color más vivo y contornos más gruesos en los modelos. Se desactiva solo si el dispositivo va justo.
 
 El mundo se dibuja con **Three.js (WebGL)**: cámara en perspectiva detrás del avión, modelos con volumen (avión, ardilla, 10 enemigos, 3 jefes,

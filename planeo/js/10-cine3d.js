@@ -79,15 +79,19 @@ function addIsland(parent, o){
   const rock = [T3(GEO.cone(), 0x8d7a9d, [0, -6.5, 0], [17, 13, 17], [Math.PI, 0, 0], { f: true }), T3(GEO.cone(), 0x6e5d80, [-4.5, -9.5, 2], [6, 8, 6], [Math.PI, 0, 0.15], { f: true }), T3(GEO.cone(), 0x7a688c, [4.2, -8.4, -2.5], [5, 7, 5], [Math.PI, 0, -0.2], { f: true }), T3(GEO.cone(), 0x5e4e70, [0.5, -12, 0], [3.5, 5, 3.5], [Math.PI, 0, 0], { f: true }),
     T3(GEO.cyl(), 0x6aa04e, [0, 0.05, 0], [17.6, 0.7, 17.6]), T3(GEO.cyl(), 0x78d86b, [0, 0.6, 0], [17, 0.9, 17]), T3(GEO.cyl(), 0x8ae07a, [0, 1.0, 0], [14.5, 0.4, 14.5])];
   g.add(build(rock, { center: false, outline: 1.02 }));
-  // casas con ventanas que se encienden
-  [[-5.4, 1.2, 3.2, 0xf4dcae, 0xe0583f, 0.3], [-1.8, 1.2, 5.2, 0xf6e6c4, 0x4a79c9, -0.2], [2.8, 1.2, 4.3, 0xf2d1b0, 0xd9a43f, 0.15], [-6.2, 1.2, -1.8, 0xf6e6c4, 0x8a5ad6, 0.6]].forEach(h => {
-    const hh = build([T3(GEO.box(), h[3], [0, 1.1, 0], [3.4, 2.2, 3.0]), T3(GEO.cone4(), h[4], [0, 3.0, 0], [4.9, 1.9, 4.5], [0, Math.PI / 4, 0], { f: true }), T3(GEO.box(), 0x7a5235, [1.0, 3.3, -0.4], [0.5, 1.0, 0.5]), T3(GEO.box(), 0x6a4020, [0.6, 0.8, 1.52], [0.8, 1.5, 0.08])], { center: false, outline: 1.04 });
+  // casitas pequeñas repartidas por la isla (la isla es mucho más grande que cada casa), con caminos y vallas
+  const HS = [[-6.4, -0.6, 0xf4dcae, 0xe0583f, 0.3], [-3.6, 4.2, 0xf6e6c4, 0x4a79c9, -0.3], [0.2, 6.4, 0xf2d1b0, 0xd9a43f, 0.1], [3.8, 4.0, 0xf6e6c4, 0x8a5ad6, 0.4], [-7.2, 3.0, 0xf2d1b0, 0x5ab36a, 0.9], [-2.0, -4.6, 0xf4dcae, 0xe0583f, -0.5], [1.6, -5.4, 0xf6e6c4, 0x4a79c9, 0.2], [-5.6, -4.4, 0xf2d1b0, 0xd9a43f, 0.7]];
+  HS.forEach(h => {
+    const hh = build([T3(GEO.rbox(), h[2], [0, 1.1, 0], [3.4, 2.2, 3.0]), T3(GEO.cone4(), h[3], [0, 3.0, 0], [4.9, 1.9, 4.5], [0, Math.PI / 4, 0], { f: true }), T3(GEO.box(), 0x7a5235, [1.0, 3.3, -0.4], [0.5, 1.0, 0.5]), T3(GEO.rbox(), 0x6a4020, [0.6, 0.8, 1.52], [0.8, 1.5, 0.08])], { center: false, outline: 1.04 });
     const w = new THREE.Mesh(GEO.box(), new THREE.MeshBasicMaterial({ color: 0xffd86b })); w.scale.set(0.9, 0.9, 0.08); w.position.set(-0.9, 1.3, 1.53); hh.add(w); U.wins.push(w);
-    hh.position.set(h[1] * 0 + h[0], h[1] + 0.9, h[2]); hh.rotation.y = h[5]; hh.scale.setScalar(0.95); g.add(hh); });
+    hh.position.set(h[0], 1.15, h[1]); hh.rotation.y = h[4]; hh.scale.setScalar(0.42); g.add(hh); });
+  // caminos y farolas
+  g.add(build([T3(GEO.cyl(), 0xe8d5a8, [-1.5, 1.28, 2.0], [9.0, 0.08, 2.0], [0, 0.3, 0]), T3(GEO.cyl(), 0xe8d5a8, [-3.4, 1.28, 0.6], [6.0, 0.08, 1.6], [0, -0.8, 0]), T3(GEO.cyl(), 0xe8d5a8, [1.2, 1.28, -1.8], [6.0, 0.08, 1.6], [0, 1.0, 0])], { center: false, outline: 0 }));
+  for (let i = 0; i < 8; i++){ const a = i / 8 * Math.PI * 2, f = build([T3(GEO.cyl(), 0xc9a45a, [0, 0.35, 0], [0.08, 0.7, 0.08]), T3(GEO.sph(), 0xffe08a, [0, 0.75, 0], [0.22, 0.22, 0.22], [0, 0, 0], { e: true })], { center: false, outline: 0 }); f.position.set(Math.cos(a) * 7.4, 1.2, Math.sin(a) * 7.4); g.add(f); }
   // gran árbol con las tres bellotas doradas
   const tree = build([T3(GEO.cyl(), 0x7a5235, [0, 2.6, 0], [1.3, 5.2, 1.3]), T3(GEO.ico(), 0x3f9d5a, [0, 6.0, 0], [8.4, 6.8, 8.4], [0, 0.3, 0], { f: true }), T3(GEO.ico(), 0x4fb36a, [-0.6, 8.4, 0.2], [6.2, 5.2, 6.2], [0, 0.9, 0], { f: true }), T3(GEO.ico(), 0x68c97c, [0.4, 10.3, 0], [4.0, 3.4, 4.0], [0, 0.5, 0], { f: true })], { center: false, outline: 1.025 });
-  tree.position.set(5.5, 1.2, -1.5); g.add(tree);
-  [[3.0, 4.6, 3.6], [7.4, 6.2, 3.2], [5.2, 9.0, 3.0]].forEach((a, i) => { const ac = MK.gold.make(); ac.scale.setScalar(1.7); ac.position.set(a[0], a[1], a[2] - 1.5 + 1.5); g.add(ac); U.acorns.push(ac); });
+  tree.position.set(5.5, 1.2, -1.5); tree.scale.setScalar(0.8); g.add(tree);
+  [[3.0, 4.6, 3.6], [7.4, 6.2, 3.2], [5.2, 9.0, 3.0]].forEach((a, i) => { const ac = MK.gold.make(); ac.scale.setScalar(1.7); ac.position.set(5.5 + 0.8 * (a[0] - 5.5), 1.2 + 0.8 * (a[1] - 1.2), -1.5 + 0.8 * (a[2] + 1.5)); g.add(ac); U.acorns.push(ac); });
   // cascadas
   const wf = new THREE.Mesh(new THREE.BoxGeometry(1.3, 9, 0.5), new THREE.MeshBasicMaterial({ color: 0xcfeeff, transparent: true, opacity: 0.55 })); wf.position.set(-8.2, -3.2, 3.5); wf.rotation.z = 0.12; g.add(wf);
   const wf2 = wf.clone(); wf2.position.set(7.5, -2.5, 4.2); wf2.scale.y = 0.7; g.add(wf2);
@@ -133,10 +137,10 @@ const SCENES = {
       h.add(build([T3(GEO.box(), 0x4a3220, [-20, 5, -11], [8, 0.4, 3]), T3(GEO.box(), 0x4a3220, [-20, 9, -11], [8, 0.4, 3]), T3(GEO.box(), 0xc9483a, [-22, 6.2, -11], [2, 2, 2]), T3(GEO.cyl(), 0x7d89d4, [-19, 6.1, -11], [1.2, 1.8, 1.2]), T3(GEO.box(), 0xffd23f, [-21, 10.2, -11], [2.4, 1.8, 2]), T3(GEO.box(), 0x3f9bff, [-17.8, 10.2, -11], [1.6, 1.6, 1.6]),
         T3(GEO.cyl(), 0x8a5a2a, [18, 1.2, -9], [3, 2.4, 3]), T3(GEO.cyl(), 0x8a5a2a, [21.5, 1.2, -8], [2.6, 2.4, 2.6]), T3(GEO.box(), 0xd9a43f, [16, 1.5, -6], [3, 3, 3])], { center: false, outline: 1.04 }));
       // el avioncito del hangar
-      o.plane = buildPlaneModel(curSkin(), false); o.plane.scale.setScalar(2.1); o.plane.position.set(0, 3.2, -3); o.plane.rotation.y = 0; h.add(o.plane); o.shadow = new THREE.Mesh(new THREE.CircleGeometry(6, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false })); o.shadow.position.set(0, 0.06, -3); h.add(o.shadow);
+      o.plane = buildPlaneModel(curSkin(), false, true); o.plane.scale.setScalar(2.1); o.plane.position.set(0, 3.2, -3); o.plane.rotation.y = 0; h.add(o.plane); o.shadow = new THREE.Mesh(new THREE.CircleGeometry(6, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35, depthWrite: false })); o.shadow.position.set(0, 0.06, -3); h.add(o.shadow);
       o.nuki = buildFigure(curSkin()); o.nuki.scale.setScalar(2.4); o.nuki.position.set(-8.5, 0, 4); o.nuki.userData.baseRot = 0.45; h.add(o.nuki);
       o.abu = buildFigure(SKIN_BY.abuelo); o.abu.scale.setScalar(2.35); o.abu.position.set(8.5, 0, 4); o.abu.userData.baseRot = -0.45; h.add(o.abu); return o; },
-    show(o, s){ o.nuki.parent.remove(o.nuki); o.nuki = buildFigure(curSkin()); o.nuki.scale.setScalar(2.4); o.nuki.position.set(-8.5, 0, 4); o.nuki.userData.baseRot = 0.45; o.h.add(o.nuki); o.plane.parent.remove(o.plane); o.plane = buildPlaneModel(curSkin(), false); o.plane.scale.setScalar(2.1); o.plane.position.set(0, 3.2, -3); o.h.add(o.plane); },
+    show(o, s){ o.nuki.parent.remove(o.nuki); o.nuki = buildFigure(curSkin()); o.nuki.scale.setScalar(2.4); o.nuki.position.set(-8.5, 0, 4); o.nuki.userData.baseRot = 0.45; o.h.add(o.nuki); o.plane.parent.remove(o.plane); o.plane = buildPlaneModel(curSkin(), false, true); o.plane.scale.setScalar(2.1); o.plane.position.set(0, 3.2, -3); o.h.add(o.plane); },
     update(o, s, t, dt, speak){ const sp = s.who === 'Nuki' ? 'n' : s.who === 'Abuelo' ? 'a' : ''; animFigure(o.nuki, C3.T, sp === 'n' ? speak : 0, sp === 'n' ? s.mood : 'happy', 0.5); animFigure(o.abu, C3.T + 1, sp === 'a' ? speak : 0, sp === 'a' ? s.mood : 'happy', -0.5);
       o.plane.userData.prop.rotation.z = C3.T * 6; o.plane.userData.scarf.rotation.y = Math.sin(C3.T * 3) * 0.3; o.plane.position.y = 3.2 + Math.sin(C3.T * 1.1) * 0.12; o.skyTex.offset.x = (C3.T * 0.01) % 1;
       const fx = sp === 'n' ? -3.2 : sp === 'a' ? 3.2 : 0, k = smooth(Math.min(1, t / 8)); camTo(fx * 0.8 + Math.sin(C3.T * 0.3) * 0.8, lerp(9, 7.5, k), lerp(30, 24.5, k), fx * 0.5, 5.6, 0); } },

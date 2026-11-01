@@ -28,31 +28,28 @@ function initModels(){
   const brows = (x, y, z, w, ang, c) => [pt(GEO.box(), c || 0x14162e, [-x, y, z], [w, w * 0.2, w * 0.2], [0, 0, -ang]), pt(GEO.box(), c || 0x14162e, [x, y, z], [w, w * 0.2, w * 0.2], [0, 0, ang])];
 
   /* ============ bloques ============ */
-  MK.crystal = { make(){
-    const g = build([pt(GEO.cone6(), 0x58c4ff, [0, 0.2, 0], [1.05, 2.3, 1.05], [0, 0, 0], { f: true }), pt(GEO.cone6(), 0x2a8fe0, [0, -1.0, 0], [1.05, 0.7, 1.05], [Math.PI, 0, 0], { f: true }),
-      pt(GEO.cone6(), 0x7fdcff, [-0.72, -0.1, 0.15], [0.7, 1.5, 0.7], [0, 0.4, 0.38], { f: true }), pt(GEO.cone6(), 0x4aa8f0, [0.7, -0.15, -0.1], [0.65, 1.35, 0.65], [0.1, 0, -0.42], { f: true }),
-      pt(GEO.oct(), 0xe6ffff, [0, 0.25, 0.05], [0.35, 0.8, 0.35], [0, 0, 0], { e: true })], { outline: 1.07 });
+  MK.crystal = { make(){   // gema redondeada, tipo gota de hielo
+    const g = build([pt(GEO.sph(), 0x6fd0ff, [0, 0.2, 0], [1.7, 2.6, 1.7]), pt(GEO.sph(), 0xa8e8ff, [-0.45, 0.8, 0.5], [0.55, 0.9, 0.5]), pt(GEO.sph(), 0x4aa8f0, [-0.85, -0.25, 0.1], [1.0, 1.6, 1.0], [0, 0, 0.35]), pt(GEO.sph(), 0x4aa8f0, [0.85, -0.2, -0.1], [0.95, 1.5, 0.95], [0, 0, -0.35]),
+      pt(GEO.sph(), 0xe6ffff, [0.1, 1.55, 0.2], [0.45, 0.45, 0.45], [0, 0, 0], { e: true })], { outline: 1.05 });
     g.add(glowSprite(0x6fe0ff, 4.2, 0.35)); return g; },
     anim(g, ob, t){ g.rotation.y = Math.sin(t * 0.8 + ob.v * 6) * 0.25; g.children[g.children.length - 1].material.opacity = 0.28 + 0.12 * Math.sin(t * 3 + ob.v * 9); } };
   MK.thunderbox = { make(){
-    const parts = [pt(GEO.box(), 0x4b3fa8, [0, 0, 0], [1.9, 1.9, 1.9]), pt(GEO.box(), 0x8d82d6, [0, 0.99, 0], [1.98, 0.14, 1.98]), pt(GEO.box(), 0x2d2566, [0, -0.99, 0], [1.98, 0.14, 1.98])];
-    for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) parts.push(pt(GEO.sph(), 0xc9c4f5, [sx * 0.88, sy * 0.88, sz * 0.88], [0.22, 0.22, 0.22]));
-    parts.push(pt(BOLT, 0xffe94d, [0, 0, 0.97], [1.3, 1.3, 1], [0, 0, 0], { e: true }), pt(BOLT, 0xffe94d, [0, 0, -0.97], [1.3, 1.3, 1], [0, Math.PI, 0], { e: true }));
+    const parts = [pt(GEO.rbox(), 0x5a4fc0, [0, 0, 0], [2.0, 2.0, 2.0]), pt(GEO.rbox(), 0x8d82e6, [0, 0.93, 0], [1.8, 0.35, 1.8])];
+    parts.push(pt(BOLT, 0xffe94d, [0, 0, 1.02], [1.3, 1.3, 1], [0, 0, 0], { e: true }), pt(BOLT, 0xffe94d, [0, 0, -1.02], [1.3, 1.3, 1], [0, Math.PI, 0], { e: true }));
+    for (const sx of [-1, 1]) for (const sy of [-1, 1]) parts.push(pt(GEO.sph(), 0xd9d4ff, [sx * 0.8, sy * 0.8, 1.0], [0.24, 0.24, 0.24]));
     const g = build(parts, { outline: 1.05 }); g.add(glowSprite(0xffe055, 5, 0.4)); return g; },
     anim(g, ob, t){ g.children[g.children.length - 1].material.opacity = 0.25 + 0.2 * (0.5 + 0.5 * Math.sin(t * 6 + ob.v * 9)); } };
-  MK.crate = { ground: true, make(){
-    const parts = [pt(GEO.box(), 0xd99a45, [0, 0, 0], [1.9, 1.9, 1.9])];
-    for (const y of [-0.3, 0.3]) parts.push(pt(GEO.box(), 0x9a6226, [0, y, 0], [1.94, 0.09, 1.94]));
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) parts.push(pt(GEO.box(), 0x8a5420, [sx * 0.93, 0, sz * 0.93], [0.17, 1.96, 0.17]));
-    for (const sz of [-1, 1]) for (const a of [0.78, -0.78]) parts.push(pt(GEO.box(), 0x8a5420, [0, 0, sz * 0.96], [0.13, 2.45, 0.06], [0, 0, a]));
-    for (const sx of [-1, 1]) for (const a of [0.78, -0.78]) parts.push(pt(GEO.box(), 0x8a5420, [sx * 0.96, 0, 0], [0.06, 2.45, 0.13], [a, 0, 0]));
-    for (let i = 0; i < 8; i++) for (const sz of [-1, 1]) parts.push(pt(GEO.box(), i % 2 ? 0xffffff : 0xe8383d, [-0.84 + i * 0.24, 0.8, sz * 0.97], [0.24, 0.3, 0.07]));
-    parts.push(pt(TRI, 0xffdd33, [0, -0.1, 0.99], [0.95, 0.07, 0.85], [Math.PI / 2, 0, Math.PI], { f: true }), pt(GEO.box(), 0x14162e, [0, -0.12, 1.04], [0.1, 0.3, 0.04]), pt(GEO.sph(), 0x14162e, [0, -0.34, 1.04], [0.12, 0.12, 0.05]));
-    return build(parts, { outline: 1.045 }); } };
-  MK.spikerock = { ground: true, make(){
-    const parts = [pt(GEO.dod(), 0x7d82a8, [0, 0, 0], [2.0, 1.55, 2.0], [0, 0.4, 0], { f: true })];
-    const dirs = [[0, 1, 0.1], [0.7, 0.8, 0.3], [-0.7, 0.8, 0.3], [0.55, 0.7, -0.6], [-0.55, 0.7, -0.6], [0.2, 0.55, 0.9], [-0.25, 0.5, 0.9], [0, 0.4, -1]];
-    dirs.forEach(d => { const n = new THREE.Vector3(d[0], d[1], d[2]).normalize(), r = aim(n.x, n.y, n.z), base = [n.x * 0.78, n.y * 0.62, n.z * 0.78]; parts.push(pt(GEO.cone(), 0xeef2ff, [base[0] + n.x * 0.35, base[1] + n.y * 0.35, base[2] + n.z * 0.35], [0.32, 1.0, 0.32], r), pt(GEO.sph(), 0xff4a4a, [base[0] + n.x * 0.82, base[1] + n.y * 0.82, base[2] + n.z * 0.82], [0.13, 0.13, 0.13])); });
+  MK.crate = { ground: true, make(){   // caja de madera blandita
+    const parts = [pt(GEO.rbox(), 0xe3a24d, [0, 0, 0], [2.0, 2.0, 2.0])];
+    for (const y of [-0.45, 0.45]) parts.push(pt(GEO.rbox(), 0xb87430, [0, y, 0], [2.08, 0.26, 2.08]));
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) parts.push(pt(GEO.rbox(), 0xb87430, [sx * 0.9, 0, sz * 0.9], [0.34, 2.06, 0.34]));
+    for (let i = 0; i < 6; i++) for (const sz of [-1, 1]) parts.push(pt(GEO.rbox(), i % 2 ? 0xffffff : 0xf0545a, [-0.75 + i * 0.3, 0.86, sz * 0.98], [0.3, 0.3, 0.12]));
+    parts.push(pt(GEO.sph(), 0xffdd33, [0, -0.15, 1.04], [0.62, 0.62, 0.14]), pt(GEO.rbox(), 0x14162e, [0, -0.1, 1.1], [0.1, 0.3, 0.05]), pt(GEO.sph(), 0x14162e, [0, -0.34, 1.1], [0.1, 0.1, 0.05]));
+    return build(parts, { outline: 1.04 }); } };
+  MK.spikerock = { ground: true, make(){   // roca redonda con pinchos gorditos de punta redonda
+    const parts = [pt(GEO.sph(), 0x8a90bc, [0, 0, 0], [2.2, 1.9, 2.2]), pt(GEO.sph(), 0xaab0d8, [-0.5, 0.5, 0.5], [0.9, 0.6, 0.6])];
+    const dirs = [[0, 1, 0.1], [0.75, 0.75, 0.3], [-0.75, 0.75, 0.3], [0.55, 0.6, -0.6], [-0.55, 0.6, -0.6], [0.25, 0.4, 0.9], [-0.3, 0.4, 0.9], [0, 0.35, -1]];
+    dirs.forEach(d => { const n = new THREE.Vector3(d[0], d[1], d[2]).normalize(), r = aim(n.x, n.y, n.z); parts.push(pt(GEO.cone(), 0xf4f6ff, [n.x * 1.1, n.y * 0.95 + 0.0, n.z * 1.1], [0.5, 0.95, 0.5], r), pt(GEO.sph(), 0xff6a6a, [n.x * 1.45, n.y * 1.3, n.z * 1.45], [0.22, 0.22, 0.22])); });
     return build(parts, { outline: 1.05 }); } };
 
   /* ============ enemigos del cielo ============ */
@@ -161,11 +158,11 @@ function initModels(){
 
   /* ============ decorado ============ */
   const leafCols = () => { const c = THEME.leaf && THEME.leaf[0] === '#' ? THEME.leaf : '#3f9d5a'; const n = parseInt(c.slice(1), 16), r = n >> 16, gg = (n >> 8) & 255, b = n & 255, sh = k => ((clamp(r + k, 0, 255) << 16) | (clamp(gg + k, 0, 255) << 8) | clamp(b + k, 0, 255)); return [sh(-28), sh(0), sh(34)]; };
-  MK.stree = { ground: true, make(){ const c = leafCols(); return build([pt(GEO.cyl(), 0x7a5235, [0, 0.9, 0], [0.5, 1.8, 0.5]), pt(GEO.ico(), c[0], [0, 2.3, 0], [3.0, 2.6, 3.0], [0, 0.3, 0], { f: true }), pt(GEO.ico(), c[1], [0, 3.6, 0], [2.4, 2.2, 2.4], [0, 0.9, 0], { f: true }), pt(GEO.ico(), c[2], [0, 4.7, 0], [1.6, 1.6, 1.6], [0, 0.5, 0], { f: true })], { outline: 1.035 }); } };
+  MK.stree = { ground: true, make(){ const c = leafCols(); return build([pt(GEO.cyl(), 0x7a5235, [0, 0.9, 0], [0.5, 1.8, 0.5]), pt(GEO.ico0(), c[0], [0, 2.3, 0], [3.0, 2.6, 3.0], [0, 0.3, 0], { f: true }), pt(GEO.ico0(), c[1], [0, 3.6, 0], [2.4, 2.2, 2.4], [0, 0.9, 0], { f: true }), pt(GEO.ico0(), c[2], [0, 4.7, 0], [1.6, 1.6, 1.6], [0, 0.5, 0], { f: true })], { outline: 1.035 }); } };
   MK.srock = { ground: true, make(){ return build([pt(GEO.ico(), 0x9aa3b5, [0, 0, 0], [2.2, 1.4, 2.0], [0, 0.4, 0], { f: true }), pt(GEO.ico(), 0xb9c1d1, [-0.5, 0.35, 0.3], [0.9, 0.6, 0.8], [0, 0, 0], { f: true })], { outline: 1.05 }); } };
   MK.flower = { ground: true, make(){ const cols = [0xff7aa8, 0xffd23f, 0xffffff, 0xb58cff]; const col = cols[Math.floor(Math.random() * 4)]; const parts = [pt(GEO.cyl(), 0x3f9d5a, [0, 0.45, 0], [0.07, 0.9, 0.07])]; for (let i = 0; i < 5; i++){ const a = i * TAU3 / 5; parts.push(pt(GEO.sphL(), col, [Math.cos(a) * 0.22, 0.95, Math.sin(a) * 0.22], [0.26, 0.26, 0.26])); } parts.push(pt(GEO.sphL(), 0xfff3a0, [0, 0.98, 0], [0.22, 0.22, 0.22])); return build(parts, { outline: 0 }); } };
   MK.tuft = { ground: true, make(){ const parts = []; for (let i = -2; i <= 2; i++) parts.push(pt(GEO.cone(), 0x3a9a4a, [i * 0.1, 0.35, 0], [0.12, 0.7 - Math.abs(i) * 0.1, 0.12], [0, 0, -i * 0.18])); return build(parts, { outline: 0 }); } };
-  MK.puff = { make(){ const parts = [pt(GEO.sph(), 0xffffff, [0, 0, 0], [3, 2.2, 2.6]), pt(GEO.sph(), 0xffffff, [-1.5, -0.2, 0.2], [2.2, 1.7, 2.0]), pt(GEO.sph(), 0xffffff, [1.6, -0.1, 0], [2.4, 1.8, 2.1]), pt(GEO.sph(), 0xffffff, [0.2, 0.8, 0.1], [2.2, 1.9, 2.0]), pt(GEO.sph(), 0xd6e0f5, [0, -0.7, 0], [4.2, 1.0, 2.6])]; return build(parts, { outline: 0 }); } };
+  MK.puff = { make(){ const parts = [pt(GEO.sphM(), 0xffffff, [0, 0, 0], [3, 2.2, 2.6]), pt(GEO.sphM(), 0xffffff, [-1.5, -0.2, 0.2], [2.2, 1.7, 2.0]), pt(GEO.sphM(), 0xffffff, [1.6, -0.1, 0], [2.4, 1.8, 2.1]), pt(GEO.sphM(), 0xffffff, [0.2, 0.8, 0.1], [2.2, 1.9, 2.0]), pt(GEO.sphM(), 0xd6e0f5, [0, -0.7, 0], [4.2, 1.0, 2.6])]; return build(parts, { outline: 0 }); } };
   MK.balloon = { make(){
     const parts = [], cols = [[0xff5a4a, 0xffd23f], [0x4aa3ff, 0xffffff], [0x7bdc65, 0xffd23f], [0xc78bff, 0xffffff]][Math.floor(Math.random() * 4)];
     for (let i = 0; i < 8; i++) parts.push(pt(GC('balseg' + i, () => new THREE.SphereGeometry(0.5, 8, 10, i * Math.PI / 4, Math.PI / 4)), i % 2 ? cols[1] : cols[0], [0, 1.9, 0], [3.4, 4.0, 3.4]));
@@ -185,7 +182,7 @@ function initModels(){
     g.userData.hy = 0; return g; },
     anim(g, ob, t){ g.userData.birds.forEach((b, i) => { const f = Math.sin(t * 7 + i * 1.7 + ob.v * 6) * 0.6; b[0].rotation.z = f; b[1].rotation.z = -f; }); } };
   MK.house = { ground: true, make(){ const wall = [0xf4dcae, 0xf6e6c4, 0xf2d1b0][Math.floor(Math.random() * 3)], roof = [0xe0583f, 0x4a79c9, 0x8a5ad6][Math.floor(Math.random() * 3)];
-    return build([pt(GEO.box(), wall, [0, 1.1, 0], [3.4, 2.2, 3.0]), pt(GEO.cone4(), roof, [0, 3.0, 0], [4.9, 1.9, 4.5], [0, Math.PI / 4, 0]), pt(GEO.box(), 0x7a5235, [1.0, 3.3, -0.4], [0.5, 1.0, 0.5]), pt(GEO.box(), 0x7a5235, [0.6, 0.8, 1.52], [0.8, 1.5, 0.08]), pt(GEO.box(), 0xffd86b, [-0.9, 1.3, 1.52], [0.8, 0.8, 0.08], [0, 0, 0], { e: true })], { outline: 1.03 }); } };
+    return build([pt(GEO.rbox(), wall, [0, 1.1, 0], [3.4, 2.2, 3.0]), pt(GEO.cone4(), roof, [0, 3.0, 0], [4.9, 1.9, 4.5], [0, Math.PI / 4, 0]), pt(GEO.box(), 0x7a5235, [1.0, 3.3, -0.4], [0.5, 1.0, 0.5]), pt(GEO.box(), 0x7a5235, [0.6, 0.8, 1.52], [0.8, 1.5, 0.08]), pt(GEO.box(), 0xffd86b, [-0.9, 1.3, 1.52], [0.8, 0.8, 0.08], [0, 0, 0], { e: true })], { outline: 1.03 }); } };
   MK.windmill = { ground: true, make(){ const g = new THREE.Group();
     const tower = build([pt(FRUST, 0xf2ead8, [0, 2.4, 0], [2.4, 4.8, 2.4]), pt(GEO.cone(), 0xd9533f, [0, 5.4, 0], [2.6, 1.6, 2.6])], { center: false, outline: 1.03 });
     const blades = build([0, 1, 2, 3].flatMap(i => [pt(GEO.box(), 0xffffff, [Math.cos(i * Math.PI / 2) * 1.7, Math.sin(i * Math.PI / 2) * 1.7, 0], [i % 2 ? 0.7 : 3.2, i % 2 ? 3.2 : 0.7, 0.1])]), { center: false, outline: 1.04 }); blades.position.set(0, 4.7, 1.3);

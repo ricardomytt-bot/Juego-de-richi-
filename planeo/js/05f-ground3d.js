@@ -18,17 +18,17 @@ function gpInst(geo, mat, n, outline){
 function groundPropsInit(){
   if (GP.ok || typeof THREE === 'undefined') return;
   const T = (g, c, p, s, r, f) => pt(g, c, p, s, r, { f });
-  const CYL6 = gcache('gp_cyl6', () => new THREE.CylinderGeometry(0.5, 0.5, 1, 6)), CON7 = gcache('gp_con7', () => new THREE.ConeGeometry(0.5, 1, 7)), ICO0 = GEO.ico0();
+  const CYL6 = gcache('gp_cyl6', () => new THREE.CylinderGeometry(0.5, 0.5, 1, 6)), CON7 = gcache('gp_con7', () => new THREE.ConeGeometry(0.5, 1, 7)), ICO0 = gcache('gp_lowsph', () => smoothG(new THREE.SphereGeometry(0.5, 8, 5)));
   // árbol redondo y pino (se tiñen con el color del mundo mediante instanceColor)
   const round = gpMerge([T(CYL6, 0x7a5235, [0, 0.9, 0], [0.5, 1.8, 0.5]), T(ICO0, 0xffffff, [0, 2.3, 0], [3.0, 2.6, 3.0], [0, 0.3, 0], true), T(ICO0, 0xe8ffe8, [0, 3.6, 0], [2.4, 2.2, 2.4], [0, 0.9, 0], true), T(ICO0, 0xd0ffd8, [0, 4.7, 0], [1.6, 1.6, 1.6], [0, 0.5, 0], true)]);
   const pine = gpMerge([T(CYL6, 0x6a4a30, [0, 0.8, 0], [0.45, 1.6, 0.45]), T(CON7, 0xffffff, [0, 2.5, 0], [3.0, 2.6, 3.0], [0, 0.3, 0], true), T(CON7, 0xeeffee, [0, 4.0, 0], [2.4, 2.4, 2.4], [0, 0.9, 0], true), T(CON7, 0xd8ffe0, [0, 5.4, 0], [1.6, 2.2, 1.6], [0, 0.5, 0], true)]);
   const houseGeo = (wall, roof) => gpMerge([T(GEO.box(), wall, [0, 1.1, 0], [3.4, 2.2, 3.0]), T(GEO.cone4(), roof, [0, 3.0, 0], [4.9, 1.9, 4.5], [0, Math.PI / 4, 0], true), T(GEO.box(), 0x7a5235, [1.0, 3.3, -0.4], [0.5, 1.0, 0.5]), T(GEO.box(), 0x6a4020, [0.6, 0.8, 1.52], [0.8, 1.5, 0.08]), pt(GEO.box(), 0xffd86b, [-0.9, 1.3, 1.52], [0.8, 0.8, 0.08], [0, 0, 0], { e: true })]);
   const barn = gpMerge([T(GEO.box(), 0xc9483a, [0, 1.5, 0], [4.6, 3.0, 5.6]), T(GEO.cone4(), 0x6a4a3a, [0, 4.0, 0], [6.4, 2.0, 7.4], [0, Math.PI / 4, 0], true), T(GEO.box(), 0xffffff, [0, 1.4, 2.82], [2.2, 2.4, 0.08]), T(GEO.box(), 0x8a2a20, [0, 1.4, 2.86], [0.18, 2.4, 0.06])]);
-  const silo = gpMerge([T(GEO.cyl(), 0xd9dde8, [0, 2.4, 0], [1.9, 4.8, 1.9]), T(GEO.sph(), 0x9aa3b8, [0, 4.9, 0], [1.9, 1.3, 1.9])]);
-  const wm = gpMerge([T(GEO.cone(), 0xf2ead8, [0, 2.6, 0], [2.4, 5.2, 2.4], [0, 0, 0], true), T(GEO.cone(), 0xd9533f, [0, 5.7, 0], [2.7, 1.7, 2.7])]);
+  const silo = gpMerge([T(CYL6, 0xd9dde8, [0, 2.4, 0], [1.9, 4.8, 1.9]), T(ICO0, 0x9aa3b8, [0, 4.9, 0], [1.9, 1.3, 1.9])]);
+  const wm = gpMerge([T(CON7, 0xf2ead8, [0, 2.6, 0], [2.4, 5.2, 2.4], [0, 0, 0], true), T(CON7, 0xd9533f, [0, 5.7, 0], [2.7, 1.7, 2.7])]);
   const blades = gpMerge([0, 1, 2, 3].map(i => T(GEO.box(), 0xffffff, [Math.cos(i * Math.PI / 2) * 1.7, Math.sin(i * Math.PI / 2) * 1.7, 0], [i % 2 ? 0.7 : 3.4, i % 2 ? 3.4 : 0.7, 0.1])));
   const rock = gpMerge([T(ICO0, 0xaab2c4, [0, 0.4, 0], [2.4, 1.6, 2.2], [0, 0.4, 0], true), T(ICO0, 0xc4cada, [-0.5, 0.7, 0.4], [1.0, 0.7, 0.9], [0, 0, 0], true)]);
-  const hay = gpMerge([T(GEO.cyl(), 0xe8c85a, [0, 0.7, 0], [1.4, 1.4, 1.4], [Math.PI / 2, 0, 0]), T(GEO.cyl(), 0xf0d878, [0, 0.7, 0.6], [1.0, 0.05, 1.0], [Math.PI / 2, 0, 0])]);
+  const hay = gpMerge([T(CYL6, 0xe8c85a, [0, 0.7, 0], [1.4, 1.4, 1.4], [Math.PI / 2, 0, 0]), T(CYL6, 0xf0d878, [0, 0.7, 0.6], [1.0, 0.05, 1.0], [Math.PI / 2, 0, 0])]);
   const tree = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: LT.grad });
   GP.round = gpInst(round, tree, 1400, false); GP.pine = gpInst(pine, tree, 1400, false);
   GP.h1 = gpInst(houseGeo(0xf4dcae, 0xe0583f), MAT.toon, 400, true); GP.h2 = gpInst(houseGeo(0xf6e6c4, 0x4a79c9), MAT.toon, 400, true); GP.h3 = gpInst(houseGeo(0xf2d1b0, 0x8a5ad6), MAT.toon, 400, true);
@@ -76,7 +76,7 @@ function groundPropsSync(P, D3, drop2, t){
       const b = biome(cxw, zAbs), r0 = hash3(ix, iz, 1), r1 = hash3(ix, iz, 2), r2 = hash3(ix, iz, 3);
       const lat = cxw / LW;
       if (b > 0.60){                                                  // BOSQUE
-        const dens = (typeof Q !== 'undefined' && Q.low ? 0.5 : 1) * (Math.abs(zAbs - P) > 190 ? 0.55 : 1); const n = Math.max(2, Math.round((5 + Math.floor(r0 * 6)) * dens)), pineF = b > 0.74 || hash3(ix, iz, 9) > 0.62;
+        const dens = (typeof Q !== 'undefined' && Q.low ? 0.5 : 1) * (Math.abs(zAbs - P) > 190 ? 0.55 : 1); const n = Math.max(2, Math.round((4 + Math.floor(r0 * 5)) * dens)), pineF = b > 0.74 || hash3(ix, iz, 9) > 0.62;
         for (let k = 0; k < n; k++){
           const ox = (hash3(ix, iz, 20 + k) - 0.5) * CELL * 0.94, oz = (hash3(ix, iz, 40 + k) - 0.5) * CELL * 0.94, x = cxw + ox, zl = czw + oz;
           if (Math.abs(x) < 10 || Math.abs(x - riverX(-zl)) < 14) continue;

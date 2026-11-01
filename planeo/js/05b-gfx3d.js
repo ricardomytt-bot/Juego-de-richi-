@@ -13,20 +13,33 @@ const _v3 = () => (typeof THREE !== 'undefined' ? new THREE.Vector3() : null);
 /* ---------------------------------------------------------------- geometría barata: partes fusionadas con color por vértice */
 const _gc = {};
 const gcache = (k, f) => _gc[k] || (_gc[k] = f());
+/* caja de esquinas redondeadas (radio r respecto a una caja unidad): sirve para bloques, cajas y casas "blanditos" */
+function roundedBox(r, seg){
+  const g = new THREE.BoxGeometry(1, 1, 1, seg, seg, seg), p = g.attributes.position, n = g.attributes.normal, v = new THREE.Vector3(), inn = new THREE.Vector3(), d = new THREE.Vector3(), h = 0.5 - r;
+  for (let i = 0; i < p.count; i++){
+    v.fromBufferAttribute(p, i); inn.set(clamp(v.x, -h, h), clamp(v.y, -h, h), clamp(v.z, -h, h)); d.copy(v).sub(inn);
+    if (d.lengthSq() > 1e-9){ d.normalize(); v.copy(inn).addScaledVector(d, r); n.setXYZ(i, d.x, d.y, d.z); } p.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.userData.smooth = true; return g;
+}
+const smoothG = g => { g.userData.smooth = true; return g; };
 const GEO = {
   box: () => gcache('box', () => new THREE.BoxGeometry(1, 1, 1)),
-  sph: () => gcache('sph', () => new THREE.SphereGeometry(0.5, 14, 10)),
-  sphL: () => gcache('sphl', () => new THREE.SphereGeometry(0.5, 8, 6)),
-  cyl: () => gcache('cyl', () => new THREE.CylinderGeometry(0.5, 0.5, 1, 14)),
-  cone: () => gcache('cone', () => new THREE.ConeGeometry(0.5, 1, 12)),
+  rbox: () => gcache('rbox', () => roundedBox(0.2, 5)),
+  rboxS: () => gcache('rboxS', () => roundedBox(0.34, 6)),
+  sph: () => gcache('sph', () => smoothG(new THREE.SphereGeometry(0.5, 22, 15))),
+  sphM: () => gcache('sphM', () => smoothG(new THREE.SphereGeometry(0.5, 13, 9))),
+  sphL: () => gcache('sphl', () => smoothG(new THREE.SphereGeometry(0.5, 10, 7))),
+  cyl: () => gcache('cyl', () => new THREE.CylinderGeometry(0.5, 0.5, 1, 20)),
+  cone: () => gcache('cone', () => new THREE.ConeGeometry(0.5, 1, 20)),
   cone4: () => gcache('cone4', () => new THREE.ConeGeometry(0.5, 1, 4)),
   cone6: () => gcache('cone6', () => new THREE.ConeGeometry(0.5, 1, 6)),
-  ico: () => gcache('ico', () => new THREE.IcosahedronGeometry(0.5, 1)),
-  ico0: () => gcache('ico0', () => new THREE.IcosahedronGeometry(0.5, 0)),
+  ico: () => gcache('ico', () => smoothG(new THREE.SphereGeometry(0.5, 22, 15))),      // antes "icosaedro" facetado: ahora esfera suave
+  ico0: () => gcache('ico0', () => smoothG(new THREE.SphereGeometry(0.5, 13, 9))),
   oct: () => gcache('oct', () => new THREE.OctahedronGeometry(0.5, 0)),
-  dod: () => gcache('dod', () => new THREE.DodecahedronGeometry(0.5, 0)),
-  tor: () => gcache('tor', () => new THREE.TorusGeometry(0.5, 0.12, 8, 20)),
-  circ: () => gcache('circ', () => new THREE.CircleGeometry(0.5, 20))
+  dod: () => gcache('dod', () => smoothG(new THREE.SphereGeometry(0.5, 18, 12))),
+  tor: () => gcache('tor', () => new THREE.TorusGeometry(0.5, 0.12, 12, 32)),
+  circ: () => gcache('circ', () => new THREE.CircleGeometry(0.5, 32))
 };
 /* parte: geometría unitaria + color + posición + tamaño + rotación; e = emisiva (sin sombreado), f = sombreado plano */
 function pt(geo, color, p, s, r, o){ return { geo, color, p: p || [0, 0, 0], s: s || [1, 1, 1], r: r || [0, 0, 0], e: !!(o && o.e), f: !!(o && o.f) }; }
@@ -36,7 +49,7 @@ function mergeParts(parts){
   for (const p of parts){
     let g = p.geo.index ? p.geo.toNonIndexed() : p.geo.clone();
     e.set(p.r[0], p.r[1], p.r[2]); q.setFromEuler(e); m.compose(new THREE.Vector3(p.p[0], p.p[1], p.p[2]), q, new THREE.Vector3(p.s[0], p.s[1], p.s[2]));
-    g.applyMatrix4(m); if (p.f) g.computeVertexNormals();
+    g.applyMatrix4(m); if (p.f && !p.geo.userData.smooth) g.computeVertexNormals();
     c.set(p.color);
     const pa = g.attributes.position.array, na = g.attributes.normal.array;
     for (let i = 0; i < pa.length; i++){ pos.push(pa[i]); nor.push(na[i]); }
@@ -154,9 +167,16 @@ function buildGround(){
     fragmentShader: `uniform float uPatch, uCover, uTime; uniform vec3 uGrass, uFogColor, uSun, uSkyBot; uniform vec3 uLand[8]; uniform vec3 uSea[5]; uniform float uFogNear, uFogFar; varying vec3 vW; varying float vE;
       ${GLSL_NOISE}
       void main(){
-        float lat = vW.x / ${LW_}, zA = -vW.z; float col_ = floor((lat + 1.0) / 2.0), row = floor(zA / 10.0);
-        float hv = hash(vec2(row * 7.0 + 3.0, col_ + 31.0)); int idx = int(floor(hv * 8.0)); vec3 rc = uLand[idx];
-        vec3 m = mix(uGrass, rc, uPatch); float stripe = (mod(row, 2.0) < 1.0) ? 1.03 : 0.95; float road = (abs(lat) < 1.6 && uPatch < 0.7) ? 1.05 : 1.0;
+        float lat = vW.x / ${LW_}, zA = -vW.z;
+        // regiones de campo con bordes curvos: ruido deformado y colores mezclados con suavidad (nada de baldosas)
+        vec2 q = vec2(vW.x, zA) * 0.0125; vec2 wp = vec2(fbm(q * 1.7 + 3.1), fbm(q * 1.7 + 9.4)); float rg = fbm(q + wp * 1.35);
+        float rf = rg * 7.0; int i0 = int(floor(rf)); float fk = smoothstep(0.30, 0.70, fract(rf));
+        vec3 c0 = uLand[int(mod(float(i0), 8.0))], c1 = uLand[int(mod(float(i0 + 1), 8.0))]; vec3 rc = mix(c0, c1, fk);
+        float fine = fbm(vec2(vW.x, zA) * 0.17); float fine2 = vnoise(vec2(vW.x, zA) * 0.9);
+        vec3 m = mix(uGrass, rc, uPatch); m *= 0.93 + 0.14 * fine + 0.05 * (fine2 - 0.5);
+        float cropMask = smoothstep(0.55, 0.75, fbm(q * 2.3 + 17.0)) * step(0.3, uPatch);
+        float rowsA = sin((vW.x * 0.8 + vW.z * 0.25) * 2.2) * 0.5 + 0.5; m = mix(m, m * (0.9 + 0.16 * rowsA), cropMask * 0.8);   // surcos de cultivo suaves
+        float stripe = 1.0 + 0.025 * sin(zA * 0.31); float road = (abs(lat) < 1.6 && uPatch < 0.7) ? 1.05 : 1.0; float hv = rg;
         bool lake = false;
         if (lake){ m = vec3(0.30, 0.59, 0.86); float sp = sin(uTime * 1.6 + vW.x * 2.1 + vW.z * 1.7) * sin(uTime * 1.1 + vW.x * 1.3 - vW.z * 2.3); m += vec3(0.25) * smoothstep(0.55, 0.95, sp); }
         vec3 n = normalize(cross(dFdx(vW), dFdy(vW))); if (n.y < 0.0) n = -n; float lit = 0.62 + 0.5 * max(dot(n, uSun), 0.0);
@@ -167,8 +187,6 @@ function buildGround(){
           vec3 wc = mix(vec3(0.27, 0.58, 0.88), vec3(0.45, 0.78, 0.97), smoothstep(0.0, 14.0, dr)); float fl = sin(uTime * 2.0 + vW.z * 0.5 + vW.x * 0.2) * 0.5 + 0.5; wc += vec3(0.14) * smoothstep(0.78, 1.0, fl);
           m = mix(m, wc, water); }
         vec3 col = m * stripe * road * lit;
-        // surcos de cultivo
-        if (uPatch > 0.3 && mod(floor(hv * 7.0), 2.0) < 1.0 && !lake){ float f = fract(vW.x * 0.55); col *= 1.0 - 0.07 * smoothstep(0.35, 0.5, abs(f - 0.5)); }
         // mar de nubes
         if (uCover > 0.0){ float nz = fbm(vW.xz * 0.05 + vec2(uTime * 0.01, 0.0)); float c = smoothstep(0.40, 0.62, nz + uCover * 0.30 - 0.20);
           vec3 cc = uSea[int(floor(hash(floor(vW.xz * 0.05) ) * 5.0))]; float sh = 0.78 + 0.32 * fbm(vW.xz * 0.11 + 3.1); cc = mix(cc * 0.82, cc, sh);
@@ -246,7 +264,7 @@ function updateTrack(P, air){
 
 /* ---------------------------------------------------------------- el avioncito con la ardilla (3D) */
 const hexN = h => parseInt(String(h).replace('#', ''), 16);
-function buildPlaneModel(skinOrColor, ghost){
+function buildPlaneModel(skinOrColor, ghost, noPilot){
   const sk = typeof skinOrColor === 'object' ? skinOrColor : null;
   const RED = sk ? hexN(sk.plane) : skinOrColor, DK = new THREE.Color(RED).multiplyScalar(0.68).getHex(), CREAM = hexN(sk ? sk.belly : '#fff3d6');
   const FUR = hexN(sk ? sk.fur : '#d28a3e'), FURD = hexN(sk ? sk.furD : '#b8742f'), BR = hexN(sk ? sk.hat : '#6b4128'), SCARF = hexN(sk ? sk.scarf : '#ffd23f'), acc = sk ? sk.acc : 'goggles';
@@ -275,8 +293,8 @@ function buildPlaneModel(skinOrColor, ghost){
     pt(GEO.box(), DK, [0, 0.2, -0.15], [4.02, 0.05, 1.22]),
     pt(GEO.box(), RED, [0, 0.12, 1.65], [1.8, 0.1, 0.6]), pt(GEO.box(), RED, [0, 0.58, 1.6], [0.1, 0.85, 0.65]),   // cola
     pt(GEO.box(), DK, [0, 0.12, 1.58], [0.14, 0.14, 1.1]),
-    ...head,
-    pt(GEO.sph(), FURD, [0.28, 0.45, 0.85], [0.6, 0.6, 0.7]), pt(GEO.sph(), FUR, [0.52, 0.6, 1.2], [0.72, 0.78, 0.85]), pt(GEO.sph(), FURD, [0.78, 0.82, 1.5], [0.82, 0.9, 0.95]), pt(GEO.sph(), CREAM, [0.98, 1.0, 1.72], [0.6, 0.62, 0.62]),   // cola esponjosa
+    ...(noPilot ? [pt(GEO.rbox(), 0x3a2a3a, [0, 0.62, 0.25], [0.9, 0.5, 1.1]), pt(GEO.rbox(), 0x6a4a52, [0, 0.9, 0.55], [0.8, 0.5, 0.3]), pt(GEO.tor(), 0x2b2b3a, [0, 0.78, -0.55], [1.0, 1.0, 1.0], [Math.PI / 2, 0, 0])] : head),
+    ...(noPilot ? [] : [pt(GEO.sph(), FURD, [0.28, 0.45, 0.85], [0.6, 0.6, 0.7]), pt(GEO.sph(), FUR, [0.52, 0.6, 1.2], [0.72, 0.78, 0.85]), pt(GEO.sph(), FURD, [0.78, 0.82, 1.5], [0.82, 0.9, 0.95]), pt(GEO.sph(), CREAM, [0.98, 1.0, 1.72], [0.6, 0.62, 0.62])]),   // cola esponjosa
     pt(GEO.sph(), 0xff5a5a, [-1.98, 0.3, -0.15], [0.2, 0.2, 0.2], [0, 0, 0], { e: true }), pt(GEO.sph(), 0x5aff8a, [1.98, 0.3, -0.15], [0.2, 0.2, 0.2], [0, 0, 0], { e: true })   // luces de navegación
   ];
   const grp = build(parts, { center: false, outline: ghost ? 0 : 1.04 });
@@ -284,7 +302,7 @@ function buildPlaneModel(skinOrColor, ghost){
   prop.position.set(0, 0, -2.35); grp.add(prop);
   const disc = new THREE.Mesh(new THREE.CircleGeometry(1.05, 24), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide })); disc.position.set(0, 0, -2.37); grp.add(disc);
   const scarf = build([pt(GEO.box(), SCARF, [0, 0, 0.45], [0.2, 0.06, 0.95]), pt(GEO.box(), SCARF, [0.22, 0, 0.35], [0.18, 0.06, 0.75])], { center: false, outline: 0 });
-  scarf.position.set(-0.1, 0.9, 0.4); grp.add(scarf);
+  scarf.position.set(-0.1, 0.9, 0.4); if (!noPilot) grp.add(scarf);
   if (sk && sk.shine){ const gl = glowSprite(0xffd860, 9, 0.35); gl.position.set(0, 0.7, 0.2); grp.add(gl); }
   if (ghost){ grp.traverse(o => { if (o.material && o.isMesh){ o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.5; o.material.depthWrite = false; } }); }
   grp.userData.prop = prop; grp.userData.scarf = scarf; return grp;
