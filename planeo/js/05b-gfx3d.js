@@ -49,8 +49,8 @@ function mergeParts(parts){
   for (const p of parts){
     let g = p.geo.index ? p.geo.toNonIndexed() : p.geo.clone();
     e.set(p.r[0], p.r[1], p.r[2]); q.setFromEuler(e); m.compose(new THREE.Vector3(p.p[0], p.p[1], p.p[2]), q, new THREE.Vector3(p.s[0], p.s[1], p.s[2]));
-    g.applyMatrix4(m); if (p.f && !p.geo.userData.smooth) g.computeVertexNormals();
-    c.set(p.color);
+    g.applyMatrix4(m); if ((p.f || p.geo.userData.flat) && !p.geo.userData.smooth) g.computeVertexNormals();
+    c.set(p.color); if (typeof STYLE !== 'undefined' && STYLE.col) STYLE.col(c);
     const pa = g.attributes.position.array, na = g.attributes.normal.array;
     for (let i = 0; i < pa.length; i++){ pos.push(pa[i]); nor.push(na[i]); }
     for (let i = 0; i < pa.length / 3; i++) col.push(c.r, c.g, c.b);
@@ -116,7 +116,7 @@ function g3Init(){
     MAT.outl = new THREE.MeshBasicMaterial({ color: 0x10122f, side: THREE.BackSide });
     LT.hemi = new THREE.HemisphereLight(0xffffff, 0x88aa88, 0.9); S3.add(LT.hemi); S3.add(new THREE.AmbientLight(0xffffff, 0.12));
     LT.sun = new THREE.DirectionalLight(0xffffff, 1.0); LT.sun.position.set(-30, 60, 25); S3.add(LT.sun); S3.add(LT.sun.target);
-    buildSky(); buildGround(); buildTrack(); buildPlayer(); buildPools();
+    buildSky(); buildGround(); buildTrack(); if (typeof setModelStyle === 'function') setModelStyle(window.PLANEO_STYLE || 'A', true); else buildPools(); buildPlayer();
     postInit(); g3Resize(); return true;
   } catch (e){ console.warn('3D no disponible:', e); return false; }
 }
@@ -424,7 +424,7 @@ function postInit(){
 }
 function postSize(){ if (!POST.ok) return; const pr = R3.getPixelRatio(), w = Math.max(2, Math.floor(W * pr)), h = Math.max(2, Math.floor(H * pr)); if (POST.rt.width !== w || POST.rt.height !== h){ POST.rt.setSize(w, h); } POST.mat.uniforms.uPx.value.set(1 / w, 1 / h); POST.mat.uniforms.uEdge.value = Math.max(1, pr) * 1.15; POST.mat.uniforms.uNear.value = CAM3.near; POST.mat.uniforms.uFar.value = CAM3.far; }
 function g3RenderScene(){
-  if (POST.ok && POST.on && !(typeof Q !== 'undefined' && Q.low)){
+  if (POST.ok && POST.on && !window.__postOff && !(typeof Q !== 'undefined' && Q.low)){
     postSize(); R3.setRenderTarget(POST.rt); R3.render(S3, CAM3); R3.setRenderTarget(null);
     POST.mat.uniforms.tC.value = POST.rt.texture; POST.mat.uniforms.tD.value = POST.rt.depthTexture; R3.render(POST.scene, POST.cam);
   } else R3.render(S3, CAM3);

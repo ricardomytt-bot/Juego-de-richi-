@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planeo Galería de modelos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#1b2250;font-family:'Fredoka',system-ui,sans-serif;color:#fff;-webkit-user-select:none;user-select:none;touch-action:none}
+#g3{position:fixed;inset:0;width:100%;height:100%;display:block}
+#bar{position:fixed;left:0;right:0;top:0;z-index:5;padding:calc(env(safe-area-inset-top) + 10px) max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left));background:linear-gradient(180deg,rgba(14,18,60,.82),rgba(14,18,60,0));display:flex;flex-direction:column;gap:8px}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+h1{margin:0 8px 0 0;font-size:20px}
+button{font:inherit;font-weight:600;font-size:14px;border:0;border-radius:99px;padding:8px 14px;color:#fff;background:rgba(255,255,255,.18);backdrop-filter:blur(6px);cursor:pointer}
+button.on{background:linear-gradient(180deg,#ffb347,#ff7a59)}
+#desc{position:fixed;left:0;right:0;bottom:calc(env(safe-area-inset-bottom) + 14px);text-align:center;z-index:5;font-weight:600;font-size:15px;padding:0 16px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+</style></head>
+<body>
+<canvas id="g3"></canvas><canvas id="c" style="display:none"></canvas>
+<div id="bar"><div class="row"><h1>Galería de modelos</h1><span id="styles"></span></div><div class="row" id="cats"></div></div>
+<div id="desc"></div>
+<div id="hud" class="hidden" style="display:none"><div id="markers"></div></div>
+<script>window.PLANEO_STYLE = 'A';</script>
+<script src="../vendor/three.min.js"></script>
+<script src="js/01-core.js"></script><script src="js/02-audio.js"></script><script src="js/03-level.js"></script><script src="js/04-art.js"></script>
+<script src="js/05b-gfx3d.js"></script><script src="js/05c-models3d.js"></script><script src="js/05c2-models-plus.js"></script><script src="js/05e-boss3d.js"></script><script src="js/05f-ground3d.js"></script><script src="js/05g-styles.js"></script>
+<script src="js/08-cine.js"></script><script src="js/08b-ach.js"></script><script src="js/10-cine3d.js"></script><script src="js/12-galeria.js"></script>
+</body></html>

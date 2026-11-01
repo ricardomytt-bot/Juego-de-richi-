@@ -53,6 +53,12 @@ Todos ocupan un carril, tienen contorno grueso y una **placa de color en el suel
 ## Tu nombre
 El nombre que escribes en el menú sustituye a "Nuki" en **todos los diálogos y cinemáticas** (etiqueta, texto y pantalla de historia). Si lo dejas vacío, se llama Nuki.
 
+## Estilos de modelos 3D (`js/05g-styles.js`)
+Los modelos 3D se rehicieron en dos estilos, elegibles con `#estilo=A` / `#estilo=B` en `index.html`:
+- **A · Peluche**: formas gorditas y suaves, colores caramelo, contorno de tinta y post-proceso cartoon.
+- **B · Papercraft low-poly**: facetas planas, colores vivos y limpios, sombreado duro y sin contorno.
+`galeria.html` muestra todos los modelos (enemigos, bloques, objetos, jefes, avión, personajes, decorado) de cada estilo.
+
 ## Gráficos en 3D (estilo caricatura)
 Todos los modelos son **redondeados** (esferas suaves y cajas de esquinas blandas); la abeja es un círculo con aros de rayas y mejillas rosas. La tierra es un terreno suave con campos de bordes curvos, surcos, ríos y lagos (sin cuadrículas).
 
