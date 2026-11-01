@@ -424,7 +424,7 @@ function drawScene(dt){
     if (!G.noPlane){
       if (G.starT > 0){ for (let i = 0; i < 3; i++){ ctx.strokeStyle = `hsla(${(t * 260 + i * 90) % 360},95%,62%,.55)`; ctx.lineWidth = u * 0.3; ctx.beginPath(); ctx.arc(0, 0.3 * u, (2.7 + i * 0.35 + 0.15 * Math.sin(t * 9 + i)) * u, 0, TAU); ctx.stroke(); } glow(ctx, 0, 0.3 * u, u * 5.5, 'rgba(255,230,90,A)'); }
       if (G.magT > 0){ for (let i = 0; i < 3; i++){ const k = ((t * 1.1 + i / 3) % 1); ctx.strokeStyle = `rgba(${i % 2 ? '90,170,255' : '255,90,90'},${(1 - k) * 0.8})`; ctx.lineWidth = u * 0.18; ctx.beginPath(); ctx.arc(0, 0.3 * u, (1.8 + k * 5) * u, 0, TAU); ctx.stroke(); } }
-      drawPlane(ctx, u, G.bank, '#ff5a4a', t, blink ? 0.45 : 1, dv, G.flash > 0.2);
+      drawPlane(ctx, u, G.bank, curSkin().plane, t, blink ? 0.45 : 1, dv, G.flash > 0.2);
       if (G.shield){
         const bg = ctx.createRadialGradient(-u * 0.9, -u * 1.1, u * 0.3, 0, 0.2 * u, u * 3.1); bg.addColorStop(0, 'rgba(255,255,255,.35)'); bg.addColorStop(0.7, 'rgba(110,200,255,.14)'); bg.addColorStop(1, 'rgba(70,160,255,.38)');
         ctx.fillStyle = bg; ctx.strokeStyle = `rgba(255,255,255,${0.7 + 0.2 * Math.sin(t * 6)})`; ctx.lineWidth = u * 0.14; ctx.beginPath(); ctx.arc(0, 0.2 * u, 3.0 * u, 0, TAU); ctx.fill(); ctx.stroke();

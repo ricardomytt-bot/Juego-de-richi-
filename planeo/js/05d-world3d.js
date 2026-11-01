@@ -90,6 +90,7 @@ function syncWorld(dt, P, D3, air){
     else { g.position.y = -D3 + e + (g.userData.hy || 0) * (ob.sc || 1); g.scale.setScalar(type === 'stree' ? ob.sc * 1.05 : type === 'house' || type === 'windmill' ? ob.sc * 1.2 : (ob.sc || 1)); }
     if (mk.anim) mk.anim(g, ob, t, gt, { z });
   }
+  if (typeof groundPropsSync === 'function') groundPropsSync(P, D3, drop2, t);
   if (typeof syncBoss === 'function') syncBoss(dt, P, D3);
   poolsEnd(); plates_end(); ghostsSync(P, t);
 }

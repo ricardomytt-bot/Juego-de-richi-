@@ -49,6 +49,7 @@
     <button id="btnStory" class="big">📖 Modo historia</button>
     <button id="btnInf" class="big alt1">♾️ Modo infinito</button>
     <button id="btnMulti" class="big alt2">👻 Multijugador</button>
+    <button id="btnSkins" class="big alt3">🏆 Logros y personajes</button>
     <div class="row">
       <button id="btnHelp" class="soft">¿Cómo se juega?</button>
       <button id="btnMute2" class="soft">🔊 Sonido</button>
@@ -90,6 +91,18 @@
   </div>
 </section>
 
+<!-- LOGROS Y PERSONAJES -->
+<section id="screen-ach" class="screen hidden">
+  <div class="panel wide">
+    <h2>🏆 Logros y personajes</h2>
+    <p class="sub" id="achCount"></p>
+    <div id="achTabs" class="tabs"></div>
+    <div id="achBody"></div>
+    <button class="big back">Volver</button>
+  </div>
+</section>
+<div id="achPop"></div>
+
 <!-- AYUDA -->
 <section id="screen-help" class="screen hidden">
   <div class="panel">
@@ -102,7 +115,8 @@
       <li>⚠️ Con el jefe, las franjas rojas avisan por dónde viene el golpe. <b>Recoge las bellotas doradas</b> grandes para devolvérselas.</li>
       <li>✨ <b>Power-ups</b>: escudo (aguanta un golpe), estrella (invencible y revienta enemigos) e imán (atrae las bellotas).</li>
       <li>🚀 Cada nivel dura unos 2 minutos y va <b>cada vez más rápido</b>.</li>
-      <li>♾️ <b>Infinito</b>: sin checkpoints. Si pierdes las 3 vidas, se acaba. ¿Hasta dónde llegas?</li>
+      <li>♾️ <b>Infinito</b>: no se acaba nunca. Derrotas al jefe, subes entre las nubes y vuelves a bajar, cada vez más rápido. Sin checkpoints: con 3 vidas, ¿hasta qué ciclo llegas?</li>
+      <li>🏆 Los <b>logros</b> desbloquean colores para Nuki y personajes como el Abuelo, Pipa, Chispa y la Capitana Rama.</li>
     </ul>
     <button class="big back">Entendido</button>
   </div>
@@ -145,10 +159,13 @@
 <script src="js/05b-gfx3d.js"></script>
 <script src="js/05c-models3d.js"></script>
 <script src="js/05d-world3d.js"></script>
+<script src="js/05c2-models-plus.js"></script>
 <script src="js/05e-boss3d.js"></script>
+<script src="js/05f-ground3d.js"></script>
 <script src="js/06-ghost.js"></script>
 <script src="js/07-boss.js"></script>
 <script src="js/08-cine.js"></script>
+<script src="js/08b-ach.js"></script>
 <script src="js/09-main.js"></script>
 </body>
 </html>

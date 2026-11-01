@@ -2,9 +2,9 @@
 'use strict';
 const BOSS_Z = 32;
 const BOSS_DEF = {
-  crow:  { name: 'Capitán Grajo',   hp: 3, cool: 3.5, shotSpd: 25, atk: ['shot', 'wall', 'shot', 'wall'],           flap: 5 },
-  storm: { name: 'Nubarrón Trueno', hp: 4, cool: 3.3, shotSpd: 26, atk: ['strike', 'wall', 'strike', 'shot'],       flap: 0 },
-  owl:   { name: 'Don Búho',        hp: 5, cool: 3.0, shotSpd: 28, atk: ['wall', 'shot', 'strike', 'wall', 'shot'], flap: 3 }
+  crow:  { name: 'Capitán Grajo',   hp: 4, cool: 2.8, shotSpd: 28, atk: ['shot', 'wall', 'sweep', 'shot', 'wall'],            flap: 5 },
+  storm: { name: 'Nubarrón Trueno', hp: 5, cool: 2.7, shotSpd: 29, atk: ['strike', 'sweep', 'wall', 'strike', 'shot', 'sweep'], flap: 0 },
+  owl:   { name: 'Don Búho',        hp: 5, cool: 2.95, shotSpd: 29, atk: ['rain', 'wall', 'shot', 'sweep', 'strike'],          flap: 3 }
 };
 function createBoss(type, lvl){
   const def = BOSS_DEF[type], hp = def.hp + Math.floor((lvl || 0) / 3);
@@ -12,7 +12,7 @@ function createBoss(type, lvl){
 }
 function bossStart(){
   const cfg = LV.cfg;
-  G.boss = createBoss(cfg.boss, LV.bossLevel);
+  G.boss = createBoss(cfg.boss, LV.bossLevel); G.bossHits = 0;
   Sound.setMood('boss'); Sound.sfx('roar');
   banner('¡Mini jefe!<small>' + G.boss.def.name + '</small>', 2200);
   showBossBar(true);
@@ -30,21 +30,30 @@ function launchAttack(){
   B.last = kind; B.atkN++;
   const R = n => Math.floor(Math.random() * n);
   if (kind === 'shot'){
-    const n = 1 + (er > 0.34 ? 1 : 0) + (er > 0.67 ? 1 : 0);
-    for (let k = 0; k < n; k++) B.warns.push({ kind: 'shot', lane: null, delay: k * 0.62, t: 0.95 - 0.15 * er, pick: k });
+    const n = 2 + (er > 0.34 ? 1 : 0) + (er > 0.67 ? 1 : 0);
+    for (let k = 0; k < n; k++) B.warns.push({ kind: 'shot', lane: null, delay: k * 0.55, t: 0.85 - 0.12 * er, pick: k });
   } else if (kind === 'wall'){
-    const nh = er > 0.4 ? 1 : 2, holes = new Set();
+    const nh = er > 0.25 ? 1 : 2, holes = new Set();
     while (holes.size < nh) holes.add(R(LANES));
-    for (let l = 0; l < LANES; l++) if (!holes.has(l)) B.warns.push({ kind: 'wall', lane: l, delay: 0, t: 1.15 - 0.25 * er });
+    for (let l = 0; l < LANES; l++) if (!holes.has(l)) B.warns.push({ kind: 'wall', lane: l, delay: 0, t: 1.0 - 0.22 * er });
     B.tx = [...holes][0];
+  } else if (kind === 'sweep'){   // una barrida de rayos que recorre los carriles, en un sentido u otro
+    const dir = Math.random() < 0.5 ? 1 : -1, gap = 0.5 - 0.08 * er;
+    for (let k = 0; k < LANES; k++){ const lane = dir > 0 ? k : LANES - 1 - k; B.warns.push({ kind: 'strike', lane, delay: k * gap, t: 0.8 - 0.1 * er }); }
+    B.tx = dir > 0 ? 0 : LANES - 1;
+  } else if (kind === 'rain'){    // lluvia de proyectiles, el primero justo donde estás
+    const n = 3 + Math.floor(er * 2.4); let prev = clamp(G.tgt, 0, LANES - 1);
+    for (let k = 0; k < n; k++){ const lane = k === 0 ? prev : (prev = (prev + 1 + R(LANES - 1)) % LANES); B.warns.push({ kind: 'rainshot', lane, delay: k * 0.5, t: 0.8 - 0.1 * er }); }
+    B.tx = prev;
   } else {
-    const n = Math.min(2, 1 + Math.floor(er * 2.4)), lanes = new Set([clamp(G.tgt, 0, LANES - 1)]);
+    const n = Math.min(LANES - 1, 1 + Math.floor(er * 3)), lanes = new Set([clamp(G.tgt, 0, LANES - 1)]);
     while (lanes.size < n) lanes.add(R(LANES));
-    for (const l of lanes) B.warns.push({ kind: 'strike', lane: l, delay: 0, t: 1.0 - 0.15 * er });
+    for (const l of lanes) B.warns.push({ kind: 'strike', lane: l, delay: 0, t: 0.85 - 0.15 * er });
     B.tx = [...lanes][0];
   }
-  B.cool = def.cool - 0.9 * er - Math.min(0.5, B.lvl * 0.05);
-  B.giftIn = 1.0;
+  if (Math.random() < 0.28 * er && kind !== 'sweep' && kind !== 'rain') B.warns.push({ kind: 'shot', lane: null, delay: 0.9, t: 0.7, pick: 0 });   // golpe doble cuando está enfadado
+  B.cool = def.cool - 1.1 * er - Math.min(0.7, B.lvl * 0.06);
+  B.giftIn = kind === 'sweep' || kind === 'rain' ? 2.2 : 1.0;
   Sound.sfx('warn');
 }
 function spawnGift(){
@@ -82,7 +91,7 @@ function updateBoss(dt){
   B.hurt = Math.max(0, B.hurt - dt);
   B.cool -= dt; if (B.cool <= 0 && G.fallT <= 0) launchAttack();
   if (B.giftIn >= 0){ B.giftIn -= dt; if (B.giftIn < 0) spawnGift(); }
-  const er = 1 - B.hp / B.maxhp, spd = B.def.shotSpd * (1 + 0.3 * er) + B.lvl * 0.6;
+  const er = 1 - B.hp / B.maxhp, spd = B.def.shotSpd * (1 + 0.32 * er) + B.lvl * 0.8;
   // avisos -> proyectiles / rayos
   for (let i = B.warns.length - 1; i >= 0; i--){
     const w = B.warns[i];
@@ -94,7 +103,7 @@ function updateBoss(dt){
     if (w.t <= 0){
       B.warns.splice(i, 1);
       if (w.kind === 'strike'){ B.haz.push({ lane: w.lane, act: 0.5, hit: false }); Sound.sfx('zap'); G.lightning = 0.18; G.shake = Math.max(G.shake, 6); }
-      else { B.projs.push({ lane: w.lane, z: BOSS_Z - 1, v: spd, done: false, seed: Math.random() * 9 }); if (w.kind === 'shot') Sound.sfx('whoosh'); }
+      else { B.projs.push({ lane: w.lane, z: BOSS_Z - 1, v: spd, done: false, seed: Math.random() * 9 }); if (w.kind === 'shot' || w.kind === 'rainshot') Sound.sfx('whoosh'); }
     }
   }
   for (let i = B.projs.length - 1; i >= 0; i--){

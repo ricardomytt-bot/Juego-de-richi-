@@ -148,8 +148,11 @@ function drawPlane(c, u, bank, wingCol, t, alpha, dive, flash){
 
 /* ------------------------------------------------------------ personajes de frente (cinemáticas) */
 function drawSquirrelFront(c, x, y, s, o){
-  o = o || {}; const old = !!o.old, t = o.t || 0, mood = o.mood || 'happy', look = o.look || 0;
-  const fur = old ? '#aaa49c' : '#d28a3e', furD = old ? '#86807a' : '#a8672b', cream = old ? '#f0ede7' : '#f8dcb2', cloth = old ? '#7c8fb9' : '#e0523f';
+  o = o || {}; const sk = o.skin || (typeof curSkin === 'function' && !o.old ? curSkin() : null);
+  const old = o.old !== undefined ? !!o.old : !!(sk && sk.old), t = o.t || 0, mood = o.mood || 'happy', look = o.look || 0;
+  const acc = old && !sk ? 'glasses' : sk ? sk.acc : 'goggles';
+  const fur = sk ? sk.fur : old ? '#aaa49c' : '#d28a3e', furD = sk ? sk.furD : old ? '#86807a' : '#a8672b', cream = sk ? sk.belly : old ? '#f0ede7' : '#f8dcb2', cloth = sk ? sk.cloth : old ? '#7c8fb9' : '#e0523f';
+  const scarfC = sk ? sk.scarf : '#ffd23f', hatC = sk ? sk.hat : '#6b4128';
   const blink = ((t + (old ? 1.1 : 0)) % 3.4) < 0.13;
   c.save(); c.translate(x, y); c.lineJoin = 'round';
   // cola
@@ -160,24 +163,42 @@ function drawSquirrelFront(c, x, y, s, o){
   c.fillStyle = cloth; ell(c, 0, 1.75 * s, 1.0 * s, 0.9 * s);
   c.fillStyle = 'rgba(255,255,255,.14)'; ell(c, -0.3 * s, 1.5 * s, 0.4 * s, 0.35 * s, -0.4);
   if (old){ c.fillStyle = '#fff'; for (let i = 0; i < 3; i++) circ(c, 0, 1.45 * s + i * 0.28 * s, 0.07 * s); }
-  else { c.fillStyle = '#ffd23f'; ell(c, 0, 1.0 * s, 0.75 * s, 0.22 * s); c.save(); c.translate(0.45 * s, 1.1 * s); c.rotate(0.9 + Math.sin(t * 5) * 0.15); c.fillRect(0, -0.1 * s, 0.8 * s, 0.22 * s); c.restore(); }
+  else { c.fillStyle = scarfC; ell(c, 0, 1.0 * s, 0.75 * s, 0.22 * s); c.save(); c.translate(0.45 * s, 1.1 * s); c.rotate(0.9 + Math.sin(t * 5) * 0.15); c.fillRect(0, -0.1 * s, 0.8 * s, 0.22 * s); c.restore(); }
   // orejas
   c.fillStyle = fur; ell(c, -0.72 * s, -0.78 * s, 0.26 * s, 0.4 * s, -0.35); ell(c, 0.72 * s, -0.78 * s, 0.26 * s, 0.4 * s, 0.35);
   c.fillStyle = '#f2b98a'; ell(c, -0.72 * s, -0.75 * s, 0.12 * s, 0.24 * s, -0.35); ell(c, 0.72 * s, -0.75 * s, 0.12 * s, 0.24 * s, 0.35);
   c.fillStyle = fur; ell(c, 0, 0, 1.0 * s, 0.95 * s);
   c.fillStyle = cream; ell(c, 0, 0.32 * s, 0.7 * s, 0.55 * s);
   c.fillStyle = 'rgba(255,255,255,.12)'; ell(c, -0.3 * s, -0.4 * s, 0.4 * s, 0.25 * s, -0.5);
-  if (!old){
+  if (acc === 'goggles'){
     // gorro de aviador con gafas
-    c.fillStyle = '#6b4128'; c.beginPath(); c.arc(0, -0.1 * s, 1.0 * s, Math.PI * 1.04, Math.PI * 1.96); c.lineTo(0.95 * s, -0.22 * s); c.lineTo(-0.95 * s, -0.22 * s); c.closePath(); c.fill();
-    c.fillStyle = '#82502f'; ell(c, -0.25 * s, -0.78 * s, 0.4 * s, 0.14 * s, -0.3);
+    c.fillStyle = hatC; c.beginPath(); c.arc(0, -0.1 * s, 1.0 * s, Math.PI * 1.04, Math.PI * 1.96); c.lineTo(0.95 * s, -0.22 * s); c.lineTo(-0.95 * s, -0.22 * s); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.14)'; ell(c, -0.25 * s, -0.78 * s, 0.4 * s, 0.14 * s, -0.3);
     c.fillStyle = '#2b2b3a'; c.fillRect(-1.0 * s, -0.3 * s, 2.0 * s, 0.14 * s);
     c.fillStyle = '#9fe7ff'; circ(c, -0.4 * s, -0.55 * s, 0.27 * s); circ(c, 0.4 * s, -0.55 * s, 0.27 * s);
     c.strokeStyle = '#2b2b3a'; c.lineWidth = 0.07 * s; c.beginPath(); c.arc(-0.4 * s, -0.55 * s, 0.27 * s, 0, TAU); c.arc(0.4 * s, -0.55 * s, 0.27 * s, 0, TAU); c.stroke();
     c.fillStyle = 'rgba(255,255,255,.8)'; circ(c, -0.48 * s, -0.62 * s, 0.07 * s); circ(c, 0.32 * s, -0.62 * s, 0.07 * s);
-  } else {
+  } else if (acc === 'bow'){
+    // lazo grande a un lado y gafas pequeñas en la frente
+    c.fillStyle = '#2b2b3a'; c.fillRect(-0.95 * s, -0.42 * s, 1.9 * s, 0.1 * s); c.fillStyle = '#9fe7ff'; circ(c, -0.34 * s, -0.7 * s, 0.2 * s); circ(c, 0.34 * s, -0.7 * s, 0.2 * s);
+    c.fillStyle = hatC; c.beginPath(); c.moveTo(0.52 * s, -0.86 * s); c.lineTo(1.12 * s, -1.22 * s); c.lineTo(1.18 * s, -0.56 * s); c.closePath(); c.fill(); c.beginPath(); c.moveTo(0.52 * s, -0.86 * s); c.lineTo(0.0 * s, -1.28 * s); c.lineTo(-0.06 * s, -0.62 * s); c.closePath(); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.35)'; circ(c, 0.52 * s, -0.86 * s, 0.17 * s); c.fillStyle = hatC; circ(c, 0.52 * s, -0.86 * s, 0.13 * s);
+  } else if (acc === 'welder'){
+    // gorra oscura con gafas de soldar levantadas y mancha de aceite
+    c.fillStyle = hatC; c.beginPath(); c.arc(0, -0.1 * s, 1.0 * s, Math.PI * 1.04, Math.PI * 1.96); c.lineTo(0.95 * s, -0.22 * s); c.lineTo(-0.95 * s, -0.22 * s); c.closePath(); c.fill();
+    c.fillStyle = '#ff9a3a'; c.fillRect(-0.96 * s, -0.3 * s, 1.92 * s, 0.1 * s);
+    c.fillStyle = '#c9c6d4'; c.strokeStyle = '#2b2b3a'; c.lineWidth = 0.06 * s; c.beginPath(); c.arc(-0.34 * s, -0.78 * s, 0.26 * s, 0, TAU); c.arc(0.34 * s, -0.78 * s, 0.26 * s, 0, TAU); c.fill(); c.stroke();
+    c.fillStyle = '#2a3a4a'; circ(c, -0.34 * s, -0.78 * s, 0.17 * s); circ(c, 0.34 * s, -0.78 * s, 0.17 * s); c.fillStyle = 'rgba(255,255,255,.5)'; circ(c, -0.4 * s, -0.84 * s, 0.05 * s); circ(c, 0.28 * s, -0.84 * s, 0.05 * s);
+    c.fillStyle = 'rgba(30,24,20,.4)'; ell(c, 0.62 * s, 0.42 * s, 0.2 * s, 0.1 * s, 0.3);
+  } else if (acc === 'captain'){
+    // gorra de capitana con ancla dorada
+    c.fillStyle = hatC; c.beginPath(); c.arc(0, -0.16 * s, 0.98 * s, Math.PI * 1.02, Math.PI * 1.98); c.lineTo(0.96 * s, -0.3 * s); c.lineTo(-0.96 * s, -0.3 * s); c.closePath(); c.fill();
+    c.fillStyle = '#10183e'; ell(c, 0, -0.3 * s, 1.1 * s, 0.14 * s);
+    c.fillStyle = '#ffd23f'; c.fillRect(-0.98 * s, -0.4 * s, 1.96 * s, 0.1 * s); circ(c, 0, -0.74 * s, 0.17 * s); c.strokeStyle = hatC; c.lineWidth = 0.05 * s; c.beginPath(); c.moveTo(0, -0.83 * s); c.lineTo(0, -0.64 * s); c.moveTo(-0.09 * s, -0.72 * s); c.lineTo(0.09 * s, -0.72 * s); c.stroke();
+  } else if (acc === 'glasses'){
     c.fillStyle = '#fff'; ell(c, -0.45 * s, -0.5 * s, 0.34 * s, 0.1 * s, -0.2); ell(c, 0.45 * s, -0.5 * s, 0.34 * s, 0.1 * s, 0.2);
     ell(c, 0, -0.95 * s, 0.4 * s, 0.14 * s);
+    c.fillStyle = hatC; c.beginPath(); c.arc(0, -0.5 * s, 0.82 * s, Math.PI * 1.1, Math.PI * 1.9); c.quadraticCurveTo(0, -1.1 * s, -0.78 * s, -0.7 * s); c.fill();   // boina
   }
   // ojos
   const ex = 0.37 * s, ey = 0.1 * s;
@@ -189,9 +210,9 @@ function drawSquirrelFront(c, x, y, s, o){
     c.fillStyle = '#2a1a10'; circ(c, -ex + look * 0.07 * s, ey + 0.02 * s, 0.11 * s); circ(c, ex + look * 0.07 * s, ey + 0.02 * s, 0.11 * s);
     c.fillStyle = '#fff'; circ(c, -ex + look * 0.07 * s - 0.04 * s, ey - 0.03 * s, 0.035 * s); circ(c, ex + look * 0.07 * s - 0.04 * s, ey - 0.03 * s, 0.035 * s);
   }
-  if (old){ c.strokeStyle = '#6b6b78'; c.lineWidth = 0.06 * s; c.beginPath(); c.arc(-ex, ey, 0.28 * s, 0, TAU); c.arc(ex, ey, 0.28 * s, 0, TAU); c.moveTo(-ex + 0.28 * s, ey); c.lineTo(ex - 0.28 * s, ey); c.stroke(); }
+  if (acc === 'glasses'){ c.strokeStyle = '#6b6b78'; c.lineWidth = 0.06 * s; c.beginPath(); c.arc(-ex, ey, 0.28 * s, 0, TAU); c.arc(ex, ey, 0.28 * s, 0, TAU); c.moveTo(-ex + 0.28 * s, ey); c.lineTo(ex - 0.28 * s, ey); c.stroke(); }
   // cejas
-  c.strokeStyle = old ? '#fff' : '#6b4128'; c.lineWidth = 0.09 * s; c.lineCap = 'round'; c.beginPath();
+  c.strokeStyle = old ? '#fff' : furD; c.lineWidth = 0.09 * s; c.lineCap = 'round'; c.beginPath();
   const by = ey - 0.34 * s;
   if (mood === 'angry'){ c.moveTo(-ex - 0.2 * s, by - 0.05 * s); c.lineTo(-ex + 0.2 * s, by + 0.08 * s); c.moveTo(ex + 0.2 * s, by - 0.05 * s); c.lineTo(ex - 0.2 * s, by + 0.08 * s); }
   else if (mood === 'sad' || mood === 'worry'){ c.moveTo(-ex - 0.2 * s, by + 0.08 * s); c.lineTo(-ex + 0.2 * s, by - 0.05 * s); c.moveTo(ex + 0.2 * s, by + 0.08 * s); c.lineTo(ex - 0.2 * s, by - 0.05 * s); }

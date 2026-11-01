@@ -94,7 +94,7 @@ function g3Init(){
     THREE.ColorManagement.enabled = false;
     glCv = document.getElementById('g3');
     R3 = new THREE.WebGLRenderer({ canvas: glCv, antialias: true, alpha: false, powerPreference: 'high-performance' });
-    R3.outputColorSpace = THREE.LinearSRGBColorSpace; R3.useLegacyLights = true; R3.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
+    R3.outputColorSpace = THREE.LinearSRGBColorSpace; R3.useLegacyLights = true; R3.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     S3 = new THREE.Scene(); S3.fog = new THREE.Fog(0xffffff, 60, 260);
     CAM3 = new THREE.PerspectiveCamera(62, 1, 0.3, 1400);
     makeTextures();
@@ -108,7 +108,7 @@ function g3Init(){
   } catch (e){ console.warn('3D no disponible:', e); return false; }
 }
 function g3Resize(){
-  if (!R3) return; R3.setSize(W, H, false); glCv.style.width = W + 'px'; glCv.style.height = H + 'px';
+  if (!R3) return; if (typeof Q !== 'undefined' && Q.low) R3.setPixelRatio(1); R3.setSize(W, H, false); glCv.style.width = W + 'px'; glCv.style.height = H + 'px';
   CAM3.aspect = W / H; CAM3.fov = H > W ? 70 : 60; CAM3.updateProjectionMatrix();
 }
 
@@ -157,10 +157,15 @@ function buildGround(){
         float lat = vW.x / ${LW_}, zA = -vW.z; float col_ = floor((lat + 1.0) / 2.0), row = floor(zA / 10.0);
         float hv = hash(vec2(row * 7.0 + 3.0, col_ + 31.0)); int idx = int(floor(hv * 8.0)); vec3 rc = uLand[idx];
         vec3 m = mix(uGrass, rc, uPatch); float stripe = (mod(row, 2.0) < 1.0) ? 1.03 : 0.95; float road = (abs(lat) < 1.6 && uPatch < 0.7) ? 1.05 : 1.0;
-        bool lake = hv > 0.93 && uPatch > 0.35 && abs(col_ * 2.0) > 3.0;
+        bool lake = false;
         if (lake){ m = vec3(0.30, 0.59, 0.86); float sp = sin(uTime * 1.6 + vW.x * 2.1 + vW.z * 1.7) * sin(uTime * 1.1 + vW.x * 1.3 - vW.z * 2.3); m += vec3(0.25) * smoothstep(0.55, 0.95, sp); }
         vec3 n = normalize(cross(dFdx(vW), dFdy(vW))); if (n.y < 0.0) n = -n; float lit = 0.62 + 0.5 * max(dot(n, uSun), 0.0);
         float sn = clamp((vE / ${HH} - 0.5) * 3.0, 0.0, 1.0); m = mix(m, vec3(0.93, 0.95, 0.99), sn * 0.85);
+        // río serpenteante
+        float rz = zA; float rx = 70.0 * sin(rz * 0.0033 + 0.6) + 34.0 * sin(rz * 0.0105 + 2.0) + 20.0; float dr = abs(vW.x - rx);
+        if (uPatch > 0.25){ float bank = smoothstep(26.0, 17.0, dr); m = mix(m, vec3(0.78, 0.7, 0.5), smoothstep(22.0, 15.0, dr) * 0.8); float water = smoothstep(14.5, 11.0, dr);
+          vec3 wc = mix(vec3(0.27, 0.58, 0.88), vec3(0.45, 0.78, 0.97), smoothstep(0.0, 14.0, dr)); float fl = sin(uTime * 2.0 + vW.z * 0.5 + vW.x * 0.2) * 0.5 + 0.5; wc += vec3(0.14) * smoothstep(0.78, 1.0, fl);
+          m = mix(m, wc, water); }
         vec3 col = m * stripe * road * lit;
         // surcos de cultivo
         if (uPatch > 0.3 && mod(floor(hv * 7.0), 2.0) < 1.0 && !lake){ float f = fract(vW.x * 0.55); col *= 1.0 - 0.07 * smoothstep(0.35, 0.5, abs(f - 0.5)); }
@@ -171,7 +176,7 @@ function buildGround(){
         float d = length(vW - cameraPosition); float f = smoothstep(uFogNear, uFogFar, d); col = mix(col, uFogColor, f);
         gl_FragColor = vec4(col, 1.0); }`
   });
-  GR.mesh = new THREE.Mesh(new THREE.PlaneGeometry(520, 600, 130, 150).rotateX(-Math.PI / 2), GR.mat); GR.mesh.frustumCulled = false; S3.add(GR.mesh);
+  GR.mesh = new THREE.Mesh(new THREE.PlaneGeometry(520, 600, 96, 112).rotateX(-Math.PI / 2), GR.mat); GR.mesh.frustumCulled = false; S3.add(GR.mesh);
   GR.matFar = GR.mat.clone(); GR.matFar.uniforms = Object.assign({}, GR.mat.uniforms, { uHill: { value: 0 } });   // comparte todo menos el relieve
   GR.far = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000, 1, 1).rotateX(-Math.PI / 2), GR.matFar); GR.far.frustumCulled = false; S3.add(GR.far);
 }
@@ -240,8 +245,28 @@ function updateTrack(P, air){
 }
 
 /* ---------------------------------------------------------------- el avioncito con la ardilla (3D) */
-function buildPlaneModel(wing, ghost){
-  const RED = wing, DK = new THREE.Color(wing).multiplyScalar(0.68).getHex(), CREAM = 0xfff3d6, FUR = 0xd28a3e, FURD = 0xb8742f, BR = 0x6b4128;
+const hexN = h => parseInt(String(h).replace('#', ''), 16);
+function buildPlaneModel(skinOrColor, ghost){
+  const sk = typeof skinOrColor === 'object' ? skinOrColor : null;
+  const RED = sk ? hexN(sk.plane) : skinOrColor, DK = new THREE.Color(RED).multiplyScalar(0.68).getHex(), CREAM = hexN(sk ? sk.belly : '#fff3d6');
+  const FUR = hexN(sk ? sk.fur : '#d28a3e'), FURD = hexN(sk ? sk.furD : '#b8742f'), BR = hexN(sk ? sk.hat : '#6b4128'), SCARF = hexN(sk ? sk.scarf : '#ffd23f'), acc = sk ? sk.acc : 'goggles';
+  const head = [
+    pt(GEO.sph(), FURD, [0, 0.6, 0.15], [0.85, 0.85, 0.95]),                                 // cuerpo de la ardilla
+    pt(GEO.sph(), FUR, [0, 1.18, 0.05], [0.92, 0.9, 0.9]),                                   // cabeza
+    pt(GEO.cone(), FUR, [-0.38, 1.62, 0.12], [0.22, 0.4, 0.2], [0, 0, 0.3]), pt(GEO.cone(), FUR, [0.38, 1.62, 0.12], [0.22, 0.4, 0.2], [0, 0, -0.3])   // orejas
+  ];
+  if (acc === 'goggles' || acc === 'welder' || acc === 'captain'){
+    head.push(pt(GEO.sph(), BR, [0, 1.38, 0.06], [0.98, acc === 'captain' ? 0.7 : 0.62, 0.98]));           // gorro
+    if (acc === 'captain'){ head.push(pt(GEO.cyl(), 0x10183e, [0, 1.26, -0.3], [1.0, 0.07, 0.6]), pt(GEO.box(), 0xffd23f, [0, 1.3, 0.05], [1.02, 0.1, 1.02]), pt(GEO.sph(), 0xffd23f, [0, 1.52, -0.34], [0.2, 0.2, 0.1], [0, 0, 0], { e: true })); }
+    else { head.push(pt(GEO.cyl(), acc === 'welder' ? 0xff9a3a : 0x2b2b3a, [0, 1.2, 0.05], [0.99, 0.12, 0.99])); }
+    if (acc === 'goggles') head.push(pt(GEO.sph(), 0x9fe7ff, [-0.2, 1.56, -0.12], [0.3, 0.3, 0.3]), pt(GEO.sph(), 0x9fe7ff, [0.2, 1.56, -0.12], [0.3, 0.3, 0.3]));
+    if (acc === 'welder') head.push(pt(GEO.tor(), 0xc9c6d4, [-0.2, 1.62, -0.18], [0.5, 0.5, 0.5], [0.5, 0, 0]), pt(GEO.tor(), 0xc9c6d4, [0.2, 1.62, -0.18], [0.5, 0.5, 0.5], [0.5, 0, 0]), pt(GEO.sph(), 0x2a3a4a, [-0.2, 1.62, -0.2], [0.26, 0.26, 0.1]), pt(GEO.sph(), 0x2a3a4a, [0.2, 1.62, -0.2], [0.26, 0.26, 0.1]));
+  } else if (acc === 'bow'){
+    head.push(pt(GEO.sph(), FUR, [0, 1.42, 0.06], [0.98, 0.5, 0.98]), pt(GEO.cone(), BR, [0.52, 1.72, -0.05], [0.4, 0.5, 0.2], [0, 0, -1.2]), pt(GEO.cone(), BR, [0.12, 1.78, -0.05], [0.4, 0.5, 0.2], [0, 0, 1.2]), pt(GEO.sph(), BR, [0.32, 1.72, -0.05], [0.22, 0.22, 0.2]),
+      pt(GEO.sph(), 0x9fe7ff, [-0.2, 1.5, -0.14], [0.22, 0.22, 0.22]), pt(GEO.sph(), 0x9fe7ff, [0.0, 1.5, -0.14], [0.22, 0.22, 0.22]));
+  } else {   // glasses (abuelo): boina y gafas redondas
+    head.push(pt(GEO.sph(), BR, [0, 1.45, 0.02], [1.0, 0.5, 1.0]), pt(GEO.sph(), 0xffffff, [0, 1.12, -0.58], [0.6, 0.14, 0.2]), pt(GEO.tor(), 0x6b6b78, [-0.21, 1.22, -0.5], [0.42, 0.42, 0.42], [0, 0, 0]), pt(GEO.tor(), 0x6b6b78, [0.21, 1.22, -0.5], [0.42, 0.42, 0.42], [0, 0, 0]));
+  }
   const parts = [
     pt(GEO.cyl(), RED, [0, 0, 0.1], [0.9, 3.2, 0.9], [Math.PI / 2, 0, 0]),                   // fuselaje
     pt(GEO.cone(), DK, [0, 0, -1.95], [0.9, 0.8, 0.9], [-Math.PI / 2, 0, 0]),               // morro
@@ -250,12 +275,7 @@ function buildPlaneModel(wing, ghost){
     pt(GEO.box(), DK, [0, 0.2, -0.15], [4.02, 0.05, 1.22]),
     pt(GEO.box(), RED, [0, 0.12, 1.65], [1.8, 0.1, 0.6]), pt(GEO.box(), RED, [0, 0.58, 1.6], [0.1, 0.85, 0.65]),   // cola
     pt(GEO.box(), DK, [0, 0.12, 1.58], [0.14, 0.14, 1.1]),
-    pt(GEO.sph(), FURD, [0, 0.6, 0.15], [0.85, 0.85, 0.95]),                                 // cuerpo de la ardilla
-    pt(GEO.sph(), FUR, [0, 1.18, 0.05], [0.92, 0.9, 0.9]),                                   // cabeza
-    pt(GEO.sph(), BR, [0, 1.38, 0.06], [0.98, 0.62, 0.98]),                                  // gorro
-    pt(GEO.cyl(), 0x2b2b3a, [0, 1.2, 0.05], [0.99, 0.12, 0.99]),                             // correa de las gafas
-    pt(GEO.sph(), 0x9fe7ff, [-0.2, 1.56, -0.12], [0.3, 0.3, 0.3]), pt(GEO.sph(), 0x9fe7ff, [0.2, 1.56, -0.12], [0.3, 0.3, 0.3]),
-    pt(GEO.cone(), FUR, [-0.38, 1.62, 0.12], [0.22, 0.4, 0.2], [0, 0, 0.3]), pt(GEO.cone(), FUR, [0.38, 1.62, 0.12], [0.22, 0.4, 0.2], [0, 0, -0.3]),
+    ...head,
     pt(GEO.sph(), FURD, [0.28, 0.45, 0.85], [0.6, 0.6, 0.7]), pt(GEO.sph(), FUR, [0.52, 0.6, 1.2], [0.72, 0.78, 0.85]), pt(GEO.sph(), FURD, [0.78, 0.82, 1.5], [0.82, 0.9, 0.95]), pt(GEO.sph(), CREAM, [0.98, 1.0, 1.72], [0.6, 0.62, 0.62]),   // cola esponjosa
     pt(GEO.sph(), 0xff5a5a, [-1.98, 0.3, -0.15], [0.2, 0.2, 0.2], [0, 0, 0], { e: true }), pt(GEO.sph(), 0x5aff8a, [1.98, 0.3, -0.15], [0.2, 0.2, 0.2], [0, 0, 0], { e: true })   // luces de navegación
   ];
@@ -263,13 +283,14 @@ function buildPlaneModel(wing, ghost){
   const prop = build([pt(GEO.box(), 0x5a3a24, [0, 0, 0], [2.1, 0.16, 0.06]), pt(GEO.box(), 0x5a3a24, [0, 0, 0], [0.16, 2.1, 0.06]), pt(GEO.sph(), 0xffd23f, [0, 0, -0.05], [0.28, 0.28, 0.28])], { center: false, outline: 0 });
   prop.position.set(0, 0, -2.35); grp.add(prop);
   const disc = new THREE.Mesh(new THREE.CircleGeometry(1.05, 24), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide })); disc.position.set(0, 0, -2.37); grp.add(disc);
-  const scarf = build([pt(GEO.box(), 0xffd23f, [0, 0, 0.45], [0.2, 0.06, 0.95]), pt(GEO.box(), 0xffd23f, [0.22, 0, 0.35], [0.18, 0.06, 0.75])], { center: false, outline: 0 });
+  const scarf = build([pt(GEO.box(), SCARF, [0, 0, 0.45], [0.2, 0.06, 0.95]), pt(GEO.box(), SCARF, [0.22, 0, 0.35], [0.18, 0.06, 0.75])], { center: false, outline: 0 });
   scarf.position.set(-0.1, 0.9, 0.4); grp.add(scarf);
+  if (sk && sk.shine){ const gl = glowSprite(0xffd860, 9, 0.35); gl.position.set(0, 0.7, 0.2); grp.add(gl); }
   if (ghost){ grp.traverse(o => { if (o.material && o.isMesh){ o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.5; o.material.depthWrite = false; } }); }
   grp.userData.prop = prop; grp.userData.scarf = scarf; return grp;
 }
 function buildPlayer(){
-  PL.root = new THREE.Group(); PL.plane = buildPlaneModel(0xff5a4a, false); PL.root.add(PL.plane);
+  PL.root = new THREE.Group(); PL.plane = buildPlaneModel(curSkin(), false); PL.root.add(PL.plane);
   PL.shield = new THREE.Mesh(new THREE.SphereGeometry(2.7, 20, 14), new THREE.MeshBasicMaterial({ color: 0x78d7ff, transparent: true, opacity: 0.2, depthWrite: false, blending: THREE.AdditiveBlending })); PL.shield.position.set(0, 0.7, 0); PL.shield.visible = false; PL.root.add(PL.shield);
   PL.rings = []; for (let i = 0; i < 3; i++){ const r = new THREE.Mesh(new THREE.TorusGeometry(2.4 + i * 0.3, 0.07, 6, 36), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending })); r.position.set(0, 0.6, 0); r.visible = false; PL.root.add(r); PL.rings.push(r); }
   PL.mag = []; for (let i = 0; i < 3; i++){ const r = new THREE.Mesh(new THREE.TorusGeometry(1, 0.05, 6, 36), new THREE.MeshBasicMaterial({ color: 0xff7a7a, transparent: true, opacity: 0.6, depthWrite: false })); r.position.set(0, 0.6, 0); r.visible = false; PL.root.add(r); PL.mag.push(r); }
@@ -277,7 +298,7 @@ function buildPlayer(){
   PL.shadow = new THREE.Mesh(new THREE.CircleGeometry(1.5, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x142a1e, transparent: true, opacity: 0.3, depthWrite: false })); PL.shadow.renderOrder = 1; S3.add(PL.shadow);
   PL.cx = 0; S3.add(PL.root);
 }
-function buildPools(){ if (typeof initModels === 'function') initModels(); }
+function buildPools(){ if (typeof initModels === 'function') initModels(); if (typeof initModelsPlus === 'function') initModelsPlus(); if (typeof groundPropsInit === 'function') groundPropsInit(); }
 
 /* ---------------------------------------------------------------- un fotograma: sincroniza el mundo y dibuja */
 function g3Project(x, y, z){ const v = new THREE.Vector3(x, y, z).project(CAM3); return { x: (v.x * 0.5 + 0.5) * W, y: (-v.y * 0.5 + 0.5) * H }; }
@@ -349,3 +370,7 @@ function g3Overlay(dt, a){
   if (vignette) ctx.drawImage(vignette, 0, 0, W, H);
   if (blur){ if (fb3.width !== glCv.width || fb3.height !== glCv.height){ fb3.width = glCv.width; fb3.height = glCv.height; } fb3x.globalCompositeOperation = 'copy'; fb3x.drawImage(glCv, 0, 0); fb3on = true; } else fb3on = false;
 }
+
+/* cambia el aspecto del avión cuando eliges otra skin */
+function skin3dRefresh(){ if (!PL || !PL.root || !PL.plane) return; PL.root.remove(PL.plane); PL.plane = buildPlaneModel(curSkin(), false); PL.root.add(PL.plane); }
+window.__skinHook = skin3dRefresh;

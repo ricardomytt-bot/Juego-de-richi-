@@ -81,7 +81,7 @@ function updateCine(dt){
   const before = Math.floor(C.chars);
   C.chars = Math.min(C.txt.length, C.chars + dt * (s.who === 'Narrador' ? 34 : 30));
   const now = Math.floor(C.chars);
-  if (now > before && now % 2 === 0 && C.txt[now - 1] !== ' ' && s.who !== 'Narrador') Sound.sfx('blip', sp.voice);
+  if (now > before){ const chh = C.txt[now - 1]; if (chh !== ' ' && /[A-Za-zÁÉÍÓÚáéíóúñÑ]/.test(chh) && (now % (s.who === 'Narrador' ? 3 : 2) === 0)){ Sound.voice(s.who, chh, now); C.talkT = C.T; } }
   if (G.state === 'cine') G.tAnim += dt;
 }
 

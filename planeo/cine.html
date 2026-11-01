@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2a3a7a">
+<title>Planeo · Cinemáticas 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+#c{pointer-events:none}
+#dlg{position:fixed;inset:0;z-index:5;pointer-events:none}
+#dlg .bar{position:absolute;left:0;right:0;height:7.5vh;background:#000}#dlg .top{top:0}#dlg .bot{bottom:0}
+#dlgBox{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(7.5vh + 14px + env(safe-area-inset-bottom));width:min(92vw,880px);min-height:92px;background:rgba(14,16,40,.8);border:2px solid rgba(255,255,255,.28);border-radius:20px;
+  padding:16px 18px 18px;display:flex;gap:14px;align-items:center;color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:auto;cursor:pointer}
+#dlgPortraitWrap{flex:none;width:96px;height:96px}#dlgPortrait{width:96px;height:96px;display:block}
+#dlgName{position:absolute;left:18px;top:-14px;padding:3px 14px;border-radius:99px;font-weight:700;font-size:14px;color:#fff}
+#dlgText{flex:1;font-size:clamp(16px,2.4vw,23px);font-weight:600;line-height:1.35;min-height:2.7em}
+#dlgNext{position:absolute;right:16px;bottom:8px;font-weight:700;opacity:0;animation:pulse 1s infinite}@keyframes pulse{50%{transform:translateX(4px)}}
+#dlgCount{position:absolute;right:16px;top:-12px;background:rgba(0,0,0,.55);padding:2px 10px;border-radius:99px;font-size:12px;font-weight:600}
+#dlgTools{position:absolute;right:max(14px,env(safe-area-inset-right));top:calc(env(safe-area-inset-top) + 10px);display:flex;gap:8px;pointer-events:auto;z-index:7}
+#dlgTools button{border:0;border-radius:99px;padding:9px 16px;font:inherit;font-weight:600;font-size:14px;color:#fff;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);cursor:pointer}
+#veil{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:4}
+#fin{position:fixed;left:0;right:0;top:26%;text-align:center;font-size:clamp(70px,16vw,150px);font-weight:700;color:#fff;text-shadow:0 6px 30px rgba(0,0,0,.5);opacity:0;transition:opacity 1.6s 1s;z-index:4;pointer-events:none}#fin.show{opacity:1}
+.seq{display:flex;align-items:center;gap:12px;text-align:left;margin-top:8px}.seq b{display:block}.seq small{display:block;color:var(--ink2);font-weight:500}
+.seq .n{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;color:#fff;background:linear-gradient(180deg,#ffb347,#ff7a59)}
+select{width:100%;margin-top:4px;padding:10px 12px;font:inherit;font-weight:600;font-size:16px;border:2px solid #d8dcf6;border-radius:14px;background:#fff;color:var(--ink)}
+.tag{display:inline-block;background:#ffe2c2;color:#a8501e;font-weight:700;font-size:12px;padding:2px 10px;border-radius:99px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<canvas id="g3"></canvas>
+<canvas id="c"></canvas>
+<div id="veil"></div>
+<div id="fin">FIN</div>
+<div id="toast"></div>
+
+<div id="dlg" class="hidden">
+  <div class="bar top"></div><div class="bar bot"></div>
+  <div id="dlgTools"><button id="btnMuteC">🔊</button><button id="btnSkipC">Saltar ⏭</button></div>
+  <div id="dlgBox">
+    <div id="dlgName">Narrador</div><div id="dlgCount">1 / 1</div>
+    <div id="dlgPortraitWrap"><canvas id="dlgPortrait" width="96" height="96"></canvas></div>
+    <div id="dlgText"></div><div id="dlgNext">▶</div>
+  </div>
+</div>
+
+<section id="screen-menu" class="screen">
+  <div class="panel wide">
+    <span class="tag">VERSIÓN DE PRUEBA</span>
+    <h1 style="font-size:42px">Planeo</h1>
+    <p class="sub" style="margin-top:0">Cinemáticas de la historia en <b>3D</b>, con la voz de cada personaje.</p>
+    <label class="field">Tu nombre (sale en todos los diálogos)<input id="inName" maxlength="14" placeholder="Nuki" autocomplete="off"></label>
+    <label class="field">Tu personaje<select id="selSkin"></select></label>
+    <button id="btnAll" class="big">▶ Ver toda la historia</button>
+    <div id="seqs"></div>
+    <p class="best">Clic, toque o <kbd>Espacio</kbd> para avanzar · <kbd>Esc</kbd> para salir</p>
+  </div>
+</section>
+
+<script src="../vendor/three.min.js"></script>
+<script src="js/01-core.js"></script>
+<script src="js/02-audio.js"></script>
+<script src="js/03-level.js"></script>
+<script src="js/04-art.js"></script>
+<script src="js/05b-gfx3d.js"></script>
+<script src="js/05c-models3d.js"></script>
+<script src="js/05c2-models-plus.js"></script>
+<script src="js/05e-boss3d.js"></script>
+<script src="js/05f-ground3d.js"></script>
+<script src="js/08-cine.js"></script>
+<script src="js/08b-ach.js"></script>
+<script src="js/10-cine3d.js"></script>
+<script src="js/11-cine-main.js"></script>
+</body>
+</html>

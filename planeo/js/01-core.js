@@ -108,5 +108,5 @@ const store = {
 
 /* ---------------------------------------------------------------- nivel activo (se rellena en 03-level.js) */
 let LV = null, L_SKY = 1700, L_GROUND = 550, L = 2250, CALM_A = 1500, CALM_B = 1790, CHECKPOINTS = [], THEME = THEMES.dawn;
-function altFrac(P){ return clamp(1 - P / L_SKY, 0, 1); }
+function altFrac(P){ return clamp(1 - P / L_SKY, 0, 1) * (typeof G === 'undefined' ? 1 : G.up); }   // G.up < 1 mientras el avión sube en el modo infinito
 function dropOf(P){ return 520 * Math.pow(altFrac(P), 0.75); }

@@ -1,4 +1,4 @@
-# 🐿️ Planeo — la ardilla planeadora (v3 · en 3D)
+# 🐿️ Planeo — la ardilla planeadora (v4 · 3D)
 
 Nuki, una ardilla con gafas de aviador, baja planeando en su avioncito desde el Pueblo Ardilla (flotando en las nubes)
 hasta el suelo para recuperar las tres Bellotas Doradas. **3 carriles** muy marcados (pista luminosa con rieles, rayas y flechas), estilo *Subway Surfers*, pero en el cielo.
@@ -7,8 +7,17 @@ HTML5 Canvas, sin dependencias ni instalación. Funciona en navegador de escrito
 
 ## Modos
 - **📖 Historia**: 3 capítulos (Amanecer, Tormenta, Atardecer) con cinemáticas ilustradas, música y diálogos. Cada nivel termina con un mini jefe.
-- **♾️ Infinito**: los 3 mundos en bucle, cada vez más rápido y difícil, con jefe al final de cada nivel. Sin checkpoints: 3 vidas y se acabó. Récord de puntos.
+- **♾️ Infinito**: un solo vuelo sin pantallas de nivel. Bajas, derrotas al jefe, el avión atraviesa una bruma, **sube y vuelve a bajar** con el mundo siguiente, cada ciclo más rápido y difícil. Sin checkpoints: 3 vidas (ganas una por ciclo) y se acaba. Récord de puntos y de ciclos.
 - **👻 Multijugador**: corre contra fantasmas de tus amigos (carrera asíncrona). Cada nivel tiene sus fantasmas; se comparten con un código.
+
+## 🏆 Logros, skins y personajes
+17 logros con barra de progreso. Los logros desbloquean **skins de colores de Nuki** (Cielo, Pistacho, Rosa, Noche, Dorada) y **personajes de Isla Ardilla**:
+Abuelo Roble (completa la historia), Pipa (ciclo 3 del infinito), Chispa (ciclo 6) y la Capitana Rama (ciclo 10). Cada uno tiene su avión, su aspecto y sus accesorios,
+tanto en el juego 3D como en los retratos. Se eligen en *Logros y personajes*.
+
+## 🎬 Cinemáticas 3D (versión de prueba): `planeo/cine.html`
+Las 7 cinemáticas de la historia con personajes y escenarios en 3D (isla flotante, hangar, tormenta, bosque, jefes, fuegos artificiales), cámara en movimiento
+y **la voz de cada personaje** al hablar (Nuki aguda, Abuelo grave, Grajo rasposo, Nubarrón con retumbo, Búho que ulula, narrador suave). Escribe tu nombre y elige personaje.
 
 ## Controles
 | | Teclado | Móvil |
@@ -67,7 +76,9 @@ bajos con efecto de bombeo (sidechain), bajo "reese" rugoso, campanas FM, ondas 
 atardecer (chillwave), jefe (electro duro a 160 bpm), menú y cinemáticas (ambient), victoria (chiptune).
 La música añade capas a medida que avanza el nivel y sube de intensidad con la velocidad. Botón 🎵 para apagar solo la música.
 
-## Jefes
+## Jefes (más difíciles)
+Más vida (4/5/6 corazones), ataques más rápidos y nuevos: barrida de rayos por los 3 carriles y lluvia de proyectiles; cuando se enfadan atacan dos veces seguidas.
+
 Un aviso rojo en el suelo indica por dónde viene el golpe (disparos, muros con huecos, rayos). Tras cada ataque aparece
 una **bellota dorada grande**: recógela y se la devuelves al jefe. Cuando se le acaban los corazones, ¡victoria!
 

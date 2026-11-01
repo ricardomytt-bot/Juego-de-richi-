@@ -22,7 +22,7 @@ function genLevel(cfg, o){
   const rnd = mulberry32(cfg.seed + (o.seedAdd || 0));
   const R = (a, b) => a + Math.floor(rnd() * (b - a + 1));
   const objs = [], dyn = [], scenery = [];
-  let P = 90, safe = MID, prevP = 30, lastE = '';
+  let P = o.startP || 90, safe = MID, prevP = (o.startP || 90) - 60, lastE = '';
 
   const pushBlocks = (rowP, free, d) => {
     const ground = rowP >= calmB;
@@ -222,5 +222,5 @@ function updateDyn(d, dt){
 function infConfig(n){
   const base = LEVELS[n % 3];
   const cfg = Object.assign({}, base, { seed: base.seed + Math.floor(n / 3) * 17 + n });
-  return { cfg, opts: { diffAdd: n * 0.16, spdAdd: Math.min(n * 1.6, 9), bossLevel: n } };
+  return { cfg, opts: { diffAdd: n * 0.16, spdAdd: Math.min(n * 1.7, 14), bossLevel: n, startP: n > 0 ? 170 : 90 } };
 }

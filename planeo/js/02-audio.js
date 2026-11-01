@@ -70,6 +70,17 @@ const SONGS = {
 };
 for (const k in SONGS){ const S = SONGS[k]; S.melT = parseMel(S.mel); S.chords = S.prog.map(p => chordOf(p[0], p[1])); S.roots = S.prog.map(p => midi(p[0])); }
 
+
+/* voces: cada personaje tiene su timbre; las letras se convierten en vocales con formantes ("animalese") */
+const VOICES = {
+  'Nuki':            { wave: 'triangle', base: 560, spread: 0.30, dur: 0.075, vib: 7, noise: 0.0, q: 5 },
+  'Abuelo':          { wave: 'sawtooth', base: 150, spread: 0.20, dur: 0.11,  vib: 4.5, noise: 0.0, q: 4, slow: true },
+  'Capitán Grajo':   { wave: 'sawtooth', base: 215, spread: 0.45, dur: 0.085, vib: 12, noise: 0.35, q: 6 },
+  'Nubarrón Trueno': { wave: 'sawtooth', base: 82,  spread: 0.18, dur: 0.15,  vib: 3, noise: 0.5, q: 3, rumble: true },
+  'Don Búho':        { wave: 'sine',     base: 300, spread: 0.12, dur: 0.14,  vib: 5.5, noise: 0.06, q: 5, hoot: true },
+  'Narrador':        { wave: 'sine',     base: 440, spread: 0.06, dur: 0.10,  vib: 0, noise: 0.0, q: 8, soft: true }
+};
+const VOWELS = { a: [800, 1250], e: [520, 1850], i: [310, 2250], o: [520, 920], u: [330, 800] };
 const Sound = {
   ctx: null, master: null, muted: store.get('planeo2.muted', false), musicOn: store.get('planeo3.music', true), on: false, timer: null, nextT: 0, tick: 0,
   noiseBuf: null, moodName: 'menu', intensity: 0,
@@ -296,6 +307,25 @@ const Sound = {
     }
   },
 
+
+  /* una sílaba de voz para la letra ch del personaje who */
+  voice(who, ch, idx){
+    const c = this.ctx; if (!c || this.muted || c.state !== 'running' || !this.master) return;
+    const V = VOICES[who] || VOICES.Narrador, lc = (ch || 'a').toLowerCase(), t = c.currentTime;
+    let vow = 'aeiou'.indexOf(lc) >= 0 ? lc : 'aeiou'[(lc.charCodeAt(0) || 97) % 5], form = VOWELS[vow];
+    const pit = V.base * (1 + (((lc.charCodeAt(0) || 97) % 9) - 4) * V.spread * 0.18 + (V.hoot ? -0.15 * (idx % 2) : 0));
+    const o = c.createOscillator(), g = c.createGain(), f1 = c.createBiquadFilter(), f2 = c.createBiquadFilter(), mix = c.createGain();
+    o.type = V.wave; o.frequency.setValueAtTime(pit, t);
+    o.frequency.linearRampToValueAtTime(pit * (V.rumble ? 0.86 : 1 + V.spread * 0.4 * ((idx % 3) - 1)), t + V.dur);
+    if (V.vib){ const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = V.vib; lg.gain.value = pit * 0.025; l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t + V.dur + 0.05); }
+    f1.type = f2.type = 'bandpass'; f1.Q.value = f2.Q.value = V.q; f1.frequency.value = form[0] * (V.rumble ? 0.55 : V.base < 200 ? 0.8 : 1); f2.frequency.value = form[1] * (V.rumble ? 0.5 : V.base < 200 ? 0.85 : 1);
+    o.connect(f1); o.connect(f2); f1.connect(mix); f2.connect(mix);
+    const vol = V.soft ? 0.14 : 0.34;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.012); g.gain.setValueAtTime(vol, t + V.dur * 0.55); g.gain.exponentialRampToValueAtTime(0.0001, t + V.dur);
+    mix.connect(g); g.connect(this.master); o.start(t); o.stop(t + V.dur + 0.06);
+    if (V.noise > 0) this.noise(t, V.dur * 0.9, V.rumble ? 260 : 1800, V.noise * 0.09, V.rumble ? 140 : 900);
+    if (!'aeiou'.includes(lc) && /[a-z]/.test(lc)) this.noise(t, 0.03, 3600, 0.035);   // consonante: chasquido corto
+  },
   sfx(name, k){
     const c = this.ctx; if (!c || this.muted || c.state !== 'running') return; const t = c.currentTime;
     const pent = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
@@ -329,6 +359,7 @@ const Sound = {
       case 'power': [0, 4, 7, 12, 16].forEach((n, i) => this.tone(600 * Math.pow(2, n / 12), t + i * 0.05, 0.3, 'triangle', 0.16)); this.noise(t, 0.3, 3000, 0.1); break;
       case 'pop': this.tone(900, t, 0.12, 'sine', 0.3); this.tone(420, t + 0.03, 0.2, 'triangle', 0.2); this.noise(t, 0.18, 3500, 0.18); break;
       case 'smash': this.tone(180, t, 0.2, 'sawtooth', 0.15); this.noise(t, 0.25, 1500, 0.3, 300); [0, 7, 12].forEach((n, i) => this.tone(700 * Math.pow(2, n / 12), t + 0.04 + i * 0.04, 0.2, 'square', 0.06)); break;
+      case 'ach': [0, 7, 12, 16, 19, 24].forEach((n, i) => this.tone(660 * Math.pow(2, n / 12), t + i * 0.07, 0.5, 'triangle', 0.14)); this.tone(1320, t + 0.5, 0.6, 'sine', 0.1); break;
       case 'whoosh': this.noise(t, 0.7, 500, 0.2, 2200); break;
       case 'level': [0, 5, 9, 12].forEach((n, i) => this.tone(523 * Math.pow(2, n / 12), t + i * 0.1, 0.5, 'sine', 0.2)); break;
     }
