@@ -32,7 +32,7 @@ function setModelStyle(id, first){
   }
   LT.grad.needsUpdate = true;
   _bc.clear();   // la caché de geometrías fusionadas depende de las geometrías base
-  if (first){ buildPools(); } else { initModels(); initModelsPlus(); }
+  if (first){ buildPools(); } else { initModels(); initModelsPlus(); if (typeof initExtras === 'function') initExtras(); }
   initBossModels();
   styleModels(A); styleBosses(A);
   // Low-poly: personajes más pequeños para que no tapen la pantalla (~1 carril de ancho). El peluche se queda como estaba.

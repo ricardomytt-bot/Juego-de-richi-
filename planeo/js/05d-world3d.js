@@ -54,7 +54,7 @@ function syncWorld(dt, P, D3, air){
   for (let i = lowerBound(o, P - 8); i < o.length && o[i].P < P + 200; i++){
     const ob = o[i]; if (ob.taken || ob.dead) continue;
     const r = place(ob, ob.P, ob.type); if (!r) continue; const { g, mk, lane } = r, z = ob.P - P;
-    if (PICK_SET.has(ob.type)) g.position.y = yAir - 0.1; else if (mk.ground) g.position.y = -D3 + (g.userData.hy || 0); else g.position.y = yAir;
+    if (PICK_SET.has(ob.type)) g.position.y = yAir - 0.1 + (ob.y || 0); else if (mk.ground) g.position.y = -D3 + (g.userData.hy || 0); else g.position.y = yAir;
     if (mk.anim) mk.anim(g, ob, t, gt, { z, look: (G.x - lane) * 0.9 });
     // placa de color en el carril
     const col = PLATE_COL[ob.type]; if (col && z > -3 && z < 170){

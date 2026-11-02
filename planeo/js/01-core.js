@@ -61,9 +61,9 @@ const THEMES = {
 
 /* niveles de la historia (también sirven para infinito y multijugador) */
 const LEVELS = [
-  { id: 0, seed: 111, theme: 'dawn',  name: 'Amanecer sobre las nubes', short: 'Amanecer',  boss: 'crow',  bossName: 'Capitán Grajo',   skyLen: 1700, groundLen: 550, spd0: 19, spd1: 33, diff0: 0.20, span: 0.60 },
-  { id: 1, seed: 222, theme: 'storm', name: 'Tormenta de verano',       short: 'Tormenta',  boss: 'storm', bossName: 'Nubarrón Trueno', skyLen: 1700, groundLen: 550, spd0: 21, spd1: 36, diff0: 0.40, span: 0.60 },
-  { id: 2, seed: 333, theme: 'dusk',  name: 'Bosque dorado',            short: 'Atardecer', boss: 'owl',   bossName: 'Don Búho',        skyLen: 1700, groundLen: 550, spd0: 23, spd1: 39, diff0: 0.60, span: 0.60 }
+  { id: 0, seed: 111, theme: 'dawn',  name: 'Amanecer sobre las nubes', short: 'Amanecer',  boss: 'crow',  bossName: 'Capitán Grajo',   skyLen: 2500, groundLen: 750, spd0: 19, spd1: 33, diff0: 0.20, span: 0.60, tod0: 0.00 },
+  { id: 1, seed: 222, theme: 'storm', name: 'Tormenta de verano',       short: 'Tormenta',  boss: 'storm', bossName: 'Nubarrón Trueno', skyLen: 2500, groundLen: 750, spd0: 21, spd1: 36, diff0: 0.40, span: 0.60, tod0: 0.18 },
+  { id: 2, seed: 333, theme: 'dusk',  name: 'Bosque dorado',            short: 'Atardecer', boss: 'owl',   bossName: 'Don Búho',        skyLen: 2500, groundLen: 750, spd0: 23, spd1: 39, diff0: 0.60, span: 0.60, tod0: 0.30 }
 ];
 const LEVEL_SEEDS = LEVELS.map(l => l.seed);
 const START_ALT = 1800;

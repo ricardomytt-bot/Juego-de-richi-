@@ -13,7 +13,8 @@ const ENEMIES = {
   ground: [{ t: 'slime', beh: 'sweep', d: 0.05, w: 3 }, { t: 'boulder', beh: 'rush', d: 0.12, w: 2.6 }, { t: 'bunny', beh: 'hop', d: 0.25, w: 2.4 },
            { t: 'mole', beh: 'ambush', d: 0.25, w: 2.6 }, { t: 'gate', beh: 'gate', d: 0.4, w: 2 }]
 };
-const PICKUPS = ['acorn', 'gold', 'heart', 'shield', 'star', 'magnet'];
+const PICKUPS = ['acorn', 'gold', 'heart', 'shield', 'star', 'magnet', 'chest', 'portal'];
+const JUMPABLE = { hurdle: 1, logbar: 1 };   // obstáculos bajos: se saltan (o se esquivan de carril)
 
 function genLevel(cfg, o){
   o = o || {};
@@ -23,6 +24,7 @@ function genLevel(cfg, o){
   const R = (a, b) => a + Math.floor(rnd() * (b - a + 1));
   const objs = [], dyn = [], scenery = [];
   let P = o.startP || 90, safe = MID, prevP = (o.startP || 90) - 60, lastE = '';
+  let nextChest = P + 380 + R(0, 200), nextPortal = P + 650 + R(0, 250);
 
   const pushBlocks = (rowP, free, d) => {
     const ground = rowP >= calmB;
@@ -53,7 +55,8 @@ function genLevel(cfg, o){
     else {
       const r = rnd();
       if (d > 0.4 && r < 0.12) kind = 'slalom';
-      else if (r < 0.5) kind = 'wall';
+      else if (r < 0.40) kind = 'wall';
+      else if (r < 0.55 && P > 150) kind = 'hurdle';
       else if (r < 0.84 && d > 0.05) kind = 'enemy';
       else kind = 'trail';
     }
@@ -64,6 +67,15 @@ function genLevel(cfg, o){
       const free = new Set([newSafe]);
       while (free.size < LANES - n) free.add(R(0, LANES - 1));
       pushBlocks(P, free, d);
+    } else if (kind === 'hurdle'){
+      const full = d > 0.2 && rnd() < 0.4, ht = ground ? 'logbar' : 'hurdle', lanesH = new Set([safe]);
+      if (full){ for (let l = 0; l < LANES; l++) lanesH.add(l); } else if (rnd() < 0.5) lanesH.add(clamp(safe + (rnd() < 0.5 ? -1 : 1), 0, LANES - 1));
+      for (const l of lanesH) objs.push({ type: ht, P, lane: l, v: rnd(), sc: 1 });
+      // arco de bellotas por encima: se recogen saltando
+      const ys = [0, 0.9, 1.9, 2.3, 1.9, 0.9, 0];
+      for (let i = 0; i < ys.length; i++) objs.push({ type: i === 3 && rnd() < 0.3 ? 'gold' : 'acorn', P: P - 12 + i * 4, lane: safe, y: ys[i], taken: false });
+      let free = -1; for (let l = 0; l < LANES; l++) if (!lanesH.has(l)) free = l;
+      newSafe = free >= 0 ? free : safe;
     } else if (kind === 'slalom'){
       let s = safe, dir = rnd() < 0.5 ? -1 : 1;
       for (let k = 0; k < 3; k++){
@@ -139,6 +151,16 @@ function genLevel(cfg, o){
         }
       }
     }
+    if (P > nextChest && kind === 'trail' && P + 120 < calmA){   // cofre secreto: en un carril del borde, a la altura de un salto
+      nextChest = P + 520 + R(0, 320);
+      const cl = newSafe <= 1 ? LANES - 1 : 0;
+      objs.push({ type: 'chest', P: P + 6, lane: cl, y: 2.35, taken: false });
+      for (let i = 0; i < 3; i++) objs.push({ type: 'acorn', P: P - 6 + i * 4, lane: cl, y: 0.5 + i * 0.75, taken: false });
+    }
+    if (P > nextPortal && kind === 'trail' && !calm && P + 360 < calmA){   // portal: atajo hacia delante (a cambio de las bellotas del camino largo)
+      nextPortal = P + 800 + R(0, 300);
+      objs.push({ type: 'portal', P: P + 6, lane: newSafe, y: 0, to: P + 6 + 170, taken: false });
+    }
     safe = newSafe; prevP = P + extra;
     P += gap + extra;
   }
@@ -211,7 +233,8 @@ function gateFlicker(o, t){ const f = (t / o.per + o.ph) % 0.5; return f > 0.4; 
 const isPickup = o => PICKUPS.includes(o.type);
 const HIT_R = { bee: 0.58, slime: 0.58, comet: 0.55, boulder: 0.6, bat: 0.55, bunny: 0.58, drone: 0.6, mole: 0.6 };
 function hitRadius(o){ return HIT_R[o.type] || 0.62; }
-function staticHit(o, x, t){
+function staticHit(o, x, t, y, dp){
+  if (JUMPABLE[o.type]) return (y || 0) < 0.7 && Math.abs(o.lane - x) < 0.62 && (dp === undefined || Math.abs(dp) < 0.9);
   if (o.type === 'gate') return gateOn(o, t) && x > o.ga - 0.58 && x < o.gb + 0.58;
   return Math.abs(laneOf(o, t) - x) < hitRadius(o);
 }

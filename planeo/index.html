@@ -55,6 +55,11 @@
       <button id="btnMute2" class="soft">🔊 Sonido</button>
       <button id="btnMusic" class="soft">🎵 Música</button>
     </div>
+    <div class="row">
+      <button id="btnRank" class="soft">🏅 Ranking</button>
+      <button id="btnRace" class="soft">🏁 Carrera en vivo</button>
+      <button id="btnTilt" class="soft">📱 Inclinar: no</button>
+    </div>
     <p class="best" id="bestLine"></p>
   </div>
 </section>
@@ -103,6 +108,49 @@
 </section>
 <div id="achPop"></div>
 
+<!-- RANKING GLOBAL -->
+<section id="screen-rank" class="screen hidden">
+  <div class="panel wide">
+    <h2>🏅 Ranking global</h2>
+    <p class="sub" id="rankSub">Los mejores de todos los que juegan este enlace.</p>
+    <div id="rankTabs" class="tabs"></div>
+    <div id="rankList"></div>
+    <button class="big back">Volver</button>
+  </div>
+</section>
+
+<!-- CARRERA EN VIVO -->
+<section id="screen-race" class="screen hidden">
+  <div class="panel wide">
+    <h2>🏁 Carrera en vivo</h2>
+    <p class="sub" id="raceSub">Corre a la vez que tus amigos: todos ven el avión de los demás en tiempo real. Crea una sala y comparte el código.</p>
+    <div id="raceLobby">
+      <input id="inRoom" maxlength="8" placeholder="Código de sala" autocomplete="off" autocapitalize="characters" style="width:100%;padding:10px 14px;font:inherit;font-size:20px;font-weight:700;text-align:center;letter-spacing:3px;border:2px solid #d8dcf6;border-radius:14px;text-transform:uppercase">
+      <div class="row"><button id="btnRoomMake" class="soft">✨ Crear sala</button><button id="btnRoomJoin" class="soft">Unirme</button></div>
+    </div>
+    <div id="raceRoom" class="hidden">
+      <p class="sub">Sala <b id="roomCode" style="letter-spacing:3px;font-size:20px"></b> · <button id="btnRoomCopy" class="soft">📋 Copiar</button></p>
+      <div id="raceTabs" class="tabs"></div>
+      <div id="racePeers"></div>
+      <button id="btnRaceGo" class="big alt1">¡Empezar carrera!</button>
+      <button id="btnRaceLeave" class="soft" style="margin-top:8px">Salir de la sala</button>
+    </div>
+    <button class="soft back" style="margin-top:10px">Volver</button>
+  </div>
+</section>
+
+<!-- MODO FOTO -->
+<div id="photoBar" class="hidden">
+  <button id="phZoomIn" class="icon" aria-label="Acercar">＋</button><button id="phZoomOut" class="icon" aria-label="Alejar">－</button>
+  <button id="phShot" class="photoShot">📸 Foto</button>
+  <button id="phExit" class="icon" aria-label="Salir">✕</button>
+</div>
+<div id="photoPrev" class="hidden">
+  <img id="photoImg" alt="Tu foto">
+  <p class="sub" style="color:#fff">Se guardó con tu nombre y la fecha. Si no se descarga, mantén pulsada la imagen.</p>
+  <div class="row"><button id="phSave" class="soft">💾 Guardar</button><button id="phClose" class="soft">Seguir</button></div>
+</div>
+
 <!-- AYUDA -->
 <section id="screen-help" class="screen hidden">
   <div class="panel">
@@ -111,7 +159,8 @@
       <li>🪂 Baja planeando desde el cielo hasta el suelo. Al final te espera un <b>mini jefe</b>.</li>
       <li>↔️ Hay <b>3 carriles</b> muy marcados: <kbd>←</kbd> <kbd>→</kbd> (o <kbd>A</kbd> <kbd>D</kbd>). En el móvil, <b>toca</b> la izquierda o la derecha, o <b>desliza</b>.</li>
       <li>⬇️ <b>Picada</b> (<kbd>↓</kbd> / desliza abajo): más velocidad y bellotas dobles.</li>
-      <li>⬆️ <b>Freno</b> (<kbd>↑</kbd> / desliza arriba): más tiempo para pensar.</li>
+      <li>🦘 <b>Salto</b> (<kbd>↑</kbd> / <kbd>W</kbd> / desliza arriba; con inclinación, toca la pantalla): salta las <b>vallas</b> y los <b>troncos</b>, recoge las bellotas de los arcos y busca los <b>cofres secretos</b> a gran altura. <kbd>Shift</kbd> frena.</li>
+      <li>🌀 <b>Portales</b>: un atajo hacia delante. 🌙 Hay <b>día y noche</b> y clima cambiante (lluvia, nieve, niebla).</li>
       <li>⚠️ Con el jefe, las franjas rojas avisan por dónde viene el golpe. <b>Recoge las bellotas doradas</b> grandes para devolvérselas.</li>
       <li>✨ <b>Power-ups</b>: escudo (aguanta un golpe), estrella (invencible y revienta enemigos) e imán (atrae las bellotas).</li>
       <li>🚀 Cada nivel dura unos 2 minutos y va <b>cada vez más rápido</b>.</li>
@@ -128,6 +177,7 @@
     <h2>Pausa</h2>
     <button id="btnResume" class="big">Seguir</button>
     <div class="row">
+      <button id="btnPhoto" class="soft">📷 Modo foto</button>
       <button id="btnMusicP" class="soft">🎵 Música</button>
       <button id="btnRestart" class="soft">Reiniciar</button>
       <button id="btnQuit" class="soft">Menú</button>
@@ -163,6 +213,7 @@
 <script src="js/05c2-models-plus.js"></script>
 <script src="js/05e-boss3d.js"></script>
 <script src="js/05g-styles.js"></script>
+<script src="js/05h-extras.js"></script>
 <script src="js/05f-ground3d.js"></script>
 <script src="js/06-ghost.js"></script>
 <script src="js/07-boss.js"></script>
@@ -170,5 +221,6 @@
 <script src="js/08b-ach.js"></script>
 <script src="js/10-cine3d.js"></script>
 <script src="js/09-main.js"></script>
+<script src="js/13-social.js"></script>
 </body>
 </html>

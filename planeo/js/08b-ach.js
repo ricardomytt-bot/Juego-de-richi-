@@ -40,6 +40,10 @@ const ACHS = [
   { id: 'powerups10',   name: 'Coleccionista',           desc: 'Recoge 10 power-ups.',                                   goal: 10,    prog: () => ST.powerups },
   { id: 'shield5',      name: 'Escudo salvador',         desc: 'Que el escudo te salve de 5 golpes.',                    goal: 5,     prog: () => ST.shieldSaves },
   { id: 'star10',       name: 'Imparable',               desc: 'Revienta 10 enemigos con la estrella.',                  goal: 10,    prog: () => ST.starKills },
+  { id: 'jump100',    name: 'Ardilla saltarina',       desc: 'Salta 100 veces.',                                       goal: 100,   prog: () => ST.jumps || 0 },
+  { id: 'chest3',      name: 'Cazatesoros',             desc: 'Encuentra 3 cofres secretos.',                           goal: 3,     prog: () => ST.chests || 0 },
+  { id: 'portal5',     name: 'Atajista',                desc: 'Cruza 5 portales.',                                      goal: 5,     prog: () => ST.portals || 0 },
+  { id: 'photo1',      name: 'Fotógrafa del cielo',     desc: 'Guarda una foto con el modo foto.',                      goal: 1,     prog: () => ST.photos || 0 },
   { id: 'dist20',       name: 'Maratón aéreo',           desc: 'Vuela 20 km en total.',                                  goal: 20000, prog: () => Math.floor(ST.dist) }
 ];
 const ACH_BY = Object.fromEntries(ACHS.map(a => [a.id, a]));

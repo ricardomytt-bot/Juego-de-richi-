@@ -360,6 +360,11 @@ const Sound = {
       case 'pop': this.tone(900, t, 0.12, 'sine', 0.3); this.tone(420, t + 0.03, 0.2, 'triangle', 0.2); this.noise(t, 0.18, 3500, 0.18); break;
       case 'smash': this.tone(180, t, 0.2, 'sawtooth', 0.15); this.noise(t, 0.25, 1500, 0.3, 300); [0, 7, 12].forEach((n, i) => this.tone(700 * Math.pow(2, n / 12), t + 0.04 + i * 0.04, 0.2, 'square', 0.06)); break;
       case 'ach': [0, 7, 12, 16, 19, 24].forEach((n, i) => this.tone(660 * Math.pow(2, n / 12), t + i * 0.07, 0.5, 'triangle', 0.14)); this.tone(1320, t + 0.5, 0.6, 'sine', 0.1); break;
+      case 'jump': { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(320, t); o.frequency.exponentialRampToValueAtTime(760, t + 0.18); g.gain.setValueAtTime(0.2, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.24); o.connect(g); g.connect(this.sfxBus || this.master || c.destination); o.start(t); o.stop(t + 0.26); this.noise(t, 0.12, 2200, 0.05); break; }
+      case 'land': this.tone(110, t, 0.12, 'sine', 0.25); this.noise(t, 0.08, 700, 0.1); break;
+      case 'chest': [0, 4, 7, 12, 16, 19, 24].forEach((n, i) => this.tone(740 * Math.pow(2, n / 12), t + i * 0.05, 0.5, 'triangle', 0.16)); this.noise(t, 0.4, 5000, 0.08); break;
+      case 'portal': { const o = c.createOscillator(), g = c.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(1500, t + 0.5); g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.7); o.connect(g); g.connect(this.sfxBus || this.master || c.destination); o.start(t); o.stop(t + 0.72); this.noise(t, 0.6, 3000, 0.12, 300); break; }
+      case 'click': this.tone(1200, t, 0.05, 'square', 0.05); this.noise(t, 0.04, 4000, 0.08); break;
       case 'whoosh': this.noise(t, 0.7, 500, 0.2, 2200); break;
       case 'level': [0, 5, 9, 12].forEach((n, i) => this.tone(523 * Math.pow(2, n / 12), t + i * 0.1, 0.5, 'sine', 0.2)); break;
     }

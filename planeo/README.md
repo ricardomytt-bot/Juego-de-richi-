@@ -102,3 +102,12 @@ una **bellota dorada grande**: recógela y se la devuelves al jefe. Cuando se le
 `07-boss` jefes · `08-cine` cinemáticas · `09-main` modos, HUD y entrada.
 
 > Fantasmas "en línea de verdad" (ranking global) necesitarían un pequeño backend; el formato de fantasma ya está listo.
+
+## Novedades: saltos, mundo vivo y extras sociales
+
+- **Saltos** (`↑` / `W` / deslizar arriba): física con gravedad (`G.jy`, `G.jv`), salto en cola al aterrizar y picada para caer rápido. Nuevos obstáculos bajos `hurdle` (cielo) y `logbar` (suelo), saltables o esquivables; arcos de bellotas que se recogen en el aire. `Shift` frena.
+- **Niveles más largos**: 2500 m de cielo + 750 m de suelo (antes 1700 + 550).
+- **Cofres secretos** (`chest`): a la altura de un salto, en un carril del borde. **Portales** (`portal`): atajo de 170 m (las bellotas del camino largo se pierden).
+- **Ciclo de día y noche** (`todState` en `js/05h-extras.js`, periodo `TOD_PERIOD` = 210 s): cielo, luces, color del terreno, estrellas, luna y luciérnagas.
+- **Clima dinámico** (`FX`): lluvia, nieve y niebla que aparecen y se van solos.
+- **Ranking global** (`Social`, colección `rank` de la capacidad `db`), **carrera en vivo** (`Race`, presencia de la capacidad `room`, mismo nivel por semilla), **modo foto** (`Photo`, órbita + captura, guarda con `downloads`) y **controles por inclinación** (`Tilt`). Todo vive en `js/13-social.js` y solo se activa si el visor ofrece esas capacidades.

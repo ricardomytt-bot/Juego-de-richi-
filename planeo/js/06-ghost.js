@@ -75,6 +75,7 @@ const Ghosts = {
   }
 };
 function ghostAt(g, t){
+  if (g.live){ if (!g.seen) return null; g.P += (g.tP - g.P) * 0.22; g.x += (g.tx - g.x) * 0.22; return { P: g.P, x: g.x }; }   // rival en vivo (carrera online)
   const f = t / 0.25, i = Math.floor(f);
   if (i >= g.Ps.length - 1) return null;
   if (i < 0) return { P: g.Ps[0], x: g.Xs[0] };

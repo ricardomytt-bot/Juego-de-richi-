@@ -4,7 +4,7 @@ const G = {
   state: 'menu', mode: 'story', ch: 0, infN: 0, t: 0, P: 0, vP: 0, x: MID, tgt: MID, bank: 0, hearts: 3, acorns: 0, combo: 0, deaths: 0,
   inv: 0, slow: 0, diveT: 0, brakeT: 0, fallT: 0, cp: 20, shake: 0, cd: 0, cdShown: 4, flash: 0, lightning: 0, lightT: 5, fade: 0,
   recT: 0, Ps: [], Xs: [], ghosts: [], tAnim: 0, endT: 0, boss: null, bossDone: false, kills: 0, totalDist: 0, lastCode: null, t0: 0, dying: false,
-  multiIdx: 0, noPlane: false, shield: false, starT: 0, magT: 0, up: 1, cyc: null, skyBlend: 1, skyFrom: null, pendingTheme: null, cycHits: 0, bossHits: 0, diveOn: false
+  jy: 0, jv: 0, jbuf: 0, tod: 0, todOn: true, tilt: false, multiIdx: 0, noPlane: false, shield: false, starT: 0, magT: 0, up: 1, cyc: null, skyBlend: 1, skyFrom: null, pendingTheme: null, cycHits: 0, bossHits: 0, diveOn: false
 };
 const keys = { dive: false, brake: false };
 const particles = [];
@@ -60,7 +60,7 @@ function updateHud(){
   if (G.boss) alt = '¡Jefe!';
   else if (G.mode === 'inf') alt = 'Ciclo ' + (G.infN + 1) + ((LV.asc && G.P - LV.base < LV.asc) ? ' · subiendo ↑ ' + Math.round(START_ALT * altFrac(G.P)) + ' m' : inSky ? ' · ' + Math.round(START_ALT * altFrac(G.P)) + ' m' : ' · en tierra');
   else alt = inSky ? 'Altitud ' + Math.round(START_ALT * altFrac(G.P)) + ' m' : 'Jefe a ' + Math.max(0, Math.round(L - G.P)) + ' m';
-  setText(el.alt, 'alt', alt);
+  setText(el.alt, 'alt', (typeof todIcon === 'function' ? todIcon() : '') + alt);
   setHtml(el.acorns, 'ac', SVG_ACORN + '<b>' + G.acorns + '</b>');
   setHtml(el.time, 'tm', SVG_CLOCK + '<b>' + fmtTime(G.t) + '</b>');
   let pw = '';
@@ -73,7 +73,7 @@ function updateHud(){
   for (let i = 0; i < G.ghosts.length; i++){
     const g = G.ghosts[i], node = ms[i + 1]; if (!node) continue;
     const s = ghostAt(g, G.t);
-    node.style.left = (s ? clamp(s.P / L, 0, 1) * 100 : 100) + '%';
+    node.style.left = (s ? clamp(s.P / L, 0, 1) * 100 : (g.live ? 0 : 100)) + '%';
   }
   if (ms[0]) ms[0].style.left = (lvProg * 100).toFixed(1) + '%';
 }
@@ -99,8 +99,9 @@ async function startLevel(mode, idx, carry){
   G.mode = mode; G.ch = mode === 'inf' ? G.infN % 3 : idx;
   G.ghosts = mode === 'multi' ? await Ghosts.runtime(cfg.seed) : [];
   const keep = !!(carry && mode === 'inf');
-  ST.flights++; Object.assign(G, { cycHits: 0, bossHits: 0, up: 1, cyc: null, state: 'countdown', P: 0, vP: 0, x: MID, tgt: MID, bank: 0, inv: 0, slow: 0, diveT: 0, brakeT: 0, fallT: 0, cp: 20, shake: 0,
+  ST.flights++; Object.assign(G, { cycHits: 0, bossHits: 0, up: 1, cyc: null, state: 'countdown', P: 0, vP: 0, x: MID, tgt: MID, bank: 0, inv: 0, slow: 0, diveT: 0, brakeT: 0, fallT: 0, cp: 20, shake: 0, jy: 0, jv: 0, jbuf: 0,
     cd: keep ? 1.8 : 3.4, cdShown: 4, flash: 0, lightning: 0, lightT: 4, fade: keep ? 1 : 0, recT: 0, boss: null, bossDone: false, endT: 0, t0: 0, dying: false, noPlane: false });
+  if (!keep) G.tod = cfg.tod0 || 0;
   if (!keep) Object.assign(G, { t: 0, hearts: 3, acorns: 0, combo: 0, deaths: 0, kills: 0, totalDist: 0, Ps: [], Xs: [] });
   else G.hearts = Math.min(3, G.hearts + 1);
   G.starT = 0; G.magT = 0; if (!keep) G.shield = false;
@@ -111,6 +112,7 @@ async function startLevel(mode, idx, carry){
   showLevelTitle(mode === 'inf' ? 'Nivel ' + (G.infN + 1) + ' · ' + cfg.name : mode === 'story' ? 'Capítulo ' + (idx + 1) + ' · ' + cfg.name : cfg.name);
 }
 function goMenu(){
+  if (typeof Race !== 'undefined') Race.stop();
   Sound.setMood('menu'); setLevel(genLevel(LEVELS[0])); AMB.init(THEME.amb);
   Object.assign(G, { state: 'menu', boss: null, ghosts: [], fade: 0, noPlane: false, fallT: 0, flash: 0, lightning: 0 });
   particles.length = 0; showScreen('menu'); el.hud.classList.add('hidden'); el.banner.classList.remove('show'); showBossBar(false); refreshMenu();
@@ -134,6 +136,12 @@ function move(dir){
   if (G.state !== 'playing' && G.state !== 'countdown') return;
   const n = clamp(G.tgt + dir, 0, LANES - 1);
   if (n !== G.tgt){ G.tgt = n; Sound.sfx('move'); }
+}
+function doJump(){
+  if (G.state !== 'playing') return;
+  if (G.boss) return;   // con el jefe solo se esquiva de carril
+  if (G.jy <= 0.02 && G.fallT <= 0){ G.jv = 13.4; G.jy = 0.03; G.jbuf = 0; Sound.sfx('jump'); ST.jumps = (ST.jumps || 0) + 1; }
+  else G.jbuf = 0.16;   // salto en cola: se ejecuta al aterrizar
 }
 function doDive(){ if (G.diveT <= 0 && !keys.dive) Sound.sfx('dive'); G.diveT = 1.3; G.brakeT = 0; }
 function doBrake(){ if (G.brakeT <= 0 && !keys.brake) Sound.sfx('brake'); G.brakeT = 1.3; G.diveT = 0; }
@@ -164,10 +172,24 @@ function hurt(o){
     else banner('¡Uy!<small>' + (G.boss ? 'Inténtalo otra vez' : 'Volvemos al último punto de control') + '</small>', 1500);
   }
 }
+function usePortal(o){
+  const from = G.P, to = Math.min(o.to, CALM_A - 60);
+  if (to <= from + 20) return;
+  for (const q of LV.objs) if (q.P > from && q.P < to - 10 && !q.taken) q.dead = true;
+  for (const q of LV.dyn) if (q.pe > from - 2 && q.pe < to - 10) q.dead = true;
+  for (const c of CHECKPOINTS) if (c > G.cp && c <= to) G.cp = c;
+  G.P = to; G.inv = Math.max(G.inv, 1.6); G.flash = 0.45; G.shake = 4; ST.portals = (ST.portals || 0) + 1; G.portalFx = 0.8;
+  Sound.sfx('portal'); toast('¡Portal! Atajo de ' + Math.round(to - from) + ' m'); achCheck();
+}
 function collect(o){
   o.taken = true;
   const p = playerScreen();
   if (o.type === 'shield' || o.type === 'star' || o.type === 'magnet'){ ST.powerups++; achCheck(); }
+  if (o.type === 'chest'){
+    G.acorns += 30; ST.acorns += 30; ST.chests = (ST.chests || 0) + 1; Sound.sfx('chest'); burst(p.x, p.y, '#ffe36b', 34, 320, 9); burst(p.x, p.y, '#ffffff', 16, 240, 6);
+    toast('¡Cofre secreto! +30 bellotas'); achCheck(); return;
+  }
+  if (o.type === 'portal'){ usePortal(o); return; }
   if (o.type === 'shield'){ G.shield = true; Sound.sfx('power'); burst(p.x, p.y, '#8fd8ff', 18, 220, 7); toast('¡Escudo! Absorbe un golpe'); }
   else if (o.type === 'star'){ G.starT = 6; G.inv = Math.max(G.inv, 0.3); Sound.sfx('power'); burst(p.x, p.y, '#ffe36b', 26, 280, 8); toast('¡Estrella! Invencible 6 s'); }
   else if (o.type === 'magnet'){ G.magT = 9; Sound.sfx('power'); burst(p.x, p.y, '#ff7a7a', 18, 220, 7); toast('¡Imán! Las bellotas vienen a ti'); }
@@ -201,6 +223,7 @@ async function showEnd(win){
   if (G.mode === 'inf'){
     const dist = Math.round(G.totalDist + Math.min(G.P, L)), score = Math.round(dist / 10 + G.acorns * 10 + G.kills * 300);
     const rec = score > Inf.score; if (rec){ Inf = { score, level: G.infN + 1 }; store.set('planeo3.inf', Inf); }
+    if (typeof Social !== 'undefined') Social.submit('inf', score, { cycle: G.infN + 1, dist });
     $('endTitle').textContent = rec ? '¡Nuevo récord! 🏆' : 'Fin del vuelo';
     $('endStats').innerHTML = stat(G.infN + 1, 'CICLO') + stat(dist + ' m', 'DISTANCIA') + stat(G.acorns + ' 🌰', 'BELLOTAS') + stat(G.kills, 'JEFES') + stat(score + (rec ? ' ⭐' : ''), 'PUNTOS');
     $('endRank').innerHTML = `<p class="sub">Récord: ${Inf.score} puntos · nivel ${Inf.level}. Cada nivel es más rápido y más difícil que el anterior.</p>`;
@@ -230,6 +253,7 @@ async function showEnd(win){
   if (G.mode === 'story'){ $('btnNext').classList.remove('hidden'); $('btnNext').textContent = G.ch < 2 ? 'Continuar ▶' : 'Ver el final ▶'; }
   if (G.mode === 'multi') $('btnShare').classList.remove('hidden');
   showScreen('end'); el.hud.classList.add('hidden'); Sound.setMood('happy'); Sound.sfx('win');
+  if (typeof Social !== 'undefined'){ if (G.mode === 'story' || G.mode === 'multi') Social.submit('t' + G.ch, time, {}); Social.afterEnd(time); }
 }
 const stat = (v, l) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`;
 
@@ -315,6 +339,12 @@ function update(dt){
   G.inv = Math.max(0, G.inv - dt); G.slow = Math.max(0, G.slow - dt);
   G.starT = Math.max(0, G.starT - dt); G.magT = Math.max(0, G.magT - dt);
   G.diveT = Math.max(0, G.diveT - dt); G.brakeT = Math.max(0, G.brakeT - dt);
+  if (G.jy > 0 || G.jv > 0){   // física del salto
+    G.jv -= (diving() ? 62 : 30) * dt; G.jy += G.jv * dt; G.jbuf = Math.max(0, G.jbuf - dt);
+    if (G.jy <= 0){ G.jy = 0; G.jv = 0; Sound.sfx('land'); if (G.jbuf > 0){ G.jbuf = 0; doJump(); } }
+  } else if (G.jbuf > 0){ G.jbuf = Math.max(0, G.jbuf - dt); doJump(); }
+  if (G.boss) { G.jy = Math.max(0, G.jy - dt * 8); G.jv = 0; }
+  G.tod = (G.tod + dt / TOD_PERIOD) % 1;
   const prog = clamp((G.P - (LV.base || 0)) / (L - (LV.base || 0)), 0, 1);
 
   // relámpagos de la tormenta
@@ -342,13 +372,18 @@ function update(dt){
       target = Math.min(base * m, 58);
     }
     G.vP += (target - G.vP) * Math.min(1, dt * 2.5);
-    const Pprev = G.P; G.P += G.vP * dt;
+    let Pprev = G.P; G.P += G.vP * dt; let P2 = G.P; G.jumped = false;
     const objs = LV.objs;
     const reach = G.magT > 0 ? 11 : 1.4;
     for (let i = lowerBound(objs, Pprev - 1.4); i < objs.length && objs[i].P <= G.P + reach; i++){
       const o = objs[i]; if (o.hit || o.taken || o.dead) continue;
-      if (isPickup(o)){ const dx = Math.abs(o.lane - G.x); if (dx < (G.magT > 0 && !(o.type === 'shield' || o.type === 'star' || o.type === 'magnet') ? 3 : 0.8) && (G.magT > 0 || (o.P >= Pprev - 1.4 && o.P <= G.P + 1.4))) collect(o); }
-      else if (o.P <= G.P + 1.4 && staticHit(o, G.x, G.t) && G.inv <= 0) hurt(o);
+      if (isPickup(o)){
+        const special = o.type === 'shield' || o.type === 'star' || o.type === 'magnet' || o.type === 'chest' || o.type === 'portal';
+        const dx = Math.abs(o.lane - G.x), dy = Math.abs((o.y || 0) - G.jy), mg = G.magT > 0 && !special;
+        if (dx < (mg ? 3 : 0.8) && (mg || dy < 1.15) && (mg || (o.P >= Pprev - 1.4 && o.P <= G.P + 1.4))) collect(o);
+      }
+      else if (o.P <= G.P + 1.4 && staticHit(o, G.x, G.t, G.jy, o.P - G.P) && G.inv <= 0) hurt(o);
+      if (G.P !== P2) break;   // portal: el bucle se reinicia desde la nueva posición
     }
     for (const d of LV.dyn){
       if (d.dead) continue; updateDyn(d, dt);
@@ -382,30 +417,32 @@ document.addEventListener('keydown', e => {
   if (k === 'ArrowLeft' || k === 'a' || k === 'A'){ move(-1); e.preventDefault(); }
   else if (k === 'ArrowRight' || k === 'd' || k === 'D'){ move(1); e.preventDefault(); }
   else if (k === 'ArrowDown' || k === 's' || k === 'S' || k === ' '){ if (!keys.dive) Sound.sfx('dive'); keys.dive = true; e.preventDefault(); }
-  else if (k === 'ArrowUp' || k === 'w' || k === 'W'){ if (!keys.brake) Sound.sfx('brake'); keys.brake = true; e.preventDefault(); }
+  else if (k === 'ArrowUp' || k === 'w' || k === 'W'){ if (!e.repeat) doJump(); e.preventDefault(); }
+  else if (k === 'Shift'){ if (!keys.brake) Sound.sfx('brake'); keys.brake = true; }
   else if (k === 'Escape' || k === 'p' || k === 'P'){ G.state === 'paused' ? resumeGame() : pauseGame(); }
   else if (k === 'm' || k === 'M'){ toggleMute(); }
 });
 document.addEventListener('keyup', e => {
   const k = e.key;
   if (k === 'ArrowDown' || k === 's' || k === 'S' || k === ' ') keys.dive = false;
-  else if (k === 'ArrowUp' || k === 'w' || k === 'W') keys.brake = false;
+  else if (k === 'Shift') keys.brake = false;
 });
 let ptr = null;
 canvas.addEventListener('pointerdown', e => {
   Sound.init();
   if (G.state === 'cine'){ cineAdvance(); e.preventDefault(); return; }
+  if (window.__photo) return;
   ptr = { x: e.clientX, y: e.clientY, swiped: false, id: e.pointerId }; try { canvas.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault();
 });
 canvas.addEventListener('pointermove', e => {
   if (!ptr || ptr.id !== e.pointerId) return;
   const dx = e.clientX - ptr.x, dy = e.clientY - ptr.y, T = 32;
   if (Math.abs(dx) > T && Math.abs(dx) >= Math.abs(dy)){ move(dx > 0 ? 1 : -1); ptr.x = e.clientX; ptr.y = e.clientY; ptr.swiped = true; }
-  else if (Math.abs(dy) > T){ dy > 0 ? doDive() : doBrake(); ptr.x = e.clientX; ptr.y = e.clientY; ptr.swiped = true; }
+  else if (Math.abs(dy) > T){ dy > 0 ? doDive() : doJump(); ptr.x = e.clientX; ptr.y = e.clientY; ptr.swiped = true; }
 });
 const endPtr = e => {
   if (!ptr || ptr.id !== e.pointerId) return;
-  if (!ptr.swiped && e.type === 'pointerup') move(e.clientX < W / 2 ? -1 : 1);
+  if (!ptr.swiped && e.type === 'pointerup'){ if (G.tilt) doJump(); else move(e.clientX < W / 2 ? -1 : 1); }
   ptr = null;
 };
 canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);

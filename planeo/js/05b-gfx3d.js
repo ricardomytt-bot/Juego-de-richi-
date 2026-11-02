@@ -327,56 +327,59 @@ function buildPlayer(){
   PL.shadow = new THREE.Mesh(new THREE.CircleGeometry(1.5, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x142a1e, transparent: true, opacity: 0.3, depthWrite: false })); PL.shadow.renderOrder = 1; S3.add(PL.shadow);
   PL.cx = 0; S3.add(PL.root);
 }
-function buildPools(){ if (typeof initModels === 'function') initModels(); if (typeof initModelsPlus === 'function') initModelsPlus(); if (typeof groundPropsInit === 'function') groundPropsInit(); }
+function buildPools(){ if (typeof initModels === 'function') initModels(); if (typeof initModelsPlus === 'function') initModelsPlus(); if (typeof groundPropsInit === 'function') groundPropsInit(); if (typeof initExtras === 'function') initExtras(); }
 
 /* ---------------------------------------------------------------- un fotograma: sincroniza el mundo y dibuja */
 function g3Project(x, y, z){ const v = new THREE.Vector3(x, y, z).project(CAM3); return { x: (v.x * 0.5 + 0.5) * W, y: (-v.y * 0.5 + 0.5) * H }; }
 function g3Frame(dt){
-  const P = G.P, a = altFrac(P), sky = skyAt(a), drop2 = dropOf(P), D3 = D3of(P), air = clamp(drop2 / 70, 0, 1), t = G.tAnim;
+  const P = G.P, a = altFrac(P), TD = todState(), sky = todSky(skyAt(a), TD), drop2 = dropOf(P), D3 = D3of(P), air = clamp(drop2 / 70, 0, 1), t = G.tAnim;
   const rgb3 = (c, k) => [c[0] / 255 * (k || 1), c[1] / 255 * (k || 1), c[2] / 255 * (k || 1)];
   // --- cielo, niebla y luces
   const top = rgb3(sky.top), bot = rgb3(sky.bot);
   SK.mat.uniforms.uTop.value.setRGB(...top); SK.mat.uniforms.uBot.value.setRGB(...bot);
-  const su = clamp((0.88 - a) / 0.6, 0, 1), sunOn = THEME.hasSun && a < 0.9 && a > 0.03;
-  const sdir = new THREE.Vector3(0.45, lerp(0.03, 0.55, smooth(su)), -0.85).normalize();
-  SK.mat.uniforms.uSunDir.value.copy(sdir); const sc = mix(THEME.sunWarm, THEME.sun, su); SK.mat.uniforms.uSunCol.value.setRGB(...rgb3(sc)); SK.mat.uniforms.uSunAmt.value = sunOn ? 1 : 0;
-  SK.mat.uniforms.uStars.value = clamp((a - THEME.stars) / 0.3, 0, 1); SK.mat.uniforms.uTime.value = t;
-  S3.fog.color.setRGB(...bot); S3.fog.near = lerp(50, 80, air); S3.fog.far = lerp(235, 340, air);
-  LT.hemi.color.setRGB(...rgb3(mix(sky.top, [255, 255, 255], 0.55))); LT.hemi.groundColor.setRGB(...rgb3(mix(THEME.grass, sky.bot, 0.35), 0.8)); LT.hemi.intensity = lerp(0.62, 0.55, air);
-  LT.sun.color.setRGB(...rgb3(mix(sc, [255, 255, 255], 0.4))); LT.sun.intensity = THEME.hasSun ? lerp(0.62, 0.82, su) : 0.55;
+  const su = clamp((0.88 - a) / 0.6, 0, 1), sunOn = (THEME.hasSun && a < 0.9 && a > 0.03 && TD.night < 0.6) || (TD.night > 0.55 && a < 0.9);
+  const sdir = new THREE.Vector3(0.45, lerp(0.03, 0.55, smooth(su)) * (1 - TD.night * 0.3) + TD.night * 0.14, -0.85).normalize();
+  SK.mat.uniforms.uSunDir.value.copy(sdir); const sc = mix(mix(THEME.sunWarm, THEME.sun, su), [196, 214, 255], TD.night); SK.mat.uniforms.uSunCol.value.setRGB(...rgb3(sc)); SK.mat.uniforms.uSunAmt.value = sunOn ? 1 : 0;
+  SK.mat.uniforms.uStars.value = Math.max(clamp((a - THEME.stars) / 0.3, 0, 1), TD.night); SK.mat.uniforms.uTime.value = t;
+  S3.fog.color.setRGB(...bot); S3.fog.near = lerp(50, 80, air); S3.fog.far = lerp(235, 340, air); FX.fog(S3.fog);
+  const gk = lerp(1, 0.4, TD.night) * (FX.dim ? FX.dim() : 1), gkb = 1 + 0.18 * TD.night;
+  LT.hemi.color.setRGB(...rgb3(mix(sky.top, [255, 255, 255], 0.55))); LT.hemi.groundColor.setRGB(...rgb3(mix(THEME.grass, sky.bot, 0.35), 0.8)); LT.hemi.intensity = lerp(0.62, 0.55, air) * lerp(1, 0.62, TD.night) * FX.dim();
+  LT.sun.color.setRGB(...rgb3(mix(sc, [255, 255, 255], 0.4))); LT.sun.intensity = (THEME.hasSun ? lerp(0.62, 0.82, su) : 0.55) * lerp(1, 0.38, TD.night) * FX.dim();
   LT.sun.position.set(-sdir.x * 60 * -1, 40 + sdir.y * 60, 35).add(new THREE.Vector3(wxOf(G.x), 0, -P)); LT.sun.target.position.set(wxOf(G.x), 0, -P);
   // --- suelo
   const U = GR.mat.uniforms; U.uPatch.value = clamp(drop2 / 180, 0, 1); U.uCover.value = clamp((a - 0.55) / 0.25, 0, 1); U.uHill.value = clamp(1 - drop2 / 140, 0, 1); U.uTime.value = t; U.uFacet.value = window.__facet ? 1 : 0; U.uFacet.value = window.__facet ? 1 : 0; GR.matFar.uniforms.uFacet.value = U.uFacet.value;
   if (!THEME._lrgb) THEME._lrgb = THEME.land.map(hex2rgb);
-  U.uGrass.value.setRGB(...rgb3(THEME.grass)); THEME._lrgb.forEach((c, i) => U.uLand.value[i].setRGB(...rgb3(c)));
-  THEME.sea.forEach((h, i) => { const c = hex2rgb(h); U.uSea.value[i].setRGB(...rgb3(c)); });
+  const gc = c => { const r = rgb3(c); return [r[0] * gk, r[1] * gk, Math.min(1, r[2] * gk * gkb)]; };
+  U.uGrass.value.setRGB(...gc(THEME.grass)); THEME._lrgb.forEach((c, i) => U.uLand.value[i].setRGB(...gc(c)));
+  THEME.sea.forEach((h, i) => { const c = hex2rgb(h); U.uSea.value[i].setRGB(...gc(c)); });
   U.uFogColor.value.setRGB(...bot); U.uFogNear.value = S3.fog.near; U.uFogFar.value = S3.fog.far; U.uSun.value.set(-0.35, 0.85, 0.4).normalize();
   GR.mesh.position.set(0, -D3, Math.floor((-P - 240) / 4) * 4); GR.far.position.set(0, -D3 - 0.45, -P - 800);
   // --- cordillera
   const hill = clamp((0.62 - a) / 0.5, 0, 1); SK.mount.visible = hill > 0.02;
-  SK.rainbow.visible = THEME !== THEMES.storm && a > 0.18 && a < 0.7; SK.rainbow.position.set(CAM3.position.x + 90, CAM3.position.y - 70, CAM3.position.z - 560); SK.rainbow.children.forEach(t => { t.material.opacity = 0.42 * (a > 0.55 ? (0.7 - a) / 0.15 : a < 0.3 ? (a - 0.18) / 0.12 : 1); });
+  SK.rainbow.visible = THEME !== THEMES.storm && TD.night < 0.3 && a > 0.18 && a < 0.7; SK.rainbow.position.set(CAM3.position.x + 90, CAM3.position.y - 70, CAM3.position.z - 560); SK.rainbow.children.forEach(t => { t.material.opacity = 0.42 * (a > 0.55 ? (0.7 - a) / 0.15 : a < 0.3 ? (a - 0.18) / 0.12 : 1); });
   SK.mmat.color.setRGB(...rgb3(mix(sky.bot, [150, 168, 212], 0.45), 1.12)); SK.smat.color.setRGB(...rgb3(mix(sky.bot, [250, 252, 255], 0.75), 1.05));
   // --- pista
   updateTrack(P, air);
   // --- avión
   const px = wxOf(G.x), dv = diving() ? 1 : braking() ? -0.4 : 0;
   PL.cx += (px - PL.cx) * Math.min(1, dt * 9);
-  PL.root.position.set(px, PLAY_Y - (G.fallT > 0 ? (1.6 - G.fallT) * 7 : 0), -P);
+  PL.root.position.set(px, PLAY_Y + G.jy - (G.fallT > 0 ? (1.6 - G.fallT) * 7 : 0), -P);
   const ascK = (LV.asc && P - LV.base < LV.asc) ? Math.max(0, 1 - (P - LV.base) / LV.asc) : 0;   // morro hacia arriba mientras sube
-  PL.root.rotation.set(0.1 * dv + 0.34 * ascK + (G.fallT > 0 ? (1.6 - G.fallT) * 1.2 : 0), 0, -G.bank * 0.5 + (G.fallT > 0 ? (1.6 - G.fallT) * 3 : 0));
+  PL.root.rotation.set(0.1 * dv + 0.34 * ascK - clamp(G.jv, -14, 14) * 0.022 + (G.fallT > 0 ? (1.6 - G.fallT) * 1.2 : 0), 0, -G.bank * 0.5 + (G.fallT > 0 ? (1.6 - G.fallT) * 3 : 0));
   PL.plane.scale.setScalar(window.__playerK || 1); PL.plane.userData.prop.rotation.z = t * 42; PL.plane.userData.scarf.rotation.y = Math.sin(t * 9) * 0.35; PL.plane.userData.scarf.rotation.x = Math.sin(t * 7) * 0.1;
   PL.root.visible = !(G.inv > 0 && Math.floor(t * 14) % 2 === 0 && G.fallT <= 0);
   PL.shield.visible = !!G.shield; if (G.shield){ PL.shield.material.opacity = 0.17 + 0.06 * Math.sin(t * 6); PL.shield.scale.setScalar(1 + 0.02 * Math.sin(t * 8)); }
   PL.rings.forEach((r, i) => { r.visible = G.starT > 0; if (r.visible){ r.material.color.setHSL(((t * 0.7) + i * 0.3) % 1, 0.95, 0.62); r.rotation.x = Math.PI / 2; r.scale.setScalar(1 + 0.08 * Math.sin(t * 9 + i)); } });
   PL.glow.visible = G.starT > 0; PL.mag.forEach((r, i) => { r.visible = G.magT > 0; if (r.visible){ const k = (t * 1.1 + i / 3) % 1; r.scale.setScalar(1.8 + k * 3.2); r.material.opacity = (1 - k) * 0.7; r.material.color.setHex(i % 2 ? 0x5aaaff : 0xff5a5a); r.rotation.x = Math.PI / 2; } });
-  PL.shadow.visible = D3 < 40; PL.shadow.position.set(px, -D3 + 0.06, -P); const hh = PLAY_Y + D3; PL.shadow.scale.setScalar(clamp(1.7 - hh * 0.02, 0.6, 1.7)); PL.shadow.material.opacity = clamp(0.32 - hh * 0.006, 0.08, 0.32);
+  PL.shadow.visible = D3 < 40; PL.shadow.position.set(px, -D3 + 0.06, -P); const hh = PLAY_Y + D3 + G.jy; PL.shadow.scale.setScalar(clamp(1.7 - hh * 0.02, 0.6, 1.7)); PL.shadow.material.opacity = clamp(0.32 - hh * 0.006, 0.08, 0.32);
   // --- objetos, enemigos, decorado, jefe, fantasmas
   if (typeof syncWorld === 'function') syncWorld(dt, P, D3, air);
   // --- cámara
   const shx = G.shake > 0 ? (Math.random() - 0.5) * G.shake * 0.05 : 0, shy = G.shake > 0 ? (Math.random() - 0.5) * G.shake * 0.05 : 0;
-  const cxp = PL.cx * 0.6 + shx, camY = PLAY_Y + 2.9 + shy, dive = diving() ? 1 : 0;
+  const cxp = PL.cx * 0.6 + shx, camY = PLAY_Y + 2.9 + G.jy * 0.55 + shy, dive = diving() ? 1 : 0;
   CAM3.fov += ((H > W ? 70 : 60) + dive * 9 + (G.starT > 0 ? 4 : 0) - CAM3.fov) * Math.min(1, dt * 5); CAM3.updateProjectionMatrix();
   CAM3.position.set(cxp, camY, -P + 8.8); CAM3.lookAt(PL.cx * 0.55, PLAY_Y + 0.15 + ascK * 3.5 + (window.__camLift || 0), -P - 15); CAM3.rotateZ(-G.bank * 0.06);
+  if (window.__photo){ const q = window.__photo, c = PL.root.position; PL.root.visible = true; CAM3.position.set(c.x + Math.sin(q.yaw) * Math.cos(q.pitch) * q.dist, c.y + 0.6 + Math.sin(q.pitch) * q.dist, c.z + Math.cos(q.yaw) * Math.cos(q.pitch) * q.dist); CAM3.lookAt(c.x, c.y + 0.4, c.z); }
   SK.dome.position.copy(CAM3.position); SK.mount.position.set(CAM3.position.x, CAM3.position.y - 8, CAM3.position.z);
   g3RenderScene();
   g3Overlay(dt, a);
@@ -389,7 +392,7 @@ function g3Overlay(dt, a){
   const blur = diving() || G.starT > 0;
   if (fb3 === null){ fb3 = document.createElement('canvas'); fb3x = fb3.getContext('2d'); }
   if (blur && fb3on){ ctx.save(); ctx.globalAlpha = 0.28; ctx.translate(cx, H * 0.45); ctx.scale(1.02, 1.02); ctx.translate(-cx, -H * 0.45); ctx.drawImage(fb3, 0, 0, W, H); ctx.restore(); }
-  AMB.draw();
+  AMB.draw(); FX.draw(dt, a);
   for (const p of particles){ ctx.globalAlpha = clamp(p.life, 0, 1); ctx.fillStyle = p.color; if (p.confetti) ctx.fillRect(p.x, p.y, p.size, p.size * 0.5); else circ(ctx, p.x, p.y, p.size); }
   ctx.globalAlpha = 1;
   const mist = Math.max(0, 1 - Math.abs(a - 0.77) / 0.05) * 0.55; if (mist > 0){ ctx.fillStyle = `rgba(255,255,255,${mist})`; ctx.fillRect(0, 0, W, H); }

@@ -126,3 +126,12 @@ button.big.alt3{background:linear-gradient(180deg,#ffd76a,#e8a21c);box-shadow:0 
 .ach{display:flex;gap:12px;align-items:center;padding:9px 12px;border-radius:14px;background:#f2f4ff;margin:6px 0}.ach.ok{background:linear-gradient(90deg,#fff1cf,#ffe4d4)}
 .ach .ic{font-size:26px;flex:none;width:34px;text-align:center}.ach .tx{flex:1;min-width:0}.ach b{display:block}.ach small{display:block;color:var(--ink2);font-size:12.5px}
 .ach .bar{height:7px;border-radius:99px;background:#dde1f7;margin:5px 0 2px;overflow:hidden}.ach .bar i{display:block;height:100%;background:linear-gradient(90deg,#ffb347,#ff7a59);border-radius:99px}.ach span{font-size:11.5px;color:var(--ink2);font-weight:600}
+
+/* modo foto, ranking, carrera */
+#photoBar{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 18px);transform:translateX(-50%);z-index:30;display:flex;gap:10px;align-items:center}
+#photoBar button{border:0;border-radius:99px;background:rgba(255,255,255,.92);color:#27305c;font:inherit;font-weight:700;font-size:20px;min-width:48px;height:48px;padding:0 16px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#photoBar .photoShot{background:linear-gradient(180deg,#ffd76a,#e8a21c);font-size:18px;padding:0 22px}
+#photoPrev{position:fixed;inset:0;z-index:40;background:rgba(10,12,36,.86);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:8px}
+#photoPrev img{max-width:min(92vw,520px);max-height:62vh;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.5);-webkit-touch-callout:default;user-select:auto}
+.rk .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#photoPrev .sub{text-align:center}
