@@ -17,64 +17,104 @@ const Spr = (() => {
   }
   const rb = (g, x, y, w, h, fill, out = OL) => { R(g, x, y, w, h, out); R(g, x + 1, y + 1, w - 2, h - 2, fill); g.clearRect(x, y, 1, 1); g.clearRect(x + w - 1, y, 1, 1); g.clearRect(x, y + h - 1, 1, 1); g.clearRect(x + w - 1, y + h - 1, 1, 1); };
 
-  // ================= SOBREVIVIENTE (24x34, pies en y=29) =================
-  const STYLES = [
-    { skin: '#ffd9b8', hair: '#6a3a20', shirt: '#4aa0ff', style: 'spiky' },
-    { skin: '#e8b48c', hair: '#1c1428', shirt: '#ff6a8a', style: 'pony' },
-    { skin: '#ffe0c8', hair: '#e8b030', shirt: '#4ac870', style: 'bun' },
-    { skin: '#b57850', hair: '#2a1a1a', shirt: '#ffa030', style: 'pig' },
-    { skin: '#ffd9b8', hair: '#c04030', shirt: '#9a6aff', style: 'long' },
-    { skin: '#d49a70', hair: '#3a2a50', shirt: '#30c8d8', style: 'spiky' },
-    { skin: '#ffe0c8', hair: '#f0f0f8', shirt: '#e84040', style: 'bun' },
-    { skin: '#e8b48c', hair: '#6a3a20', shirt: '#f0d040', style: 'pony' },
+  // ================= SOBREVIVIENTE: dos estilos, chicos =================
+  const PAL = [
+    { skin: '#ffd9b8', hair: '#6a3a20', shirt: '#6a9a40', style: 'spiky' }, { skin: '#e8b48c', hair: '#1c1428', shirt: '#e8a020', style: 'short' },
+    { skin: '#b57850', hair: '#2a1a1a', shirt: '#e84a4a', style: 'spiky' }, { skin: '#ffe0c8', hair: '#e8b030', shirt: '#f0f0f8', style: 'pony' },
+    { skin: '#d49a70', hair: '#3a2a50', shirt: '#3a3a58', style: 'short' }, { skin: '#ffd9b8', hair: '#c04030', shirt: '#9a6aff', style: 'long' },
+    { skin: '#e8b48c', hair: '#6a3a20', shirt: '#f8f8f8', style: 'short' }, { skin: '#ffe0c8', hair: '#5a4a30', shirt: '#3a7a3a', style: 'pony' },
+    { skin: '#d49a70', hair: '#1c1428', shirt: '#c8a040', style: 'pig' }, { skin: '#ffd9b8', hair: '#d8d8f0', shirt: '#30c8d8', style: 'bun' },
   ];
-  function kid(dir, fr, st) {
-    return mk(24, 34, g => {
-      const skin = st.skin, hair = st.hair, shirt = st.shirt;
-      const hl = shade(hair, 1.45), hd = shade(hair, 0.7);
-      const swing = fr === 1 ? 1 : fr === 2 ? -1 : 0, bob = fr ? 1 : 0;
-      E(g, 12, 30, 8, 2, 'rgba(0,0,0,0.30)');
-      const HY = 13 - 0 + (bob ? 0 : 0);
-      // pelo trasero (largo / coletas) detrás del cuerpo
-      if (st.style === 'long') blob(g, 12, HY + 6, 9, 9, hair);
-      if (st.style === 'pig' && dir !== 'd') { blob(g, 3, HY + 3, 3, 4, hair); blob(g, 21, HY + 3, 3, 4, hair); }
-      // pies
-      const side = dir === 'l';
-      if (side) { blob(g, 9, 28 - (swing > 0 ? 1 : 0), 3, 2, '#3a2850', { shade: false }); blob(g, 15, 28 - (swing < 0 ? 1 : 0), 3, 2, '#3a2850', { shade: false }); }
-      else { blob(g, 8, 28 - (swing > 0 ? 1 : 0), 3, 2, '#3a2850', { shade: false }); blob(g, 16, 28 - (swing < 0 ? 1 : 0), 3, 2, '#3a2850', { shade: false }); }
-      // cuerpo
-      blob(g, 12, 24 - bob * 0, side ? 4 : 5, 4, shirt);
-      R(g, side ? 9 : 8, 26, side ? 7 : 9, 1, shade(shirt, 0.6));
-      // brazos
-      if (side) { blob(g, 12, 23 + swing, 2, 3, shade(shirt, 1.05)); E(g, 12, 26 + swing, 1, 1, skin); }
-      else { blob(g, 6, 23 + swing, 2, 3, shirt); blob(g, 18, 23 - swing, 2, 3, shirt); E(g, 6, 26 + swing, 1, 1, skin); E(g, 18, 26 - swing, 1, 1, skin); }
-      // extras de peinado atrás
-      if (st.style === 'pony' && dir !== 'd') { blob(g, dir === 'l' ? 21 : dir === 'r' ? 3 : 12, dir === 'u' ? HY + 6 : HY + 3, dir === 'u' ? 3 : 3, dir === 'u' ? 5 : 4, hair); }
-      if (st.style === 'pony' && dir === 'd') blob(g, 20, HY + 1, 3, 4, hair);
-      // cabeza: pelo + cara
-      const cx = side ? 13 : 12;
-      blob(g, cx, HY, 9, 9, hair);
-      if (st.style === 'spiky') { [[6, 4, 4], [12, 2, 5], [18, 4, 4]].forEach(([x, y, h]) => { for (let i = 0; i < h; i++) R(g, x - ((h - i) >> 1) + 1, y + i - 1, h - i, 1, OL); for (let i = 0; i < h - 1; i++) R(g, x - ((h - i) >> 1) + 2, y + i, Math.max(1, h - i - 2), 1, hair); }); R(g, 11, 2, 2, 2, hl); }
-      if (st.style === 'bun') { blob(g, 12, 3, 4, 3, hair); R(g, 11, 2, 2, 1, hl); }
-      if (st.style === 'pig' && dir === 'd') { blob(g, 3, HY + 2, 3, 4, hair); blob(g, 21, HY + 2, 3, 4, hair); R(g, 2, HY - 1, 3, 2, '#ff5a8a'); R(g, 19, HY - 1, 3, 2, '#ff5a8a'); }
-      R(g, cx - 5, HY - 7, 5, 1, hl); R(g, cx - 6, HY - 6, 2, 1, hl); R(g, cx + 2, HY - 7, 2, 1, shade(hair, 1.2));
+  // accesorios por clase: cx = centro de la cabeza, top = y de arriba de la cabeza, w = ancho, by = y del pecho
+  function hat(g, id, dir, cx, top, w, by) {
+    const front = dir === 'd' || dir === 'l';
+    switch (id) {
+      case 'explorer': E(g, cx, top + 1, (w >> 1) + 2, 1, OL); E(g, cx, top + 1, (w >> 1) + 1, 1, '#d8b060'); R(g, cx - 3, top - 2, 7, 3, OL); R(g, cx - 2, top - 2, 5, 3, '#c8a050'); R(g, cx - 2, top, 5, 1, '#6a4a20'); break;
+      case 'helmet': E(g, cx, top + 1, (w >> 1) - 1, 3, OL); E(g, cx, top + 1, (w >> 1) - 2, 2, '#ffd23f'); R(g, cx, top - 1, 1, 3, '#e8a010'); R(g, cx - 2, top, 5, 1, '#fff6a0'); break;
+      case 'band': R(g, cx - (w >> 1), top + 3, w, 2, OL); R(g, cx - (w >> 1) + 1, top + 3, w - 2, 1, '#ff4a4a'); if (dir !== 'd') R(g, cx + (w >> 1), top + 4, 2, 3, '#ff4a4a'); break;
+      case 'cross': R(g, cx - 3, top + 1, 7, 3, OL); R(g, cx - 2, top + 1, 5, 2, '#fff'); if (front) { R(g, cx, top + 1, 1, 2, '#e03030'); R(g, cx - 1, top + 2, 3, 1, '#e03030'); } break;
+      case 'mask': if (front) { R(g, cx - (w >> 1) + 1, top + (w > 12 ? 8 : 7), w - 2, 3, OL); R(g, cx - (w >> 1) + 2, top + (w > 12 ? 8 : 7), w - 4, 2, '#3a3a58'); } R(g, cx - (w >> 1), top + 2, w, 1, '#3a3a58'); break;
+      case 'cam': R(g, cx - 3, by - 1, 7, 4, OL); R(g, cx - 2, by, 5, 2, '#707890'); R(g, cx, by, 2, 2, '#6ac8ff'); break;
+      case 'chef': R(g, cx - 4, top - 4, 9, 5, OL); R(g, cx - 3, top - 4, 7, 5, '#fff'); E(g, cx - 2, top - 4, 2, 2, '#fff'); E(g, cx + 2, top - 4, 2, 2, '#fff'); R(g, cx - 3, top, 7, 1, '#d8d8e8'); break;
+      case 'cap': R(g, cx - (w >> 1), top + 1, w, 3, OL); R(g, cx - (w >> 1) + 1, top + 1, w - 2, 2, '#3a9a3a'); if (front) R(g, cx - (w >> 1) - 1, top + 3, w + 2, 1, '#2a6a2a'); break;
+      case 'keys': R(g, cx + 2, by + 3, 1, 1, '#ffd23f'); R(g, cx + 3, by + 3, 1, 2, '#ffd23f'); R(g, cx + 4, by + 3, 1, 1, '#c8c8d8'); break;
+      case 'goggles': R(g, cx - (w >> 1), top + 3, w, 1, '#3a3a58'); if (front) { E(g, cx - 2, top + 3, 1, 1, '#4af0ff'); E(g, cx + 2, top + 3, 1, 1, '#4af0ff'); } else R(g, cx - 1, top + 2, 3, 2, '#4af0ff'); break;
+    }
+  }
+  // ---- ESTILO A: redondito (18x26, pies en y=22) ----
+  function kidA(dir, fr, pal, hatId) {
+    return mk(18, 26, g => {
+      const { skin, hair, shirt, style } = pal, hl = shade(hair, 1.45), hd = shade(hair, 0.7);
+      const sw = fr === 1 ? 1 : fr === 2 ? -1 : 0, side = dir === 'l', cx = side ? 10 : 9;
+      E(g, 9, 23, 6, 2, 'rgba(0,0,0,0.3)');
+      if (style === 'long') blob(g, 9, 14, 7, 7, hair);
+      if (style === 'pig' && dir !== 'd') { blob(g, 2, 11, 2, 3, hair); blob(g, 16, 11, 2, 3, hair); }
+      blob(g, side ? 7 : 6, 22 - (sw > 0 ? 1 : 0), 2, 1, '#3a2850', { shade: false }); blob(g, side ? 11 : 12, 22 - (sw < 0 ? 1 : 0), 2, 1, '#3a2850', { shade: false });
+      blob(g, 9, 18, side ? 3 : 4, 3, shirt);
+      if (side) blob(g, 9, 18 + sw, 1, 2, shade(shirt, 1.1), { shade: false }); else { blob(g, 4, 18 + sw, 1, 2, shirt, { shade: false }); blob(g, 14, 18 - sw, 1, 2, shirt, { shade: false }); }
+      if (style === 'pony' && dir !== 'd') blob(g, dir === 'u' ? 9 : side ? 15 : 3, dir === 'u' ? 14 : 11, 2, 3, hair);
+      if (style === 'pony' && dir === 'd') blob(g, 15, 10, 2, 3, hair);
+      blob(g, cx, 9, 7, 7, hair);
+      if (style === 'spiky') { for (const [x, h] of [[5, 3], [9, 4], [13, 3]]) for (let i = 0; i < h; i++) { R(g, x - ((h - i) >> 1) + cx - 9, 1 - 0 + i - 1, h - i + 1, 1, OL); } for (const [x, h] of [[5, 3], [9, 4], [13, 3]]) for (let i = 0; i < h - 1; i++) R(g, x - ((h - i) >> 1) + cx - 9 + 1, i, Math.max(1, h - i - 1), 1, hair); }
+      if (style === 'bun') blob(g, 9, 2, 3, 2, hair);
+      R(g, cx - 4, 4, 4, 1, hl); R(g, cx - 5, 5, 2, 1, hl);
       if (dir === 'd') {
-        E(g, 12, HY + 2, 7, 6, skin); E(g, 12, HY + 3, 7, 6, skin); R(g, 6, HY + 6, 12, 1, shade(skin, 0.9));
-        // flequillo
-        R(g, 6, HY - 3, 5, 1, hair); R(g, 7, HY - 2, 3, 1, hair); R(g, 8, HY - 1, 1, 1, hair); R(g, 13, HY - 3, 6, 1, hair); R(g, 15, HY - 2, 3, 1, hair); R(g, 12, HY - 3, 1, 2, hd);
-        // ojos grandes con brillo
-        for (const ex of [8, 14]) { R(g, ex, HY + 1, 3, 4, '#1a1020'); R(g, ex, HY + 1, 1, 1, '#fff'); R(g, ex + 1, HY + 4, 1, 1, '#4a3a6a'); R(g, ex + 2, HY + 2, 1, 1, '#fff'); }
-        E(g, 6, HY + 5, 1, 1, '#ff9a9a'); E(g, 18, HY + 5, 1, 1, '#ff9a9a'); R(g, 11, HY + 6, 2, 1, '#b04a50'); R(g, 10, HY + 5, 1, 1, '#b04a50'); R(g, 13, HY + 5, 1, 1, '#b04a50');
-      } else if (dir === 'u') {
-        R(g, 12, HY - 6, 1, 6, hd); R(g, 8, HY - 2, 2, 1, hd); R(g, 15, HY - 3, 2, 1, hd); R(g, 9, HY + 1, 6, 1, hd);
-      } else {
-        E(g, cx - 3, HY + 3, 6, 6, skin); R(g, cx - 8, HY - 1, 4, 1, hair); R(g, cx - 7, HY - 2, 4, 1, hair); R(g, cx - 6, HY - 3, 3, 1, hair);
-        R(g, cx - 7, HY + 1, 3, 4, '#1a1020'); R(g, cx - 7, HY + 1, 1, 1, '#fff'); R(g, cx - 5, HY + 2, 1, 1, '#fff'); R(g, cx - 10, HY + 4, 2, 2, skin); R(g, cx - 10, HY + 4, 1, 2, shade(skin, 0.85));
-        E(g, cx - 5, HY + 6, 1, 1, '#ff9a9a'); R(g, cx - 7, HY + 7, 2, 1, '#b04a50'); E(g, cx + 3, HY + 3, 1, 2, shade(skin, 0.9));
-      }
+        E(g, 9, 11, 5, 4, skin); E(g, 9, 12, 5, 4, skin); R(g, 5, 14, 9, 1, shade(skin, 0.9));
+        R(g, 5, 7, 3, 1, hair); R(g, 6, 8, 1, 1, hair); R(g, 10, 7, 4, 1, hair); R(g, 12, 8, 1, 1, hair);
+        R(g, 6, 10, 2, 3, '#1a1020'); R(g, 11, 10, 2, 3, '#1a1020'); R(g, 6, 10, 1, 1, '#fff'); R(g, 11, 10, 1, 1, '#fff');
+        R(g, 5, 13, 1, 1, '#ff9a9a'); R(g, 14, 13, 1, 1, '#ff9a9a'); R(g, 8, 14, 2, 1, '#b04a50');
+      } else if (dir === 'u') { R(g, 9, 4, 1, 5, hd); R(g, 6, 8, 2, 1, hd); R(g, 12, 7, 2, 1, hd); }
+      else { E(g, 7, 12, 4, 4, skin); R(g, 4, 8, 3, 1, hair); R(g, 5, 7, 2, 1, hair); R(g, 5, 10, 2, 3, '#1a1020'); R(g, 5, 10, 1, 1, '#fff'); R(g, 2, 12, 2, 1, skin); R(g, 5, 14, 2, 1, '#b04a50'); R(g, 4, 13, 1, 1, '#ff9a9a'); }
+      hat(g, hatId, dir, cx, 2, 14, 17);
     });
   }
-
+  // ---- ESTILO B: clásico de RPG (16x24, pies en y=20) ----
+  function kidB(dir, fr, pal, hatId) {
+    return mk(16, 24, g => {
+      const { skin, hair, shirt, style } = pal, hl = shade(hair, 1.4), sw = fr === 1 ? 1 : fr === 2 ? -1 : 0, side = dir === 'l', K = '#201428';
+      E(g, 8, 21, 5, 2, 'rgba(0,0,0,0.3)');
+      if (style === 'long') { R(g, 2, 8, 12, 9, K); R(g, 3, 8, 10, 8, hair); }
+      if (style === 'pig' && dir !== 'u') { R(g, 0, 6, 3, 6, K); R(g, 1, 6, 2, 5, hair); R(g, 13, 6, 3, 6, K); R(g, 13, 6, 2, 5, hair); }
+      // piernas y zapatos
+      R(g, 5, 16 - (sw > 0 ? 1 : 0), 3, 4, K); R(g, 6, 16 - (sw > 0 ? 1 : 0), 1, 3, '#33406a'); R(g, 9, 16 - (sw < 0 ? 1 : 0), 3, 4, K); R(g, 10, 16 - (sw < 0 ? 1 : 0), 1, 3, '#33406a');
+      // cuerpo y brazos
+      rb(g, 3, 10, 10, 7, shirt, K); R(g, 4, 11, 8, 1, shade(shirt, 1.25)); R(g, 4, 15, 8, 1, shade(shirt, 0.75));
+      if (!side) { rb(g, 1, 11 + sw, 3, 5, shirt, K); rb(g, 12, 11 - sw, 3, 5, shirt, K); R(g, 2, 15 + sw, 1, 1, skin); R(g, 13, 15 - sw, 1, 1, skin); } else { rb(g, 6, 11 + sw, 4, 5, shade(shirt, 1.1), K); R(g, 7, 15 + sw, 2, 1, skin); }
+      if (style === 'pony' && dir !== 'd') { R(g, dir === 'u' ? 6 : side ? 12 : 1, dir === 'u' ? 10 : 6, 4, 6, K); R(g, dir === 'u' ? 7 : side ? 13 : 2, dir === 'u' ? 10 : 7, 2, 4, hair); }
+      if (style === 'pony' && dir === 'd') { R(g, 13, 4, 3, 6, K); R(g, 13, 5, 2, 4, hair); }
+      // cabeza
+      rb(g, 2, 1, 12, 10, dir === 'u' ? hair : skin, K);
+      R(g, 2, 1, 12, 4, K); R(g, 3, 1, 10, 4, hair); R(g, 3, 1, 5, 1, hl);
+      if (style === 'spiky') { for (const x of [3, 7, 11]) { R(g, x, -1 + 1, 3, 1, K); R(g, x + 1, 0, 1, 1, hair); } R(g, 4, 0, 2, 1, hair); R(g, 8, 0, 2, 1, hair); R(g, 12, 0, 1, 1, hair); }
+      if (style === 'bun') { R(g, 6, 0, 4, 2, K); R(g, 7, 0, 2, 1, hair); }
+      if (dir === 'd') { R(g, 2, 3, 2, 6, hair); R(g, 12, 3, 2, 6, hair); R(g, 4, 5, 3, 1, hair); R(g, 9, 5, 4, 1, hair); R(g, 5, 7, 1, 2, K); R(g, 10, 7, 1, 2, K); R(g, 4, 9, 1, 1, '#ff9a9a'); R(g, 11, 9, 1, 1, '#ff9a9a'); }
+      else if (dir === 'u') { R(g, 3, 5, 10, 5, hair); R(g, 8, 3, 1, 6, shade(hair, 0.7)); }
+      else { R(g, 8, 3, 6, 7, hair); R(g, 2, 3, 2, 3, hair); R(g, 4, 7, 1, 2, K); R(g, 3, 9, 1, 1, '#ff9a9a'); }
+      hat(g, hatId, dir, 8, 1, 12, 12);
+    });
+  }
+  // ---- MUÑECA ESTILO B: caricatura plana (32x44, pies en y=40) ----
+  function dollB(dir, fr, mood) {
+    return mk(32, 44, g => {
+      const K = '#241020', metal = '#9a9ab4', porc = '#fff0e6', dress = '#7a2068', hair = '#2e1840', sw = fr === 1 ? 1 : fr === 2 ? -1 : 0, bob = fr ? 1 : 0, side = dir === 'l';
+      E(g, 16, 41, 10, 3, 'rgba(0,0,0,0.4)');
+      R(g, 11, 32, 4, 7 - (sw > 0 ? 1 : 0), K); R(g, 12, 32, 2, 6 - (sw > 0 ? 1 : 0), metal); R(g, 17, 32, 4, 7 - (sw < 0 ? 1 : 0), K); R(g, 18, 32, 2, 6 - (sw < 0 ? 1 : 0), metal);
+      rb(g, 9, 38 - (sw > 0 ? 1 : 0), 7, 3, '#d02a6a', K); rb(g, 16, 38 - (sw < 0 ? 1 : 0), 7, 3, '#d02a6a', K);
+      blob(g, 16, 31 - bob, 10, 7, dress); R(g, 6, 36 - bob, 20, 1, '#f4e8f4'); blob(g, 16, 30 - bob, 5, 5, '#f6ecf6', { shade: false });
+      R(g, 3, 21 + sw, 3, 10, K); R(g, 4, 21 + sw, 1, 9, metal); R(g, 26, 21 - sw, 3, 10, K); R(g, 27, 21 - sw, 1, 9, metal); blob(g, 4, 31 + sw, 2, 2, porc, { shade: false }); blob(g, 27, 31 - sw, 2, 2, porc, { shade: false });
+      const hy = 12 - bob;
+      blob(g, 5, hy + 6, 3, 5, hair); blob(g, 27, hy + 6, 3, 5, hair); R(g, 3, hy + 3, 4, 2, '#d02a6a'); R(g, 25, hy + 3, 4, 2, '#d02a6a');
+      blob(g, 16, hy, 11, 11, dir === 'u' ? hair : hair);
+      if (dir !== 'u') {
+        const fx = side ? 14 : 16; blob(g, fx, hy + 2, 9, 8, porc, { shade: false }); R(g, fx - 8, hy - 5, 17, 3, hair); R(g, fx - 3, hy - 3, 2, 2, hair); R(g, fx + 2, hy - 3, 3, 2, hair);
+        const ex = side ? [fx - 4] : [fx - 5, fx + 5];
+        for (const e of ex) { if (mood === 'stun') { R(g, e - 1, hy + 1, 1, 1, '#ff4a4a'); R(g, e + 1, hy + 1, 1, 1, '#ff4a4a'); R(g, e, hy + 2, 1, 1, '#ff4a4a'); R(g, e - 1, hy + 3, 1, 1, '#ff4a4a'); R(g, e + 1, hy + 3, 1, 1, '#ff4a4a'); } else { blob(g, e, hy + 2, 2, 3, K, { out: false }); R(g, e - 1, hy + 2, 2, 2, mood === 'angry' ? '#ff2a2a' : '#c03040'); R(g, e - 1, hy, 1, 1, '#fff'); } if (mood === 'angry') { R(g, e - 2, hy - 2, 5, 1, K); } }
+        E(g, fx - 7, hy + 5, 1, 1, '#ff9ab0'); if (!side) E(g, fx + 7, hy + 5, 1, 1, '#ff9ab0');
+        if (mood === 'angry') { R(g, fx - 3, hy + 5, 7, 3, '#1a0810'); R(g, fx - 2, hy + 5, 1, 1, '#fff'); R(g, fx, hy + 5, 1, 1, '#fff'); R(g, fx + 2, hy + 5, 1, 1, '#fff'); } else R(g, fx - 3, hy + 6, 7, 1, '#6a2030');
+      } else { R(g, 14, hy - 8, 1, 8, shade(hair, 0.6)); blob(g, 16, 26 - bob, 3, 3, '#c8c8dc'); R(g, 14, 22 - bob, 1, 1, K); }
+      blob(g, 10, 1 - bob, 4, 2, '#e02a70'); blob(g, 22, 1 - bob, 4, 2, '#e02a70'); R(g, 15, 1 - bob, 2, 2, '#a01a50');
+    });
+  }
   // ================= MUÑECA ROBOT (40x52, pies en y=48) =================
   function doll(dir, fr, mood) {
     return mk(40, 52, g => {
@@ -128,15 +168,17 @@ const Spr = (() => {
     });
   }
   const cache = {};
-  function kidSpr(dir, fr, styleIdx = 0) {
-    const k = 'k' + dir + fr + '_' + styleIdx; if (cache[k]) return cache[k];
-    if (dir === 'r') return cache[k] = flipX(kidSpr('l', fr, styleIdx));
-    return cache[k] = kid(dir, fr, STYLES[styleIdx % STYLES.length]);
+  const KI = { A: { w: 18, h: 26, fy: 22 }, B: { w: 16, h: 24, fy: 20 } }, DI = { A: { w: 40, h: 52, fy: 48 }, B: { w: 32, h: 44, fy: 40 } };
+  function kidSpr(dir, fr, cls = 0, style = 'A') {
+    const k = 'k' + style + dir + fr + '_' + cls; if (cache[k]) return cache[k];
+    if (dir === 'r') return cache[k] = flipX(kidSpr('l', fr, cls, style));
+    const pal = PAL[cls % PAL.length], hatId = (typeof CLASSES !== 'undefined' && CLASSES[cls]) ? CLASSES[cls].hat : '';
+    return cache[k] = (style === 'B' ? kidB : kidA)(dir, fr, pal, hatId);
   }
-  function dollSpr(dir, fr, mood = 'calm') {
-    const k = 'd' + dir + fr + mood; if (cache[k]) return cache[k];
-    if (dir === 'r') return cache[k] = flipX(dollSpr('l', fr, mood));
-    return cache[k] = doll(dir, fr, mood);
+  function dollSpr(dir, fr, mood = 'calm', style = 'A') {
+    const k = 'd' + style + dir + fr + mood; if (cache[k]) return cache[k];
+    if (dir === 'r') return cache[k] = flipX(dollSpr('l', fr, mood, style));
+    return cache[k] = (style === 'B' ? dollB : doll)(dir, fr, mood);
   }
 
   // ================= TILES =================
@@ -144,7 +186,7 @@ const Spr = (() => {
   function tile(ch, i, j, below, above, wc) {
     return mk(16, 16, g => {
       const h = (i * 7 + j * 13) % 5, n = (i * 31 + j * 17) % 7;
-      if (ch === '.' || ch === '1' || ch === '2' || ch === '3') {
+      if (ch === '.' || (ch >= '1' && ch <= '5')) {
         const cols = ['#b07040', '#a46638', '#bc7c48', '#aa6c3c'];
         for (let y = 0; y < 16; y += 8) { const c = cols[((j * 2 + (y >> 3)) + i * 3) % 4]; R(g, 0, y, 16, 8, c); R(g, 0, y, 16, 1, shade(c, 0.7)); R(g, 0, y + 1, 16, 1, shade(c, 1.12)); R(g, 0, y + 7, 16, 1, shade(c, 0.85)); const off = ((j + (y >> 3)) * 5 + i) % 3 * 5 + 2; R(g, off, y, 1, 8, shade(c, 0.65)); R(g, (off + 7) % 16, y + 3, 3, 1, shade(c, 0.9)); R(g, (off + 3) % 16, y + 5, 1, 1, shade(c, 0.6)); }
         if (ch !== '.') {
@@ -234,6 +276,12 @@ const Spr = (() => {
       case 'computer': shadow(); rb(g, X + 1, Y + 6, 14, 9, '#4a4a60'); rb(g, X + 1, Y, 14, 10, '#2a2a38'); R(g, X + 3, Y + 2, 10, 6, st.blackout ? ((t * 3 | 0) % 2 ? '#ff5050' : '#501818') : '#46f09a'); if (!st.blackout) { R(g, X + 4, Y + 3, 5, 1, '#1a6a40'); R(g, X + 4, Y + 5, 7, 1, '#1a6a40'); } R(g, X + 3, Y + 12, 10, 2, '#8a8aa4'); break;
       case 'exit': shadow(); rb(g, X - 1, Y - 3, 18, 20, '#5a5a70'); rb(g, X + 1, Y - 1, 14, 16, '#8a8aa4'); for (let y = 0; y < 14; y += 4) R(g, X + 2, Y + y, 12, 1, '#6a6a84'); rb(g, X + 9, Y + 3, 6, 9, '#18181e'); R(g, X + 10, Y + 4, 4, 2, o.escape ? '#3ae07a' : '#e04040'); for (let k = 0; k < 4; k++) R(g, X + 10 + (k % 2) * 2, Y + 7 + (k >> 1) * 2, 1, 1, '#fff'); R(g, X + 2, Y - 2, 5, 3, o.escape ? '#3ae07a' : '#e04040'); break;
       case 'stairs': rb(g, X, Y, 16, 16, '#3a3050'); for (let i = 0; i < 5; i++) { const c = o.to === 1 ? shade('#9a8aaa', 1 - i * 0.12) : shade('#9a8aaa', 0.6 + i * 0.12); R(g, X + 1, Y + 1 + i * 3, 14, 2, c); R(g, X + 1, Y + 3 + i * 3, 14, 1, 'rgba(0,0,0,0.3)'); } rb(g, X + 5, Y + 5, 6, 6, '#ffd23f', '#8a6a10'); R(g, X + 7, o.to === 1 ? Y + 6 : Y + 8, 2, 3, '#8a6a10'); R(g, X + 6, o.to === 1 ? Y + 7 : Y + 7, 4, 1, '#8a6a10'); break;
+      case 'fridge': shadow(); rb(g, X + 1, Y - 5, 14, 21, '#dce8f0'); R(g, X + 2, Y - 4, 12, 2, '#f8fcff'); R(g, X + 1, Y + 4, 14, 1, OL); R(g, X + 12, Y - 2, 1, 5, '#8a9aa8'); R(g, X + 12, Y + 6, 1, 6, '#8a9aa8'); R(g, X + 4, Y + 7, 3, 3, '#e04a6a'); R(g, X + 4, Y - 1, 3, 2, '#ffd23f'); if (o.opened) R(g, X + 2, Y + 5, 12, 1, '#a8b8c8'); break;
+      case 'microwave': rb(g, X + 1, Y + 4, 14, 11, '#c8c8d8'); R(g, X + 2, Y + 5, 12, 1, '#e8e8f4');
+        if (o.opened) { rb(g, X + 2, Y + 6, 9, 7, '#ffe890'); R(g, X + 3, Y + 7, 7, 5, '#fff6c0'); R(g, X + 1, Y + 6, 2, 8, '#9a9ab0'); if (o.cooking) R(g, X + 4, Y + 8, 5, 3, ((G.t * 8 | 0) % 2) ? '#ff9a3a' : '#ffd23f'); else if (o.food) R(g, X + 4, Y + 9, 5, 3, '#e08a3a'); }
+        else { rb(g, X + 2, Y + 6, 9, 7, '#2a3a4a'); R(g, X + 3, Y + 7, 3, 1, '#4a6a8a'); } R(g, X + 12, Y + 7, 2, 2, '#e04040'); R(g, X + 12, Y + 10, 2, 2, '#3ae07a'); break;
+      case 'safe': shadow(); rb(g, X + 1, Y - 1, 14, 16, '#c8a040'); R(g, X + 2, Y, 12, 2, '#f0d070');
+        if (o.opened) { R(g, X + 3, Y + 2, 10, 11, '#0a0a10'); rb(g, X + 11, Y + 1, 4, 13, '#a88830'); R(g, X + 4, Y + 4, 4, 3, '#3ae07a'); } else { blob(g, X + 8, Y + 7, 4, 4, '#8a6a20'); E(g, X + 8, Y + 7, 2, 2, '#f0d070'); R(g, X + 8, Y + 5, 1, 2, '#2a1a00'); R(g, X + 3, Y + 12, 2, 2, '#2a1a00'); R(g, X + 11, Y + 12, 2, 2, '#2a1a00'); } break;
       case 'd_sofa': E(g, X + (W >> 1), Y + 15, (W >> 1) - 1, 3, 'rgba(0,0,0,0.28)'); rb(g, X, Y + 1, W, 14, '#3a62b0'); R(g, X + 1, Y + 2, W - 2, 4, '#5a82d0'); R(g, X + 3, Y + 7, W - 6, 6, '#4a72c0'); R(g, X + 15, Y + 7, 1, 6, '#2a4a90'); R(g, X + 31, Y + 7, 1, 6, '#2a4a90'); rb(g, X, Y + 3, 3, 12, '#2a4a90'); rb(g, X + W - 3, Y + 3, 3, 12, '#2a4a90'); break;
       case 'd_bed': E(g, X + 16, Y + 31, 15, 3, 'rgba(0,0,0,0.28)'); rb(g, X, Y, 32, 32, '#7a5030'); R(g, X + 2, Y + 2, 28, 28, '#f0e8f8'); rb(g, X + 4, Y + 3, 10, 7, '#fff'); rb(g, X + 18, Y + 3, 10, 7, '#fff'); rb(g, X + 2, Y + 13, 28, 17, '#4a88d0'); R(g, X + 3, Y + 14, 26, 2, '#7aaae8'); for (let k = 0; k < 4; k++) R(g, X + 6 + k * 7, Y + 19, 3, 3, '#7aaae8'); break;
       case 'd_car': E(g, X + 32, Y + 31, 31, 3, 'rgba(0,0,0,0.3)'); rb(g, X + 1, Y + 3, 62, 27, '#d04848'); R(g, X + 3, Y + 5, 58, 3, '#f07070'); rb(g, X + 14, Y + 7, 30, 19, '#9ac4e0'); R(g, X + 16, Y + 9, 12, 15, '#c8e4f4'); R(g, X + 30, Y + 9, 12, 15, '#7aa8c8'); rb(g, X + 56, Y + 6, 7, 5, '#ffe890', '#8a7a20'); rb(g, X + 56, Y + 22, 7, 5, '#ffe890', '#8a7a20'); R(g, X + 2, Y + 8, 3, 4, '#e8e8e8'); R(g, X + 2, Y + 22, 3, 4, '#e8e8e8'); break;
@@ -248,5 +296,5 @@ const Spr = (() => {
       case 'd_table': shadow(); rb(g, X, Y + 2, W, H - 2, '#7a5030'); R(g, X + 1, Y + 3, W - 2, H - 6, '#b88450'); R(g, X + 2, Y + 4, W - 4, 1, '#d8a870'); R(g, X + 4, Y + 7, 5, 4, '#f4ecd8'); if (W > 16) E(g, X + W - 8, Y + 9, 3, 2, '#e04040'); break;
     }
   }
-  return { mk, R, E, kid: kidSpr, doll: dollSpr, floorCanvas, obj, STYLES };
+  return { mk, R, E, kid: kidSpr, doll: dollSpr, floorCanvas, obj, PAL, KI, DI };
 })();

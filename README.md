@@ -64,11 +64,13 @@ Añade `?fast` a la URL para partidas aceleradas (pruebas). El progreso del modo
 
 # 🧸 Noche de Juguetes (en desarrollo)
 
-Nuevo juego multijugador de supervivencia (diseño completo en `docs/DISENO.md`). Abre `juego/index.html`.
+Juego multijugador de supervivencia (diseño en `docs/DISENO.md`). Abre `juego/index.html`.
 
-**Estado actual (paso 1 del plan):** prototipo jugable de una persona contra un bot, en el mapa 1 (casa de 2 pisos).
-Ya incluye: joystick táctil/teclado, linterna de 3 usos con recarga, la muñeca robot con radar y visión limitada,
-forcejeo, cadena de llaves → bóveda → código → puerta de salida, apagón con computadora, y los objetos máscara y pizza.
+**Estado actual:** prototipo de una persona contra un bot, en el mapa 1 (casa de 2 pisos).
+- 10 clases con ventajas y objetos propios, 3 dificultades y 2 estilos de arte (A redondo / B clásico), todo desde el menú.
+- Cadena de 5 llaves y dos cajas con partes del código (bóveda y caja fuerte del ático), apagón con computadora, microondas, nevera y comida.
+- Mesa de crafteo 3×3 (sin orden) con 8 recetas y libro de recetas; objetos: máscara, taser, brujitas, barricada, trampa, caja musical, mancha de aceite, pila turbo, pizza, cámara, Nerf, jeringa, bebida, bomba de humo, torreta, ración.
+- Muñeca robot con radar, visión, trampas, señuelos y que rompe barricadas; se vuelve más agresiva con la noche.
 
-Controles: `WASD` mover · `J` USAR · `K` LINTERNA · `L` OBJETO (en pantalla táctil, joystick a la izquierda y 3 botones a la derecha).
-Falta: salas con código en línea, votación de mapa, crafteo 3x3, clases, y los otros 9 mapas y enemigos.
+Controles: `WASD` mover · `J` USAR · `K` LINTERNA · `L` OBJETO (mantén pulsado para cambiar de objeto, o `R`). En celular: joystick a la izquierda y 3 botones a la derecha.
+Falta: salas con código en línea, votación de mapa, los otros 9 mapas y enemigos, y el modo aventura.

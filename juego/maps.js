@@ -1,7 +1,7 @@
 // Mapas: se generan por código (habitaciones + puertas + objetos), 2 pisos de 40x24 casillas de 16 px
 const TS = 16, MW = 40, MH = 24;
-const KEY_NAMES = ['', 'ROJA', 'AZUL', 'VERDE'];
-const KEY_COLORS = ['', '#e04040', '#4a8aff', '#3ae07a'];
+const KEY_NAMES = ['', 'ROJA', 'AZUL', 'VERDE', 'AMARILLA', 'MORADA'];
+const KEY_COLORS = ['', '#e04040', '#4a8aff', '#3ae07a', '#ffd23f', '#b46aff'];
 const MAT_BASIC = ['chatarra', 'cuerda', 'pilas', 'tela', 'madera', 'aluminio'];
 const MAT_RARE = ['lente', 'circuito', 'aceite'];
 const MAT_NAMES = { chatarra: 'CHATARRA', cuerda: 'CUERDA', pilas: 'PILAS', tela: 'TELA', madera: 'MADERA', aluminio: 'ALUMINIO', lente: 'LENTE', circuito: 'CIRCUITO', aceite: 'ACEITE' };
@@ -36,7 +36,7 @@ function buildMap1() {
   obj(0, 'chest', 12, 8, { loot: randLoot() }); obj(0, 'chest', 21, 3, { loot: randLoot() });
   obj(0, 'wardrobe', 26, 3, { loot: [{ key: 2 }, ...randLoot().slice(0, 1)] });
   obj(0, 'wardrobe', 14, 12, { loot: randLoot() }); obj(0, 'wardrobe', 3, 18, { loot: randLoot() });
-  obj(0, 'vault', 34, 3, { code });
+  obj(0, 'vault', 34, 3, { part: 'A', digits: code.slice(0, 2), loot: [{ key: 4 }, { mat: 'circuito', n: 1 }] });
   obj(0, 'recharge', 3, 12); obj(0, 'table', 26, 12); obj(0, 'exit', 34, 14, { code });
   obj(0, 'stairs', 19, 12, { to: 1 });
   obj(0, 'deco', 6, 4, { kind: 'sofa', w: 3, h: 1 }); obj(0, 'deco', 9, 4, { kind: 'table', w: 2, h: 1 });
@@ -49,22 +49,24 @@ function buildMap1() {
   room(1, 2, 10, 36, 3, '.', 'pasillo');
   room(1, 2, 14, 11, 8, '.', 'biblioteca'); room(1, 15, 14, 10, 8, 'g', 'bodega'); room(1, 27, 14, 11, 8, 'r', 'atico');
   walls(1);
-  set(1, 6, 9, '.'); set(1, 17, 9, '2'); set(1, 26, 9, '.'); set(1, 34, 9, '.'); set(1, 7, 13, '.'); set(1, 19, 13, '.'); set(1, 32, 13, '.');
-  obj(1, 'door', 17, 9, { id: 2 });
+  set(1, 6, 9, '.'); set(1, 17, 9, '2'); set(1, 26, 9, '.'); set(1, 34, 9, '.'); set(1, 7, 13, '4'); set(1, 19, 13, '.'); set(1, 32, 13, '5');
+  obj(1, 'door', 17, 9, { id: 2 }); obj(1, 'door', 7, 13, { id: 4 }); obj(1, 'door', 32, 13, { id: 5 });
   obj(1, 'computer', 4, 3);
   obj(1, 'chest', 15, 3, { loot: [{ key: 3 }, ...randLoot().slice(0, 1)] });
   obj(1, 'chest', 27, 3, { loot: randLoot() }); obj(1, 'wardrobe', 34, 3, { loot: randLoot() });
-  obj(1, 'chest', 17, 16, { loot: randLoot() }); obj(1, 'chest', 22, 19, { loot: randLoot() });
-  obj(1, 'chest', 4, 16, { loot: randLoot() }); obj(1, 'wardrobe', 29, 16, { loot: randLoot() });
+  obj(1, 'chest', 17, 16, { loot: [{ item: 'palanca', n: 1 }, ...randLoot().slice(0, 1)] }); obj(1, 'chest', 22, 19, { loot: randLoot() });
+  obj(1, 'chest', 4, 16, { loot: [{ key: 5 }, { mat: 'lente', n: 1 }, ...randLoot().slice(0, 1)] }); obj(1, 'safe', 29, 16, { part: 'B', digits: code.slice(2), loot: [{ mat: 'aceite', n: 2 }] });
   obj(1, 'stairs', 22, 11, { to: 0 });
   obj(1, 'deco', 8, 3, { kind: 'bed', w: 2, h: 2 }); obj(1, 'deco', 18, 5, { kind: 'bed', w: 2, h: 2 });
   obj(1, 'deco', 34, 6, { kind: 'bed', w: 2, h: 2 }); obj(1, 'deco', 4, 20, { kind: 'shelf', w: 4, h: 1 });
   obj(1, 'deco', 30, 20, { kind: 'table', w: 3, h: 1 });
 
+  obj(0, 'chest', 21, 17, { loot: randLoot() }); obj(0, 'chest', 31, 18, { loot: randLoot() }); obj(0, 'wardrobe', 9, 3, { loot: randLoot() });
+  obj(1, 'chest', 9, 7, { loot: randLoot() }); obj(1, 'wardrobe', 29, 3, { loot: randLoot() }); obj(1, 'chest', 35, 19, { loot: randLoot() }); obj(1, 'chest', 10, 8, { loot: randLoot() });
   // ---------- decoración ----------
   const D = (f, kind, x, y, w = 1, h = 1) => obj(f, 'deco', x, y, { kind, w, h });
   D(0, 'plant', 13, 2); D(0, 'lamp', 2, 8); D(0, 'tv', 7, 2, 2, 1); D(0, 'plant', 2, 2);
-  D(0, 'fridge', 15, 2); D(0, 'stove', 16, 2); D(0, 'plant', 22, 9);
+  obj(0, 'fridge', 15, 2, { loot: [{ item: 'comida', n: 1 }, { mat: 'aluminio', n: 1 }] }); D(0, 'stove', 16, 2); obj(0, 'microwave', 17, 2); D(0, 'plant', 22, 9);
   D(0, 'shelf', 28, 2, 2, 1); D(0, 'lamp', 30, 3); D(0, 'plant', 24, 9);
   D(0, 'boxes', 32, 8); D(0, 'boxes', 33, 8); D(0, 'lamp', 36, 9);
   D(0, 'boxes', 12, 17); D(0, 'boxes', 13, 17); D(0, 'lamp', 2, 16);
