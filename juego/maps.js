@@ -61,6 +61,20 @@ function buildMap1() {
   obj(1, 'deco', 34, 6, { kind: 'bed', w: 2, h: 2 }); obj(1, 'deco', 4, 20, { kind: 'shelf', w: 4, h: 1 });
   obj(1, 'deco', 30, 20, { kind: 'table', w: 3, h: 1 });
 
+  // ---------- decoración ----------
+  const D = (f, kind, x, y, w = 1, h = 1) => obj(f, 'deco', x, y, { kind, w, h });
+  D(0, 'plant', 13, 2); D(0, 'lamp', 2, 8); D(0, 'tv', 7, 2, 2, 1); D(0, 'plant', 2, 2);
+  D(0, 'fridge', 15, 2); D(0, 'stove', 16, 2); D(0, 'plant', 22, 9);
+  D(0, 'shelf', 28, 2, 2, 1); D(0, 'lamp', 30, 3); D(0, 'plant', 24, 9);
+  D(0, 'boxes', 32, 8); D(0, 'boxes', 33, 8); D(0, 'lamp', 36, 9);
+  D(0, 'boxes', 12, 17); D(0, 'boxes', 13, 17); D(0, 'lamp', 2, 16);
+  D(0, 'plant', 17, 18); D(0, 'lamp', 22, 11); D(0, 'boxes', 24, 18); D(0, 'boxes', 25, 18); D(0, 'lamp', 33, 11);
+  D(1, 'lamp', 10, 2); D(1, 'plant', 2, 8); D(1, 'lamp', 21, 2); D(1, 'plant', 13, 8); D(1, 'plant', 29, 8);
+  D(1, 'lamp', 32, 2); D(1, 'plant', 37, 8); D(1, 'lamp', 10, 10); D(1, 'lamp', 28, 10); D(1, 'plant', 3, 12); D(1, 'plant', 36, 12);
+  D(1, 'shelf', 8, 14, 3, 1); D(1, 'lamp', 12, 21); D(1, 'plant', 2, 21);
+  D(1, 'boxes', 20, 15); D(1, 'boxes', 23, 15); D(1, 'boxes', 24, 21); D(1, 'boxes', 23, 21);
+  D(1, 'lamp', 27, 21); D(1, 'plant', 37, 21); D(1, 'boxes', 36, 15);
+
   F[0].rugs = [{ x: 4, y: 5, w: 7, h: 4, c1: '#2a5a8a', c2: '#3a7ab0', c3: '#e8d8a0' }, { x: 17, y: 12, w: 5, h: 4, c1: '#7a2a3a', c2: '#a04050', c3: '#e8c880' }];
   F[1].rugs = [{ x: 4, y: 4, w: 5, h: 3, c1: '#3a7a4a', c2: '#4a9a5a', c3: '#e8e0a0' }, { x: 14, y: 6, w: 6, h: 2, c1: '#6a3a8a', c2: '#8a5aaa', c3: '#f0d0f0' }];
 

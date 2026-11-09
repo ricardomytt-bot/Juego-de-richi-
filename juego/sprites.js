@@ -140,11 +140,12 @@ const Spr = (() => {
   }
 
   // ================= TILES =================
-  function tile(ch, i, j, below, above) {
+  const WALLPAL = { '.': ['#8a6ab8', '#9a7ac8', '#5a3a88', '#b8a0e0'], k: ['#58b8a8', '#68c8b8', '#2a7a6a', '#98e8d8'], g: ['#8a98b8', '#9aa8c8', '#4a5a78', '#c0d0f0'], r: ['#c8587a', '#d8688a', '#8a2a4a', '#f0a0b8'] };
+  function tile(ch, i, j, below, above, wc) {
     return mk(16, 16, g => {
       const h = (i * 7 + j * 13) % 5, n = (i * 31 + j * 17) % 7;
       if (ch === '.' || ch === '1' || ch === '2' || ch === '3') {
-        const cols = ['#8a5a3a', '#7e5236', '#92603e', '#84563a'];
+        const cols = ['#b07040', '#a46638', '#bc7c48', '#aa6c3c'];
         for (let y = 0; y < 16; y += 8) { const c = cols[((j * 2 + (y >> 3)) + i * 3) % 4]; R(g, 0, y, 16, 8, c); R(g, 0, y, 16, 1, shade(c, 0.7)); R(g, 0, y + 1, 16, 1, shade(c, 1.12)); R(g, 0, y + 7, 16, 1, shade(c, 0.85)); const off = ((j + (y >> 3)) * 5 + i) % 3 * 5 + 2; R(g, off, y, 1, 8, shade(c, 0.65)); R(g, (off + 7) % 16, y + 3, 3, 1, shade(c, 0.9)); R(g, (off + 3) % 16, y + 5, 1, 1, shade(c, 0.6)); }
         if (ch !== '.') {
           const id = +ch, col = KEY_COLORS[id];
@@ -158,20 +159,20 @@ const Spr = (() => {
         R(g, 0, 0, 16, 1, 'rgba(255,255,255,0.35)'); R(g, 0, 8, 16, 1, 'rgba(255,255,255,0.2)'); R(g, 7, 0, 1, 16, 'rgba(0,0,0,0.12)'); R(g, 15, 0, 1, 16, 'rgba(0,0,0,0.12)'); R(g, 0, 15, 16, 1, 'rgba(0,0,0,0.12)');
         R(g, 2, 2, 2, 1, '#fff'); R(g, 10, 10, 2, 1, '#fff');
       } else if (ch === 'g') {
-        R(g, 0, 0, 16, 16, '#7c7c8c'); for (let k = 0; k < 6; k++) R(g, (h * 3 + k * 5) % 15, (n * 2 + k * 3) % 15, 2, 1, k % 2 ? '#6c6c7c' : '#8c8c9c');
+        R(g, 0, 0, 16, 16, '#8c90a4'); for (let k = 0; k < 6; k++) R(g, (h * 3 + k * 5) % 15, (n * 2 + k * 3) % 15, 2, 1, k % 2 ? '#6c6c7c' : '#8c8c9c');
         R(g, 0, 15, 16, 1, '#5c5c6c'); R(g, 15, 0, 1, 16, '#5c5c6c'); R(g, 0, 0, 16, 1, '#8c8c9c');
         if (j % 4 === 0) { R(g, 2, 7, 5, 2, '#e8c840'); R(g, 10, 7, 5, 2, '#e8c840'); }
         if (n === 3) { E(g, 8, 8, 4, 2, 'rgba(30,30,40,0.35)'); }
       } else if (ch === 'r') {
-        R(g, 0, 0, 16, 16, '#8e3248'); R(g, 0, 0, 16, 1, '#a24258'); R(g, 0, 15, 16, 1, '#6e2438'); R(g, 15, 0, 1, 16, '#6e2438');
+        R(g, 0, 0, 16, 16, '#b04060'); R(g, 0, 0, 16, 1, '#c85478'); R(g, 0, 15, 16, 1, '#6e2438'); R(g, 15, 0, 1, 16, '#6e2438');
         for (let y = 0; y < 16; y += 8) for (let x = 0; x < 16; x += 8) { R(g, x + 3, y + 1, 2, 6, '#a24258'); R(g, x + 1, y + 3, 6, 2, '#a24258'); R(g, x + 3, y + 3, 2, 2, '#d8a8b0'); }
       } else if (ch === '#') {
         R(g, 0, 0, 16, 16, '#2c2240'); R(g, 0, 0, 16, 1, '#3c3258');
         for (let k = 0; k < 4; k++) R(g, (h * 4 + k * 5) % 15, (n * 3 + k * 4) % 15, 1, 1, '#382e50');
         if (below) {
-          R(g, 0, 7, 16, 9, '#6a5688'); for (let x = 0; x < 16; x += 4) R(g, x, 8, 2, 6, '#765f96'); R(g, 0, 7, 16, 1, '#8a74aa'); R(g, 0, 7, 16, 1, '#a08cc4');
-          R(g, 0, 13, 16, 3, '#3c2c52'); R(g, 0, 13, 16, 1, '#a08cc4'); R(g, 0, 15, 16, 1, '#241a34');
-          R(g, 5 + h, 9, 2, 2, '#8a74aa'); R(g, 11 - h % 3, 10, 1, 1, '#4a3a68');
+          const w = WALLPAL[wc] || WALLPAL['.'];
+          R(g, 0, 7, 16, 9, w[0]); for (let x = 0; x < 16; x += 4) R(g, x, 8, 2, 6, w[1]); R(g, 0, 7, 16, 1, w[3]);
+          R(g, 0, 13, 16, 3, w[2]); R(g, 0, 13, 16, 1, w[3]); R(g, 0, 15, 16, 1, '#241a34'); R(g, 5 + h, 9, 2, 2, w[3]); R(g, 11 - h % 3, 10, 1, 1, w[2]);
         } else R(g, 0, 15, 16, 1, '#241a34');
       } else R(g, 0, 0, 16, 16, '#05040a');
       if (above && ch !== '#' && ch !== ' ') { R(g, 0, 0, 16, 4, 'rgba(10,0,20,0.28)'); R(g, 0, 4, 16, 3, 'rgba(10,0,20,0.12)'); }
@@ -181,7 +182,7 @@ const Spr = (() => {
     return mk(MW * TS, MH * TS, g => {
       for (let j = 0; j < MH; j++) for (let i = 0; i < MW; i++) {
         const ch = F.g[j][i], below = j + 1 < MH && F.g[j + 1][i] !== '#' && F.g[j + 1][i] !== ' ', above = j > 0 && F.g[j - 1][i] === '#';
-        g.drawImage(tile(ch, i, j, below, above), i * TS, j * TS);
+        g.drawImage(tile(ch, i, j, below, above, below ? F.g[j + 1][i] : '.'), i * TS, j * TS);
       }
       for (const r of (F.rugs || [])) {
         const x = r.x * TS, y = r.y * TS, w = r.w * TS, h = r.h * TS;
@@ -190,6 +191,24 @@ const Spr = (() => {
         for (let k = 0; k < h - 8; k += 6) { R(g, x + 4, y + 4 + k, 2, 2, r.c3); R(g, x + w - 6, y + 4 + k, 2, 2, r.c3); }
         E(g, x + (w >> 1), y + (h >> 1), Math.max(2, (w >> 1) - 9), Math.max(2, (h >> 1) - 8), r.c3);
         E(g, x + (w >> 1), y + (h >> 1), Math.max(1, (w >> 1) - 12), Math.max(1, (h >> 1) - 11), r.c2);
+      }
+      // ventanas y cuadros en la pared de arriba de cada habitación + rayos de luna sobre el piso
+      for (const r of F.rooms) {
+        if (r.w < 5) continue;
+        const ty = (r.y - 1) * TS;
+        for (let x = r.x + 1; x < r.x + r.w - 1; x += 4) {
+          const kind = (x * 3 + r.y) % 3, X = x * TS + 3, Y = ty + 8;
+          if (kind === 0) {
+            R(g, X - 1, Y - 1, 12, 8, OL); R(g, X, Y, 10, 6, '#3a5aa8'); R(g, X + 1, Y + 1, 4, 3, '#a8c8ff'); R(g, X + 6, Y + 1, 3, 2, '#a8c8ff'); R(g, X + 5, Y, 1, 6, '#e8e0f0'); R(g, X, Y + 3, 10, 1, '#e8e0f0'); R(g, X + 7, Y + 1, 2, 2, '#fff8c0');
+            for (let k = 0; k < 40; k += 2) { const wd = 8 + (k >> 1), x0 = X - 1 - (k >> 2); g.fillStyle = 'rgba(150,190,255,' + (0.13 - k * 0.0028).toFixed(3) + ')'; g.fillRect(x0 + 3, ty + TS + k, wd, 2); }
+          } else if (kind === 1) {
+            R(g, X, Y, 10, 6, OL); R(g, X + 1, Y + 1, 8, 4, '#e8c060'); R(g, X + 2, Y + 2, 6, 2, ['#d04a6a', '#4aa8d0', '#6ac04a'][(x + r.y) % 3]); R(g, X + 3, Y + 2, 2, 1, '#fff');
+          } else { E(g, X + 5, Y + 3, 3, 3, OL); E(g, X + 5, Y + 3, 2, 2, '#f4ecd8'); R(g, X + 5, Y + 1, 1, 3, OL); R(g, X + 5, Y + 3, 2, 1, OL); }
+        }
+      }
+      for (const o of F.objs) if (o.type === 'deco' && o.kind === 'lamp') {
+        const cx = o.x * TS + 8, cy = o.y * TS + 8;
+        [[34, 26, 0.05], [26, 20, 0.06], [18, 14, 0.07], [10, 8, 0.09]].forEach(([rx, ry, a]) => E(g, cx, cy, rx, ry, 'rgba(255,200,110,' + a + ')'));
       }
     });
   }
@@ -220,6 +239,12 @@ const Spr = (() => {
       case 'd_car': E(g, X + 32, Y + 31, 31, 3, 'rgba(0,0,0,0.3)'); rb(g, X + 1, Y + 3, 62, 27, '#d04848'); R(g, X + 3, Y + 5, 58, 3, '#f07070'); rb(g, X + 14, Y + 7, 30, 19, '#9ac4e0'); R(g, X + 16, Y + 9, 12, 15, '#c8e4f4'); R(g, X + 30, Y + 9, 12, 15, '#7aa8c8'); rb(g, X + 56, Y + 6, 7, 5, '#ffe890', '#8a7a20'); rb(g, X + 56, Y + 22, 7, 5, '#ffe890', '#8a7a20'); R(g, X + 2, Y + 8, 3, 4, '#e8e8e8'); R(g, X + 2, Y + 22, 3, 4, '#e8e8e8'); break;
       case 'd_desk': shadow(); rb(g, X, Y + 3, W, 13, '#7a5030'); R(g, X + 1, Y + 4, W - 2, 3, '#b88450'); R(g, X + 6, Y + 6, 6, 5, '#f4ecd8'); R(g, X + 7, Y + 7, 4, 1, '#8a8a9a'); R(g, X + 7, Y + 9, 3, 1, '#8a8a9a'); R(g, X + W - 12, Y + 5, 5, 6, '#e04040'); break;
       case 'd_shelf': shadow(); rb(g, X, Y - 3, W, 19, '#6a4020'); for (let i = 0; i < 3; i++) { R(g, X + 1, Y + i * 5 - 1, W - 2, 4, '#3a2210'); for (let k = 0; k < W / 4 - 0.5; k++) R(g, X + 2 + k * 4, Y + i * 5 - 1, 3, 4, ['#e04040', '#4a8aff', '#ffd23f', '#3ae07a', '#c060e0'][(k + i) % 5]); } break;
+      case 'd_plant': shadow(); rb(g, X + 4, Y + 9, 8, 6, '#c8643a'); R(g, X + 5, Y + 10, 6, 1, '#e88a5a'); blob(g, X + 8, Y + 5, 5, 5, '#38c060'); blob(g, X + 4, Y + 8, 3, 3, '#2aa04a'); blob(g, X + 12, Y + 7, 3, 3, '#2aa04a'); R(g, X + 6, Y + 3, 2, 1, '#8af0a0'); break;
+      case 'd_lamp': shadow(); R(g, X + 6, Y + 14, 4, 1, OL); R(g, X + 7, Y + 7, 2, 7, '#6a5a4a'); rb(g, X + 3, Y, 10, 7, '#ffd878'); R(g, X + 4, Y + 1, 8, 2, '#fff0b0'); R(g, X + 7, Y + 7, 2, 1, '#ffe090'); break;
+      case 'd_fridge': shadow(); rb(g, X + 1, Y - 5, 14, 21, '#dce8f0'); R(g, X + 2, Y - 4, 12, 2, '#f8fcff'); R(g, X + 1, Y + 4, 14, 1, OL); R(g, X + 12, Y - 2, 1, 5, '#8a9aa8'); R(g, X + 12, Y + 6, 1, 6, '#8a9aa8'); R(g, X + 4, Y + 7, 3, 3, '#e04a6a'); R(g, X + 4, Y - 1, 3, 2, '#ffd23f'); break;
+      case 'd_stove': shadow(); rb(g, X + 1, Y + 1, 14, 14, '#9a9ab0'); R(g, X + 2, Y + 2, 12, 2, '#c0c0d4'); E(g, X + 5, Y + 6, 2, 2, '#2a2a38'); E(g, X + 11, Y + 6, 2, 2, '#2a2a38'); rb(g, X + 3, Y + 9, 10, 5, '#3a3a4a'); R(g, X + 4, Y + 10, 8, 2, '#5a8ac8'); R(g, X + 3, Y + 3, 1, 1, '#e04040'); R(g, X + 12, Y + 3, 1, 1, '#e04040'); break;
+      case 'd_boxes': shadow(); rb(g, X + 1, Y + 6, 14, 9, '#d09a52'); R(g, X + 7, Y + 6, 2, 9, '#f0d08a'); R(g, X + 2, Y + 7, 4, 1, '#e8b870'); rb(g, X + 3, Y + 1, 10, 6, '#e0aa62'); R(g, X + 7, Y + 1, 2, 6, '#f0d08a'); break;
+      case 'd_tv': shadow(); rb(g, X + 1, Y - 3, 30, 17, '#3a3a50'); R(g, X + 3, Y - 1, 26, 12, '#3a78c8'); for (let k = 0; k < 14; k++) R(g, X + 3 + ((k * 7 + (t * 6 | 0) * 3) % 24), Y - 1 + ((k * 5) % 12), 2, 1, k % 2 ? '#e8f4ff' : '#1a3a6a'); R(g, X + 4, Y, 8, 2, 'rgba(255,255,255,0.3)'); R(g, X + 12, Y + 11, 8, 2, '#2a2a3a'); break;
       case 'd_table': shadow(); rb(g, X, Y + 2, W, H - 2, '#7a5030'); R(g, X + 1, Y + 3, W - 2, H - 6, '#b88450'); R(g, X + 2, Y + 4, W - 4, 1, '#d8a870'); R(g, X + 4, Y + 7, 5, 4, '#f4ecd8'); if (W > 16) E(g, X + W - 8, Y + 9, 3, 2, '#e04040'); break;
     }
   }

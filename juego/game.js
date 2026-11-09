@@ -51,9 +51,9 @@ function newGame() {
     W, t: 0, dur: FAST ? 60 : 360, blackoutAt: FAST ? 40 : 240, floors: W.f.map(f => Spr.floorCanvas(f)),
     p: { f: sp.f, x: tc(sp.x), y: tc(sp.y), dir: 'd', ang: Math.PI / 2, hp: 100, anim: 0, moving: false, keys: new Set(), mats: {}, items: ['mask', 'pizza'], charge: 100, beam: 0, beamHit: false, immune: 0, held: false, grab: 0, dead: false, escaped: false, code: null, charging: false, stairCd: 0 },
     e: { f: es.f, x: tc(es.x), y: tc(es.y), dir: 'd', fx: 0, fy: 1, state: 'patrol', stun: 0, eat: 0, path: [], goal: null, repath: 0, radarCd: 7, ring: 0, anim: 0, lost: 0, wait: 0, last: null, stairCd: 0 },
-    pizza: null, blackout: false, fixed: false, overlay: null, msg: null, fade: 0, ended: null, intro: 2.6, shake: 0, hint: null, joy: null, stats: { chests: 0, flashes: 0, grabs: 0 },
+    pizza: null, blackout: false, fixed: false, overlay: null, msg: null, fade: 0, ended: null, intro: 1, introT: 0, banner: null, room: null, flick: 0, flickCd: rand(6, 12), cam: { cx: 0, cy: 0 }, shake: 0, hint: null, joy: null, stats: { chests: 0, flashes: 0, grabs: 0 },
   };
-  Sfx.droneStart();
+  Sfx.horrorStart(); Sfx.setTension(0);
 }
 const say = (text, t = 2.4) => { S.msg = { text, t }; };
 
@@ -229,12 +229,12 @@ function updateEnemy(dt) {
 
 // ---------------- actualización ----------------
 function update(dt) {
-  if (S.intro > 0) { S.intro -= dt; return; }
+  if (S.intro > 0) { S.introT += dt; return; }
   const p = S.p, e = S.e;
   S.t += dt; S.shake = Math.max(0, S.shake - dt); S.fade = Math.max(0, S.fade - dt);
   if (S.msg) { S.msg.t -= dt; if (S.msg.t <= 0) S.msg = null; }
   if (p.stairCd > 0) p.stairCd -= dt; if (p.immune > 0) p.immune -= dt;
-  if (!S.blackout && !S.fixed && S.t >= S.blackoutAt) { S.blackout = true; p.charging = false; Sfx.power(); say('¡SE FUE LA LUZ! ARREGLALA EN LA COMPUTADORA (PISO 2)', 6); }
+  if (!S.blackout && !S.fixed && S.t >= S.blackoutAt) { S.blackout = true; p.charging = false; Sfx.power(); say('¡SE FUE LA LUZ!', 4); }
   const [vx, vy] = inputVec(), mag = Math.hypot(vx, vy);
   if (S.overlay && mag > 0.5) S.overlay = null;
   p.moving = false;
@@ -254,31 +254,83 @@ function update(dt) {
   updateEnemy(dt); updateOverlay(dt);
   if (!S.ended) {
     if (p.escaped) S.ended = { kind: 'escape', t: 0 }; else if (p.dead) S.ended = { kind: 'dead', t: 0 }; else if (S.t >= S.dur) S.ended = { kind: 'survive', t: 0 };
-  } else { S.ended.t += dt; if (S.ended.t > (S.ended.kind === 'dead' ? 2.2 : 1.6)) { Sfx.droneStop(); setScene(End, S.ended.kind, S); } }
+  } else { S.ended.t += dt; if (S.ended.t > (S.ended.kind === 'dead' ? 2.2 : 1.6)) { Sfx.setTension(0); setScene(End, S.ended.kind, S); } }
   const o = !S.overlay && !p.held ? nearest() : null; S.hint = o ? hintFor(o) : null;
+  // nombre de la habitación
+  const F = S.W.f[p.f], tx = tileOf(p.x), ty = tileOf(p.y), rm = F.rooms.find(r => tx >= r.x && tx < r.x + r.w && ty >= r.y && ty < r.y + r.h);
+  const rk = rm ? p.f + rm.name : null;
+  if (rk !== S.room) { S.room = rk; if (rm && ROOM_NAMES[rm.name]) S.banner = { title: ROOM_NAMES[rm.name][0], sub: ROOM_NAMES[rm.name][1], t: 2.6 }; }
+  if (S.banner) { S.banner.t -= dt; if (S.banner.t <= 0) S.banner = null; }
+  // tensión de la música y parpadeo de luces
+  const dist = e.f === p.f ? Math.hypot(e.x - p.x, e.y - p.y) : 999, prox = clamp(1 - dist / 170, 0, 1);
+  Sfx.setTension(p.held ? 1 : Math.max(prox * 0.9, e.state === 'chase' ? 0.65 : 0, S.blackout ? 0.4 : 0));
+  S.flickCd -= dt; if (S.flickCd <= 0) { S.flickCd = rand(7, 15); S.flick = 0.22; Sfx.light(); }
+  if (S.flick > 0) S.flick -= dt;
+}
+const ROOM_NAMES = { sala: ['SALA', 'AQUI EMPIEZAS'], cocina: ['COCINA', ''], estudio: ['ESTUDIO', ''], boveda: ['BOVEDA', 'AQUI ESTA EL CODIGO'], estacionamiento: ['ESTACIONAMIENTO', 'AQUI RECARGAS LA LINTERNA'], comedor: ['COMEDOR', 'ESCALERAS HACIA EL PISO 2'], taller: ['TALLER', 'LA SALIDA NECESITA EL CODIGO'], pasillo: ['PASILLO', ''], 'cuarto A': ['CUARTO DE LA COMPUTADORA', 'ARREGLA LA LUZ AQUI'], 'cuarto B': ['CUARTO AZUL', ''], bano: ['BAÑO', ''], 'cuarto C': ['CUARTO INFANTIL', ''], biblioteca: ['BIBLIOTECA', ''], bodega: ['BODEGA', ''], atico: ['ATICO', ''] };
+
+// ---------- objetivo actual ----------
+function getObjective() {
+  const p = S.p, W = S.W;
+  const find = pred => { for (let f = 0; f < 2; f++) { const o = W.f[f].objs.find(pred); if (o) return o; } };
+  const door = id => find(o => o.type === 'door' && o.id === id), open = id => door(id).removed;
+  let o, text, col = '#ffd23f';
+  if (S.blackout && !S.fixed) { o = find(x => x.type === 'computer'); text = '¡SE FUE LA LUZ! ARREGLALA EN LA COMPUTADORA'; col = '#ff5a5a'; }
+  else if (!p.keys.has(1)) { o = find(x => x.type === 'chest' && x.loot.some(l => l.key === 1)); text = 'ABRE EL COFRE DE LA SALA: LLAVE ROJA'; col = KEY_COLORS[1]; }
+  else if (!open(1)) { o = door(1); text = 'ABRE LA PUERTA ROJA (FONDO DE LA COCINA)'; col = KEY_COLORS[1]; }
+  else if (!p.keys.has(2)) { o = find(x => x.type === 'wardrobe' && x.loot.some(l => l.key === 2)); text = 'ABRE EL ARMARIO DEL ESTUDIO: LLAVE AZUL'; col = KEY_COLORS[2]; }
+  else if (!open(2)) { o = door(2); text = 'ABRE LA PUERTA AZUL DEL PISO 2'; col = KEY_COLORS[2]; }
+  else if (!p.keys.has(3)) { o = find(x => x.type === 'chest' && x.loot.some(l => l.key === 3)); text = 'ABRE EL COFRE DEL CUARTO AZUL: LLAVE VERDE'; col = KEY_COLORS[3]; }
+  else if (!open(3)) { o = door(3); text = 'ABRE LA PUERTA VERDE (ESTUDIO)'; col = KEY_COLORS[3]; }
+  else if (!find(x => x.type === 'vault').opened) { o = find(x => x.type === 'vault'); text = 'ABRE LA BOVEDA: AHI ESTA EL CODIGO'; col = KEY_COLORS[3]; }
+  else { o = find(x => x.type === 'exit'); text = 'ESCAPA POR EL TALLER: ESCRIBE EL CODIGO'; col = '#3ae07a'; }
+  let tgt = o;
+  if (o.f !== p.f) { tgt = W.f[p.f].objs.find(x => x.type === 'stairs'); text = (o.f > p.f ? 'SUBE AL PISO 2. ' : 'BAJA AL PISO 1. ') + text; }
+  return { o, tgt, text, col };
+}
+function arrow(g, x, y, ang, col, sz = 7) {
+  const c = Math.cos(ang), s = Math.sin(ang);
+  for (const pad of [1.4, 0]) { g.fillStyle = pad ? '#000' : col; for (let dy = -sz - 3; dy <= sz + 3; dy++) for (let dx = -sz - 3; dx <= sz + 3; dx++) { const u = dx * c + dy * s, v = -dx * s + dy * c; const head = u >= -pad && u <= sz + pad && Math.abs(v) <= (sz - u) * 0.95 + pad, tail = u >= -sz * 0.9 - pad && u <= 0.5 + pad && Math.abs(v) <= 1.7 + pad; if (head || tail) g.fillRect(Math.round(x + dx), Math.round(y + dy), 1, 1); } }
+}
+function edgeArrow(g, wx, wy, col) {
+  const sx = wx - S.cam.cx, sy = wy - S.cam.cy;
+  if (sx > 10 && sx < 310 && sy > 70 && sy < 172) return false;
+  const dx = sx - 160, dy = sy - 121, k = Math.min(140 / Math.max(1, Math.abs(dx)), 44 / Math.max(1, Math.abs(dy)));
+  arrow(g, 160 + dx * k, 121 + dy * k, Math.atan2(dy, dx), col, 7); return true;
 }
 
 // ---------------- dibujo ----------------
 const DARK = []; for (let i = 0; i <= 20; i++) DARK.push('rgba(2,0,10,' + (i / 20).toFixed(2) + ')');
-const WARM = []; for (let i = 0; i <= 10; i++) WARM.push('rgba(255,196,120,' + (i / 100).toFixed(2) + ')');
-function renderDark(g, cx, cy) {
-  const p = S.p, B = 3, base = S.blackout ? 0.97 : 0.78, amb = S.blackout ? 32 : 62;
+function renderDark(g, cx, cy) { // solo durante el apagón: se ve oscuro pero visible, con luz cerca del jugador
+  const p = S.p, B = 3, base = 0.58, amb = 52;
   for (let by = 0; by < VH; by += B) for (let bx = 0; bx < VW; bx += B) {
     const wx = bx + 1 + cx, wy = by + 1 + cy, dx = wx - p.x, dy = wy - p.y, d2 = dx * dx + dy * dy; let l = 0;
-    if (d2 < amb * amb && los(p.f, p.x, p.y, wx, wy)) { const t = 1 - Math.sqrt(d2) / amb; l = t * t * (3 - 2 * t); }
-    if (p.beam > 0 && l < 0.95 && d2 < 130 * 130 && Math.abs(angDiff(Math.atan2(dy, dx), p.ang)) < 0.52 && los(p.f, p.x, p.y, wx, wy)) l = Math.max(l, Math.min(1, 1.15 - Math.sqrt(d2) / 150));
-    const q = Math.round(l * 6) / 6, a = base * (1 - q);
+    if (d2 < amb * amb) { const t = 1 - Math.sqrt(d2) / amb; l = t * t * (3 - 2 * t); }
+    const q = Math.round(l * 5) / 5, a = base * (1 - q);
     if (a > 0.02) { g.fillStyle = DARK[Math.round(a * 20)]; g.fillRect(bx, by, B, B); }
-    if (q > 0.1) { g.fillStyle = WARM[Math.round(q * 10)]; g.fillRect(bx, by, B, B); }
   }
-  // viñeta
-  g.fillStyle = 'rgba(0,0,10,0.18)'; g.fillRect(0, 0, VW, 6); g.fillRect(0, VH - 6, VW, 6); g.fillRect(0, 0, 6, VH); g.fillRect(VW - 6, 0, 6, VH);
+  g.fillStyle = 'rgba(255,0,0,' + (0.05 + 0.05 * Math.sin(G.t * 5)).toFixed(3) + ')'; g.fillRect(0, 0, VW, VH);
+}
+// ----- ambiente tenebroso (todo está iluminado) -----
+const VIG = Spr.mk(VW, VH, g => { for (let by = 0; by < VH; by += 4) for (let bx = 0; bx < VW; bx += 4) { const dx = (bx + 2 - 160) / 160, dy = (by + 2 - 90) / 90, d = Math.sqrt(dx * dx * 0.8 + dy * dy * 1.1), a = clamp((d - 0.55) / 0.75, 0, 1), q = Math.round(a * 6) / 6 * 0.62; if (q > 0.02) { g.fillStyle = 'rgba(8,0,24,' + q.toFixed(2) + ')'; g.fillRect(bx, by, 4, 4); } } });
+const VIGR = Spr.mk(VW, VH, g => { for (let by = 0; by < VH; by += 4) for (let bx = 0; bx < VW; bx += 4) { const dx = (bx + 2 - 160) / 160, dy = (by + 2 - 90) / 90, d = Math.sqrt(dx * dx * 0.8 + dy * dy * 1.1), a = clamp((d - 0.4) / 0.7, 0, 1), q = Math.round(a * 6) / 6 * 0.8; if (q > 0.02) { g.fillStyle = 'rgba(200,0,20,' + q.toFixed(2) + ')'; g.fillRect(bx, by, 4, 4); } } });
+const DUST = Array.from({ length: 34 }, () => ({ x: Math.random() * 320, y: Math.random() * 180, vx: rand(-6, 6), vy: rand(-5, 3), ph: Math.random() * 6, s: Math.random() < 0.25 ? 2 : 1 }));
+function renderFx(g) {
+  const p = S.p, e = S.e;
+  g.fillStyle = 'rgba(70,20,120,0.12)'; g.fillRect(0, 0, VW, VH);
+  for (let i = 0; i < 4; i++) { const x = ((G.t * 7 + i * 110) % 460) - 70, y = 36 + i * 42 + Math.sin(G.t * 0.5 + i) * 8; E(g, x, y, 74, 11, 'rgba(210,200,255,0.05)'); E(g, x + 20, y + 4, 46, 7, 'rgba(210,200,255,0.05)'); }
+  for (const d of DUST) { const x = ((d.x + G.t * d.vx) % 320 + 320) % 320, y = ((d.y + G.t * d.vy) % 180 + 180) % 180; g.fillStyle = 'rgba(230,220,255,' + (0.25 + 0.2 * Math.sin(G.t * 2 + d.ph)).toFixed(2) + ')'; g.fillRect(x | 0, y | 0, d.s, d.s); }
+  g.globalAlpha = 0.85 + 0.15 * Math.sin(G.t * 1.3); g.drawImage(VIG, 0, 0); g.globalAlpha = 1;
+  const dist = e.f === p.f ? Math.hypot(e.x - p.x, e.y - p.y) : 999, prox = Math.max(clamp(1 - dist / 150, 0, 1), p.held ? 1 : 0);
+  if (prox > 0.05 || e.state === 'chase' && e.f === p.f) { g.globalAlpha = clamp(prox * 0.9 + (e.state === 'chase' ? 0.15 : 0), 0, 1) * (0.55 + 0.45 * Math.sin(G.t * (5 + prox * 6))); g.drawImage(VIGR, 0, 0); g.globalAlpha = 1; }
+  if (S.flick > 0) { g.fillStyle = 'rgba(0,0,20,' + (0.45 * Math.abs(Math.sin(S.flick * 40))).toFixed(2) + ')'; g.fillRect(0, 0, VW, VH); }
 }
 function renderWorld(g) {
   const p = S.p, e = S.e;
   const cam = S.p.dead && S.e.f === p.f ? e : p;
   let cx = clamp(Math.round(cam.x - VW / 2), 0, MW * TS - VW), cy = clamp(Math.round(cam.y - VH / 2), 0, MH * TS - VH);
   if (S.shake > 0) { cx += (Math.random() * 4 - 2) | 0; cy += (Math.random() * 4 - 2) | 0; }
+  S.cam.cx = cx; S.cam.cy = cy;
   g.save(); g.translate(-cx, -cy);
   g.drawImage(S.floors[p.f], 0, 0);
   const st = { t: G.t, power: !S.blackout, charging: p.charging, blackout: S.blackout };
@@ -288,13 +340,24 @@ function renderWorld(g) {
   if (e.f === p.f) list.push({ y: e.y, d: () => { const mood = e.stun > 0 || e.state === 'eat' ? 'stun' : (e.state === 'chase' || e.state === 'grab') ? 'angry' : 'calm'; const sp = Spr.doll(e.dir, e.path.length && e.stun <= 0 && e.state !== 'eat' ? 1 + ((e.anim * 6 | 0) % 2) : 0, mood); g.drawImage(sp, Math.round(e.x - 20), Math.round(e.y - 47)); if (e.stun > 0 || e.state === 'eat') for (let i = 0; i < 4; i++) { const a = G.t * 5 + i * 1.6; R(g, e.x + Math.cos(a) * 11 - 1, e.y - 52 + Math.sin(a) * 3, 3, 3, '#ffd23f'); } } });
   if (S.pizza && S.pizza.f === p.f) list.push({ y: S.pizza.y, d: () => { E(g, S.pizza.x, S.pizza.y, 5, 4, '#e0a040'); E(g, S.pizza.x, S.pizza.y, 4, 3, '#d04030'); R(g, S.pizza.x - 2, S.pizza.y - 1, 2, 1, '#ffe890'); R(g, S.pizza.x + 1, S.pizza.y, 2, 1, '#ffe890'); } });
   list.sort((a, b) => a.y - b.y).forEach(i => i.d());
+  // destello de la linterna
+  if (p.beam > 0) { const k = clamp(p.beam / 1.4, 0, 1); for (let wy = Math.floor((p.y - 130) / 3) * 3; wy < p.y + 130; wy += 3) for (let wx = Math.floor((p.x - 130) / 3) * 3; wx < p.x + 130; wx += 3) { const dx = wx - p.x, dy = wy - p.y, d2 = dx * dx + dy * dy; if (d2 < 130 * 130 && d2 > 16 && Math.abs(angDiff(Math.atan2(dy, dx), p.ang)) < 0.52 && los(p.f, p.x, p.y, wx, wy)) { g.fillStyle = 'rgba(255,252,210,' + (0.34 * k * (1 - Math.sqrt(d2) / 150)).toFixed(3) + ')'; g.fillRect(wx, wy, 3, 3); } } }
+  // marcadores: objetivo y objetos que se pueden abrir
+  const ob = getObjective();
+  for (const o of S.W.f[p.f].objs) {
+    if (o.removed) continue; const ox = (o.x + o.w / 2) * TS, oy = o.y * TS;
+    if (((o.type === 'chest' || o.type === 'wardrobe' || o.type === 'vault') && !o.opened)) { const tw = ((G.t * 3 + o.x) % 2) < 1; g.fillStyle = tw ? '#fff6a0' : '#ffd23f'; g.fillRect(ox + 4, oy - 2, 1, 3); g.fillRect(ox + 3, oy - 1, 3, 1); g.fillRect(ox - 6, oy + 2, 1, 1); }
+    if (o.type === 'door') { ring(g, ox, (o.y + 0.5) * TS, 11 + Math.sin(G.t * 4) * 1.5, KEY_COLORS[o.id]); ring(g, ox, (o.y + 0.5) * TS, 12 + Math.sin(G.t * 4) * 1.5, KEY_COLORS[o.id]); }
+  }
+  if (ob.tgt && ob.tgt.f === p.f) { const t = ob.tgt, tx = (t.x + t.w / 2) * TS, ty = t.y * TS - 6 - Math.abs(Math.sin(G.t * 4)) * 4; ring(g, tx, (t.y + t.h / 2) * TS, 13 + Math.sin(G.t * 5) * 2, ob.col); arrow(g, tx, ty - 6, Math.PI / 2, ob.col, 6); }
   g.restore();
-  renderDark(g, cx, cy);
+  if (S.blackout) renderDark(g, cx, cy);
+  renderFx(g);
   g.save(); g.translate(-cx, -cy);
   // ojos y radar del enemigo (visibles en la oscuridad)
   if (e.f === p.f) {
     const d = Math.hypot(e.x - p.x, e.y - p.y);
-    if (d < 160 && e.stun <= 0 && (G.t * 6 | 0) % 7 !== 0 && e.dir !== 'u') { const xs = e.dir === 'd' ? [-6, 6] : e.dir === 'l' ? [-8] : [8]; for (const x of xs) { R(g, e.x + x - 1, e.y - 32, 3, 3, '#ff2a2a'); R(g, e.x + x - 2, e.y - 33, 5, 5, 'rgba(255,40,40,0.25)'); } }
+    if (S.blackout && e.stun <= 0 && e.dir !== 'u') { const xs = e.dir === 'd' ? [-6, 6] : e.dir === 'l' ? [-8] : [8]; for (const x of xs) { R(g, e.x + x - 1, e.y - 32, 3, 3, '#ff2a2a'); R(g, e.x + x - 3, e.y - 34, 7, 7, 'rgba(255,40,40,0.25)'); } }
     if (e.ring > 0 && d < RADAR_R + 140) { ring(g, e.x, e.y, e.ring / 1.2 * RADAR_R, 'rgba(255,60,60,0.9)'); ring(g, e.x, e.y, Math.max(1, e.ring / 1.2 * RADAR_R - 3), 'rgba(255,60,60,0.45)'); }
   }
   g.restore();
@@ -327,6 +390,18 @@ function renderHud(g) {
   let iy = 34; for (const k of Object.keys(p.mats)) if (p.mats[k] > 0) { Txt.draw(g, MAT_NAMES[k].slice(0, 3) + ' ' + p.mats[k], 4, iy, { color: '#d8d0ff', shadow: '#000' }); iy += 9; }
   for (const k of p.keys) { R(g, 4 + (k - 1) * 12, iy + 2, 9, 5, KEY_COLORS[k]); R(g, 4 + (k - 1) * 12, iy + 2, 9, 1, '#fff'); }
   if (p.immune > 0 && !p.held) Txt.draw(g, 'INMUNE ' + Math.ceil(p.immune), 160, 28, { align: 'c', color: '#3ae07a', shadow: '#000' });
+  // objetivo, progreso y flechas
+  const ob = getObjective(), olines = Txt.wrap(ob.text, 172), oh = 14 + olines.length * 9;
+  g.fillStyle = 'rgba(8,4,20,0.82)'; g.fillRect(70, 29, 184, oh); R(g, 70, 29, 184, 1, ob.col); R(g, 70, 29, 3, oh, ob.col);
+  Txt.draw(g, 'OBJETIVO', 78, 33, { color: ob.col }); olines.forEach((l, i) => Txt.draw(g, l, 78, 43 + i * 9, { color: '#fff' }));
+  [[1, 224], [2, 238], [3, 252]].forEach(([k, x]) => { const has = p.keys.has(k); R(g, x, 14, 12, 10, '#000'); R(g, x + 1, 15, 10, 8, has ? KEY_COLORS[k] : '#2a2440'); if (has) R(g, x + 3, 17, 6, 1, 'rgba(255,255,255,0.6)'); else Txt.draw(g, '?', x + 6, 16, { align: 'c', color: '#6a6090' }); });
+  R(g, 268, 14, 28, 10, '#000'); R(g, 269, 15, 26, 8, p.code ? '#3ae07a' : '#2a2440'); Txt.draw(g, p.code ? p.code : 'COD', 282, 16, { align: 'c', color: p.code ? '#06210f' : '#6a6090' });
+  R(g, 298, 14, 18, 10, '#000'); R(g, 299, 15, 16, 8, p.escaped ? '#3ae07a' : '#2a2440'); Txt.draw(g, 'SAL', 307, 16, { align: 'c', color: p.escaped ? '#06210f' : '#6a6090' });
+  if (!p.dead && !p.escaped) {
+    if (ob.tgt && ob.tgt.f === p.f) edgeArrow(g, (ob.tgt.x + ob.tgt.w / 2) * TS, (ob.tgt.y + ob.tgt.h / 2) * TS, ob.col);
+    if (e.f === p.f && Math.hypot(e.x - p.x, e.y - p.y) < 340 && e.state !== 'eat') edgeArrow(g, e.x, e.y, '#ff3a3a');
+  }
+  if (S.banner) { const b = S.banner, a = clamp(Math.min(b.t, 0.5) * 2, 0, 1), w = Math.max(Txt.w(b.title, 1), Txt.w(b.sub, 1)) + 24; g.globalAlpha = a; g.fillStyle = 'rgba(8,4,20,0.85)'; g.fillRect(160 - w / 2, 104, w, b.sub ? 24 : 15); R(g, 160 - w / 2, 104, w, 1, '#ffd23f'); Txt.draw(g, b.title, 160, 108, { align: 'c', color: '#ffd23f' }); if (b.sub) Txt.draw(g, b.sub, 160, 118, { align: 'c', color: '#c9c0ff' }); g.globalAlpha = 1; }
   // joystick (siempre visible)
   const j = S.joy;
   if (j) { const dx = j.x - j.ox, dy = j.y - j.oy, l = Math.hypot(dx, dy), k = l > 24 ? 24 / l : 1; drawJoy(g, j.ox, j.oy, Math.round(j.ox + dx * k), Math.round(j.oy + dy * k), true); }
@@ -340,14 +415,13 @@ function renderHud(g) {
   Txt.draw(g, it ? (it === 'mask' ? 'MASCARA' : 'PIZZA') + (p.items.length > 1 ? ' +' + (p.items.length - 1) : '') : 'OBJETO', BTN.item.x, BTN.item.y + BTN.item.r + 2, { align: 'c', color: '#c9c0ff', shadow: '#000' });
   if (S.hint) Txt.draw(g, 'USAR: ' + S.hint, 160, 158, { align: 'c', color: '#ffd23f', outline: '#000' });
   if (S.msg) Txt.draw(g, S.msg.text, 160, 138, { align: 'c', color: '#fff', outline: '#000' });
-  if (G.t < 14 && !G.touched) Txt.draw(g, 'WASD MOVER   J USAR   K LINTERNA   L OBJETO', 160, 170, { align: 'c', color: '#8a7fe0', shadow: '#000' });
   // forcejeo
   if (p.held) {
     panel(g, 100, 54, 120, 72, 'rgba(40,6,10,0.92)', '#e03030'); Txt.draw(g, '¡TE AGARRARON!', 160, 60, { align: 'c', color: '#ff6060' });
     circle(g, 160, 92, 17 + ((G.t * 10 | 0) % 2), '#e03030', '#fff'); Txt.draw(g, 'TOCA', 160, 89, { align: 'c', color: '#fff' });
     R(g, 110, 114, 100, 6, '#000'); R(g, 111, 115, Math.round(98 * p.grab / 100), 4, '#3ae07a');
   }
-  if (e.state === 'chase' && e.f === p.f && !p.held && (G.t * 4 | 0) % 2) Txt.draw(g, '¡TE VE!', 160, 34, { align: 'c', color: '#ff4040', outline: '#000' });
+  if (e.state === 'chase' && e.f === p.f && !p.held && (G.t * 4 | 0) % 2) Txt.draw(g, '¡TE VE!', 160, 94, { align: 'c', color: '#ff4040', outline: '#000' });
   if (S.blackout) { Txt.draw(g, 'SIN LUZ', 316, 15, { align: 'r', color: '#ff6060', shadow: '#000' }); }
   // overlays
   const ov = S.overlay;
@@ -371,18 +445,21 @@ function renderHud(g) {
   if (S.fade > 0) { g.fillStyle = 'rgba(0,0,0,' + clamp(S.fade * 2, 0, 1) + ')'; g.fillRect(0, 0, VW, VH); }
   if (S.ended) { const a = clamp(S.ended.t / (S.ended.kind === 'dead' ? 2 : 1.4), 0, 1); g.fillStyle = (S.ended.kind === 'dead' ? 'rgba(60,0,0,' : 'rgba(255,255,255,') + a * 0.9 + ')'; g.fillRect(0, 0, VW, VH); }
   if (S.intro > 0) {
-    g.fillStyle = '#05040f'; g.fillRect(0, 0, VW, VH);
-    Txt.draw(g, 'MAPA 1', 160, 28, { s: 2, align: 'c', color: '#ffd23f' }); Txt.draw(g, 'CASA ABANDONADA', 160, 52, { s: 2, align: 'c', color: '#fff' });
-    g.drawImage(Spr.doll('d', 0, 'calm'), 160 - 31, 78, 62, 81);
-    Txt.draw(g, 'ENEMIGO: LA MUÑECA', 160, 70, { align: 'c', color: '#ff7ab8' });
-    Txt.draw(g, 'SOBREVIVE HASTA LAS 6 AM O ESCAPA', 160, 168, { align: 'c', color: '#c9a6ff' });
+    R(g, 0, 0, VW, VH, '#0c0820'); for (let i = 0; i < 40; i++) R(g, (i * 71) % 320, (i * 37) % 180, 1, 1, i % 4 ? '#fff' : '#ffd23f');
+    Txt.draw(g, 'MAPA 1', 160, 6, { align: 'c', color: '#c9a6ff' }); Txt.draw(g, 'CASA ABANDONADA', 160, 16, { s: 2, align: 'c', color: '#ffd23f', outline: '#2a1a30' });
+    panel(g, 6, 38, 82, 108, '#1a1038', '#e02a70'); g.drawImage(Spr.doll('d', (G.t * 3 | 0) % 2, 'calm'), 16, 44, 62, 81); Txt.draw(g, 'LA MUÑECA', 47, 128, { align: 'c', color: '#ff7ab8' }); Txt.draw(g, 'TE BUSCA', 47, 137, { align: 'c', color: '#fff' });
+    panel(g, 94, 38, 220, 108, '#1a1038', '#6a5ad0');
+    const steps = [['#4a42a0', 'J', 'MUEVETE: JOYSTICK (O TECLAS WASD)'], ['#ffd23f', 'U', 'USAR (O J): ABRE COFRES, PUERTAS Y ESCALERAS'], ['#4aa8ff', 'L', 'LINTERNA (O K): ATURDE A LA MUÑECA 3 S'], ['#3ae07a', '★', 'ESCAPA CON LLAVES Y CODIGO O SOBREVIVE HASTA LAS 6 AM']];
+    steps.forEach(([c, l, t], i) => { const y = 44 + i * 25; circle(g, 110, y + 9, 8, c, '#fff'); Txt.draw(g, l === '★' ? '!' : l, 110, y + 6, { align: 'c', color: '#1a0f1f' }); Txt.wrap(t, 186).forEach((ln, k) => Txt.draw(g, ln, 124, y + 3 + k * 9, { color: '#fff' })); });
+    Txt.draw(g, 'SIGUE LA FLECHA AMARILLA: TE DICE A DONDE IR', 160, 152, { align: 'c', color: '#ffd23f' });
+    if (S.introT > 0.6 && (G.t * 2 | 0) % 2 === 0) Txt.draw(g, 'TOCA PARA EMPEZAR', 160, 166, { s: 1, align: 'c', color: '#fff', outline: '#000' });
   }
 }
 
 // ---------------- escenas ----------------
 const Title = {
   sel: 0, items: ['JUGAR (PRACTICA CON BOT)', 'CREAR SALA (PRONTO)', 'UNIRSE CON CODIGO (PRONTO)', 'SONIDO'],
-  enter() { this.sel = 0; if (G.started) Sfx.musicStart('menu'); },
+  enter() { this.sel = 0; if (G.started) { Sfx.horrorStart(); Sfx.setTension(0); } },
   render(g) {
     R(g, 0, 0, VW, VH, '#07061a'); for (let i = 0; i < 40; i++) R(g, (i * 71) % 320, (i * 37) % 100, 1, 1, i % 5 ? '#fff' : '#ffd23f');
     E(g, 270, 34, 18, 18, '#fff6c8'); E(g, 277, 29, 15, 15, '#07061a'); E(g, 270, 34, 18, 18, '#fff6c8'); E(g, 278, 28, 15, 15, '#07061a');
@@ -392,7 +469,7 @@ const Title = {
     if (!G.started) { if ((G.t * 2 | 0) % 2 === 0) Txt.draw(g, 'TOCA O PULSA UNA TECLA', 210, 110, { align: 'c', color: '#fff', outline: '#000' }); return; }
     this.items.forEach((it, i) => { const sel = i === this.sel; let l = it; if (i === 3) l = 'SONIDO: ' + (Sfx.muted ? 'NO' : 'SI'); Txt.draw(g, (sel ? '> ' : '') + l, 210, 86 + i * 14, { align: 'c', color: sel ? '#ffd23f' : i === 1 || i === 2 ? '#6a6090' : '#d8d0ff', shadow: '#000' }); });
   },
-  act(i) { Sfx.click(); if (i === 0) { Sfx.musicStop(); newGame(); setScene(Play); } else if (i === 3) Sfx.toggleMute(); else say0(); },
+  act(i) { Sfx.click(); if (i === 0) { newGame(); setScene(Play); } else if (i === 3) Sfx.toggleMute(); else say0(); },
   keydown(c) { if (!G.started) return; if (c === 'ArrowUp' || c === 'KeyW') this.sel = (this.sel + 3) % 4; if (c === 'ArrowDown' || c === 'KeyS') this.sel = (this.sel + 1) % 4; if (c === 'Enter' || c === 'Space') this.act(this.sel); },
   pointerDown(id, x, y) { if (!G.started) return; for (let i = 0; i < 4; i++) if (y >= 82 + i * 14 && y < 96 + i * 14 && x > 90) { this.sel = i; this.act(i); } },
 };
@@ -402,13 +479,14 @@ const Play = {
   enter() {}, update(dt) { update(dt); },
   render(g) { R(g, 0, 0, VW, VH, '#000'); renderWorld(g); renderHud(g); },
   keydown(c) {
+    if (S.intro > 0) { if (c === 'Escape') { setScene(Title); return; } if (S.introT > 0.6) S.intro = 0; return; }
     if (S.overlay) { if (c === 'Escape') { S.overlay = null; return; } if (S.overlay.type === 'keypad' && /^(Digit|Numpad)[0-9]$/.test(c)) { overlayInput('k', c.slice(-1)); return; } if (S.overlay.type === 'puzzle' && /^(Digit|Numpad)[1-4]$/.test(c)) { overlayInput('p', +c.slice(-1) - 1); return; } }
-    if (c === 'Escape') { Sfx.droneStop(); setScene(Title); return; }
+    if (c === 'Escape') { Sfx.setTension(0); setScene(Title); return; }
     if (c === 'KeyE' || c === 'KeyJ' || c === 'Space') press('use'); else if (c === 'KeyF' || c === 'KeyK') press('flash'); else if (c === 'KeyQ' || c === 'KeyL') press('item');
   },
   pointerDown(id, x, y) {
     G.touched = true;
-    if (S.intro > 0) { S.intro = Math.min(S.intro, 0.3); return; }
+    if (S.intro > 0) { if (S.introT > 0.6) S.intro = 0; return; }
     if (S.overlay) {
       const ov = S.overlay;
       if (ov.type === 'keypad') { for (const k of padKeys()) if (x >= k.x && x < k.x + k.w && y >= k.y && y < k.y + k.h) { overlayInput('k', k.k); return; } }
@@ -424,7 +502,7 @@ const Play = {
 };
 
 const End = {
-  enter(kind, st) { this.kind = kind; this.t = 0; this.st = st; Sfx.musicStop(); if (kind === 'dead') Sfx.lose(); else { Sfx.win(); } },
+  enter(kind, st) { this.kind = kind; this.t = 0; this.st = st; if (kind === 'dead') Sfx.lose(); else { Sfx.win(); } },
   update(dt) { this.t += dt; },
   render(g) {
     const k = this.kind; R(g, 0, 0, VW, VH, k === 'dead' ? '#0a0204' : '#0a1a14');
@@ -445,7 +523,7 @@ const End = {
 // ---------------- entrada ----------------
 function toLocal(e) { const r = canvas.getBoundingClientRect(); return [(e.clientX - r.left) * VW / r.width, (e.clientY - r.top) * VH / r.height]; }
 function goFull() { try { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen().then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (x) {} }).catch(() => {}); } catch (x) {} }
-function firstInput() { const first = !G.started; G.started = true; Sfx.init(); if (first && G.scene === Title) Sfx.musicStart('menu'); return first; }
+function firstInput() { const first = !G.started; G.started = true; Sfx.init(); if (first) Sfx.horrorStart(); return first; }
 addEventListener('keydown', e => {
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
   if (e.repeat) return; G.keys[e.code] = true; const first = firstInput(); if (first && G.scene === Title) return;

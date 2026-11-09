@@ -1,6 +1,6 @@
 // Audio sintetizado (sin archivos): efectos + música chiptune
 const Sfx = (() => {
-  let ac = null, master = null, muted = false, musicTimer = null, droneNodes = null;
+  let ac = null, master = null, muted = false, musicTimer = null, droneNodes = null, hor = null;
   try { muted = localStorage.getItem('richi_mute') === '1'; } catch (e) {}
   function init() {
     if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
@@ -60,6 +60,40 @@ const Sfx = (() => {
       const mel = [76, 74, 70, 74, 76, 74, 70, 74, 76, 79, 76, 74, 72, 70, 69, 70];
       mel.forEach((n, i) => tone(N(n), 0.5, 'triangle', 0.12, 0, i * 0.3));
     },
+
+    // ======== MÚSICA DE TERROR (generativa) ========
+    horrorStart() {
+      if (!ac || hor) return;
+      const t0 = ac.currentTime, out = ac.createGain(); out.gain.setValueAtTime(0, t0); out.gain.linearRampToValueAtTime(1, t0 + 3); out.connect(master);
+      const nodes = [], timers = []; let tens = 0, tensT = 0, dead = false;
+      // zumbido grave con filtro que respira
+      const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 220; f.Q.value = 4;
+      const dg = ac.createGain(); dg.gain.value = 0.075;
+      [[55, 'sawtooth'], [55.8, 'sawtooth'], [82.4, 'triangle'], [41.2, 'sine']].forEach(([fr, ty]) => { const o = ac.createOscillator(); o.type = ty; o.frequency.value = fr; o.connect(f); o.start(); nodes.push(o); });
+      const lfo = ac.createOscillator(); lfo.frequency.value = 0.08; const lg = ac.createGain(); lg.gain.value = 140; lfo.connect(lg); lg.connect(f.frequency); lfo.start(); nodes.push(lfo);
+      f.connect(dg); dg.connect(out);
+      // chillido disonante (sube con la tensión)
+      const shg = ac.createGain(); shg.gain.value = 0; shg.connect(out);
+      [1568, 1661, 2349].forEach(fr => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = fr; o.connect(shg); o.start(); nodes.push(o); });
+      const wob = ac.createOscillator(); wob.frequency.value = 5.5; const wg = ac.createGain(); wg.gain.value = 0.012; wob.connect(wg); wg.connect(shg.gain); wob.start(); nodes.push(wob);
+      const later = (fn, a, b) => { const id = setTimeout(() => { if (!dead) { fn(); later(fn, a, b); } }, (a + Math.random() * (b - a)) * 1000); timers.push(id); };
+      // pads disonantes
+      const chords = [[110, 116.5, 164.8], [98, 103.8, 146.8], [110, 130.8, 155.6], [87.3, 92.5, 138.6]];
+      later(() => { const ch = chords[Math.random() * chords.length | 0], t = ac.currentTime; ch.forEach(fr => { const o = ac.createOscillator(), g = ac.createGain(); o.type = Math.random() < 0.5 ? 'sine' : 'triangle'; o.frequency.value = fr * (1 + (Math.random() - 0.5) * 0.01); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.045, t + 3); g.gain.linearRampToValueAtTime(0.0001, t + 9); o.connect(g); g.connect(out); o.start(t); o.stop(t + 9.2); }); }, 6, 9);
+      // caja de música (nana en menor, con alguna nota falsa)
+      const scale = [440, 523.3, 659.3, 587.3, 523.3, 493.9, 440, 392, 440, 523.3, 493.9, 440, 415.3];
+      const box = () => { const len = 7 + (Math.random() * 6 | 0), t = ac.currentTime + 0.05, step = 0.42 + Math.random() * 0.12; for (let i = 0; i < len; i++) { let fr = scale[(i * 3 + (Math.random() * 3 | 0)) % scale.length]; if (Math.random() < 0.1) fr *= 1.0595; const tt = t + i * step; [[1, 'triangle', 0.075], [2, 'sine', 0.03]].forEach(([m, ty, v]) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = ty; o.frequency.value = fr * m * (1 - i * 0.0008); g.gain.setValueAtTime(v, tt); g.gain.exponentialRampToValueAtTime(0.0001, tt + 1.1); o.connect(g); g.connect(out); o.start(tt); o.stop(tt + 1.2); }); } };
+      timers.push(setTimeout(() => { if (!dead) box(); }, 1500)); later(box, 13, 24);
+      // crujidos, golpes lejanos y susurros
+      later(() => { const r = Math.random(), t = ac.currentTime; if (r < 0.4) { const n = ac.createBufferSource(), len = Math.floor(ac.sampleRate * 1.4), b = ac.createBuffer(1, len, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; n.buffer = b; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 8; bp.frequency.setValueAtTime(250, t); bp.frequency.exponentialRampToValueAtTime(900 + Math.random() * 500, t + 1.3); const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.16, t + 0.5); g.gain.linearRampToValueAtTime(0.0001, t + 1.4); n.connect(bp); bp.connect(g); g.connect(out); n.start(t); } else if (r < 0.75) { noise(0.25, 0.3, 160); tone(52, 0.4, 'sine', 0.25, -20); } else { const n = ac.createBufferSource(), len = Math.floor(ac.sampleRate * 2.2), b = ac.createBuffer(1, len, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; n.buffer = b; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 3; bp.frequency.value = 2200; const g = ac.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.06, t + 1); g.gain.linearRampToValueAtTime(0.0001, t + 2.2); n.connect(bp); bp.connect(g); g.connect(out); n.start(t); } }, 9, 20);
+      // latido del corazón (más rápido con la tensión)
+      const beat = () => { if (dead) return; const t = ac.currentTime, v = 0.12 + tens * 0.4; [[0, v], [0.2, v * 0.7]].forEach(([d, vv]) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(70, t + d); o.frequency.exponentialRampToValueAtTime(38, t + d + 0.18); g.gain.setValueAtTime(vv, t + d); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.22); o.connect(g); g.connect(out); o.start(t + d); o.stop(t + d + 0.25); }); timers.push(setTimeout(beat, 60000 / (48 + tens * 95))); };
+      timers.push(setTimeout(beat, 2000));
+      timers.push(setInterval(() => { if (dead) return; tensT += (tens - tensT) * 0.15; f.frequency.value = Math.max(100, 200 + tensT * 700 + 0) ; dg.gain.value = 0.07 + tensT * 0.06; shg.gain.setTargetAtTime(Math.max(0, (tensT - 0.45)) * 0.05, ac.currentTime, 0.2); }, 100));
+      hor = { out, nodes, timers, set(v) { tens = v; }, stop() { dead = true; timers.forEach(id => { clearTimeout(id); clearInterval(id); }); const t = ac.currentTime; out.gain.cancelScheduledValues(t); out.gain.setValueAtTime(out.gain.value, t); out.gain.linearRampToValueAtTime(0, t + 1.2); setTimeout(() => nodes.forEach(n => { try { n.stop(); } catch (e) {} }), 1400); } };
+    },
+    horrorStop() { if (hor) { hor.stop(); hor = null; } },
+    setTension(v) { if (hor) hor.set(Math.max(0, Math.min(1, v))); },
     // música de menú
     musicStart(kind) {
       api.musicStop(); if (!ac) return;
