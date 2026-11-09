@@ -175,6 +175,11 @@ const Spr = (() => {
     const pal = PAL[cls % PAL.length], hatId = (typeof CLASSES !== 'undefined' && CLASSES[cls]) ? CLASSES[cls].hat : '';
     return cache[k] = (style === 'B' ? kidB : kidA)(dir, fr, pal, hatId);
   }
+  // ---- fantasma (22x30) ----
+  function ghostSpr(fr) { const k = 'gh' + fr; if (cache[k]) return cache[k];
+    return cache[k] = mk(22, 30, g => { const w = fr % 2; E(g, 11, 26, 7, 2, 'rgba(0,0,0,0.18)'); g.globalAlpha = 0.95; E(g, 11, 10, 9, 9, '#e8ecff'); R(g, 2, 10, 18, 12, '#e8ecff'); for (let i = 0; i < 5; i++) { R(g, 2 + i * 4, 22, 4, 3 + ((i + w) % 2) * 3, '#e8ecff'); } R(g, 3, 6, 4, 2, '#fff'); g.globalAlpha = 1;
+      E(g, 8, 11, 2, 3, '#15102a'); E(g, 14, 11, 2, 3, '#15102a'); R(g, 8, 10, 1, 1, '#ff4a6a'); R(g, 14, 10, 1, 1, '#ff4a6a'); E(g, 11, 17, 2, 3 + w, '#15102a'); R(g, 0, 12, 3, 7, '#d0d6f0'); R(g, 19, 12, 3, 7, '#d0d6f0'); }); }
+  function gemSpr() { return cache.gem || (cache.gem = mk(12, 14, g => { const c = '#b46aff'; R(g, 4, 0, 4, 1, OL); R(g, 2, 1, 8, 1, OL); R(g, 0, 3, 12, 1, OL); R(g, 2, 4, 8, 8, OL); R(g, 4, 12, 4, 1, OL); R(g, 5, 13, 2, 1, OL); R(g, 4, 1, 4, 2, '#e0b8ff'); R(g, 1, 3, 10, 2, c); R(g, 3, 5, 6, 6, c); R(g, 3, 5, 2, 4, '#e0b8ff'); R(g, 7, 6, 2, 5, '#7a3ac8'); R(g, 5, 11, 2, 1, '#7a3ac8'); })); }
   function dollSpr(dir, fr, mood = 'calm', style = 'A') {
     const k = 'd' + style + dir + fr + mood; if (cache[k]) return cache[k];
     if (dir === 'r') return cache[k] = flipX(dollSpr('l', fr, mood, style));
@@ -220,10 +225,11 @@ const Spr = (() => {
       if (above && ch !== '#' && ch !== ' ') { R(g, 0, 0, 16, 4, 'rgba(10,0,20,0.28)'); R(g, 0, 4, 16, 3, 'rgba(10,0,20,0.12)'); }
     });
   }
-  function floorCanvas(F) {
+  function floorCanvas(F, flat) {
     return mk(MW * TS, MH * TS, g => {
       for (let j = 0; j < MH; j++) for (let i = 0; i < MW; i++) {
         const ch = F.g[j][i], below = j + 1 < MH && F.g[j + 1][i] !== '#' && F.g[j + 1][i] !== ' ', above = j > 0 && F.g[j - 1][i] === '#';
+        if (flat && (ch === '#' || ch === ' ')) { R(g, i * TS, j * TS, TS, TS, '#120a1e'); continue; }
         g.drawImage(tile(ch, i, j, below, above, below ? F.g[j + 1][i] : '.'), i * TS, j * TS);
       }
       for (const r of (F.rugs || [])) {
@@ -235,7 +241,7 @@ const Spr = (() => {
         E(g, x + (w >> 1), y + (h >> 1), Math.max(1, (w >> 1) - 12), Math.max(1, (h >> 1) - 11), r.c2);
       }
       // ventanas y cuadros en la pared de arriba de cada habitación + rayos de luna sobre el piso
-      for (const r of F.rooms) {
+      if (!flat) for (const r of F.rooms) {
         if (r.w < 5) continue;
         const ty = (r.y - 1) * TS;
         for (let x = r.x + 1; x < r.x + r.w - 1; x += 4) {
@@ -274,7 +280,18 @@ const Spr = (() => {
       case 'recharge': { const on = st.power !== false; shadow(); rb(g, X, Y + 2, 16, 13, '#3a3a4c'); R(g, X + 1, Y + 3, 14, 3, on ? '#4a4a60' : '#2a2a38'); rb(g, X + 3, Y + 6, 10, 7, '#18181e'); const col = on ? (st.charging ? ((t * 8 | 0) % 2 ? '#ffd23f' : '#3ae07a') : '#3ae07a') : '#333'; R(g, X + 4, Y + 7, 8, 5, col); R(g, X + 13, Y + 8, 2, 3, '#18181e'); R(g, X + 8, Y + 7, 1, 2, '#fff'); R(g, X + 7, Y + 9, 3, 1, '#fff'); if (on) E(g, X + 8, Y + 9, 12, 8, 'rgba(60,224,122,0.12)'); break; }
       case 'table': shadow(); rb(g, X, Y + 3, 16, 12, '#7a5030'); R(g, X + 1, Y + 4, 14, 2, '#b88450'); R(g, X + 3, Y + 7, 5, 3, '#9a9ab4'); R(g, X + 3, Y + 7, 5, 1, '#d0d0e4'); R(g, X + 10, Y + 7, 3, 4, '#e04040'); R(g, X + 10, Y + 7, 3, 1, '#ff8a8a'); R(g, X + 2, Y + 13, 2, 2, OL); R(g, X + 12, Y + 13, 2, 2, OL); break;
       case 'computer': shadow(); rb(g, X + 1, Y + 6, 14, 9, '#4a4a60'); rb(g, X + 1, Y, 14, 10, '#2a2a38'); R(g, X + 3, Y + 2, 10, 6, st.blackout ? ((t * 3 | 0) % 2 ? '#ff5050' : '#501818') : '#46f09a'); if (!st.blackout) { R(g, X + 4, Y + 3, 5, 1, '#1a6a40'); R(g, X + 4, Y + 5, 7, 1, '#1a6a40'); } R(g, X + 3, Y + 12, 10, 2, '#8a8aa4'); break;
-      case 'exit': shadow(); rb(g, X - 1, Y - 3, 18, 20, '#5a5a70'); rb(g, X + 1, Y - 1, 14, 16, '#8a8aa4'); for (let y = 0; y < 14; y += 4) R(g, X + 2, Y + y, 12, 1, '#6a6a84'); rb(g, X + 9, Y + 3, 6, 9, '#18181e'); R(g, X + 10, Y + 4, 4, 2, o.escape ? '#3ae07a' : '#e04040'); for (let k = 0; k < 4; k++) R(g, X + 10 + (k % 2) * 2, Y + 7 + (k >> 1) * 2, 1, 1, '#fff'); R(g, X + 2, Y - 2, 5, 3, o.escape ? '#3ae07a' : '#e04040'); break;
+      case 'exit': shadow(); rb(g, X - 1, Y - 3, 18, 20, '#5a5a70'); if (!o.shutter) { /* persiana cerrada */ } rb(g, X + 1, Y - 1, 14, 16, '#8a8aa4'); for (let y = 0; y < 14; y += 4) R(g, X + 2, Y + y, 12, 1, '#6a6a84'); rb(g, X + 9, Y + 3, 6, 9, '#18181e'); R(g, X + 10, Y + 4, 4, 2, o.escape ? '#3ae07a' : '#e04040'); for (let k = 0; k < 4; k++) R(g, X + 10 + (k % 2) * 2, Y + 7 + (k >> 1) * 2, 1, 1, '#fff'); R(g, X + 2, Y - 2, 5, 3, o.escape ? '#3ae07a' : '#e04040'); if (!o.shutter) { rb(g, X, Y - 2, 16, 18, '#7a7a8a'); for (let k = 0; k < 6; k++) R(g, X + 1, Y - 1 + k * 3, 14, 1, '#4a4a5a'); blob(g, X + 8, Y + 7, 3, 3, '#3a3a4a'); E(g, X + 8, Y + 7, 1, 1, '#c0c0d8'); } break;
+      case 'mechbox': shadow(); rb(g, X + 1, Y + 3, 14, 12, '#6a6a82'); R(g, X + 2, Y + 4, 12, 2, '#9a9ab4');
+        if (o.opened) { R(g, X + 3, Y + 7, 10, 6, '#0a0a10'); rb(g, X + 1, Y, 14, 4, '#5a5a72'); } else { blob(g, X + 8, Y + 9, 4, 4, '#3a3a50'); E(g, X + 8, Y + 9, 2, 2, '#c0c0d8'); for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; R(g, X + 8 + Math.round(Math.cos(a) * 5), Y + 9 + Math.round(Math.sin(a) * 5), 1, 1, '#c0c0d8'); } }
+        break;
+      case 'crate': shadow(); rb(g, X + 1, Y + 3, 14, 12, '#b8884c'); R(g, X + 1, Y + 8, 14, 1, '#7a5a2c'); R(g, X + 7, Y + 3, 2, 12, '#7a5a2c'); R(g, X + 2, Y + 4, 4, 1, '#d8b070'); R(g, X + 10, Y + 4, 4, 1, '#d8b070');
+        if (o.opened) { R(g, X + 3, Y + 5, 10, 8, '#2a1a0a'); R(g, X + 2, Y, 12, 3, '#9a7038'); R(g, X + 11, Y + 1, 5, 2, '#9a7038'); } else { R(g, X + 3, Y + 5, 2, 2, '#6a4a22'); R(g, X + 11, Y + 5, 2, 2, '#6a4a22'); R(g, X + 3, Y + 11, 2, 2, '#6a4a22'); R(g, X + 11, Y + 11, 2, 2, '#6a4a22'); }
+        break;
+      case 'gap': { const w = o.w * 16, h = o.h * 16; R(g, X, Y, w, h, '#05030a'); R(g, X, Y, w, 2, '#2a1a10'); R(g, X, Y + h - 2, w, 2, '#2a1a10'); R(g, X, Y, 2, h, '#2a1a10'); R(g, X + w - 2, Y, 2, h, '#2a1a10');
+        for (let k = 0; k < 9; k++) R(g, X + 3 + (k * 7) % (w - 6), Y + 4 + (k * 11) % (h - 8), 3, 1, '#14091c');
+        if (o.bridged) { R(g, X + 2, Y + 3, w - 4, 3, '#3a2210'); R(g, X + 2, Y + h - 6, w - 4, 3, '#3a2210'); for (let x = X + 4; x < X + w - 3; x += 5) R(g, x, Y + 3, 3, h - 6, '#c8935a'); R(g, X + 2, Y + 3, w - 4, 1, '#e8b87a'); } else { R(g, X + 4, Y + 3, 8, 1, '#4a3a5a'); R(g, X + w - 12, Y + h - 5, 8, 1, '#4a3a5a'); }
+        break; }
+      case 'fusebox': shadow(); rb(g, X + 3, Y, 10, 14, '#5a5a70'); R(g, X + 4, Y + 1, 8, 2, '#8a8aa0'); for (let k = 0; k < 3; k++) { R(g, X + 5, Y + 5 + k * 3, 6, 2, '#1a1a24'); if (o.powered || k === 0) R(g, X + 6, Y + 5 + k * 3, 4, 1, o.powered ? '#3ae07a' : '#e04040'); } R(g, X + 11, Y + 2, 1, 1, o.powered ? '#3ae07a' : '#e04040'); break;
       case 'stairs': rb(g, X, Y, 16, 16, '#3a3050'); for (let i = 0; i < 5; i++) { const c = o.to === 1 ? shade('#9a8aaa', 1 - i * 0.12) : shade('#9a8aaa', 0.6 + i * 0.12); R(g, X + 1, Y + 1 + i * 3, 14, 2, c); R(g, X + 1, Y + 3 + i * 3, 14, 1, 'rgba(0,0,0,0.3)'); } rb(g, X + 5, Y + 5, 6, 6, '#ffd23f', '#8a6a10'); R(g, X + 7, o.to === 1 ? Y + 6 : Y + 8, 2, 3, '#8a6a10'); R(g, X + 6, o.to === 1 ? Y + 7 : Y + 7, 4, 1, '#8a6a10'); break;
       case 'fridge': shadow(); rb(g, X + 1, Y - 5, 14, 21, '#dce8f0'); R(g, X + 2, Y - 4, 12, 2, '#f8fcff'); R(g, X + 1, Y + 4, 14, 1, OL); R(g, X + 12, Y - 2, 1, 5, '#8a9aa8'); R(g, X + 12, Y + 6, 1, 6, '#8a9aa8'); R(g, X + 4, Y + 7, 3, 3, '#e04a6a'); R(g, X + 4, Y - 1, 3, 2, '#ffd23f'); if (o.opened) R(g, X + 2, Y + 5, 12, 1, '#a8b8c8'); break;
       case 'microwave': rb(g, X + 1, Y + 4, 14, 11, '#c8c8d8'); R(g, X + 2, Y + 5, 12, 1, '#e8e8f4');
@@ -296,5 +313,5 @@ const Spr = (() => {
       case 'd_table': shadow(); rb(g, X, Y + 2, W, H - 2, '#7a5030'); R(g, X + 1, Y + 3, W - 2, H - 6, '#b88450'); R(g, X + 2, Y + 4, W - 4, 1, '#d8a870'); R(g, X + 4, Y + 7, 5, 4, '#f4ecd8'); if (W > 16) E(g, X + W - 8, Y + 9, 3, 2, '#e04040'); break;
     }
   }
-  return { mk, R, E, kid: kidSpr, doll: dollSpr, floorCanvas, obj, PAL, KI, DI };
+  return { mk, R, E, kid: kidSpr, doll: dollSpr, ghost: ghostSpr, gem: gemSpr, floorCanvas, obj, PAL, KI, DI, tile };
 })();

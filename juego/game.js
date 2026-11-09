@@ -7,12 +7,18 @@ const G = { scene: null, keys: {}, t: 0, started: false };
 const { R, E } = Spr;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const rand = (a, b) => a + Math.random() * (b - a);
-const CFG = { cls: 0, diff: 1, style: 'A' };
+const CFG = { cls: 0, level: 1, style: 'A', view: '3D' };
 try { Object.assign(CFG, JSON.parse(localStorage.getItem('nj_cfg') || '{}')); } catch (e) {}
-if (CFG.style !== 'A' && CFG.style !== 'B') CFG.style = 'A'; CFG.cls = clamp(CFG.cls | 0, 0, CLASSES.length - 1); CFG.diff = clamp(CFG.diff | 0, 0, DIFFS.length - 1);
+if (CFG.style !== 'A' && CFG.style !== 'B') CFG.style = 'A'; if (CFG.view !== '2D' && CFG.view !== '3D') CFG.view = '3D';
+const SAVE = { adam: 0, unlocked: [0], maxLevel: 1 };
+try { Object.assign(SAVE, JSON.parse(localStorage.getItem('nj_save') || '{}')); } catch (e) {}
+if (!Array.isArray(SAVE.unlocked) || !SAVE.unlocked.includes(0)) SAVE.unlocked = [0, ...(Array.isArray(SAVE.unlocked) ? SAVE.unlocked : [])];
+SAVE.maxLevel = clamp(SAVE.maxLevel | 0 || 1, 1, 10); SAVE.adam = Math.max(0, SAVE.adam | 0);
+CFG.cls = clamp(CFG.cls | 0, 0, CLASSES.length - 1); if (!SAVE.unlocked.includes(CFG.cls)) CFG.cls = 0; CFG.level = clamp(CFG.level | 0 || 1, 1, SAVE.maxLevel);
+const persist = () => { try { localStorage.setItem('nj_save', JSON.stringify(SAVE)); } catch (e) {} };
 const saveCfg = () => { try { localStorage.setItem('nj_cfg', JSON.stringify(CFG)); } catch (e) {} };
 const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
-function fit() { const s = Math.min(innerWidth / VW, innerHeight / VH); canvas.style.width = Math.floor(VW * s) + 'px'; canvas.style.height = Math.floor(VH * s) + 'px'; }
+function fit() { const s = Math.min(innerWidth / VW, innerHeight / VH), w = Math.floor(VW * s) + 'px', h = Math.floor(VH * s) + 'px'; for (const id of ['wrap', 'gl', 'c']) { const el = document.getElementById(id); if (el) { el.style.width = w; el.style.height = h; } } }
 addEventListener('resize', fit); fit();
 function setScene(s, ...a) { G.scene = s; if (s.enter) s.enter(...a); }
 function panel(g, x, y, w, h, fill = '#14102a', border = '#4a3a8a') { R(g, x, y, w, h, '#000'); R(g, x + 1, y + 1, w - 2, h - 2, border); R(g, x + 2, y + 2, w - 4, h - 4, fill); }
@@ -51,13 +57,13 @@ function bfs(f, sx, sy, gx, gy) {
 }
 
 function newGame() {
-  const W = buildMap1(), cl = CLASSES[CFG.cls], df = DIFFS[CFG.diff];
+  const W = buildMap1(), cl = CLASSES[CFG.cls], df = levelParams(CFG.level);
   const sp = W.spawn, es = W.enemySpawn;
   S = {
-    W, cl, df, t: 0, dur: FAST ? 60 : 360, blackoutAt: FAST ? 40 : 240, floors: W.f.map(f => Spr.floorCanvas(f)),
-    p: { f: sp.f, x: tc(sp.x), y: tc(sp.y), dir: 'd', ang: Math.PI / 2, hp: cl.hp || 100, maxhp: cl.hp || 100, speed: SPEED * (cl.speed || 1), anim: 0, moving: false, keys: new Set(), mats: Object.assign({}, cl.mats), inv: Object.assign({}, cl.items), sel: 0, boost: 0, charge: 100, beam: 0, beamHit: false, immune: 0, held: false, grab: 0, dead: false, escaped: false, codeA: null, codeB: null, charging: false, stairCd: 0 },
+    W, cl, df, t: 0, dur: FAST ? 60 : 360, blackoutAt: FAST ? 40 : df.blackout, floors: W.f.map(f => Spr.floorCanvas(f)),
+    p: { f: sp.f, x: tc(sp.x), y: tc(sp.y), dir: 'd', ang: Math.PI / 2, hp: cl.hp || 100, maxhp: cl.hp || 100, speed: SPEED * (cl.speed || 1), anim: 0, moving: false, keys: new Set(), mats: Object.assign({}, cl.mats), inv: Object.assign({}, cl.items), sel: 0, boost: 0, slow: 0, charge: 100, beam: 0, beamHit: false, immune: 0, held: false, grab: 0, dead: false, escaped: false, codeA: null, codeB: null, charging: false, stairCd: 0 },
     e: { f: es.f, x: tc(es.x), y: tc(es.y), dir: 'd', fx: 0, fy: 1, state: 'patrol', stun: 0, eat: 0, path: [], goal: null, repath: 0, radarCd: df.grace, ring: 0, anim: 0, lost: 0, wait: -df.grace, waitT: 1, calm: 0, last: null, stairCd: 0, blind: 0, slow: 0, dmgRed: 0, brk: 0 },
-    lure: null, placed: [], blackout: false, fixed: false, overlay: null, msg: null, fade: 1.2, ended: null, intro: 0, introT: 0, flick: 0, flickCd: rand(6, 12), cam: { cx: 0, cy: 0 }, shake: 0, hint: null, joy: null, hold: null, stats: { chests: 0, flashes: 0, grabs: 0, crafts: 0 },
+    lure: null, placed: [], ghosts: [], ghostT: rand(df.ghostEvery * 0.6, df.ghostEvery), scream: null, blackout: false, fixed: false, overlay: null, msg: null, fade: 1.2, ended: null, intro: 0, introT: 0, flick: 0, flickCd: rand(6, 12), cam: { cx: 0, cy: 0 }, shake: 0, hint: null, joy: null, hold: null, stats: { chests: 0, flashes: 0, grabs: 0, crafts: 0 },
   };
   S.mini = W.f.map(F => Spr.mk(80, 48, g => { const cols = { '#': '#3a2a5a', '.': '#b88454', k: '#6ab8b0', g: '#8a8aa0', r: '#b04868' }; for (let j = 0; j < MH; j++) for (let i = 0; i < MW; i++) { const c = F.g[j][i]; if (c === ' ') continue; g.fillStyle = cols[c] || cols['.']; g.fillRect(i * 2, j * 2, 2, 2); } }));
   S.parts = [];
@@ -79,14 +85,15 @@ const takeItem = id => { S.p.inv[id] = Math.max(0, (S.p.inv[id] || 0) - 1); };
 const curItem = () => { const l = invList(); return l.length ? l[S.p.sel % l.length] : null; };
 function cycleItem() { const l = invList(); if (l.length > 1) { S.p.sel = (S.p.sel + 1) % l.length; Sfx.blip(); } }
 function nearest() {
-  const p = S.p; let best = null, bd = 24;
-  for (const o of S.W.f[p.f].objs) { if (o.type === 'deco' || o.removed) continue; const d = Math.hypot((o.x + o.w / 2) * TS - p.x, (o.y + o.h / 2) * TS - p.y); if (d < bd) { bd = d; best = o; } }
+  const p = S.p; let best = null, bd = 17;
+  for (const o of S.W.f[p.f].objs) { if (o.type === 'deco' || o.removed) continue; const rx = clamp(p.x, o.x * TS, (o.x + o.w) * TS), ry = clamp(p.y, o.y * TS, (o.y + o.h) * TS), d = Math.hypot(rx - p.x, ry - p.y) + 6; if (d < bd) { bd = d; best = o; } }
   return best;
 }
 function hintFor(o) {
   switch (o.type) {
-    case 'chest': case 'wardrobe': case 'fridge': case 'safe': return o.opened ? null : 'x'; case 'microwave': return o.cooking ? null : 'x';
-    case 'door': case 'vault': case 'recharge': case 'table': case 'computer': case 'exit': case 'stairs': return 'x';
+    case 'chest': case 'wardrobe': case 'fridge': case 'safe': case 'vault': case 'mechbox': case 'crate': return o.opened ? null : 'x'; case 'microwave': return o.cooking ? null : 'x';
+    case 'gap': return o.bridged ? null : 'x'; case 'fusebox': return o.powered ? null : 'x';
+    case 'door': case 'recharge': case 'table': case 'computer': case 'exit': case 'stairs': return 'x';
   } return null;
 }
 function sparkle(x, y, n = 12) { for (let i = 0; i < n; i++) S.parts.push({ x, y, vx: rand(-34, 34), vy: rand(-48, -14), g: 90, t: 0, life: rand(0.5, 0.9), col: ['#ffd23f', '#fff6a0', '#ff9ad0', '#8ae0ff'][i % 4], sz: 2, star: true }); }
@@ -100,18 +107,22 @@ function useAction() {
   switch (o.type) {
     case 'chest': case 'wardrobe': case 'fridge': if (o.opened) return; o.opened = true; S.stats.chests++; Sfx.chest(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); break;
     case 'door': if (p.keys.has(o.id) || (p.inv.ganzua > 0 && (takeItem('ganzua'), true))) { o.removed = true; S.W.f[o.f].g[o.y][o.x] = '.'; Sfx.door(); say('PUERTA ABIERTA'); sparkle((o.x + 0.5) * TS, (o.y + 0.5) * TS, 8); } else say('PUERTA CON LLAVE ' + KEY_NAMES[o.id]); break;
-    case 'vault': if (o.opened) say('PRIMERAS CIFRAS: ' + o.digits + '__'); else if (p.keys.has(3)) { o.opened = true; p.codeA = o.digits; Sfx.door(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); say('CODIGO: ' + o.digits + '__  (FALTAN 2 CIFRAS)', 4); } else say('BOVEDA CERRADA'); break;
-    case 'safe': if (o.opened) say('ULTIMAS CIFRAS: __' + o.digits); else { o.opened = true; p.codeB = o.digits; Sfx.door(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); say('CODIGO: __' + o.digits, 4); } break;
+    case 'mechbox': if (o.opened) return; if (p.inv.engranaje > 0) { takeItem('engranaje'); o.opened = true; S.stats.chests++; Sfx.hit(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); } else say('FALTA UN ENGRANAJE'); break;
+    case 'crate': if (o.opened) return; if (p.inv.palanca > 0) { o.opened = true; S.stats.chests++; Sfx.hit(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); } else say('TABLAS CLAVADAS'); break;
+    case 'gap': if (o.bridged) return; if (p.inv.escalera > 0) { takeItem('escalera'); o.bridged = true; for (let j = 0; j < o.h; j++) for (let i = 0; i < o.w; i++) S.W.f[o.f].sol[o.y + j][o.x + i] = false; Sfx.door(); sparkle((o.x + 1) * TS, (o.y + 1.5) * TS, 12); say('PUENTE LISTO'); } else say('HUECO EN EL PISO'); break;
+    case 'fusebox': if (o.powered) return; if (p.inv.fusible > 0) { takeItem('fusible'); o.powered = true; S.W.f[0].objs.find(x => x.type === 'exit').powered = true; Sfx.power(); Sfx.pickup(); say('ENERGIA RESTAURADA'); } else say('FALTA UN FUSIBLE'); break;
+    case 'vault': if (o.opened) say('PRIMERAS CIFRAS: ' + o.digits + '__'); else if (true) { o.opened = true; p.codeA = o.digits; Sfx.door(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); say('CODIGO: ' + o.digits + '__  (FALTAN 2 CIFRAS)', 4); } else say('BOVEDA CERRADA'); break;
+    case 'safe': if (o.opened) say('ULTIMAS CIFRAS: __' + o.digits); else if (true) { o.opened = true; p.codeB = o.digits; Sfx.door(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); say('CODIGO: __' + o.digits, 4); } break;
     case 'recharge': if (S.blackout) say('SIN ENERGIA'); else if (p.charge >= 99.9) say('LINTERNA LLENA'); else { p.charging = true; say('RECARGANDO...'); } break;
     case 'table': S.overlay = newCraft(); break;
     case 'microwave':
-      if (!o.opened) { if (p.inv.pistola_al > 0) { takeItem('pistola_al'); o.opened = true; Sfx.hit(); sparkle((o.x + 0.5) * TS, o.y * TS + 8, 14); say('¡MICROONDAS ABIERTO!'); } else if (p.inv.palanca > 0) { takeItem('palanca'); o.opened = true; Sfx.hit(); say('MICROONDAS ABIERTO'); } else say('MICROONDAS ATASCADO'); }
+      if (!o.opened) { if (p.inv.engranaje > 0) { takeItem('engranaje'); o.opened = true; Sfx.hit(); sparkle((o.x + 0.5) * TS, o.y * TS + 8, 14); say('¡MICROONDAS ABIERTO!'); } else if (p.inv.palanca > 0) { takeItem('palanca'); o.opened = true; Sfx.hit(); say('MICROONDAS ABIERTO'); } else say('MICROONDAS ATASCADO'); }
       else if (o.cooking) say('COCINANDO...');
       else if (o.food) { o.food = false; if (S.cl.id === 'cocinero') { addItem('pizza', 2); say('2 PIZZAS'); } else { addItem('racion', 2); say('2 RACIONES'); } Sfx.pickup(); }
       else if (p.inv.comida > 0) { takeItem('comida'); o.cooking = true; o.cookT = 6; say('COCINANDO...'); Sfx.cam(); }
       else say('MICROONDAS VACIO'); break;
     case 'computer': if (S.blackout && !S.fixed) S.overlay = newPuzzle(); break;
-    case 'exit': S.overlay = { type: 'keypad', entered: '', shake: 0, o }; break;
+    case 'exit': if (!o.powered) say('SIN ENERGIA'); else if (!o.shutter) { if (p.inv.engranaje > 0) { takeItem('engranaje'); o.shutter = true; Sfx.door(); sparkle((o.x + 0.5) * TS, o.y * TS + 6, 10); say('PERSIANA ABIERTA'); } else say('PERSIANA ATASCADA'); } else S.overlay = { type: 'keypad', entered: '', shake: 0, o }; break;
     case 'stairs': { if (p.stairCd > 0) return; const to = o.to, l = S.W.land(to); p.f = to; p.x = tc(l.x); p.y = tc(l.y); p.stairCd = 0.8; S.fade = 0.5; Sfx.step(); break; }
   }
 }
@@ -134,7 +145,8 @@ function itemAction() {
     case 'barricada': { const tx = tileOf(p.x + Math.cos(p.ang) * 16), ty = tileOf(p.y + Math.sin(p.ang) * 16), F = S.W.f[p.f]; if (solidTile(p.f, tx, ty) || F.objs.some(o => o.type === 'stairs' && o.x === tx && o.y === ty) || tileOf(p.x) === tx && tileOf(p.y) === ty || barAt(p.f, tx, ty)) { say('NO SE PUEDE PONER AQUI'); break; } takeItem(it); F.sol[ty][tx] = true; S.placed.push({ type: 'barricada', f: p.f, tx, ty, x: tc(tx), y: tc(ty), t: 0 }); Sfx.door(); break; }
     case 'turbo': takeItem(it); p.charge = Math.min(100, p.charge + 33.4); Sfx.pickup(); break;
     case 'pizza': { takeItem(it); let px = p.x + Math.cos(p.ang) * 44, py = p.y + Math.sin(p.ang) * 44; if (hits(p.f, px, py, 3, 3)) { px = p.x; py = p.y; } S.lure = { type: 'pizza', f: p.f, x: px, y: py, life: 25, stay: S.cl.pizzaT || 7 }; Sfx.blip(); break; }
-    case 'camara': takeItem(it); p.beam = 0.5; p.beamHit = true; S.flick = 0; S.fade = 0; Sfx.flash(); p.camFlash = 0.25; if (enemyInCone(115, 0.62)) { if (e.state === 'grab') releaseGrab(1.5); stunEnemy(5 + (S.cl.camBonus || 0)); } break;
+    case 'camara': takeItem(it); p.beam = 0.5; p.beamHit = true; S.flick = 0; S.fade = 0; Sfx.flash(); p.camFlash = 0.25; for (const gh of S.ghosts) if (gh.f === p.f && Math.hypot(gh.x - p.x, gh.y - p.y) < 130) { gh.dead = true; sparkle(gh.x, gh.y - 8, 10); }
+    if (enemyInCone(115, 0.62)) { if (e.state === 'grab') releaseGrab(1.5); stunEnemy(5 + (S.cl.camBonus || 0)); } break;
     case 'nerf': { takeItem(it); const ex = p.x + Math.cos(p.ang) * 150, ey = p.y + Math.sin(p.ang) * 150; S.parts.push({ x: p.x, y: p.y - 6, vx: Math.cos(p.ang) * 260, vy: Math.sin(p.ang) * 260, t: 0, life: 0.5, col: '#ff6a4a', sz: 3 }); Sfx.blip(); if (e.f === p.f) { const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy), perp = Math.abs(dx * Math.sin(p.ang) - dy * Math.cos(p.ang)); if (d < 150 && perp < 9 && Math.cos(p.ang) * dx + Math.sin(p.ang) * dy > 0 && los(p.f, p.x, p.y, e.x, e.y)) { stunEnemy(2); if (e.state === 'grab') releaseGrab(1); } } break; }
     case 'jeringa': takeItem(it); p.hp = Math.min(p.maxhp, p.hp + 40); sparkle(p.x, p.y - 10, 8); Sfx.pickup(); break;
     case 'racion': takeItem(it); p.hp = Math.min(p.maxhp, p.hp + 50); sparkle(p.x, p.y - 10, 8); Sfx.pickup(); break;
@@ -143,6 +155,26 @@ function itemAction() {
     case 'torreta': takeItem(it); placeAt('torreta', { life: 15, cd: 0 }); Sfx.blip(); break;
   }
   if (!invList().length) p.sel = 0; else p.sel = Math.min(p.sel, invList().length - 1);
+}
+// ---------------- fantasmas: te asustan y te dejan lento ----------------
+function spawnGhost() {
+  const p = S.p; for (let i = 0; i < 12; i++) { const a = Math.random() * 6.283, r = rand(80, 125), x = p.x + Math.cos(a) * r, y = p.y + Math.sin(a) * r; if (x > 24 && y > 24 && x < MW * TS - 24 && y < MH * TS - 24) { S.ghosts.push({ f: p.f, x, y, a: 0, t: 0, life: 22, ph: Math.random() * 6 }); Sfx.warn(); return; } }
+}
+function updateGhosts(dt) {
+  const p = S.p, df = S.df; S.ghostT -= dt;
+  if (S.ghostT <= 0 && S.t > df.grace + 8 && S.ghosts.length < 1 + (CFG.level > 5 ? 1 : 0)) { spawnGhost(); S.ghostT = rand(df.ghostEvery * 0.7, df.ghostEvery * 1.2); }
+  const busy = S.overlay || p.charging || !p.moving;
+  for (const gh of S.ghosts) {
+    gh.t += dt; gh.life -= dt; gh.a = Math.min(1, gh.t / 1.5) * Math.min(1, gh.life / 1.5);
+    if (gh.f !== p.f) { gh.life -= dt * 3; continue; }
+    const dx = p.x - gh.x, dy = p.y - gh.y, d = Math.hypot(dx, dy) || 1, sp = df.ghostSpeed * (busy ? 1.8 : 1) * (S.blackout ? 1.2 : 1);
+    gh.x += dx / d * sp * dt; gh.y += dy / d * sp * dt;
+    if (d < 11 && gh.a > 0.5 && !p.dead && !p.escaped) { gh.dead = true; S.scream = { t: 0, dur: 1.3 }; p.slow = 8; p.hp = Math.max(1, p.hp - 8); S.shake = 0.8; closeOverlay(); Sfx.scare(); }
+    if (p.beam > 0 && d < 120 && Math.abs(angDiff(Math.atan2(dy, dx) + Math.PI, p.ang)) > 3.1 - 0.5 && false) gh.dead = true;
+    if (p.beam > 0 && d < 125 && Math.abs(angDiff(Math.atan2(-dy, -dx), p.ang)) < 0.6) { gh.dead = true; sparkle(gh.x, gh.y - 8, 12); Sfx.flee(); }
+  }
+  S.ghosts = S.ghosts.filter(g2 => !g2.dead && g2.life > 0);
+  if (S.scream) { S.scream.t += dt; if (S.scream.t > S.scream.dur) S.scream = null; }
 }
 function mash() { const p = S.p; p.grab = Math.min(100, p.grab + 11); Sfx.mash(); }
 function press(kind) {
@@ -226,7 +258,7 @@ function enemySees() {
   const st = S.cl.stealth || 1, dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy); if (d > df.sight * ramp() * st) return false;
   if (d < 17 * st + 2) return los(e.f, e.x, e.y, p.x, p.y);
   const a = Math.atan2(dy, dx), fa = Math.atan2(e.fy, e.fx);
-  return Math.abs(angDiff(a, fa)) < 0.75 + 0.1 * CFG.diff && los(e.f, e.x, e.y, p.x, p.y);
+  return Math.abs(angDiff(a, fa)) < 0.75 + 0.015 * (CFG.level - 1) && los(e.f, e.x, e.y, p.x, p.y);
 }
 function stunEnemy(sec) { const e = S.e; e.stun = Math.max(e.stun, sec); e.path = []; if (e.state === 'eat') { e.state = 'patrol'; S.lure = null; } Sfx.hiss(); }
 function releaseGrab(imm) { const p = S.p, e = S.e; p.held = false; p.immune = Math.max(p.immune, imm); e.state = 'patrol'; e.path = []; e.goal = null; e.stun = Math.max(e.stun, 3.5); e.calm = 14; e.wait = 0; e.waitT = 3; Sfx.flee(); }
@@ -243,7 +275,7 @@ function updateEnemy(dt) {
     p.hp -= df.dmg * (e.dmgRed > 0 ? 0.5 : 1) * dt;
     if (p.grab >= 100) releaseGrab(2.5);
     else if (p.hp <= 0) { p.hp = 0; p.dead = true; p.held = false; e.state = 'patrol'; e.stun = 2; Sfx.scare(); S.shake = 0.6; }
-    else p.grab = Math.max(0, p.grab - (8 + 2 * CFG.diff) * dt);
+    else p.grab = Math.max(0, p.grab - (8 + 0.5 * CFG.level) * dt);
     return;
   }
   if (e.stun > 0) { e.stun -= dt; return; }
@@ -306,7 +338,7 @@ function update(dt) {
   if (S.overlay && mag > 0.5) closeOverlay();
   p.moving = false;
   if (!p.held && !p.dead && !p.escaped && !S.overlay && !S.ended) {
-    if (mag > 0.05) { const sp = p.speed * (p.boost > 0 ? 1.45 : 1); move(p, vx * sp * dt, vy * sp * dt, HW, HH); p.moving = true; p.anim += dt * 9; p.dust = (p.dust || 0) - dt; if (p.dust <= 0) { p.dust = 0.17; S.parts.push({ x: p.x + rand(-2, 2), y: p.y + 2, vx: rand(-6, 6), vy: rand(-8, -3), t: 0, life: 0.5, col: '#d8c8b0', sz: 2, fade: 1 }); } p.ang = Math.atan2(vy, vx); p.dir = Math.abs(vx) > Math.abs(vy) ? (vx < 0 ? 'l' : 'r') : (vy < 0 ? 'u' : 'd'); if (p.charging) { p.charging = false; 0; } }
+    if (mag > 0.05) { const sp = p.speed * (p.boost > 0 ? 1.45 : 1) * (p.slow > 0 ? 0.5 : 1); move(p, vx * sp * dt, vy * sp * dt, HW, HH); p.moving = true; p.anim += dt * 9; p.dust = (p.dust || 0) - dt; if (p.dust <= 0) { p.dust = 0.17; S.parts.push({ x: p.x + rand(-2, 2), y: p.y + 2, vx: rand(-6, 6), vy: rand(-8, -3), t: 0, life: 0.5, col: '#d8c8b0', sz: 2, fade: 1 }); } p.ang = Math.atan2(vy, vx); p.dir = Math.abs(vx) > Math.abs(vy) ? (vx < 0 ? 'l' : 'r') : (vy < 0 ? 'u' : 'd'); if (p.charging) { p.charging = false; 0; } }
   }
   if (p.charging) {
     const st = S.W.f[p.f].objs.find(o => o.type === 'recharge');
@@ -319,16 +351,16 @@ function update(dt) {
   }
   if (p.held) { /* forcejeo en updateEnemy */ }
   // clase, objetos y cosas colocadas
-  if (p.boost > 0) p.boost -= dt; if (p.camFlash > 0) p.camFlash -= dt;
+  if (p.boost > 0) p.boost -= dt; if (p.slow > 0) p.slow -= dt; if (p.camFlash > 0) p.camFlash -= dt;
   if (S.cl.regen && !p.held && !p.dead && p.hp < p.maxhp) p.hp = Math.min(p.maxhp, p.hp + S.cl.regen * dt);
   if (S.hold && !S.hold.fired) { S.hold.t += dt; if (S.hold.t > 0.45) { S.hold.fired = true; cycleItem(); } }
   for (const f of S.W.f) for (const o of f.objs) if (o.type === 'microwave' && o.cooking) { o.cookT -= dt; if (o.cookT <= 0) { o.cooking = false; o.food = true; Sfx.bell(); sparkle((o.x + 0.5) * TS, o.y * TS + 6, 8); } }
   for (const q of S.placed) { q.t += dt; if (q.fire > 0) q.fire -= dt; if (q.type === 'torreta') { q.life -= dt; if (q.life <= 0) q.dead = true; } }
   S.placed = S.placed.filter(q => { if (q.dead && q.type === 'barricada') S.W.f[q.f].sol[q.ty][q.tx] = false; return !q.dead; });
-  updateEnemy(dt); updateOverlay(dt);
+  updateEnemy(dt); updateGhosts(dt); updateOverlay(dt);
   if (!S.ended) {
     if (p.escaped) S.ended = { kind: 'escape', t: 0 }; else if (p.dead) S.ended = { kind: 'dead', t: 0 }; else if (S.t >= S.dur) S.ended = { kind: 'survive', t: 0 };
-  } else { S.ended.t += dt; if (S.ended.t > (S.ended.kind === 'dead' ? 2.2 : 1.6)) { Sfx.setTension(0); setScene(End, S.ended.kind, S); } }
+  } else { S.ended.t += dt; if (S.ended.t > (S.ended.kind === 'dead' ? 2.2 : 1.6)) { Sfx.setTension(0); const k = S.ended.kind, L = CFG.level, gain = k === 'escape' ? L : k === 'survive' ? Math.ceil(L / 2) : 0; SAVE.adam += gain; if (k !== 'dead' && L === SAVE.maxLevel && SAVE.maxLevel < 10) { SAVE.maxLevel++; CFG.level = SAVE.maxLevel; } persist(); saveCfg(); S.gain = gain; setScene(End, k, S); } }
   const o = !S.overlay && !p.held ? nearest() : null; S.hint = o ? hintFor(o) : null;
   // tensión de la música y parpadeo de luces
   const dist = e.f === p.f ? Math.hypot(e.x - p.x, e.y - p.y) : 999, prox = clamp(1 - dist / 170, 0, 1);
@@ -361,6 +393,7 @@ function renderFx(g) {
   const dist = e.f === p.f ? Math.hypot(e.x - p.x, e.y - p.y) : 999, prox = Math.max(clamp(1 - dist / 150, 0, 1), p.held ? 1 : 0);
   if (prox > 0.05 || e.state === 'chase' && e.f === p.f) { g.globalAlpha = clamp(prox * 0.9 + (e.state === 'chase' ? 0.15 : 0), 0, 1) * (0.55 + 0.45 * Math.sin(G.t * (5 + prox * 6))); g.drawImage(VIGR, 0, 0); g.globalAlpha = 1; }
   if (S.flick > 0) { g.fillStyle = 'rgba(0,0,20,' + (0.45 * Math.abs(Math.sin(S.flick * 40))).toFixed(2) + ')'; g.fillRect(0, 0, VW, VH); }
+  if (p.slow > 0) { g.fillStyle = 'rgba(110,160,255,' + (0.1 + 0.04 * Math.sin(G.t * 6)).toFixed(3) + ')'; g.fillRect(0, 0, VW, VH); }
 }
 function drawPlaced(g, q) {
   const x = Math.round(q.x), y = Math.round(q.y);
@@ -384,6 +417,7 @@ function renderWorld(g) {
   const st = { t: G.t, power: !S.blackout, charging: p.charging, blackout: S.blackout };
   for (const o of S.W.f[p.f].objs) if (!o.removed && o.type !== 'door') Spr.obj(g, o, st);
   const list = [];
+  for (const gh of S.ghosts) if (gh.f === p.f) list.push({ y: gh.y + 20, d: () => { g.globalAlpha = 0.7 * gh.a; g.drawImage(Spr.ghost((G.t * 3 | 0) % 2), Math.round(gh.x - 11), Math.round(gh.y - 26 + Math.sin(G.t * 3 + gh.ph) * 3)); g.globalAlpha = 1; } });
   for (const q of S.placed) if (q.f === p.f) list.push({ y: q.y - (q.type === 'barricada' ? 0 : 6), d: () => drawPlaced(g, q) });
   const KI = Spr.KI[CFG.style], DI = Spr.DI[CFG.style];
   list.push({ y: p.y, d: () => { if (p.escaped) return; const sp = Spr.kid(p.dir, p.moving ? 1 + ((p.anim | 0) % 2) : 0, CFG.cls, CFG.style); g.globalAlpha = p.dead ? 0.35 : (p.immune > 0 && (G.t * 10 | 0) % 2 ? 0.5 : 1); g.drawImage(sp, Math.round(p.x - KI.w / 2), Math.round(p.y + 1 - KI.fy + (p.boost > 0 ? -1 : 0))); g.globalAlpha = 1; } });
@@ -489,6 +523,7 @@ function renderHud(g) {
       if (ov.phase === 'wait') { R(g, 118, 150, 84, 5, '#000'); R(g, 119, 151, Math.round(82 * (1 - ov.wait / ov.waitMax)), 3, '#3ae07a'); }
     }
   }
+  if (S.scream) { const sc = S.scream, k = sc.t / sc.dur, sh = (Math.random() - 0.5) * 12, z = 4 + k * 3; g.fillStyle = (G.t * 25 | 0) % 2 ? '#2a0008' : '#000'; g.fillRect(0, 0, VW, VH); g.globalAlpha = 1 - k * 0.4; g.drawImage(Spr.ghost((G.t * 12 | 0) % 2), Math.round(160 - 11 * z + sh), Math.round(95 - 15 * z + sh), 22 * z, 30 * z); R(g, 160 - 26 + sh, 70 + sh, 14, 18, '#ff1030'); R(g, 160 + 12 + sh, 70 + sh, 14, 18, '#ff1030'); g.globalAlpha = 1; for (let i = 0; i < 160; i++) { const v = (Math.random() * 255) | 0; g.fillStyle = 'rgba(' + v + ',' + v + ',' + v + ',0.25)'; g.fillRect(Math.random() * VW, Math.random() * VH, 3, 1); } if ((G.t * 20 | 0) % 3 === 0) { g.fillStyle = 'rgba(255,255,255,0.3)'; g.fillRect(0, 0, VW, VH); } }
   if (S.fade > 0) { g.fillStyle = 'rgba(0,0,0,' + clamp(S.fade * 2, 0, 1) + ')'; g.fillRect(0, 0, VW, VH); }
   if (S.ended) { const a = clamp(S.ended.t / (S.ended.kind === 'dead' ? 2 : 1.4), 0, 1); g.fillStyle = (S.ended.kind === 'dead' ? 'rgba(60,0,0,' : 'rgba(255,255,255,') + a * 0.9 + ')'; g.fillRect(0, 0, VW, VH); }
 }
@@ -511,8 +546,8 @@ const TITLE_BG = Spr.mk(VW, VH, g => {
 const BATS = Array.from({ length: 6 }, () => ({ x: Math.random() * 320, y: 14 + Math.random() * 70, sp: rand(16, 34), ph: Math.random() * 6, a: rand(4, 10) }));
 const TSTARS = Array.from({ length: 70 }, () => ({ x: Math.random() * 320, y: Math.random() * 100, ph: Math.random() * 6 }));
 const Title = {
-  sel: 0, N: 5,
-  enter() { this.sel = 0; if (G.started) { Sfx.horrorStart(); Sfx.setTension(0); } },
+  sel: 0, N: 6, msg: null, msgT: 0,
+  enter() { Render3D.show(false); this.sel = 0; if (G.started) { Sfx.horrorStart(); Sfx.setTension(0); } },
   render(g) {
     const t = G.t; g.drawImage(TITLE_BG, 0, 0);
     for (const s of TSTARS) { const a = 0.4 + 0.6 * Math.abs(Math.sin(t * 1.5 + s.ph)); g.fillStyle = 'rgba(255,250,220,' + a.toFixed(2) + ')'; g.fillRect(s.x | 0, s.y | 0, 1, 1); }
@@ -525,24 +560,40 @@ const Title = {
     for (let i = 0; i < 4; i++) { const x = ((t * (5 + i) + i * 90) % 440) - 60; E(g, x, 156 + i * 5, 80, 8, 'rgba(160,140,210,0.10)'); }
     g.fillStyle = 'rgba(70,20,120,0.10)'; g.fillRect(0, 0, VW, VH); g.drawImage(VIG, 0, 0);
     const w = Math.sin(t * 2) * 1.5, gl = Math.random() < 0.02 ? 2 : 0;
-    Txt.draw(g, 'NOCHE DE', 224 + gl, 46 + w, { s: 3, align: 'c', color: '#ffd23f', outline: '#1a0820', shadow: '#d0601a' });
-    Txt.draw(g, 'JUGUETES', 224 - gl, 74 - w, { s: 3, align: 'c', color: '#ff7ab8', outline: '#1a0820', shadow: '#a02060' });
+    Txt.draw(g, 'NOCHE DE', 224 + gl, 38 + w, { s: 3, align: 'c', color: '#ffd23f', outline: '#1a0820', shadow: '#d0601a' });
+    Txt.draw(g, 'JUGUETES', 224 - gl, 64 - w, { s: 3, align: 'c', color: '#ff7ab8', outline: '#1a0820', shadow: '#a02060' });
     if (!G.started) { if ((t * 2 | 0) % 2 === 0) Txt.draw(g, 'TOCA PARA JUGAR', 224, 128, { s: 1, align: 'c', color: '#fff', outline: '#000' }); return; }
-    const rows = ['JUGAR', '< CLASE: ' + CLASSES[CFG.cls].n + ' >', '< DIFICULTAD: ' + DIFFS[CFG.diff].n + ' >', '< ESTILO: ' + (CFG.style === 'A' ? 'A REDONDO' : 'B CLASICO') + ' >', 'SONIDO: ' + (Sfx.muted ? 'NO' : 'SI')];
-    rows.forEach((l, i) => { const sel = i === this.sel, y = 102 + i * 12; if (sel) { g.fillStyle = 'rgba(255,210,63,0.18)'; g.fillRect(150, y - 3, 150, 11); R(g, 150, y - 3, 2, 11, '#ffd23f'); } Txt.draw(g, l, 224, y, { align: 'c', color: sel ? '#ffd23f' : '#e8e0ff', outline: '#10081c' }); });
-    Txt.wrap(CLASSES[CFG.cls].desc, 150).forEach((l, k) => Txt.draw(g, l, 224, 162 + k * 8, { align: 'c', color: '#c9a6ff', outline: '#10081c' }));
+    const cl = CLASSES[CFG.cls], locked = !SAVE.unlocked.includes(CFG.cls);
+    const rows = ['JUGAR', '< NIVEL: ' + CFG.level + ' >', '< CLASE: ' + cl.n + (locked ? ' [' + cl.cost + ']' : '') + ' >', '< ESTILO: ' + (CFG.style === 'A' ? 'A REDONDO' : 'B CLASICO') + ' >', '< VISTA: ' + CFG.view + ' >', 'SONIDO: ' + (Sfx.muted ? 'NO' : 'SI')];
+    rows.forEach((l, i) => { const sel = i === this.sel, y = 94 + i * 11; if (sel) { g.fillStyle = 'rgba(255,210,63,0.18)'; g.fillRect(138, y - 3, 172, 10); R(g, 138, y - 3, 2, 10, '#ffd23f'); } Txt.draw(g, l, 224, y, { align: 'c', color: sel ? '#ffd23f' : (i === 2 && locked) ? '#9a8ab8' : '#e8e0ff', outline: '#10081c' }); });
+    Txt.wrap(locked ? 'BLOQUEADA: CUESTA ' + cl.cost + ' ADAMANTIUM. PULSA PARA COMPRAR' : cl.desc, 160).forEach((l, k) => Txt.draw(g, l, 224, 158 + k * 8, { align: 'c', color: locked ? '#ff9ad0' : '#c9a6ff', outline: '#10081c' }));
+    g.drawImage(Spr.gem(), 6, 5); Txt.draw(g, 'X ' + SAVE.adam, 22, 8, { color: '#e0b8ff', outline: '#10081c' }); Txt.draw(g, 'ADAMANTIUM', 6, 20, { color: '#b46aff', outline: '#10081c' });
+    if (this.msgT > 0) { this.msgT -= 1 / 60; Txt.draw(g, this.msg, 224, 86, { align: 'c', color: '#ff7a7a', outline: '#10081c' }); }
     const KI = Spr.KI[CFG.style], sp = Spr.kid('d', (t * 3 | 0) % 2 ? 1 : 0, CFG.cls, CFG.style), sc = 2; g.drawImage(sp, 132 - KI.w * sc / 2, 130 - KI.fy * sc + 10, KI.w * sc, KI.h * sc);
   },
-  adj(i, d) { if (i === 1) CFG.cls = (CFG.cls + d + CLASSES.length) % CLASSES.length; else if (i === 2) CFG.diff = (CFG.diff + d + DIFFS.length) % DIFFS.length; else if (i === 3) CFG.style = CFG.style === 'A' ? 'B' : 'A'; else return; saveCfg(); Sfx.blip(); },
-  act(i) { Sfx.click(); if (i === 0) { newGame(); setScene(Play); } else if (i === 4) Sfx.toggleMute(); else this.adj(i, 1); },
+  adj(i, d) { if (i === 1) CFG.level = (CFG.level - 1 + d + SAVE.maxLevel) % SAVE.maxLevel + 1; else if (i === 2) CFG.cls = (CFG.cls + d + CLASSES.length) % CLASSES.length; else if (i === 3) CFG.style = CFG.style === 'A' ? 'B' : 'A'; else if (i === 4) CFG.view = CFG.view === '3D' ? '2D' : '3D'; else return; saveCfg(); Sfx.blip(); },
+  say(t) { this.msg = t; this.msgT = 2.2; },
+  act(i) {
+    Sfx.click();
+    if (i === 0) { if (!SAVE.unlocked.includes(CFG.cls)) { this.say('ESA CLASE ESTA BLOQUEADA'); Sfx.hit(); return; } newGame(); setScene(Play); }
+    else if (i === 5) Sfx.toggleMute();
+    else if (i === 2 && !SAVE.unlocked.includes(CFG.cls)) { const c = CLASSES[CFG.cls]; if (SAVE.adam >= c.cost) { SAVE.adam -= c.cost; SAVE.unlocked.push(CFG.cls); persist(); Sfx.pickup(); this.say('¡' + c.n + ' DESBLOQUEADO!'); } else { this.say('FALTA ADAMANTIUM (' + SAVE.adam + '/' + c.cost + ')'); Sfx.hit(); } }
+    else this.adj(i, 1);
+  },
   keydown(c) { if (!G.started) return; if (c === 'ArrowUp' || c === 'KeyW') this.sel = (this.sel + this.N - 1) % this.N; if (c === 'ArrowDown' || c === 'KeyS') this.sel = (this.sel + 1) % this.N; if (c === 'ArrowLeft' || c === 'KeyA') this.adj(this.sel, -1); if (c === 'ArrowRight' || c === 'KeyD') this.adj(this.sel, 1); if (c === 'Enter' || c === 'Space') this.act(this.sel); },
-  pointerDown(id, x, y) { if (!G.started) return; for (let i = 0; i < this.N; i++) if (y >= 98 + i * 12 && y < 110 + i * 12 && x > 148) { this.sel = i; if (i >= 1 && i <= 3 && x < 200) { this.adj(i, -1); Sfx.click(); } else this.act(i); } },
+  pointerDown(id, x, y) { if (!G.started) return; for (let i = 0; i < this.N; i++) if (y >= 90 + i * 11 && y < 101 + i * 11 && x > 138) { this.sel = i; if (i >= 1 && i <= 4 && x < 190) { this.adj(i, -1); Sfx.click(); } else this.act(i); } },
 };
 function say0() { Sfx.back(); }
 
 const Play = {
-  enter() {}, update(dt) { update(dt); },
-  render(g) { R(g, 0, 0, VW, VH, '#000'); renderWorld(g); renderHud(g); },
+  enter() { Render3D.show(CFG.view === '3D'); }, update(dt) { update(dt); },
+  render(g) {
+    if (CFG.view === '3D' && Render3D.ok) {
+      Render3D.show(true); g.clearRect(0, 0, VW, VH); Render3D.draw(S); renderFx(g);
+      for (const q of S.parts) { const k = 1 - q.t / q.life, [sx, sy] = Render3D.project(q.x, q.y, 0.4 + (q.star ? 0.6 : 0.1)); g.globalAlpha = clamp(q.fade ? k * 0.7 : 1 - Math.pow(q.t / q.life, 3), 0, 1); g.fillStyle = q.col; g.fillRect(Math.round(sx), Math.round(sy), q.star ? 2 : Math.max(1, q.sz - 1), q.star ? 2 : Math.max(1, q.sz - 1)); } g.globalAlpha = 1;
+      renderHud(g);
+    } else { Render3D.show(false); R(g, 0, 0, VW, VH, '#000'); renderWorld(g); renderHud(g); }
+  },
   keydown(c) {
     if (S.intro > 0) { if (c === 'Escape') { setScene(Title); return; } if (S.introT > 0.6) S.intro = 0; return; }
     if (S.overlay) { if (c === 'Escape') { closeOverlay(); return; } if (S.overlay.type === 'craft') { const ov = S.overlay; if (/^Digit[1-9]$/.test(c)) craftAdd(ov, MAT_ORDER[+c[5] - 1]); else if (c === 'Backspace') craftClear(ov); else if (c === 'Enter') craftStart(ov); else if (c === 'Tab') ov.tab = ov.tab === 'mat' ? 'rec' : 'mat'; return; } if (S.overlay.type === 'keypad' && /^(Digit|Numpad)[0-9]$/.test(c)) { overlayInput('k', c.slice(-1)); return; } if (S.overlay.type === 'puzzle' && /^(Digit|Numpad)[1-4]$/.test(c)) { overlayInput('p', +c.slice(-1) - 1); return; } }
@@ -568,7 +619,7 @@ const Play = {
 };
 
 const End = {
-  enter(kind, st) { this.kind = kind; this.t = 0; this.st = st; if (kind === 'dead') Sfx.lose(); else { Sfx.win(); } },
+  enter(kind, st) { Render3D.show(false); this.kind = kind; this.t = 0; this.st = st; if (kind === 'dead') Sfx.lose(); else { Sfx.win(); } },
   update(dt) { this.t += dt; },
   render(g) {
     const k = this.kind; R(g, 0, 0, VW, VH, k === 'dead' ? '#0a0204' : '#0a1a14');
@@ -577,7 +628,7 @@ const End = {
     Txt.draw(g, k === 'escape' ? 'SALISTE POR LA PUERTA CON EL CODIGO' : k === 'survive' ? 'LLEGASTE A LAS 6 AM' : 'AHORA ERES ESPECTADOR... Y NO HAY NADIE MAS', 160, 54, { align: 'c', color: '#fff' });
     const st = this.st; const mins = Math.floor(480 * clamp(st.t / st.dur, 0, 1)), hh = (22 * 60 + mins) / 60 % 24 | 0, mm = (22 * 60 + mins) % 60;
     Txt.draw(g, 'HORA FINAL: ' + (hh % 12 || 12) + ':' + String(mm).padStart(2, '0') + (hh >= 12 && hh < 24 ? ' PM' : ' AM'), 160, 78, { align: 'c', color: '#c9a6ff' });
-    Txt.draw(g, CLASES[CFG.cls].n + ' - ' + DIFFS[CFG.diff].n + '   COFRES: ' + st.stats.chests + '   CRAFTEOS: ' + st.stats.crafts + '   AGARRADO: ' + st.stats.grabs, 160, 92, { align: 'c', color: '#c9a6ff' });
+    Txt.draw(g, CLASSES[CFG.cls].n + ' - NIVEL ' + CFG.level + '   COFRES: ' + st.stats.chests + '   CRAFTEOS: ' + st.stats.crafts + '   AGARRADO: ' + st.stats.grabs, 160, 92, { align: 'c', color: '#c9a6ff' });
     { const DI = Spr.DI[CFG.style]; g.drawImage(Spr.doll('d', 0, this.kind === 'dead' ? 'angry' : 'stun', CFG.style), 160 - DI.w / 2, 104); }
     if (this.t > 0.8 && (G.t * 2 | 0) % 2 === 0) Txt.draw(g, 'ENTER O TOCA: JUGAR OTRA VEZ', 160, 168, { align: 'c', color: '#ffd23f' });
   },
@@ -607,8 +658,8 @@ let last = performance.now();
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now; G.t += dt;
   const s = G.scene; if (s.update) s.update(dt);
-  ctx.imageSmoothingEnabled = false; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, VW, VH); s.render(ctx);
+  ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, VW, VH); s.render(ctx);
   requestAnimationFrame(loop);
 }
-window.__G = G; window.__S = () => S; window.__scenes = { Title, Play, End }; window.__CFG = CFG; window.__craft = { craftAdd, craftStart, craftMatch }; window.__setScene = setScene; window.__newGame = newGame;
+window.__SAVE = SAVE; window.__persist = persist; window.__G = G; window.__S = () => S; window.__scenes = { Title, Play, End }; window.__CFG = CFG; window.__craft = { craftAdd, craftStart, craftMatch }; window.__setScene = setScene; window.__newGame = newGame;
 setScene(Title); requestAnimationFrame(loop);

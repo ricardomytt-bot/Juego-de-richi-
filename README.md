@@ -64,13 +64,14 @@ Añade `?fast` a la URL para partidas aceleradas (pruebas). El progreso del modo
 
 # 🧸 Noche de Juguetes (en desarrollo)
 
-Juego multijugador de supervivencia (diseño en `docs/DISENO.md`). Abre `juego/index.html`.
+Juego de supervivencia (diseño en `docs/DISENO.md`). Abre `juego/index.html`. Se puede jugar en **3D** (Three.js, baja resolución) o en **2D** pixel art, y en dos estilos de personaje (A redondo, B clásico).
 
 **Estado actual:** prototipo de una persona contra un bot, en el mapa 1 (casa de 2 pisos).
-- 10 clases con ventajas y objetos propios, 3 dificultades y 2 estilos de arte (A redondo / B clásico), todo desde el menú.
-- Cadena de 5 llaves y dos cajas con partes del código (bóveda y caja fuerte del ático), apagón con computadora, microondas, nevera y comida.
-- Mesa de crafteo 3×3 (sin orden) con 8 recetas y libro de recetas; objetos: máscara, taser, brujitas, barricada, trampa, caja musical, mancha de aceite, pila turbo, pizza, cámara, Nerf, jeringa, bebida, bomba de humo, torreta, ración.
-- Muñeca robot con radar, visión, trampas, señuelos y que rompe barricadas; se vuelve más agresiva con la noche.
+- **No lineal y aleatorio:** las 5 llaves y los objetos cambian de lugar en cada partida, con rutas alternativas (cofres, mecanismos que piden engranaje, cajas que piden palanca). Se comprobó que las 300 partidas generadas se pueden completar.
+- **Objetos para progresar:** engranaje (de aluminio), escalera (para cruzar el hueco del piso 2), fusible (para dar energía a la salida) y palanca. Salida: fusible + engranaje + código de 4 cifras en dos partes.
+- **Enemigos:** la muñeca robot (radar, trampas, señuelos, rompe barricadas) y **fantasmas** que se acercan, te dan un susto y te dejan lento; la linterna y la cámara los disipan.
+- **Adamantium y niveles:** 10 niveles; cada nivel superado da su número en adamantium (escapar) o la mitad (sobrevivir). Las clases cuestan 1 a 10 adamantium, de la peor a la mejor.
+- Mesa de crafteo 3×3 con 11 recetas y más de 15 objetos usables.
 
-Controles: `WASD` mover · `J` USAR · `K` LINTERNA · `L` OBJETO (mantén pulsado para cambiar de objeto, o `R`). En celular: joystick a la izquierda y 3 botones a la derecha.
-Falta: salas con código en línea, votación de mapa, los otros 9 mapas y enemigos, y el modo aventura.
+Controles: `WASD` mover · `J` USAR · `K` LINTERNA · `L` OBJETO (mantén pulsado o `R` para cambiar de objeto). En celular: joystick y 3 botones.
+Falta: salas con código en línea, votación de mapa y los otros 9 mapas y enemigos.
