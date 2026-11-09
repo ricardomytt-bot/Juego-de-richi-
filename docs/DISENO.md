@@ -65,7 +65,8 @@ Regla: **si un objeto no se puede craftear, es exclusivo de una clase. Si no es 
 | Corredor | Bebida energética: corre más rápido 5 s (propuesta) |
 | Sigiloso | Bomba de humo: el animatrónico no ve 4 s (propuesta) |
 
-Ingeniero y Electricista no tienen objeto exclusivo (solo ventajas), porque sus objetos pasaron a ser crafteables. **Por decidir.**
+| Ingeniero | Torreta de dardos: se coloca en el suelo y aturde al animatrónico 1.5 s cada 3 s durante 15 s |
+| Electricista | Pulso EMP: apaga el radar del animatrónico 10 s y lo aturde 1 s |
 
 ## Las 10 clases
 1 Explorador (empieza con 15 de aluminio) · 2 Ingeniero (craftea el doble de rápido; 3 Chatarra + 2 Pilas) · 3 Corredor (más velocidad, menos vida) · 4 Médico (cura a otros) · 5 Sigiloso (el radar casi no lo detecta si camina despacio) · 6 Fotógrafo (empieza con 1 Lente; su foto aturde 2 s más) · 7 Cocinero (empieza con 1 Comida; pizza dura 10 s) · 8 Cazador (Nerf con más munición) · 9 Cerrajero (empieza con 1 Ganzúa) · 10 Electricista (arregla la luz en 1.5 s, recarga la linterna al doble; empieza con 1 Circuito).

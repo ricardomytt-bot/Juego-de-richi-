@@ -59,3 +59,16 @@ Pantalla dividida; luego se **cambian los roles**. Gana quien aguante más tiemp
 - Jugador 2: guardia `J L U O I K N M` · monstruo `Flechas` + `Enter` (atacar) + `.` (habilidad)
 
 Añade `?fast` a la URL para partidas aceleradas (pruebas). El progreso del modo historia se guarda en el navegador.
+
+---
+
+# 🧸 Noche de Juguetes (en desarrollo)
+
+Nuevo juego multijugador de supervivencia (diseño completo en `docs/DISENO.md`). Abre `juego/index.html`.
+
+**Estado actual (paso 1 del plan):** prototipo jugable de una persona contra un bot, en el mapa 1 (casa de 2 pisos).
+Ya incluye: joystick táctil/teclado, linterna de 3 usos con recarga, la muñeca robot con radar y visión limitada,
+forcejeo, cadena de llaves → bóveda → código → puerta de salida, apagón con computadora, y los objetos máscara y pizza.
+
+Controles: `WASD` mover · `J` USAR · `K` LINTERNA · `L` OBJETO (en pantalla táctil, joystick a la izquierda y 3 botones a la derecha).
+Falta: salas con código en línea, votación de mapa, crafteo 3x3, clases, y los otros 9 mapas y enemigos.
