@@ -10,7 +10,7 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const CFG = { cls: 0, level: 1, style: 'A', view: '3D' };
 try { Object.assign(CFG, JSON.parse(localStorage.getItem('nj_cfg') || '{}')); } catch (e) {}
 if (CFG.style !== 'A' && CFG.style !== 'B') CFG.style = 'A'; if (CFG.view !== '2D' && CFG.view !== '3D') CFG.view = '3D';
-const SAVE = { adam: 0, unlocked: [0], maxLevel: 1 };
+const SAVE = { adam: 0, unlocked: [0], maxLevel: 1, name: 'JUGADOR' + (10 + (Math.random() * 90 | 0)) };
 try { Object.assign(SAVE, JSON.parse(localStorage.getItem('nj_save') || '{}')); } catch (e) {}
 if (!Array.isArray(SAVE.unlocked) || !SAVE.unlocked.includes(0)) SAVE.unlocked = [0, ...(Array.isArray(SAVE.unlocked) ? SAVE.unlocked : [])];
 SAVE.maxLevel = clamp(SAVE.maxLevel | 0 || 1, 1, 10); SAVE.adam = Math.max(0, SAVE.adam | 0);
@@ -56,8 +56,10 @@ function bfs(f, sx, sy, gx, gy) {
   return null;
 }
 
-function newGame() {
-  const W = buildMap1(), cl = CLASSES[CFG.cls], df = levelParams(CFG.level);
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function withSeed(seed, fn) { const o = Math.random; Math.random = mulberry(seed); try { return fn(); } finally { Math.random = o; } }
+function newGame(seed) {
+  const W = seed ? withSeed(seed, buildMap1) : buildMap1(), cl = CLASSES[CFG.cls], df = levelParams(CFG.level);
   const sp = W.spawn, es = W.enemySpawn;
   S = {
     W, cl, df, t: 0, dur: FAST ? 60 : 360, blackoutAt: FAST ? 40 : df.blackout, floors: W.f.map(f => Spr.floorCanvas(f)),
@@ -360,7 +362,7 @@ function update(dt) {
   updateEnemy(dt); updateGhosts(dt); updateOverlay(dt);
   if (!S.ended) {
     if (p.escaped) S.ended = { kind: 'escape', t: 0 }; else if (p.dead) S.ended = { kind: 'dead', t: 0 }; else if (S.t >= S.dur) S.ended = { kind: 'survive', t: 0 };
-  } else { S.ended.t += dt; if (S.ended.t > (S.ended.kind === 'dead' ? 2.2 : 1.6)) { Sfx.setTension(0); const k = S.ended.kind, L = CFG.level, gain = k === 'escape' ? L : k === 'survive' ? Math.ceil(L / 2) : 0; SAVE.adam += gain; if (k !== 'dead' && L === SAVE.maxLevel && SAVE.maxLevel < 10) { SAVE.maxLevel++; CFG.level = SAVE.maxLevel; } persist(); saveCfg(); S.gain = gain; setScene(End, k, S); } }
+  } else { S.ended.t += dt; if (S.ended.t > (S.ended.kind === 'dead' ? 2.2 : 1.6)) { Sfx.setTension(0); const k = S.ended.kind, L = CFG.level, gain = k === 'escape' ? L : k === 'survive' ? Math.ceil(L / 2) : 0; SAVE.adam += gain; if (k !== 'dead' && L === SAVE.maxLevel && SAVE.maxLevel < 10) { SAVE.maxLevel++; CFG.level = SAVE.maxLevel; } persist(); saveCfg(); S.gain = gain; if (typeof MPreport === 'function') MPreport(k, S.t); setScene(End, k, S); } }
   const o = !S.overlay && !p.held ? nearest() : null; S.hint = o ? hintFor(o) : null;
   // tensión de la música y parpadeo de luces
   const dist = e.f === p.f ? Math.hypot(e.x - p.x, e.y - p.y) : 999, prox = clamp(1 - dist / 170, 0, 1);
@@ -545,10 +547,7 @@ const TITLE_BG = Spr.mk(VW, VH, g => {
 });
 const BATS = Array.from({ length: 6 }, () => ({ x: Math.random() * 320, y: 14 + Math.random() * 70, sp: rand(16, 34), ph: Math.random() * 6, a: rand(4, 10) }));
 const TSTARS = Array.from({ length: 70 }, () => ({ x: Math.random() * 320, y: Math.random() * 100, ph: Math.random() * 6 }));
-const Title = {
-  sel: 0, N: 6, msg: null, msgT: 0,
-  enter() { Render3D.show(false); this.sel = 0; if (G.started) { Sfx.horrorStart(); Sfx.setTension(0); } },
-  render(g) {
+function drawTitleBg2D(g) {
     const t = G.t; g.drawImage(TITLE_BG, 0, 0);
     for (const s of TSTARS) { const a = 0.4 + 0.6 * Math.abs(Math.sin(t * 1.5 + s.ph)); g.fillStyle = 'rgba(255,250,220,' + a.toFixed(2) + ')'; g.fillRect(s.x | 0, s.y | 0, 1, 1); }
     [[40, 0.05], [32, 0.07], [26, 0.1]].forEach(([r, a]) => E(g, 262, 28, r, r, 'rgba(255,240,190,' + (a + 0.02 * Math.sin(t * 1.2)).toFixed(3) + ')')); E(g, 262, 28, 19, 19, '#fff4c8'); E(g, 256, 22, 4, 4, '#e8d8a0'); E(g, 268, 33, 5, 5, '#e8d8a0'); E(g, 270, 20, 2, 2, '#e8d8a0');
@@ -559,30 +558,8 @@ const Title = {
     for (const b of BATS) { const x = ((b.x + t * b.sp) % 360) - 20, y = b.y + Math.sin(t * 2 + b.ph) * b.a, up = (t * 9 + b.ph | 0) % 2; g.fillStyle = '#05020c'; g.fillRect(x - 1, y, 3, 2); if (up) { g.fillRect(x - 5, y - 2, 4, 1); g.fillRect(x + 2, y - 2, 4, 1); g.fillRect(x - 7, y - 1, 2, 1); g.fillRect(x + 6, y - 1, 2, 1); } else { g.fillRect(x - 5, y + 1, 4, 1); g.fillRect(x + 2, y + 1, 4, 1); g.fillRect(x - 7, y + 2, 2, 1); g.fillRect(x + 6, y + 2, 2, 1); } }
     for (let i = 0; i < 4; i++) { const x = ((t * (5 + i) + i * 90) % 440) - 60; E(g, x, 156 + i * 5, 80, 8, 'rgba(160,140,210,0.10)'); }
     g.fillStyle = 'rgba(70,20,120,0.10)'; g.fillRect(0, 0, VW, VH); g.drawImage(VIG, 0, 0);
-    const w = Math.sin(t * 2) * 1.5, gl = Math.random() < 0.02 ? 2 : 0;
-    Txt.draw(g, 'NOCHE DE', 224 + gl, 38 + w, { s: 3, align: 'c', color: '#ffd23f', outline: '#1a0820', shadow: '#d0601a' });
-    Txt.draw(g, 'JUGUETES', 224 - gl, 64 - w, { s: 3, align: 'c', color: '#ff7ab8', outline: '#1a0820', shadow: '#a02060' });
-    if (!G.started) { if ((t * 2 | 0) % 2 === 0) Txt.draw(g, 'TOCA PARA JUGAR', 224, 128, { s: 1, align: 'c', color: '#fff', outline: '#000' }); return; }
-    const cl = CLASSES[CFG.cls], locked = !SAVE.unlocked.includes(CFG.cls);
-    const rows = ['JUGAR', '< NIVEL: ' + CFG.level + ' >', '< CLASE: ' + cl.n + (locked ? ' [' + cl.cost + ']' : '') + ' >', '< ESTILO: ' + (CFG.style === 'A' ? 'A REDONDO' : 'B CLASICO') + ' >', '< VISTA: ' + CFG.view + ' >', 'SONIDO: ' + (Sfx.muted ? 'NO' : 'SI')];
-    rows.forEach((l, i) => { const sel = i === this.sel, y = 94 + i * 11; if (sel) { g.fillStyle = 'rgba(255,210,63,0.18)'; g.fillRect(138, y - 3, 172, 10); R(g, 138, y - 3, 2, 10, '#ffd23f'); } Txt.draw(g, l, 224, y, { align: 'c', color: sel ? '#ffd23f' : (i === 2 && locked) ? '#9a8ab8' : '#e8e0ff', outline: '#10081c' }); });
-    Txt.wrap(locked ? 'BLOQUEADA: CUESTA ' + cl.cost + ' ADAMANTIUM. PULSA PARA COMPRAR' : cl.desc, 160).forEach((l, k) => Txt.draw(g, l, 224, 158 + k * 8, { align: 'c', color: locked ? '#ff9ad0' : '#c9a6ff', outline: '#10081c' }));
-    g.drawImage(Spr.gem(), 6, 5); Txt.draw(g, 'X ' + SAVE.adam, 22, 8, { color: '#e0b8ff', outline: '#10081c' }); Txt.draw(g, 'ADAMANTIUM', 6, 20, { color: '#b46aff', outline: '#10081c' });
-    if (this.msgT > 0) { this.msgT -= 1 / 60; Txt.draw(g, this.msg, 224, 86, { align: 'c', color: '#ff7a7a', outline: '#10081c' }); }
-    const KI = Spr.KI[CFG.style], sp = Spr.kid('d', (t * 3 | 0) % 2 ? 1 : 0, CFG.cls, CFG.style), sc = 2; g.drawImage(sp, 132 - KI.w * sc / 2, 130 - KI.fy * sc + 10, KI.w * sc, KI.h * sc);
-  },
-  adj(i, d) { if (i === 1) CFG.level = (CFG.level - 1 + d + SAVE.maxLevel) % SAVE.maxLevel + 1; else if (i === 2) CFG.cls = (CFG.cls + d + CLASSES.length) % CLASSES.length; else if (i === 3) CFG.style = CFG.style === 'A' ? 'B' : 'A'; else if (i === 4) CFG.view = CFG.view === '3D' ? '2D' : '3D'; else return; saveCfg(); Sfx.blip(); },
-  say(t) { this.msg = t; this.msgT = 2.2; },
-  act(i) {
-    Sfx.click();
-    if (i === 0) { if (!SAVE.unlocked.includes(CFG.cls)) { this.say('ESA CLASE ESTA BLOQUEADA'); Sfx.hit(); return; } newGame(); setScene(Play); }
-    else if (i === 5) Sfx.toggleMute();
-    else if (i === 2 && !SAVE.unlocked.includes(CFG.cls)) { const c = CLASSES[CFG.cls]; if (SAVE.adam >= c.cost) { SAVE.adam -= c.cost; SAVE.unlocked.push(CFG.cls); persist(); Sfx.pickup(); this.say('¡' + c.n + ' DESBLOQUEADO!'); } else { this.say('FALTA ADAMANTIUM (' + SAVE.adam + '/' + c.cost + ')'); Sfx.hit(); } }
-    else this.adj(i, 1);
-  },
-  keydown(c) { if (!G.started) return; if (c === 'ArrowUp' || c === 'KeyW') this.sel = (this.sel + this.N - 1) % this.N; if (c === 'ArrowDown' || c === 'KeyS') this.sel = (this.sel + 1) % this.N; if (c === 'ArrowLeft' || c === 'KeyA') this.adj(this.sel, -1); if (c === 'ArrowRight' || c === 'KeyD') this.adj(this.sel, 1); if (c === 'Enter' || c === 'Space') this.act(this.sel); },
-  pointerDown(id, x, y) { if (!G.started) return; for (let i = 0; i < this.N; i++) if (y >= 90 + i * 11 && y < 101 + i * 11 && x > 138) { this.sel = i; if (i >= 1 && i <= 4 && x < 190) { this.adj(i, -1); Sfx.click(); } else this.act(i); } },
-};
+}
+let Title = null;
 function say0() { Sfx.back(); }
 
 const Play = {
@@ -597,7 +574,7 @@ const Play = {
   keydown(c) {
     if (S.intro > 0) { if (c === 'Escape') { setScene(Title); return; } if (S.introT > 0.6) S.intro = 0; return; }
     if (S.overlay) { if (c === 'Escape') { closeOverlay(); return; } if (S.overlay.type === 'craft') { const ov = S.overlay; if (/^Digit[1-9]$/.test(c)) craftAdd(ov, MAT_ORDER[+c[5] - 1]); else if (c === 'Backspace') craftClear(ov); else if (c === 'Enter') craftStart(ov); else if (c === 'Tab') ov.tab = ov.tab === 'mat' ? 'rec' : 'mat'; return; } if (S.overlay.type === 'keypad' && /^(Digit|Numpad)[0-9]$/.test(c)) { overlayInput('k', c.slice(-1)); return; } if (S.overlay.type === 'puzzle' && /^(Digit|Numpad)[1-4]$/.test(c)) { overlayInput('p', +c.slice(-1) - 1); return; } }
-    if (c === 'Escape') { Sfx.setTension(0); setScene(Title); return; }
+    if (c === 'Escape') { Sfx.setTension(0); if (typeof MPleave === 'function') MPleave(); setScene(Title); return; }
     if (c === 'KeyE' || c === 'KeyJ' || c === 'Space') press('use'); else if (c === 'KeyF' || c === 'KeyK') press('flash'); else if (c === 'KeyQ' || c === 'KeyL') press('item'); else if (c === 'KeyR' || c === 'Tab') cycleItem();
   },
   pointerDown(id, x, y) {
@@ -630,9 +607,10 @@ const End = {
     Txt.draw(g, 'HORA FINAL: ' + (hh % 12 || 12) + ':' + String(mm).padStart(2, '0') + (hh >= 12 && hh < 24 ? ' PM' : ' AM'), 160, 78, { align: 'c', color: '#c9a6ff' });
     Txt.draw(g, CLASSES[CFG.cls].n + ' - NIVEL ' + CFG.level + '   COFRES: ' + st.stats.chests + '   CRAFTEOS: ' + st.stats.crafts + '   AGARRADO: ' + st.stats.grabs, 160, 92, { align: 'c', color: '#c9a6ff' });
     { const DI = Spr.DI[CFG.style]; g.drawImage(Spr.doll('d', 0, this.kind === 'dead' ? 'angry' : 'stun', CFG.style), 160 - DI.w / 2, 104); }
+    if (typeof MPend === 'function') MPend(g);
     if (this.t > 0.8 && (G.t * 2 | 0) % 2 === 0) Txt.draw(g, 'ENTER O TOCA: JUGAR OTRA VEZ', 160, 168, { align: 'c', color: '#ffd23f' });
   },
-  go() { if (this.t < 0.8) return; Sfx.click(); newGame(); setScene(Play); },
+  go() { if (this.t < 0.8) return; Sfx.click(); if (typeof MPback === 'function' && MPback()) return; newGame(); setScene(Play); },
   keydown(c) { if (c === 'Enter' || c === 'Space') this.go(); if (c === 'Escape') setScene(Title); },
   pointerDown() { this.go(); },
 };
@@ -642,6 +620,7 @@ function toLocal(e) { const r = canvas.getBoundingClientRect(); return [(e.clien
 function goFull() { try { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen().then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (x) {} }).catch(() => {}); } catch (x) {} }
 function firstInput() { const first = !G.started; G.started = true; Sfx.init(); if (first) Sfx.horrorStart(); return first; }
 addEventListener('keydown', e => {
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
   if (e.repeat) return; G.keys[e.code] = true; const first = firstInput(); if (first && G.scene === Title) return;
   G.scene.keydown && G.scene.keydown(e.code);
@@ -661,5 +640,4 @@ function loop(now) {
   ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, VW, VH); s.render(ctx);
   requestAnimationFrame(loop);
 }
-window.__SAVE = SAVE; window.__persist = persist; window.__G = G; window.__S = () => S; window.__scenes = { Title, Play, End }; window.__CFG = CFG; window.__craft = { craftAdd, craftStart, craftMatch }; window.__setScene = setScene; window.__newGame = newGame;
-setScene(Title); requestAnimationFrame(loop);
+window.__SAVE = SAVE; window.__persist = persist; window.__G = G; window.__S = () => S; window.__scenes = { Play, End }; window.__CFG = CFG; window.__craft = { craftAdd, craftStart, craftMatch }; window.__setScene = setScene; window.__newGame = newGame;

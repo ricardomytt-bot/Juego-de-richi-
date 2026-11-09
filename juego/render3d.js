@@ -210,7 +210,60 @@ const Render3D = (() => {
     const sh = S.shake > 0 ? S.shake * 0.25 : 0; const cx = cam.position.x + (Math.random() - .5) * sh, cz = cam.position.z + (Math.random() - .5) * sh;
     const sp = cam.position.clone(); cam.position.set(cx, cam.position.y, cz); cam.lookAt(cam.position.x - off.x, 0.4, cam.position.z - off.z); ren.render(scene, cam); cam.position.copy(sp);
   }
+
+  // ---------------- fondo 3D del menú: la casa embrujada de noche ----------------
+  let ms = null;
+  function buildMenu() {
+    const sc = new T.Scene(); sc.background = new T.Color(0x0a0618); sc.fog = new T.Fog(0x160c2a, 14, 64);
+    const amb = new T.AmbientLight(0x4a3a7a, 1.15), moon = new T.DirectionalLight(0x9ab4ff, 0.95); moon.position.set(-14, 18, -20);
+    const w1 = new T.PointLight(0xffb85a, 1.5, 15, 1.4), w2 = new T.PointLight(0xffb85a, 1.3, 13, 1.4), lampL = new T.PointLight(0xffd890, 1.0, 9, 1.5);
+    w1.position.set(-2.4, 1.8, 4.2); w2.position.set(2.4, 4.4, 4.2); lampL.position.set(6.2, 2.6, 7.4); sc.add(amb, moon, w1, w2, lampL);
+    const gnd = new T.Mesh(new T.CircleGeometry(80, 32), cm('#1e1536')); gnd.rotation.x = -Math.PI / 2; sc.add(gnd);
+    const path = box(2.2, .04, 12, '#3a2c52', 0, .02, 8); sc.add(path);
+    // casa
+    const house = new T.Group();
+    house.add(box(9, 5.6, 6.4, '#3e2e62', 0, 2.8, 0), box(9.4, .3, 6.8, '#2a1e46', 0, 5.7, 0), box(9.2, .25, 6.6, '#2a1e46', 0, 2.9, 0));
+    const roof = cone(6.9, 3.6, '#2a1a48', 0, 7.6, 0); roof.rotation.y = Math.PI / 4; roof.scale.set(6.9, 3.6, 5.0); house.add(roof);
+    house.add(box(1.1, 3, 1.1, '#2a1e46', 2.8, 8.3, -1.2), box(1.6, 2.7, .25, '#3a2412', 0, 1.35, 3.25), box(.16, .16, .1, bm('#ffd23f'), .5, 1.3, 3.4), box(2.6, .2, 1.4, '#2a1e46', 0, 2.7, 3.8), box(.2, 2.7, .2, '#5a4a7a', -1.1, 1.35, 4.3), box(.2, 2.7, .2, '#5a4a7a', 1.1, 1.35, 4.3));
+    const wins = [];
+    for (const [x, y] of [[-2.8, 1.8], [2.8, 1.8], [-2.8, 4.2], [2.8, 4.2]]) { const wm = bm('#ffc860'); const win = box(1.4, 1.6, .12, wm, x, y, 3.23); house.add(win, box(1.5, .1, .16, '#1a1030', x, y, 3.25), box(.1, 1.7, .16, '#1a1030', x, y, 3.25), box(1.6, .12, .3, '#2a1e46', x, y - .9, 3.3)); wins.push(wm); }
+    const dh = new T.Group(); dh.add(sph(.28, '#14081e', 2.8, 4.1, 3.12), sph(.1, bm('#ff2a2a'), 2.7, 4.16, 3.36), sph(.1, bm('#ff2a2a'), 2.9, 4.16, 3.36), sph(.18, bm('#d02a6a'), 2.55, 4.5, 3.1, .7), sph(.18, bm('#d02a6a'), 3.05, 4.5, 3.1, .7)); house.add(dh);
+    sc.add(house);
+    // luna y estrellas
+    const moonM = sph(4, bm('#fff4c8'), -28, 21, -48); sc.add(moonM, sph(7.5, new T.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: .13, depthWrite: false }), -28, 21, -48));
+    const sp = new Float32Array(900); for (let i = 0; i < 300; i++) { const a = Math.random() * 6.283, b = Math.random() * 1.2 + 0.12, r = 85; sp[i * 3] = Math.cos(a) * Math.cos(b) * r; sp[i * 3 + 1] = Math.sin(b) * r; sp[i * 3 + 2] = Math.sin(a) * Math.cos(b) * r - 10; }
+    const sg = new T.BufferGeometry(); sg.setAttribute('position', new T.BufferAttribute(sp, 3)); const stars = new T.Points(sg, new T.PointsMaterial({ color: 0xffffff, size: 0.9, sizeAttenuation: false })); sc.add(stars);
+    // árboles secos, cerca y tumbas
+    const tree = (x, z, k) => { const g = new T.Group(); g.add(cyl(.28 * k, .42 * k, 5 * k, '#120a1c', 0, 2.5 * k, 0)); for (let i = 0; i < 5; i++) { const br = cyl(.07 * k, .14 * k, 2.4 * k, '#120a1c', 0, 0, 0); br.position.set(Math.cos(i * 1.4) * .6 * k, (2.6 + i * .55) * k, Math.sin(i * 1.4) * .6 * k); br.rotation.z = (i % 2 ? 1 : -1) * 0.9; br.rotation.y = i * 1.3; g.add(br); } g.position.set(x, 0, z); sc.add(g); };
+    tree(-11, 3, 1.3); tree(12, 1, 1.5); tree(-7, -6, 1.1); tree(8, -7, 1.2); tree(-17, 10, 1.4); tree(18, 9, 1.3); tree(-4, 13, 1);
+    for (let i = 0; i < 16; i++) { sc.add(box(.14, 1.1, .14, '#2a1e46', -9 + i * 1.2, .55, 11)); } sc.add(box(19, .1, .1, '#2a1e46', 0, .95, 11), box(19, .1, .1, '#2a1e46', 0, .45, 11));
+    [[8.5, 6], [10.2, 7.6], [11.6, 5.4], [-9, 7]].forEach(([x, z], i) => { sc.add(box(.8, 1.1, .2, '#4a4068', x, .55, z), cyl(.4, .4, .2, '#4a4068', x, 1.1, z)); const cr = box(.12, .5, .12, '#2a2044', x, 1.5, z); sc.add(cr); });
+    // lámpara del camino
+    sc.add(cyl(.07, .07, 2.6, '#2a2040', 6.2, 1.3, 7.4), sph(.28, bm('#ffe08a'), 6.2, 2.7, 7.4));
+    // murciélagos
+    const bats = []; for (let i = 0; i < 7; i++) { const g = new T.Group(), wl = box(.5, .04, .22, '#05020c', -.28, 0, 0), wr = box(.5, .04, .22, '#05020c', .28, 0, 0); g.add(sph(.1, '#05020c'), wl, wr); g.userData = { wl, wr, r: 6 + Math.random() * 8, h: 6 + Math.random() * 6, sp: .4 + Math.random() * .5, ph: Math.random() * 6 }; sc.add(g); bats.push(g); }
+    // personajes en el jardín
+    const cam2 = new T.PerspectiveCamera(48, W3 / H3, 0.1, 140);
+    ms = { sc, cam: cam2, w1, w2, lampL, wins, bats, dh, avatar: null, doll: null, cls: -1, style: '', house };
+    return ms;
+  }
+  function drawMenu(t) {
+    if (!init()) return false; if (!ms) buildMenu();
+    if (ms.cls !== CFG.cls || ms.style !== CFG.style) {
+      if (ms.avatar) ms.sc.remove(ms.avatar.g); if (ms.doll) ms.sc.remove(ms.doll.g);
+      ms.avatar = makePerson(CFG.cls, CFG.style); ms.avatar.g.position.set(-2.6, 0, 7.4); ms.avatar.g.scale.multiplyScalar(1.5); ms.avatar.g.rotation.y = 0.5; ms.sc.add(ms.avatar.g);
+      ms.doll = makeDoll(CFG.style); ms.doll.g.position.set(3.6, 0, 6.2); ms.doll.g.scale.multiplyScalar(1.15); ms.doll.g.rotation.y = -0.4; ms.sc.add(ms.doll.g); ms.doll.aura.visible = false; ms.doll.stars.visible = false;
+      ms.cls = CFG.cls; ms.style = CFG.style;
+    }
+    const f = (k) => (Math.sin(t * 7 + k * 5) > -0.75 || Math.random() < 0.25) ? 1 : 0.25;
+    ms.wins.forEach((m, i) => m.color.set(i === 3 ? '#a07a40' : (f(i) > 0.5 ? '#ffc860' : '#6a4a20'))); ms.w1.intensity = 1.2 + f(1) * .6; ms.w2.intensity = 1.0 + f(2) * .5; ms.lampL.intensity = .9 + Math.sin(t * 11) * .1;
+    ms.bats.forEach(b => { const d = b.userData, a = t * d.sp + d.ph; b.position.set(Math.cos(a) * d.r, d.h + Math.sin(a * 2) * 1.2, Math.sin(a) * d.r - 2); b.rotation.y = -a + Math.PI / 2; const fl = Math.sin(t * 14 + d.ph) * .7; d.wl.rotation.z = fl; d.wr.rotation.z = -fl; });
+    const D = ms.doll; if (D) { D.head.rotation.y = Math.sin(t * .8) * .5; D.head.rotation.z = Math.sin(t * 1.3) * .06; D.inner.position.y = Math.sin(t * 2.2) * .04; D.lArm.rotation.x = Math.sin(t * 1.5) * .15; D.rArm.rotation.x = -Math.sin(t * 1.5) * .15; D.g.rotation.y = -0.4 + Math.sin(t * .4) * .25; }
+    const A = ms.avatar; if (A) { A.g.position.y = Math.abs(Math.sin(t * 3)) * .06; A.lArm.rotation.x = Math.sin(t * 2.4) * .3; A.rArm.rotation.x = -Math.sin(t * 2.4) * .3; A.g.rotation.y = 0.5 + Math.sin(t * .7) * .3; }
+    const ang = Math.sin(t * 0.12) * 0.5; ms.cam.position.set(Math.sin(ang) * 15, 3.3 + Math.sin(t * 0.2) * 0.4, Math.cos(ang) * 15 + 1.5); ms.cam.lookAt(0, 2.5, 3.2);
+    ren.render(ms.sc, ms.cam); return true;
+  }
   const project = (x, y, h = 0.5) => { const v = new T.Vector3(x / 16, h, y / 16).project(cam); return [(v.x * 0.5 + 0.5) * 320, (-v.y * 0.5 + 0.5) * 180]; };
   const show = on => { const c = document.getElementById('gl'); if (c) c.style.display = on ? 'block' : 'none'; };
-  return { init, draw, project, show, get ok() { return ok || (T && init()); } };
+  return { init, draw, drawMenu, project, show, get ok() { return ok || (T && init()); } };
 })();

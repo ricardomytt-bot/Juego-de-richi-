@@ -66,6 +66,8 @@ Añade `?fast` a la URL para partidas aceleradas (pruebas). El progreso del modo
 
 Juego de supervivencia (diseño en `docs/DISENO.md`). Abre `juego/index.html`. Se puede jugar en **3D** (Three.js, baja resolución) o en **2D** pixel art, y en dos estilos de personaje (A redondo, B clásico).
 
+**Menú:** fondo 3D (casa embrujada) con JUGAR, MODO HISTORIA (mapas con imágenes de la casa y niveles; selección de clase, estilo y vista), MULTIJUGADOR (sala de espera con código y perfiles) y AJUSTES. Las salas funcionan entre pestañas del mismo navegador; entre dispositivos distintos falta el servicio de conexión.
+
 **Estado actual:** prototipo de una persona contra un bot, en el mapa 1 (casa de 2 pisos).
 - **No lineal y aleatorio:** las 5 llaves y los objetos cambian de lugar en cada partida, con rutas alternativas (cofres, mecanismos que piden engranaje, cajas que piden palanca). Se comprobó que las 300 partidas generadas se pueden completar.
 - **Objetos para progresar:** engranaje (de aluminio), escalera (para cruzar el hueco del piso 2), fusible (para dar energía a la salida) y palanca. Salida: fusible + engranaje + código de 4 cifras en dos partes.
