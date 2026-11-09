@@ -17,7 +17,7 @@ function ring(g, x, y, r, col) { g.fillStyle = col; const n = Math.max(16, Math.
 
 // ---------------- estado de la partida ----------------
 let S = null;
-const SPEED = 62, HW = 4, HH = 3, EHW = 5, EHH = 4, RADAR_R = 130;
+const SPEED = 62, HW = 4, HH = 3, EHW = 5, EHH = 4, RADAR_R = 105;
 const tc = t => t * TS + TS / 2;
 const tileOf = v => Math.floor(v / TS);
 function solidTile(f, tx, ty) {
@@ -50,9 +50,11 @@ function newGame() {
   S = {
     W, t: 0, dur: FAST ? 60 : 360, blackoutAt: FAST ? 40 : 240, floors: W.f.map(f => Spr.floorCanvas(f)),
     p: { f: sp.f, x: tc(sp.x), y: tc(sp.y), dir: 'd', ang: Math.PI / 2, hp: 100, anim: 0, moving: false, keys: new Set(), mats: {}, items: ['mask', 'pizza'], charge: 100, beam: 0, beamHit: false, immune: 0, held: false, grab: 0, dead: false, escaped: false, code: null, charging: false, stairCd: 0 },
-    e: { f: es.f, x: tc(es.x), y: tc(es.y), dir: 'd', fx: 0, fy: 1, state: 'patrol', stun: 0, eat: 0, path: [], goal: null, repath: 0, radarCd: 7, ring: 0, anim: 0, lost: 0, wait: 0, last: null, stairCd: 0 },
-    pizza: null, blackout: false, fixed: false, overlay: null, msg: null, fade: 0, ended: null, intro: 1, introT: 0, banner: null, room: null, flick: 0, flickCd: rand(6, 12), cam: { cx: 0, cy: 0 }, shake: 0, hint: null, joy: null, stats: { chests: 0, flashes: 0, grabs: 0 },
+    e: { f: es.f, x: tc(es.x), y: tc(es.y), dir: 'd', fx: 0, fy: 1, state: 'patrol', stun: 0, eat: 0, path: [], goal: null, repath: 0, radarCd: 20, ring: 0, anim: 0, lost: 0, wait: -25, waitT: 1, calm: 0, last: null, stairCd: 0 },
+    pizza: null, blackout: false, fixed: false, overlay: null, msg: null, fade: 1.2, ended: null, intro: 0, introT: 0, banner: null, room: null, flick: 0, flickCd: rand(6, 12), cam: { cx: 0, cy: 0 }, shake: 0, hint: null, joy: null, stats: { chests: 0, flashes: 0, grabs: 0 },
   };
+  S.mini = W.f.map(F => Spr.mk(80, 48, g => { const cols = { '#': '#3a2a5a', '.': '#b88454', k: '#6ab8b0', g: '#8a8aa0', r: '#b04868' }; for (let j = 0; j < MH; j++) for (let i = 0; i < MW; i++) { const c = F.g[j][i]; if (c === ' ') continue; g.fillStyle = cols[c] || cols['.']; g.fillRect(i * 2, j * 2, 2, 2); } }));
+  S.parts = [];
   Sfx.horrorStart(); Sfx.setTension(0);
 }
 const say = (text, t = 2.4) => { S.msg = { text, t }; };
@@ -79,18 +81,18 @@ function hintFor(o) {
   } return null;
 }
 function useAction() {
-  const p = S.p, o = nearest(); if (!o) { say('NO HAY NADA CERCA'); return; }
+  const p = S.p, o = nearest(); if (!o) { 0; return; }
   switch (o.type) {
     case 'chest': case 'wardrobe': {
-      if (o.opened) return; o.opened = true; S.stats.chests++; Sfx.chest(); const parts = [];
+      if (o.opened) return; o.opened = true; S.stats.chests++; Sfx.chest(); for (let i = 0; i < 12; i++) S.parts.push({ x: (o.x + 0.5) * TS, y: o.y * TS + 6, vx: rand(-34, 34), vy: rand(-48, -14), g: 90, t: 0, life: rand(0.5, 0.9), col: ['#ffd23f', '#fff6a0', '#ff9ad0', '#8ae0ff'][i % 4], sz: 2, star: true }); const parts = [];
       for (const l of o.loot) { if (l.key) { p.keys.add(l.key); parts.push('LLAVE ' + KEY_NAMES[l.key]); } else { p.mats[l.mat] = (p.mats[l.mat] || 0) + l.n; parts.push(l.n + ' ' + MAT_NAMES[l.mat]); } }
       Sfx.pickup(); say(parts.join(', ')); break;
     }
-    case 'door': if (p.keys.has(o.id)) { o.removed = true; S.W.f[o.f].g[o.y][o.x] = '.'; Sfx.door(); say('PUERTA ABIERTA'); } else { Sfx.back && 0; say('NECESITAS LA LLAVE ' + KEY_NAMES[o.id]); } break;
-    case 'vault': if (o.opened) { say('CODIGO: ' + o.code); } else if (p.keys.has(3)) { o.opened = true; p.code = o.code; Sfx.door(); Sfx.pickup(); say('CODIGO: ' + o.code + ' - ¡RECUERDALO!', 5); } else say('NECESITAS LA LLAVE VERDE'); break;
-    case 'recharge': if (S.blackout) say('SIN LUZ: LA ESTACION NO FUNCIONA'); else if (p.charge >= 99.9) say('LINTERNA YA ESTA LLENA'); else { p.charging = true; say('RECARGANDO... NO TE MUEVAS'); } break;
-    case 'table': say('MESA DE CRAFTEO: PROXIMAMENTE'); break;
-    case 'computer': if (S.blackout && !S.fixed) { S.overlay = newPuzzle(); } else say(S.fixed ? 'LA LUZ YA FUNCIONA' : 'SE USA CUANDO SE VA LA LUZ'); break;
+    case 'door': if (p.keys.has(o.id)) { o.removed = true; S.W.f[o.f].g[o.y][o.x] = '.'; Sfx.door(); say('PUERTA ABIERTA'); } else { Sfx.back && 0; say('PUERTA CON LLAVE ' + KEY_NAMES[o.id]); } break;
+    case 'vault': if (o.opened) { say('CODIGO: ' + o.code); } else if (p.keys.has(3)) { o.opened = true; p.code = o.code; Sfx.door(); Sfx.pickup(); say('CODIGO: ' + o.code + ' - ¡RECUERDALO!', 5); } else say('BOVEDA CERRADA'); break;
+    case 'recharge': if (S.blackout) say('SIN ENERGIA'); else if (p.charge >= 99.9) say('LINTERNA LLENA'); else { p.charging = true; say('RECARGANDO...'); } break;
+    case 'table': say('PROXIMAMENTE'); break;
+    case 'computer': if (S.blackout && !S.fixed) { S.overlay = newPuzzle(); } else 0; break;
     case 'exit': S.overlay = { type: 'keypad', entered: '', shake: 0, o }; break;
     case 'stairs': {
       if (p.stairCd > 0) return; const to = o.to, l = S.W.land(to); p.f = to; p.x = tc(l.x); p.y = tc(l.y); p.stairCd = 0.8; S.fade = 0.5; Sfx.step(); break;
@@ -99,16 +101,16 @@ function useAction() {
 }
 function flashAction() {
   const p = S.p; if (p.beam > 0) return;
-  if (p.charge < 33) { say('SIN PILA: RECARGA EN EL ESTACIONAMIENTO'); return; }
+  if (p.charge < 33) { say('SIN PILA'); return; }
   p.charge -= 33.4; if (p.charge < 0.5) p.charge = 0; p.beam = 1.4; p.beamHit = false; S.stats.flashes++; Sfx.flash();
 }
 function itemAction() {
-  const p = S.p; if (!p.items.length) { say('NO TIENES OBJETOS'); return; }
+  const p = S.p; if (!p.items.length) { 0; return; }
   const it = p.items.shift();
-  if (it === 'mask') { p.immune = 10; say('MASCARA: INMUNE 10 SEGUNDOS'); Sfx.hiss(); }
+  if (it === 'mask') { p.immune = 10; 0; Sfx.hiss(); }
   else if (it === 'pizza') {
     let px = p.x + Math.cos(p.ang) * 44, py = p.y + Math.sin(p.ang) * 44; if (hits(p.f, px, py, 3, 3)) { px = p.x; py = p.y; }
-    S.pizza = { f: p.f, x: px, y: py, life: 25 }; say('LANZASTE LA PIZZA'); Sfx.blip();
+    S.pizza = { f: p.f, x: px, y: py, life: 25 }; 0; Sfx.blip();
   }
 }
 function mash() { const p = S.p; p.grab = Math.min(100, p.grab + 11); Sfx.mash(); }
@@ -132,7 +134,7 @@ function overlayInput(kind, v) {
     if (v === 'C') { ov.entered = ''; return; }
     if (ov.entered.length < 4) { ov.entered += v; Sfx.blip(); }
     if (ov.entered.length === 4) {
-      if (ov.entered === ov.o.code) { ov.o.escape = true; S.p.escaped = true; S.overlay = null; Sfx.door(); Sfx.win(); say('¡ABRISTE LA PUERTA!'); }
+      if (ov.entered === ov.o.code) { ov.o.escape = true; S.p.escaped = true; S.overlay = null; Sfx.door(); Sfx.win(); 0; }
       else { ov.shake = 0.5; ov.entered = ''; Sfx.hit(); }
     }
   } else if (ov.type === 'puzzle' && ov.phase === 'input') {
@@ -147,7 +149,7 @@ function updateOverlay(dt) {
   if (ov.type !== 'puzzle') return;
   if (ov.flashT > 0) ov.flashT -= dt; if (ov.fail > 0) ov.fail -= dt;
   if (ov.phase === 'show') { ov.t += dt; if (ov.fail <= 0 && ov.t > 0.9 * 3 + 1.0) { ov.phase = 'input'; ov.idx = 0; } }
-  else if (ov.phase === 'wait') { ov.wait -= dt; if (ov.wait <= 0) { S.overlay = null; S.blackout = false; S.fixed = true; Sfx.bell(); say('¡LUZ ARREGLADA!', 3); } }
+  else if (ov.phase === 'wait') { ov.wait -= dt; if (ov.wait <= 0) { S.overlay = null; S.blackout = false; S.fixed = true; Sfx.bell(); 0; } }
 }
 
 // ---------------- enemigo (bot) ----------------
@@ -165,15 +167,15 @@ function pickWaypoint() {
 }
 function enemySees() {
   const e = S.e, p = S.p; if (p.dead || p.escaped || p.immune > 0 || p.f !== e.f) return false;
-  const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy); if (d > 72) return false;
-  if (d < 22) return los(e.f, e.x, e.y, p.x, p.y);
+  const dx = p.x - e.x, dy = p.y - e.y, d = Math.hypot(dx, dy); if (d > 54) return false;
+  if (d < 17) return los(e.f, e.x, e.y, p.x, p.y);
   const a = Math.atan2(dy, dx), fa = Math.atan2(e.fy, e.fx);
-  return Math.abs(angDiff(a, fa)) < 0.96 && los(e.f, e.x, e.y, p.x, p.y);
+  return Math.abs(angDiff(a, fa)) < 0.75 && los(e.f, e.x, e.y, p.x, p.y);
 }
 function stunEnemy(sec) { const e = S.e; e.stun = Math.max(e.stun, sec); e.path = []; if (e.state === 'eat') e.state = 'patrol'; Sfx.hiss(); }
-function releaseGrab(imm) { const p = S.p, e = S.e; p.held = false; p.immune = Math.max(p.immune, imm); e.state = 'patrol'; e.path = []; e.goal = null; e.stun = Math.max(e.stun, 1.5); say('¡TE SOLTASTE!'); Sfx.flee(); }
+function releaseGrab(imm) { const p = S.p, e = S.e; p.held = false; p.immune = Math.max(p.immune, imm); e.state = 'patrol'; e.path = []; e.goal = null; e.stun = Math.max(e.stun, 3.5); e.calm = 16; e.wait = 0; e.waitT = 3; 0; Sfx.flee(); }
 function updateEnemy(dt) {
-  const e = S.e, p = S.p; e.anim += dt; if (e.stairCd > 0) e.stairCd -= dt;
+  const e = S.e, p = S.p; e.anim += dt; if (e.stairCd > 0) e.stairCd -= dt; e.calm = Math.max(0, e.calm - dt);
   if (e.state === 'grab') {
     e.x += (p.x - e.x) * Math.min(1, dt * 8); e.y += (p.y - 6 - e.y) * Math.min(1, dt * 8);
     p.hp -= 9 * dt;
@@ -186,9 +188,9 @@ function updateEnemy(dt) {
   // radar: cada pocos segundos lanza un círculo; si hay alguien cerca, va hacia allá
   e.radarCd -= dt;
   if (e.radarCd <= 0) {
-    e.radarCd = rand(8, 11); e.ring = 0.001; const same = p.f === e.f, d = same ? Math.hypot(p.x - e.x, p.y - e.y) : 999;
+    e.radarCd = rand(13, 18); e.ring = 0.001; const same = p.f === e.f, d = same ? Math.hypot(p.x - e.x, p.y - e.y) : 999;
     Sfx.radar(same ? clamp(1.1 - d / 260, 0.1, 1) : 0.08);
-    if (same && d < RADAR_R && !p.dead && !p.escaped && p.immune <= 0 && e.state !== 'chase') { e.last = { f: p.f, x: p.x, y: p.y }; e.state = 'investigate'; planTo(p.f, tileOf(p.x), tileOf(p.y)); }
+    if (same && d < RADAR_R && !p.dead && !p.escaped && p.immune <= 0 && e.state !== 'chase' && e.calm <= 0) { e.last = { f: p.f, x: p.x, y: p.y }; e.state = 'investigate'; planTo(p.f, tileOf(p.x), tileOf(p.y)); }
   }
   if (e.ring > 0) { e.ring += dt; if (e.ring > 1.2) e.ring = 0; }
   // pizza señuelo
@@ -202,18 +204,18 @@ function updateEnemy(dt) {
   if (e.state === 'lure' && !S.pizza) { e.state = 'patrol'; e.goal = null; }
   // visión
   const sees = enemySees();
-  if (sees && e.state !== 'chase' && e.state !== 'lure') { e.state = 'chase'; e.lost = 0; Sfx.warn(); }
+  if (sees && e.state !== 'chase' && e.state !== 'lure' && e.calm <= 0 && S.t > 30) { e.state = 'chase'; e.lost = 0; Sfx.warn(); }
   if (e.state === 'chase') {
     if (sees) { e.lost = 0; e.last = { f: p.f, x: p.x, y: p.y }; } else e.lost += dt;
-    if (e.lost > 4 || p.dead || p.escaped || p.immune > 0 && !sees && e.lost > 0.5) { e.state = 'investigate'; if (e.last) planTo(e.last.f, tileOf(e.last.x), tileOf(e.last.y)); e.lost = 0; }
+    if (e.lost > 2.2 || p.dead || p.escaped || p.immune > 0 && !sees && e.lost > 0.5) { e.state = 'investigate'; if (e.last) planTo(e.last.f, tileOf(e.last.x), tileOf(e.last.y)); e.lost = 0; e.calm = 10; }
     e.repath -= dt; if (e.repath <= 0 && !p.dead) { e.repath = 0.25; planTo(sees ? p.f : e.last ? e.last.f : e.f, tileOf(sees ? p.x : e.last ? e.last.x : e.x), tileOf(sees ? p.y : e.last ? e.last.y : e.y)); }
   }
   // atrapar
   if (p.f === e.f && !p.dead && !p.escaped && !p.held && p.immune <= 0 && Math.hypot(p.x - e.x, p.y - e.y) < 13 && (e.state === 'chase' || e.state === 'investigate' || e.state === 'patrol')) {
-    e.state = 'grab'; p.held = true; p.grab = 0; p.charging = false; S.overlay = null; S.stats.grabs++; Sfx.grab(); S.shake = 0.4; say('¡TE AGARRO! ¡TOCA LOS BOTONES!', 3); return;
+    e.state = 'grab'; p.held = true; p.grab = 0; p.charging = false; S.overlay = null; S.stats.grabs++; Sfx.grab(); S.shake = 0.4; 0; return;
   }
   // seguir camino
-  const spd = (e.state === 'chase' ? 54 : e.state === 'investigate' || e.state === 'lure' ? 42 : 34) * (S.blackout ? 1.15 : 1);
+  const spd = (e.state === 'chase' ? 45 : e.state === 'investigate' || e.state === 'lure' ? 34 : 27) * (S.blackout ? 1.15 : 1);
   if (e.path.length) {
     const [tx, ty] = e.path[0], dx = tc(tx) - e.x, dy = tc(ty) - e.y, d = Math.hypot(dx, dy);
     if (d < 2) e.path.shift();
@@ -223,7 +225,7 @@ function updateEnemy(dt) {
     if (e.goal && e.goal.f !== e.f && e.stairCd <= 0) { const to = e.goal.f, l = S.W.land(to); e.f = to; e.x = tc(l.x); e.y = tc(l.y); e.stairCd = 3; planTo(e.goal.f, e.goal.tx, e.goal.ty); }
     else if (e.state === 'investigate' || e.state === 'chase') { e.wait += dt; if (e.wait > 1.6) { e.wait = 0; e.state = 'patrol'; e.goal = null; } }
     else if (e.state === 'lure') { e.state = 'patrol'; }
-    else { e.wait += dt; if (e.wait > 0.8) { e.wait = 0; pickWaypoint(); } }
+    else { e.wait += dt; if (e.wait > e.waitT) { e.wait = 0; e.waitT = rand(3, 7); pickWaypoint(); } }
   }
 }
 
@@ -233,13 +235,14 @@ function update(dt) {
   const p = S.p, e = S.e;
   S.t += dt; S.shake = Math.max(0, S.shake - dt); S.fade = Math.max(0, S.fade - dt);
   if (S.msg) { S.msg.t -= dt; if (S.msg.t <= 0) S.msg = null; }
+  for (const q of S.parts) { q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += (q.g || 0) * dt; } S.parts = S.parts.filter(q => q.t < q.life);
   if (p.stairCd > 0) p.stairCd -= dt; if (p.immune > 0) p.immune -= dt;
-  if (!S.blackout && !S.fixed && S.t >= S.blackoutAt) { S.blackout = true; p.charging = false; Sfx.power(); say('¡SE FUE LA LUZ!', 4); }
+  if (!S.blackout && !S.fixed && S.t >= S.blackoutAt) { S.blackout = true; p.charging = false; Sfx.power(); 0; }
   const [vx, vy] = inputVec(), mag = Math.hypot(vx, vy);
   if (S.overlay && mag > 0.5) S.overlay = null;
   p.moving = false;
   if (!p.held && !p.dead && !p.escaped && !S.overlay && !S.ended) {
-    if (mag > 0.05) { move(p, vx * SPEED * dt, vy * SPEED * dt, HW, HH); p.moving = true; p.anim += dt * 9; p.ang = Math.atan2(vy, vx); p.dir = Math.abs(vx) > Math.abs(vy) ? (vx < 0 ? 'l' : 'r') : (vy < 0 ? 'u' : 'd'); if (p.charging) { p.charging = false; say('RECARGA CANCELADA'); } }
+    if (mag > 0.05) { move(p, vx * SPEED * dt, vy * SPEED * dt, HW, HH); p.moving = true; p.anim += dt * 9; p.dust = (p.dust || 0) - dt; if (p.dust <= 0) { p.dust = 0.17; S.parts.push({ x: p.x + rand(-2, 2), y: p.y + 2, vx: rand(-6, 6), vy: rand(-8, -3), t: 0, life: 0.5, col: '#d8c8b0', sz: 2, fade: 1 }); } p.ang = Math.atan2(vy, vx); p.dir = Math.abs(vx) > Math.abs(vy) ? (vx < 0 ? 'l' : 'r') : (vy < 0 ? 'u' : 'd'); if (p.charging) { p.charging = false; 0; } }
   }
   if (p.charging) {
     const st = S.W.f[p.f].objs.find(o => o.type === 'recharge');
@@ -248,7 +251,7 @@ function update(dt) {
   }
   if (p.beam > 0) {
     p.beam -= dt;
-    if (!p.beamHit && e.f === p.f) { const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy); if (d < 125 && Math.abs(angDiff(Math.atan2(dy, dx), p.ang)) < 0.52 && los(p.f, p.x, p.y, e.x, e.y)) { p.beamHit = true; if (e.state === 'grab') releaseGrab(1.5); stunEnemy(3); say('¡ATURDIDO 3 SEGUNDOS!', 1.6); } }
+    if (!p.beamHit && e.f === p.f) { const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy); if (d < 125 && Math.abs(angDiff(Math.atan2(dy, dx), p.ang)) < 0.52 && los(p.f, p.x, p.y, e.x, e.y)) { p.beamHit = true; if (e.state === 'grab') releaseGrab(1.5); stunEnemy(3); 0; } }
   }
   if (p.held) { /* forcejeo en updateEnemy */ }
   updateEnemy(dt); updateOverlay(dt);
@@ -256,49 +259,12 @@ function update(dt) {
     if (p.escaped) S.ended = { kind: 'escape', t: 0 }; else if (p.dead) S.ended = { kind: 'dead', t: 0 }; else if (S.t >= S.dur) S.ended = { kind: 'survive', t: 0 };
   } else { S.ended.t += dt; if (S.ended.t > (S.ended.kind === 'dead' ? 2.2 : 1.6)) { Sfx.setTension(0); setScene(End, S.ended.kind, S); } }
   const o = !S.overlay && !p.held ? nearest() : null; S.hint = o ? hintFor(o) : null;
-  // nombre de la habitación
-  const F = S.W.f[p.f], tx = tileOf(p.x), ty = tileOf(p.y), rm = F.rooms.find(r => tx >= r.x && tx < r.x + r.w && ty >= r.y && ty < r.y + r.h);
-  const rk = rm ? p.f + rm.name : null;
-  if (rk !== S.room) { S.room = rk; if (rm && ROOM_NAMES[rm.name]) S.banner = { title: ROOM_NAMES[rm.name][0], sub: ROOM_NAMES[rm.name][1], t: 2.6 }; }
-  if (S.banner) { S.banner.t -= dt; if (S.banner.t <= 0) S.banner = null; }
   // tensión de la música y parpadeo de luces
   const dist = e.f === p.f ? Math.hypot(e.x - p.x, e.y - p.y) : 999, prox = clamp(1 - dist / 170, 0, 1);
   Sfx.setTension(p.held ? 1 : Math.max(prox * 0.9, e.state === 'chase' ? 0.65 : 0, S.blackout ? 0.4 : 0));
   S.flickCd -= dt; if (S.flickCd <= 0) { S.flickCd = rand(7, 15); S.flick = 0.22; Sfx.light(); }
   if (S.flick > 0) S.flick -= dt;
 }
-const ROOM_NAMES = { sala: ['SALA', 'AQUI EMPIEZAS'], cocina: ['COCINA', ''], estudio: ['ESTUDIO', ''], boveda: ['BOVEDA', 'AQUI ESTA EL CODIGO'], estacionamiento: ['ESTACIONAMIENTO', 'AQUI RECARGAS LA LINTERNA'], comedor: ['COMEDOR', 'ESCALERAS HACIA EL PISO 2'], taller: ['TALLER', 'LA SALIDA NECESITA EL CODIGO'], pasillo: ['PASILLO', ''], 'cuarto A': ['CUARTO DE LA COMPUTADORA', 'ARREGLA LA LUZ AQUI'], 'cuarto B': ['CUARTO AZUL', ''], bano: ['BAÑO', ''], 'cuarto C': ['CUARTO INFANTIL', ''], biblioteca: ['BIBLIOTECA', ''], bodega: ['BODEGA', ''], atico: ['ATICO', ''] };
-
-// ---------- objetivo actual ----------
-function getObjective() {
-  const p = S.p, W = S.W;
-  const find = pred => { for (let f = 0; f < 2; f++) { const o = W.f[f].objs.find(pred); if (o) return o; } };
-  const door = id => find(o => o.type === 'door' && o.id === id), open = id => door(id).removed;
-  let o, text, col = '#ffd23f';
-  if (S.blackout && !S.fixed) { o = find(x => x.type === 'computer'); text = '¡SE FUE LA LUZ! ARREGLALA EN LA COMPUTADORA'; col = '#ff5a5a'; }
-  else if (!p.keys.has(1)) { o = find(x => x.type === 'chest' && x.loot.some(l => l.key === 1)); text = 'ABRE EL COFRE DE LA SALA: LLAVE ROJA'; col = KEY_COLORS[1]; }
-  else if (!open(1)) { o = door(1); text = 'ABRE LA PUERTA ROJA (FONDO DE LA COCINA)'; col = KEY_COLORS[1]; }
-  else if (!p.keys.has(2)) { o = find(x => x.type === 'wardrobe' && x.loot.some(l => l.key === 2)); text = 'ABRE EL ARMARIO DEL ESTUDIO: LLAVE AZUL'; col = KEY_COLORS[2]; }
-  else if (!open(2)) { o = door(2); text = 'ABRE LA PUERTA AZUL DEL PISO 2'; col = KEY_COLORS[2]; }
-  else if (!p.keys.has(3)) { o = find(x => x.type === 'chest' && x.loot.some(l => l.key === 3)); text = 'ABRE EL COFRE DEL CUARTO AZUL: LLAVE VERDE'; col = KEY_COLORS[3]; }
-  else if (!open(3)) { o = door(3); text = 'ABRE LA PUERTA VERDE (ESTUDIO)'; col = KEY_COLORS[3]; }
-  else if (!find(x => x.type === 'vault').opened) { o = find(x => x.type === 'vault'); text = 'ABRE LA BOVEDA: AHI ESTA EL CODIGO'; col = KEY_COLORS[3]; }
-  else { o = find(x => x.type === 'exit'); text = 'ESCAPA POR EL TALLER: ESCRIBE EL CODIGO'; col = '#3ae07a'; }
-  let tgt = o;
-  if (o.f !== p.f) { tgt = W.f[p.f].objs.find(x => x.type === 'stairs'); text = (o.f > p.f ? 'SUBE AL PISO 2. ' : 'BAJA AL PISO 1. ') + text; }
-  return { o, tgt, text, col };
-}
-function arrow(g, x, y, ang, col, sz = 7) {
-  const c = Math.cos(ang), s = Math.sin(ang);
-  for (const pad of [1.4, 0]) { g.fillStyle = pad ? '#000' : col; for (let dy = -sz - 3; dy <= sz + 3; dy++) for (let dx = -sz - 3; dx <= sz + 3; dx++) { const u = dx * c + dy * s, v = -dx * s + dy * c; const head = u >= -pad && u <= sz + pad && Math.abs(v) <= (sz - u) * 0.95 + pad, tail = u >= -sz * 0.9 - pad && u <= 0.5 + pad && Math.abs(v) <= 1.7 + pad; if (head || tail) g.fillRect(Math.round(x + dx), Math.round(y + dy), 1, 1); } }
-}
-function edgeArrow(g, wx, wy, col) {
-  const sx = wx - S.cam.cx, sy = wy - S.cam.cy;
-  if (sx > 10 && sx < 310 && sy > 70 && sy < 172) return false;
-  const dx = sx - 160, dy = sy - 121, k = Math.min(140 / Math.max(1, Math.abs(dx)), 44 / Math.max(1, Math.abs(dy)));
-  arrow(g, 160 + dx * k, 121 + dy * k, Math.atan2(dy, dx), col, 7); return true;
-}
-
 // ---------------- dibujo ----------------
 const DARK = []; for (let i = 0; i <= 20; i++) DARK.push('rgba(2,0,10,' + (i / 20).toFixed(2) + ')');
 function renderDark(g, cx, cy) { // solo durante el apagón: se ve oscuro pero visible, con luz cerca del jugador
@@ -333,23 +299,17 @@ function renderWorld(g) {
   S.cam.cx = cx; S.cam.cy = cy;
   g.save(); g.translate(-cx, -cy);
   g.drawImage(S.floors[p.f], 0, 0);
+  for (const o of S.W.f[p.f].objs) if (o.type === 'deco' && o.kind === 'lamp') { const lx = o.x * TS + 8, ly = o.y * TS + 8, fl = 0.05 + 0.03 * Math.sin(G.t * 9 + o.x * 3) + (Math.random() < 0.02 ? 0.05 : 0); E(g, lx, ly, 24, 17, 'rgba(255,210,120,' + fl.toFixed(3) + ')'); E(g, lx, ly, 13, 9, 'rgba(255,230,160,' + (fl * 1.3).toFixed(3) + ')'); }
   const st = { t: G.t, power: !S.blackout, charging: p.charging, blackout: S.blackout };
   for (const o of S.W.f[p.f].objs) if (!o.removed && o.type !== 'door') Spr.obj(g, o, st);
   const list = [];
   list.push({ y: p.y, d: () => { if (p.escaped) return; const sp = Spr.kid(p.dir, p.moving ? 1 + ((p.anim | 0) % 2) : 0, 0); g.globalAlpha = p.dead ? 0.35 : (p.immune > 0 && (G.t * 10 | 0) % 2 ? 0.5 : 1); g.drawImage(sp, Math.round(p.x - 12), Math.round(p.y - 28)); g.globalAlpha = 1; } });
-  if (e.f === p.f) list.push({ y: e.y, d: () => { const mood = e.stun > 0 || e.state === 'eat' ? 'stun' : (e.state === 'chase' || e.state === 'grab') ? 'angry' : 'calm'; const sp = Spr.doll(e.dir, e.path.length && e.stun <= 0 && e.state !== 'eat' ? 1 + ((e.anim * 6 | 0) % 2) : 0, mood); g.drawImage(sp, Math.round(e.x - 20), Math.round(e.y - 47)); if (e.stun > 0 || e.state === 'eat') for (let i = 0; i < 4; i++) { const a = G.t * 5 + i * 1.6; R(g, e.x + Math.cos(a) * 11 - 1, e.y - 52 + Math.sin(a) * 3, 3, 3, '#ffd23f'); } } });
+  if (e.f === p.f) list.push({ y: e.y, d: () => { const mood = e.stun > 0 || e.state === 'eat' ? 'stun' : (e.state === 'chase' || e.state === 'grab') ? 'angry' : 'calm'; const sp = Spr.doll(e.dir, e.path.length && e.stun <= 0 && e.state !== 'eat' ? 1 + ((e.anim * 6 | 0) % 2) : 0, mood); if (mood === 'angry') E(g, e.x, e.y + 1, 14 + Math.round(Math.sin(G.t * 10)), 5, 'rgba(255,40,70,0.25)'); g.drawImage(sp, Math.round(e.x - 20), Math.round(e.y - 47 + (e.path.length ? 0 : Math.sin(G.t * 2.5)))); if (e.stun > 0 || e.state === 'eat') for (let i = 0; i < 4; i++) { const a = G.t * 5 + i * 1.6; R(g, e.x + Math.cos(a) * 11 - 1, e.y - 52 + Math.sin(a) * 3, 3, 3, '#ffd23f'); } } });
   if (S.pizza && S.pizza.f === p.f) list.push({ y: S.pizza.y, d: () => { E(g, S.pizza.x, S.pizza.y, 5, 4, '#e0a040'); E(g, S.pizza.x, S.pizza.y, 4, 3, '#d04030'); R(g, S.pizza.x - 2, S.pizza.y - 1, 2, 1, '#ffe890'); R(g, S.pizza.x + 1, S.pizza.y, 2, 1, '#ffe890'); } });
   list.sort((a, b) => a.y - b.y).forEach(i => i.d());
+  for (const q of S.parts) { const k = 1 - q.t / q.life; g.globalAlpha = clamp(q.fade ? k * 0.7 : 1 - Math.pow(q.t / q.life, 3), 0, 1); g.fillStyle = q.col; if (q.star) { g.fillRect(Math.round(q.x) - 1, Math.round(q.y), 3, 1); g.fillRect(Math.round(q.x), Math.round(q.y) - 1, 1, 3); } else g.fillRect(Math.round(q.x), Math.round(q.y), q.sz, q.sz); } g.globalAlpha = 1;
   // destello de la linterna
   if (p.beam > 0) { const k = clamp(p.beam / 1.4, 0, 1); for (let wy = Math.floor((p.y - 130) / 3) * 3; wy < p.y + 130; wy += 3) for (let wx = Math.floor((p.x - 130) / 3) * 3; wx < p.x + 130; wx += 3) { const dx = wx - p.x, dy = wy - p.y, d2 = dx * dx + dy * dy; if (d2 < 130 * 130 && d2 > 16 && Math.abs(angDiff(Math.atan2(dy, dx), p.ang)) < 0.52 && los(p.f, p.x, p.y, wx, wy)) { g.fillStyle = 'rgba(255,252,210,' + (0.34 * k * (1 - Math.sqrt(d2) / 150)).toFixed(3) + ')'; g.fillRect(wx, wy, 3, 3); } } }
-  // marcadores: objetivo y objetos que se pueden abrir
-  const ob = getObjective();
-  for (const o of S.W.f[p.f].objs) {
-    if (o.removed) continue; const ox = (o.x + o.w / 2) * TS, oy = o.y * TS;
-    if (((o.type === 'chest' || o.type === 'wardrobe' || o.type === 'vault') && !o.opened)) { const tw = ((G.t * 3 + o.x) % 2) < 1; g.fillStyle = tw ? '#fff6a0' : '#ffd23f'; g.fillRect(ox + 4, oy - 2, 1, 3); g.fillRect(ox + 3, oy - 1, 3, 1); g.fillRect(ox - 6, oy + 2, 1, 1); }
-    if (o.type === 'door') { ring(g, ox, (o.y + 0.5) * TS, 11 + Math.sin(G.t * 4) * 1.5, KEY_COLORS[o.id]); ring(g, ox, (o.y + 0.5) * TS, 12 + Math.sin(G.t * 4) * 1.5, KEY_COLORS[o.id]); }
-  }
-  if (ob.tgt && ob.tgt.f === p.f) { const t = ob.tgt, tx = (t.x + t.w / 2) * TS, ty = t.y * TS - 6 - Math.abs(Math.sin(G.t * 4)) * 4; ring(g, tx, (t.y + t.h / 2) * TS, 13 + Math.sin(G.t * 5) * 2, ob.col); arrow(g, tx, ty - 6, Math.PI / 2, ob.col, 6); }
   g.restore();
   if (S.blackout) renderDark(g, cx, cy);
   renderFx(g);
@@ -383,29 +343,17 @@ function renderHud(g) {
   for (let i = 0; i < 3; i++) { const fill = clamp((p.charge - i * 33.34) / 33.34, 0, 1); R(g, 21 + i * 25, 18, 24, 8, '#2a2a10'); R(g, 21 + i * 25, 18, Math.round(24 * fill), 8, p.charging ? ((G.t * 8 | 0) % 2 ? '#ffe890' : '#ffd23f') : '#ffd23f'); if (fill > 0) R(g, 21 + i * 25, 18, Math.round(24 * fill), 2, 'rgba(255,255,255,0.4)'); }
   // reloj
   const mins = Math.floor(480 * clamp(S.t / S.dur, 0, 1)), hh = (22 * 60 + mins) / 60 % 24 | 0, mm = (22 * 60 + mins) % 60, h12 = hh % 12 === 0 ? 12 : hh % 12;
-  Txt.draw(g, h12 + ':' + String(mm).padStart(2, '0') + (hh >= 12 && hh < 24 ? ' PM' : ' AM'), 160, 4, { s: 2, align: 'c', color: S.blackout ? '#ff6060' : '#fff', outline: '#000' });
-  R(g, 110, 22, 100, 3, '#000'); R(g, 111, 23, Math.round(98 * clamp(S.t / S.dur, 0, 1)), 1, '#ffd23f');
-  Txt.draw(g, 'PISO ' + (p.f + 1), 316, 5, { align: 'r', color: '#c9a6ff', shadow: '#000' });
-  // inventario
-  let iy = 34; for (const k of Object.keys(p.mats)) if (p.mats[k] > 0) { Txt.draw(g, MAT_NAMES[k].slice(0, 3) + ' ' + p.mats[k], 4, iy, { color: '#d8d0ff', shadow: '#000' }); iy += 9; }
-  for (const k of p.keys) { R(g, 4 + (k - 1) * 12, iy + 2, 9, 5, KEY_COLORS[k]); R(g, 4 + (k - 1) * 12, iy + 2, 9, 1, '#fff'); }
-  if (p.immune > 0 && !p.held) Txt.draw(g, 'INMUNE ' + Math.ceil(p.immune), 160, 28, { align: 'c', color: '#3ae07a', shadow: '#000' });
-  // objetivo, progreso y flechas
-  const ob = getObjective(), olines = Txt.wrap(ob.text, 172), oh = 14 + olines.length * 9;
-  g.fillStyle = 'rgba(8,4,20,0.82)'; g.fillRect(70, 29, 184, oh); R(g, 70, 29, 184, 1, ob.col); R(g, 70, 29, 3, oh, ob.col);
-  Txt.draw(g, 'OBJETIVO', 78, 33, { color: ob.col }); olines.forEach((l, i) => Txt.draw(g, l, 78, 43 + i * 9, { color: '#fff' }));
-  [[1, 224], [2, 238], [3, 252]].forEach(([k, x]) => { const has = p.keys.has(k); R(g, x, 14, 12, 10, '#000'); R(g, x + 1, 15, 10, 8, has ? KEY_COLORS[k] : '#2a2440'); if (has) R(g, x + 3, 17, 6, 1, 'rgba(255,255,255,0.6)'); else Txt.draw(g, '?', x + 6, 16, { align: 'c', color: '#6a6090' }); });
-  R(g, 268, 14, 28, 10, '#000'); R(g, 269, 15, 26, 8, p.code ? '#3ae07a' : '#2a2440'); Txt.draw(g, p.code ? p.code : 'COD', 282, 16, { align: 'c', color: p.code ? '#06210f' : '#6a6090' });
-  R(g, 298, 14, 18, 10, '#000'); R(g, 299, 15, 16, 8, p.escaped ? '#3ae07a' : '#2a2440'); Txt.draw(g, 'SAL', 307, 16, { align: 'c', color: p.escaped ? '#06210f' : '#6a6090' });
-  if (!p.dead && !p.escaped) {
-    if (ob.tgt && ob.tgt.f === p.f) edgeArrow(g, (ob.tgt.x + ob.tgt.w / 2) * TS, (ob.tgt.y + ob.tgt.h / 2) * TS, ob.col);
-    if (e.f === p.f && Math.hypot(e.x - p.x, e.y - p.y) < 340 && e.state !== 'eat') edgeArrow(g, e.x, e.y, '#ff3a3a');
-  }
-  if (S.banner) { const b = S.banner, a = clamp(Math.min(b.t, 0.5) * 2, 0, 1), w = Math.max(Txt.w(b.title, 1), Txt.w(b.sub, 1)) + 24; g.globalAlpha = a; g.fillStyle = 'rgba(8,4,20,0.85)'; g.fillRect(160 - w / 2, 104, w, b.sub ? 24 : 15); R(g, 160 - w / 2, 104, w, 1, '#ffd23f'); Txt.draw(g, b.title, 160, 108, { align: 'c', color: '#ffd23f' }); if (b.sub) Txt.draw(g, b.sub, 160, 118, { align: 'c', color: '#c9c0ff' }); g.globalAlpha = 1; }
+  Txt.draw(g, h12 + ':' + String(mm).padStart(2, '0') + (hh >= 12 && hh < 24 ? ' PM' : ' AM'), 160, 5, { align: 'c', color: S.blackout ? '#ff6060' : '#fff', outline: '#000' });
+  R(g, 124, 15, 72, 3, '#000'); R(g, 125, 16, Math.round(70 * clamp(S.t / S.dur, 0, 1)), 1, '#ffd23f');
+  // mapa en la esquina
+  { const mx = 236, my = 3; R(g, mx - 1, my - 1, 82, 50, '#000'); R(g, mx, my, 80, 48, 'rgba(8,4,20,0.78)'); g.drawImage(S.mini[p.f], mx, my);
+    for (const o of S.W.f[p.f].objs) { if (o.type === 'door' && !o.removed) R(g, mx + o.x * 2, my + o.y * 2, 2, 2, KEY_COLORS[o.id]); else if (o.type === 'stairs') R(g, mx + o.x * 2, my + o.y * 2, 2, 2, '#ffd23f'); else if (o.type === 'exit') R(g, mx + o.x * 2, my + o.y * 2, 2, 2, '#3ae07a'); }
+    if ((G.t * 3 | 0) % 2) R(g, mx + tileOf(p.x) * 2 - 1, my + tileOf(p.y) * 2 - 1, 4, 4, '#fff'); R(g, mx + tileOf(p.x) * 2, my + tileOf(p.y) * 2, 2, 2, '#ff4a6a');
+    Txt.draw(g, String(p.f + 1), mx + 73, my + 40, { color: '#ffd23f', outline: '#000' }); }
   // joystick (siempre visible)
   const j = S.joy;
   if (j) { const dx = j.x - j.ox, dy = j.y - j.oy, l = Math.hypot(dx, dy), k = l > 24 ? 24 / l : 1; drawJoy(g, j.ox, j.oy, Math.round(j.ox + dx * k), Math.round(j.oy + dy * k), true); }
-  else { drawJoy(g, JOY_HOME.x, JOY_HOME.y, JOY_HOME.x, JOY_HOME.y, false); if (!G.touched || S.t < 6) Txt.draw(g, 'MOVER', JOY_HOME.x, JOY_HOME.y + 33, { align: 'c', color: '#fff', outline: '#000' }); }
+  else { drawJoy(g, JOY_HOME.x, JOY_HOME.y, JOY_HOME.x, JOY_HOME.y, false); }
   // botones
   const near = S.hint, canF = p.charge >= 33;
   circle(g, BTN.use.x, BTN.use.y, BTN.use.r, near ? '#ffd23f' : '#4a42a0', near ? '#fff' : '#8a7af0'); E(g, BTN.use.x - 8, BTN.use.y - 9, 7, 4, near ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.25)'); Txt.draw(g, 'USAR', BTN.use.x, BTN.use.y - 3, { s: 1, align: 'c', color: near ? '#1a0f1f' : '#fff' });
@@ -413,16 +361,13 @@ function renderHud(g) {
   const it = p.items[0];
   circle(g, BTN.item.x, BTN.item.y, BTN.item.r, it ? '#4a42a0' : '#2a2840', it ? '#8a7af0' : '#5a5080'); Txt.draw(g, it === 'mask' ? 'M' : it === 'pizza' ? 'P' : '-', BTN.item.x, BTN.item.y - 3, { align: 'c', color: it ? '#fff' : '#6a6a80' });
   Txt.draw(g, it ? (it === 'mask' ? 'MASCARA' : 'PIZZA') + (p.items.length > 1 ? ' +' + (p.items.length - 1) : '') : 'OBJETO', BTN.item.x, BTN.item.y + BTN.item.r + 2, { align: 'c', color: '#c9c0ff', shadow: '#000' });
-  if (S.hint) Txt.draw(g, 'USAR: ' + S.hint, 160, 158, { align: 'c', color: '#ffd23f', outline: '#000' });
-  if (S.msg) Txt.draw(g, S.msg.text, 160, 138, { align: 'c', color: '#fff', outline: '#000' });
+  if (S.msg) { g.globalAlpha = clamp(S.msg.t * 2, 0, 1); Txt.draw(g, S.msg.text, 160, 26, { align: 'c', color: '#fff', outline: '#000' }); g.globalAlpha = 1; }
   // forcejeo
   if (p.held) {
     panel(g, 100, 54, 120, 72, 'rgba(40,6,10,0.92)', '#e03030'); Txt.draw(g, '¡TE AGARRARON!', 160, 60, { align: 'c', color: '#ff6060' });
     circle(g, 160, 92, 17 + ((G.t * 10 | 0) % 2), '#e03030', '#fff'); Txt.draw(g, 'TOCA', 160, 89, { align: 'c', color: '#fff' });
     R(g, 110, 114, 100, 6, '#000'); R(g, 111, 115, Math.round(98 * p.grab / 100), 4, '#3ae07a');
   }
-  if (e.state === 'chase' && e.f === p.f && !p.held && (G.t * 4 | 0) % 2) Txt.draw(g, '¡TE VE!', 160, 94, { align: 'c', color: '#ff4040', outline: '#000' });
-  if (S.blackout) { Txt.draw(g, 'SIN LUZ', 316, 15, { align: 'r', color: '#ff6060', shadow: '#000' }); }
   // overlays
   const ov = S.overlay;
   if (ov) {
@@ -444,34 +389,48 @@ function renderHud(g) {
   }
   if (S.fade > 0) { g.fillStyle = 'rgba(0,0,0,' + clamp(S.fade * 2, 0, 1) + ')'; g.fillRect(0, 0, VW, VH); }
   if (S.ended) { const a = clamp(S.ended.t / (S.ended.kind === 'dead' ? 2 : 1.4), 0, 1); g.fillStyle = (S.ended.kind === 'dead' ? 'rgba(60,0,0,' : 'rgba(255,255,255,') + a * 0.9 + ')'; g.fillRect(0, 0, VW, VH); }
-  if (S.intro > 0) {
-    R(g, 0, 0, VW, VH, '#0c0820'); for (let i = 0; i < 40; i++) R(g, (i * 71) % 320, (i * 37) % 180, 1, 1, i % 4 ? '#fff' : '#ffd23f');
-    Txt.draw(g, 'MAPA 1', 160, 6, { align: 'c', color: '#c9a6ff' }); Txt.draw(g, 'CASA ABANDONADA', 160, 16, { s: 2, align: 'c', color: '#ffd23f', outline: '#2a1a30' });
-    panel(g, 6, 38, 82, 108, '#1a1038', '#e02a70'); g.drawImage(Spr.doll('d', (G.t * 3 | 0) % 2, 'calm'), 16, 44, 62, 81); Txt.draw(g, 'LA MUÑECA', 47, 128, { align: 'c', color: '#ff7ab8' }); Txt.draw(g, 'TE BUSCA', 47, 137, { align: 'c', color: '#fff' });
-    panel(g, 94, 38, 220, 108, '#1a1038', '#6a5ad0');
-    const steps = [['#4a42a0', 'J', 'MUEVETE: JOYSTICK (O TECLAS WASD)'], ['#ffd23f', 'U', 'USAR (O J): ABRE COFRES, PUERTAS Y ESCALERAS'], ['#4aa8ff', 'L', 'LINTERNA (O K): ATURDE A LA MUÑECA 3 S'], ['#3ae07a', '★', 'ESCAPA CON LLAVES Y CODIGO O SOBREVIVE HASTA LAS 6 AM']];
-    steps.forEach(([c, l, t], i) => { const y = 44 + i * 25; circle(g, 110, y + 9, 8, c, '#fff'); Txt.draw(g, l === '★' ? '!' : l, 110, y + 6, { align: 'c', color: '#1a0f1f' }); Txt.wrap(t, 186).forEach((ln, k) => Txt.draw(g, ln, 124, y + 3 + k * 9, { color: '#fff' })); });
-    Txt.draw(g, 'SIGUE LA FLECHA AMARILLA: TE DICE A DONDE IR', 160, 152, { align: 'c', color: '#ffd23f' });
-    if (S.introT > 0.6 && (G.t * 2 | 0) % 2 === 0) Txt.draw(g, 'TOCA PARA EMPEZAR', 160, 166, { s: 1, align: 'c', color: '#fff', outline: '#000' });
-  }
 }
 
 // ---------------- escenas ----------------
+const TITLE_BG = Spr.mk(VW, VH, g => {
+  const bands = ['#0a0620', '#100a2e', '#180e3c', '#22124c', '#2e175a', '#3e1c68', '#541f72', '#722478', '#94307e', '#b84a84'];
+  bands.forEach((c, i) => R(g, 0, i * 12, VW, 13, c));
+  for (let x = 0; x < VW; x++) { const h = 128 + Math.sin(x * 0.03) * 8 + Math.sin(x * 0.11) * 3; R(g, x, h, 1, VH - h, '#1a0c34'); }
+  for (let x = 0; x < VW; x++) { const h = 142 + Math.sin(x * 0.05 + 2) * 6; R(g, x, h, 1, VH - h, '#120824'); }
+  const tree = (x, y, sc) => { g.fillStyle = '#080414'; g.fillRect(x - sc, y - 40 * sc, 2 * sc, 40 * sc); [[-10, -34, -1], [8, -30, 1], [-8, -22, -1], [10, -16, 1]].forEach(([dx, dy, d]) => { for (let i = 0; i < 12; i++) g.fillRect(x + d * i * sc * 0.9, y + (dy - i * 0.5) * sc, sc * 1.4, sc * 1.4); }); };
+  tree(10, 150, 1.4); tree(150, 152, 1); tree(304, 150, 1.5);
+  R(g, 22, 82, 98, 70, '#0e081e');
+  for (let y = 56; y < 82; y++) { const w = Math.round((82 - y) * 1.9); R(g, 71 - w, y, w * 2, 1, '#0e081e'); }
+  R(g, 98, 60, 8, 22, '#0e081e'); R(g, 0, 150, 320, 30, '#07040f');
+  for (let x = 0; x < VW; x += 5) R(g, x, 148 - ((x * 7) % 5), 2, 6, '#07040f');
+  R(g, 62, 126, 18, 26, '#2a1a10'); R(g, 62, 126, 18, 2, '#1a0e08'); R(g, 76, 138, 2, 2, '#ffd23f');
+  [[200, 154], [232, 158], [262, 153]].forEach(([x, y]) => { R(g, x, y - 12, 12, 14, '#150b2a'); E(g, x + 6, y - 12, 6, 5, '#150b2a'); R(g, x + 5, y - 14, 2, 8, '#2a1a4a'); R(g, x + 2, y - 10, 8, 2, '#2a1a4a'); });
+});
+const BATS = Array.from({ length: 6 }, () => ({ x: Math.random() * 320, y: 14 + Math.random() * 70, sp: rand(16, 34), ph: Math.random() * 6, a: rand(4, 10) }));
+const TSTARS = Array.from({ length: 70 }, () => ({ x: Math.random() * 320, y: Math.random() * 100, ph: Math.random() * 6 }));
 const Title = {
   sel: 0, items: ['JUGAR (PRACTICA CON BOT)', 'CREAR SALA (PRONTO)', 'UNIRSE CON CODIGO (PRONTO)', 'SONIDO'],
   enter() { this.sel = 0; if (G.started) { Sfx.horrorStart(); Sfx.setTension(0); } },
   render(g) {
-    R(g, 0, 0, VW, VH, '#07061a'); for (let i = 0; i < 40; i++) R(g, (i * 71) % 320, (i * 37) % 100, 1, 1, i % 5 ? '#fff' : '#ffd23f');
-    E(g, 270, 34, 18, 18, '#fff6c8'); E(g, 277, 29, 15, 15, '#07061a'); E(g, 270, 34, 18, 18, '#fff6c8'); E(g, 278, 28, 15, 15, '#07061a');
-    R(g, 0, 150, 320, 30, '#0c0a1e'); g.drawImage(Spr.doll('d', (G.t * 3 | 0) % 2 ? 1 : 0, 'calm'), 22, 38, 80, 104);
-    Txt.draw(g, 'NOCHE DE', 210, 14, { s: 3, align: 'c', color: '#ffd23f', outline: '#1a0f1f' }); Txt.draw(g, 'JUGUETES', 210, 38, { s: 3, align: 'c', color: '#ff7ab8', outline: '#1a0f1f' });
-    Txt.draw(g, '(NOMBRE PROVISIONAL)', 210, 62, { align: 'c', color: '#8a7fe0' });
-    if (!G.started) { if ((G.t * 2 | 0) % 2 === 0) Txt.draw(g, 'TOCA O PULSA UNA TECLA', 210, 110, { align: 'c', color: '#fff', outline: '#000' }); return; }
-    this.items.forEach((it, i) => { const sel = i === this.sel; let l = it; if (i === 3) l = 'SONIDO: ' + (Sfx.muted ? 'NO' : 'SI'); Txt.draw(g, (sel ? '> ' : '') + l, 210, 86 + i * 14, { align: 'c', color: sel ? '#ffd23f' : i === 1 || i === 2 ? '#6a6090' : '#d8d0ff', shadow: '#000' }); });
+    const t = G.t; g.drawImage(TITLE_BG, 0, 0);
+    for (const s of TSTARS) { const a = 0.4 + 0.6 * Math.abs(Math.sin(t * 1.5 + s.ph)); g.fillStyle = 'rgba(255,250,220,' + a.toFixed(2) + ')'; g.fillRect(s.x | 0, s.y | 0, 1, 1); }
+    [[40, 0.05], [32, 0.07], [26, 0.1]].forEach(([r, a]) => E(g, 262, 28, r, r, 'rgba(255,240,190,' + (a + 0.02 * Math.sin(t * 1.2)).toFixed(3) + ')')); E(g, 262, 28, 19, 19, '#fff4c8'); E(g, 256, 22, 4, 4, '#e8d8a0'); E(g, 268, 33, 5, 5, '#e8d8a0'); E(g, 270, 20, 2, 2, '#e8d8a0');
+    for (let i = 0; i < 3; i++) { const x = ((t * (4 + i * 2) + i * 140) % 420) - 60, y = 20 + i * 24; E(g, x, y, 46, 6, 'rgba(26,12,52,0.85)'); E(g, x + 16, y - 3, 28, 6, 'rgba(26,12,52,0.85)'); E(g, x - 20, y + 1, 22, 4, 'rgba(26,12,52,0.85)'); }
+    const fl = k => (Math.sin(t * 7 + k * 5) > -0.7 || Math.random() < 0.3) ? 1 : 0.25;
+    [[30, 118, 0], [96, 118, 1], [32, 92, 2]].forEach(([x, y, k]) => { const a = fl(k); R(g, x, y, 14, 14, 'rgba(255,200,90,' + (0.9 * a).toFixed(2) + ')'); R(g, x + 6, y, 2, 14, '#0e081e'); R(g, x, y + 6, 14, 2, '#0e081e'); E(g, x + 7, y + 7, 14, 12, 'rgba(255,190,80,' + (0.06 * a).toFixed(3) + ')'); });
+    { const x = 96, y = 92; R(g, x, y, 14, 14, 'rgba(255,200,90,0.35)'); R(g, x + 6, y, 2, 14, '#0e081e'); E(g, x + 7, y + 8, 4, 5, '#1a0c2a'); R(g, x + 3, y + 1, 8, 3, '#d02a6a'); if ((t * 1.3) % 4 > 0.15) { R(g, x + 4, y + 7, 2, 2, '#ff2a2a'); R(g, x + 8, y + 7, 2, 2, '#ff2a2a'); } }
+    for (const b of BATS) { const x = ((b.x + t * b.sp) % 360) - 20, y = b.y + Math.sin(t * 2 + b.ph) * b.a, up = (t * 9 + b.ph | 0) % 2; g.fillStyle = '#05020c'; g.fillRect(x - 1, y, 3, 2); if (up) { g.fillRect(x - 5, y - 2, 4, 1); g.fillRect(x + 2, y - 2, 4, 1); g.fillRect(x - 7, y - 1, 2, 1); g.fillRect(x + 6, y - 1, 2, 1); } else { g.fillRect(x - 5, y + 1, 4, 1); g.fillRect(x + 2, y + 1, 4, 1); g.fillRect(x - 7, y + 2, 2, 1); g.fillRect(x + 6, y + 2, 2, 1); } }
+    for (let i = 0; i < 4; i++) { const x = ((t * (5 + i) + i * 90) % 440) - 60; E(g, x, 156 + i * 5, 80, 8, 'rgba(160,140,210,0.10)'); }
+    g.fillStyle = 'rgba(70,20,120,0.10)'; g.fillRect(0, 0, VW, VH); g.drawImage(VIG, 0, 0);
+    const w = Math.sin(t * 2) * 1.5, gl = Math.random() < 0.02 ? 2 : 0;
+    Txt.draw(g, 'NOCHE DE', 224 + gl, 46 + w, { s: 3, align: 'c', color: '#ffd23f', outline: '#1a0820', shadow: '#d0601a' });
+    Txt.draw(g, 'JUGUETES', 224 - gl, 74 - w, { s: 3, align: 'c', color: '#ff7ab8', outline: '#1a0820', shadow: '#a02060' });
+    if (!G.started) { if ((t * 2 | 0) % 2 === 0) Txt.draw(g, 'TOCA PARA JUGAR', 224, 128, { s: 1, align: 'c', color: '#fff', outline: '#000' }); return; }
+    this.items.forEach((it, i) => { const sel = i === this.sel; let l = it; if (i === 3) l = 'SONIDO: ' + (Sfx.muted ? 'NO' : 'SI'); const y = 108 + i * 14; if (sel) { g.fillStyle = 'rgba(255,210,63,0.18)'; g.fillRect(122, y - 3, 204, 13); R(g, 122, y - 3, 2, 13, '#ffd23f'); } Txt.draw(g, l, 224, y, { align: 'c', color: sel ? '#ffd23f' : i === 1 || i === 2 ? '#7a6aa8' : '#e8e0ff', outline: '#10081c' }); });
   },
   act(i) { Sfx.click(); if (i === 0) { newGame(); setScene(Play); } else if (i === 3) Sfx.toggleMute(); else say0(); },
   keydown(c) { if (!G.started) return; if (c === 'ArrowUp' || c === 'KeyW') this.sel = (this.sel + 3) % 4; if (c === 'ArrowDown' || c === 'KeyS') this.sel = (this.sel + 1) % 4; if (c === 'Enter' || c === 'Space') this.act(this.sel); },
-  pointerDown(id, x, y) { if (!G.started) return; for (let i = 0; i < 4; i++) if (y >= 82 + i * 14 && y < 96 + i * 14 && x > 90) { this.sel = i; this.act(i); } },
+  pointerDown(id, x, y) { if (!G.started) return; for (let i = 0; i < 4; i++) if (y >= 105 + i * 14 && y < 119 + i * 14 && x > 110) { this.sel = i; this.act(i); } },
 };
 function say0() { Sfx.back(); }
 
