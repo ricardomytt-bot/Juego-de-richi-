@@ -64,7 +64,7 @@ Añade `?fast` a la URL para partidas aceleradas (pruebas). El progreso del modo
 
 # 🧸 Noche de Juguetes (en desarrollo)
 
-Juego de supervivencia (diseño en `docs/DISENO.md`). Abre `juego/index.html`. Se puede jugar en **3D** (Three.js, baja resolución) o en **2D** pixel art, y en dos estilos de personaje (A redondo, B clásico).
+Juego de supervivencia (diseño en `docs/DISENO.md`). Abre `juego/index.html`. Se puede jugar en **primera persona** (alta calidad: texturas, sombras, techos, ventanas con luna), en **3D** desde arriba (Three.js, baja resolución) o en **2D** pixel art, y en dos estilos de personaje (A redondo, B clásico).
 
 **Menú:** fondo 3D (casa embrujada) con JUGAR, MODO HISTORIA (mapas con imágenes de la casa y niveles; selección de clase, estilo y vista), MULTIJUGADOR (sala de espera con código y perfiles) y AJUSTES. Las salas funcionan entre pestañas del mismo navegador; entre dispositivos distintos falta el servicio de conexión.
 

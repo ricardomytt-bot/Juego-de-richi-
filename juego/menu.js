@@ -33,6 +33,7 @@ const IC = {
   gear: (g, x, y, c) => icon(g, ['...XXX...', '.X.XXX.X.', '..XXXXX..', 'XXX...XXX', 'XXX...XXX', 'XXX...XXX', '..XXXXX..', '.X.XXX.X.', '...XXX...'], x, y, c),
   back: (g, x, y, c) => icon(g, ['...X.', '..XX.', '.XXXX', 'XXXXX', '.XXXX', '..XX.', '...X.'], x, y + 1, c),
   lock: (g, x, y, c) => icon(g, ['.XXX.', 'X...X', 'X...X', 'XXXXX', 'XXXXX', 'XXXXX'], x, y, c),
+  eye: (g, x, y, c) => icon(g, ['..XXXXX..', '.X.....X.', 'X..XXX..X', 'X.XXXXX.X', 'X..XXX..X', '.X.....X.', '..XXXXX..'], x, y + 1, c),
   crown: (g, x, y, c) => icon(g, ['X.X.X', 'XXXXX', 'XXXXX'], x, y, c),
 };
 
@@ -84,9 +85,10 @@ const Menu = {
     R(g, 14, 62, 120, 2, '#ffd23f'); R(g, 14, 65, 70, 1, '#ff7ab8');
     if (!G.started) { if ((t * 2 | 0) % 2 === 0) Txt.draw(g, 'TOCA PARA EMPEZAR', 14, 100, { s: 1, color: '#fff', outline: '#000' }); return; }
     const f = () => UI.foc.length === this.sel;
-    UI.btn(g, 14, 76, 142, 24, 'JUGAR', { sel: f(), primary: true, icon: IC.play, fn: () => this.quick() });
-    UI.btn(g, 14, 106, 142, 24, 'MODO HISTORIA', { sel: f(), icon: IC.book, fn: () => { setScene(Story); } });
-    UI.btn(g, 14, 136, 142, 24, 'MULTIJUGADOR', { sel: f(), icon: IC.people, fn: () => { setScene(MultiMenu); } });
+    UI.btn(g, 14, 72, 142, 21, 'JUGAR', { sel: f(), primary: true, icon: IC.play, fn: () => this.quick() });
+    UI.btn(g, 14, 97, 142, 21, 'MODO HISTORIA', { sel: f(), icon: IC.book, fn: () => { setScene(Story); } });
+    UI.btn(g, 14, 122, 142, 21, 'MULTIJUGADOR', { sel: f(), icon: IC.people, fn: () => { setScene(MultiMenu); } });
+    UI.btn(g, 14, 147, 142, 21, 'PRIMERA PERSONA', { sel: f(), sub: '', icon: IC.eye, fn: () => { CFG.view = 'FP'; saveCfg(); this.quick(); } });
     // ajustes
     const gsel = UI.foc.length === this.sel; UI.foc.push({ fn: () => setScene(Settings) }); UI.hits.push({ x: 290, y: 140, w: 24, h: 24, fn: () => { Sfx.click(); setScene(Settings); } });
     R(g, 292, 144, 24, 24, '#000'); R(g, 293, 145, 22, 22, gsel ? '#e8a020' : '#3a2a8a'); R(g, 293, 145, 22, 11, gsel ? '#ffe27a' : '#7a6ae0'); IC.gear(g, 299, 151, gsel ? '#2a1400' : '#fff');
@@ -173,8 +175,9 @@ const Story = {
     Txt.draw(g, 'ESTILO', 212, 47, { color: '#c9a6ff', outline: '#10081c' });
     for (const [k, x, l] of [['A', 212, 'REDONDO'], ['B', 262, 'CLASICO']]) { const on = CFG.style === k, K2 = Spr.KI[k]; R(g, x, 57, 48, 56, on ? '#ffd23f' : '#000'); R(g, x + 1, 58, 46, 54, on ? '#3a2a6a' : '#1c1436'); g.drawImage(Spr.kid('d', 0, cs, k), Math.round(x + 24 - K2.w), 100 - K2.fy * 2 + 8, K2.w * 2, K2.h * 2); Txt.draw(g, l, x + 24, 101, { align: 'c', color: on ? '#ffd23f' : '#9a8ab8' }); UI.hits.push({ x, y: 57, w: 48, h: 56, fn: () => { CFG.style = k; saveCfg(); Sfx.blip(); } }); }
     Txt.draw(g, 'VISTA', 212, 119, { color: '#c9a6ff', outline: '#10081c' });
-    UI.btn(g, 212, 129, 48, 14, '3D', { sel: CFG.view === '3D', small: true, focus: false, fn: () => { CFG.view = '3D'; saveCfg(); Sfx.blip(); } });
-    UI.btn(g, 262, 129, 48, 14, '2D', { sel: CFG.view === '2D', small: true, focus: false, fn: () => { CFG.view = '2D'; saveCfg(); Sfx.blip(); } });
+    UI.btn(g, 212, 129, 32, 14, '3D', { sel: CFG.view === '3D', small: true, focus: false, fn: () => { CFG.view = '3D'; saveCfg(); Sfx.blip(); } });
+    UI.btn(g, 246, 129, 32, 14, 'FP', { sel: CFG.view === 'FP', small: true, focus: false, fn: () => { CFG.view = 'FP'; saveCfg(); Sfx.blip(); } });
+    UI.btn(g, 280, 129, 32, 14, '2D', { sel: CFG.view === '2D', small: true, focus: false, fn: () => { CFG.view = '2D'; saveCfg(); Sfx.blip(); } });
     UI.btn(g, 212, 150, 100, 22, 'JUGAR', { sel: f(), primary: true, icon: IC.play, fn: () => this.play() });
     if (this.msgT > 0) { this.msgT -= 1 / 60; Txt.draw(g, this.msg, 160, 36, { align: 'c', color: '#ff9a9a', outline: '#10081c' }); }
   },
@@ -308,7 +311,7 @@ const Settings = {
     const f = () => UI.foc.length === this.sel; if (this.confirm > 0) this.confirm -= 1 / 60;
     R(g, 40, 32, 240, 140, 'rgba(8,4,24,0.88)'); R(g, 40, 32, 240, 1, '#6a5ad0');
     UI.btn(g, 56, 40, 208, 18, 'SONIDO: ' + (Sfx.muted ? 'NO' : 'SI'), { sel: f(), small: true, fn: () => { Sfx.toggleMute(); } });
-    UI.btn(g, 56, 62, 208, 18, 'VISTA: ' + CFG.view, { sel: f(), small: true, fn: () => { CFG.view = CFG.view === '3D' ? '2D' : '3D'; saveCfg(); Sfx.blip(); } });
+    UI.btn(g, 56, 62, 208, 18, 'VISTA: ' + (CFG.view === 'FP' ? '1RA PERSONA' : CFG.view), { sel: f(), small: true, fn: () => { CFG.view = CFG.view === '3D' ? 'FP' : CFG.view === 'FP' ? '2D' : '3D'; saveCfg(); Sfx.blip(); } });
     UI.btn(g, 56, 84, 208, 18, 'ESTILO: ' + (CFG.style === 'A' ? 'A REDONDO' : 'B CLASICO'), { sel: f(), small: true, fn: () => { CFG.style = CFG.style === 'A' ? 'B' : 'A'; saveCfg(); Sfx.blip(); } });
     UI.btn(g, 56, 106, 208, 18, 'MI NOMBRE: ' + SAVE.name, { sel: f(), small: true, fn: () => askText('TU NOMBRE DE JUGADOR', SAVE.name, 10, v => { if (v) { SAVE.name = v; persist(); } }) });
     UI.btn(g, 56, 128, 208, 18, this.confirm > 0 ? '¿SEGURO? PULSA OTRA VEZ' : 'BORRAR PROGRESO', { sel: f(), small: true, fn: () => this.wipe() });

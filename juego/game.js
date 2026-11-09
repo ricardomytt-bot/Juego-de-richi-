@@ -9,7 +9,8 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const rand = (a, b) => a + Math.random() * (b - a);
 const CFG = { cls: 0, level: 1, style: 'A', view: '3D' };
 try { Object.assign(CFG, JSON.parse(localStorage.getItem('nj_cfg') || '{}')); } catch (e) {}
-if (CFG.style !== 'A' && CFG.style !== 'B') CFG.style = 'A'; if (CFG.view !== '2D' && CFG.view !== '3D') CFG.view = '3D';
+if (CFG.style !== 'A' && CFG.style !== 'B') CFG.style = 'A'; if (CFG.view !== '2D' && CFG.view !== '3D' && CFG.view !== 'FP') CFG.view = '3D';
+const isFP = () => CFG.view === 'FP' && typeof RenderFP !== 'undefined' && RenderFP.ok;
 const SAVE = { adam: 0, unlocked: [0], maxLevel: 1, name: 'JUGADOR' + (10 + (Math.random() * 90 | 0)) };
 try { Object.assign(SAVE, JSON.parse(localStorage.getItem('nj_save') || '{}')); } catch (e) {}
 if (!Array.isArray(SAVE.unlocked) || !SAVE.unlocked.includes(0)) SAVE.unlocked = [0, ...(Array.isArray(SAVE.unlocked) ? SAVE.unlocked : [])];
@@ -18,7 +19,7 @@ CFG.cls = clamp(CFG.cls | 0, 0, CLASSES.length - 1); if (!SAVE.unlocked.includes
 const persist = () => { try { localStorage.setItem('nj_save', JSON.stringify(SAVE)); } catch (e) {} };
 const saveCfg = () => { try { localStorage.setItem('nj_cfg', JSON.stringify(CFG)); } catch (e) {} };
 const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
-function fit() { const s = Math.min(innerWidth / VW, innerHeight / VH), w = Math.floor(VW * s) + 'px', h = Math.floor(VH * s) + 'px'; for (const id of ['wrap', 'gl', 'c']) { const el = document.getElementById(id); if (el) { el.style.width = w; el.style.height = h; } } }
+function fit() { const s = Math.min(innerWidth / VW, innerHeight / VH), w = Math.floor(VW * s) + 'px', h = Math.floor(VH * s) + 'px'; for (const id of ['wrap', 'gl', 'fp', 'c']) { const el = document.getElementById(id); if (el) { el.style.width = w; el.style.height = h; } } }
 addEventListener('resize', fit); fit();
 function setScene(s, ...a) { G.scene = s; if (s.enter) s.enter(...a); }
 function panel(g, x, y, w, h, fill = '#14102a', border = '#4a3a8a') { R(g, x, y, w, h, '#000'); R(g, x + 1, y + 1, w - 2, h - 2, border); R(g, x + 2, y + 2, w - 4, h - 4, fill); }
@@ -63,7 +64,7 @@ function newGame(seed) {
   const sp = W.spawn, es = W.enemySpawn;
   S = {
     W, cl, df, t: 0, dur: FAST ? 60 : 360, blackoutAt: FAST ? 40 : df.blackout, floors: W.f.map(f => Spr.floorCanvas(f)),
-    p: { f: sp.f, x: tc(sp.x), y: tc(sp.y), dir: 'd', ang: Math.PI / 2, hp: cl.hp || 100, maxhp: cl.hp || 100, speed: SPEED * (cl.speed || 1), anim: 0, moving: false, keys: new Set(), mats: Object.assign({}, cl.mats), inv: Object.assign({}, cl.items), sel: 0, boost: 0, slow: 0, charge: 100, beam: 0, beamHit: false, immune: 0, held: false, grab: 0, dead: false, escaped: false, codeA: null, codeB: null, charging: false, stairCd: 0 },
+    p: { f: sp.f, x: tc(sp.x), y: tc(sp.y), dir: 'd', ang: Math.PI / 2, hp: cl.hp || 100, maxhp: cl.hp || 100, speed: SPEED * (cl.speed || 1), anim: 0, moving: false, keys: new Set(), mats: Object.assign({}, cl.mats), inv: Object.assign({}, cl.items), sel: 0, boost: 0, slow: 0, yaw: Math.PI / 2, pitch: 0, charge: 100, beam: 0, beamHit: false, immune: 0, held: false, grab: 0, dead: false, escaped: false, codeA: null, codeB: null, charging: false, stairCd: 0 },
     e: { f: es.f, x: tc(es.x), y: tc(es.y), dir: 'd', fx: 0, fy: 1, state: 'patrol', stun: 0, eat: 0, path: [], goal: null, repath: 0, radarCd: df.grace, ring: 0, anim: 0, lost: 0, wait: -df.grace, waitT: 1, calm: 0, last: null, stairCd: 0, blind: 0, slow: 0, dmgRed: 0, brk: 0 },
     lure: null, placed: [], ghosts: [], ghostT: rand(df.ghostEvery * 0.6, df.ghostEvery), scream: null, blackout: false, fixed: false, overlay: null, msg: null, fade: 1.2, ended: null, intro: 0, introT: 0, flick: 0, flickCd: rand(6, 12), cam: { cx: 0, cy: 0 }, shake: 0, hint: null, joy: null, hold: null, stats: { chests: 0, flashes: 0, grabs: 0, crafts: 0 },
   };
@@ -76,7 +77,8 @@ const say = (text, t = 2.4) => { S.msg = { text, t }; };
 // ---------------- jugador ----------------
 function inputVec() {
   let x = 0, y = 0; const k = G.keys;
-  if (k.KeyA || k.ArrowLeft) x -= 1; if (k.KeyD || k.ArrowRight) x += 1; if (k.KeyW || k.ArrowUp) y -= 1; if (k.KeyS || k.ArrowDown) y += 1;
+  const fp = CFG.view === 'FP';
+  if (k.KeyA || (!fp && k.ArrowLeft)) x -= 1; if (k.KeyD || (!fp && k.ArrowRight)) x += 1; if (k.KeyW || (!fp && k.ArrowUp)) y -= 1; if (k.KeyS || (!fp && k.ArrowDown)) y += 1;
   if (x || y) { const l = Math.hypot(x, y); return [x / l, y / l]; }
   if (S.joy) { const dx = (S.joy.x - S.joy.ox) / 22, dy = (S.joy.y - S.joy.oy) / 22, l = Math.hypot(dx, dy); if (l > 0.18) return [dx / Math.max(1, l), dy / Math.max(1, l)]; }
   return [0, 0];
@@ -88,7 +90,7 @@ const curItem = () => { const l = invList(); return l.length ? l[S.p.sel % l.len
 function cycleItem() { const l = invList(); if (l.length > 1) { S.p.sel = (S.p.sel + 1) % l.length; Sfx.blip(); } }
 function nearest() {
   const p = S.p; let best = null, bd = 17;
-  for (const o of S.W.f[p.f].objs) { if (o.type === 'deco' || o.removed) continue; const rx = clamp(p.x, o.x * TS, (o.x + o.w) * TS), ry = clamp(p.y, o.y * TS, (o.y + o.h) * TS), d = Math.hypot(rx - p.x, ry - p.y) + 6; if (d < bd) { bd = d; best = o; } }
+  for (const o of S.W.f[p.f].objs) { if (o.type === 'deco' || o.removed) continue; const rx = clamp(p.x, o.x * TS, (o.x + o.w) * TS), ry = clamp(p.y, o.y * TS, (o.y + o.h) * TS), dd = Math.hypot(rx - p.x, ry - p.y), cx = (o.x + o.w / 2) * TS, cy = (o.y + o.h / 2) * TS; if (isFP() && Math.abs(angDiff(Math.atan2(cy - p.y, cx - p.x), p.yaw)) > 1.0 && dd > 3) continue; const d = dd + 6; if (d < bd) { bd = d; best = o; } }
   return best;
 }
 function hintFor(o) {
@@ -339,8 +341,9 @@ function update(dt) {
   const [vx, vy] = inputVec(), mag = Math.hypot(vx, vy);
   if (S.overlay && mag > 0.5) closeOverlay();
   p.moving = false;
+  if (isFP()) { const k = G.keys; if (k.ArrowLeft) p.yaw -= 2.2 * dt; if (k.ArrowRight) p.yaw += 2.2 * dt; if (k.ArrowUp) p.pitch = clamp(p.pitch + 1.2 * dt, -0.8, 0.8); if (k.ArrowDown) p.pitch = clamp(p.pitch - 1.2 * dt, -0.8, 0.8); p.ang = p.yaw; }
   if (!p.held && !p.dead && !p.escaped && !S.overlay && !S.ended) {
-    if (mag > 0.05) { const sp = p.speed * (p.boost > 0 ? 1.45 : 1) * (p.slow > 0 ? 0.5 : 1); move(p, vx * sp * dt, vy * sp * dt, HW, HH); p.moving = true; p.anim += dt * 9; p.dust = (p.dust || 0) - dt; if (p.dust <= 0) { p.dust = 0.17; S.parts.push({ x: p.x + rand(-2, 2), y: p.y + 2, vx: rand(-6, 6), vy: rand(-8, -3), t: 0, life: 0.5, col: '#d8c8b0', sz: 2, fade: 1 }); } p.ang = Math.atan2(vy, vx); p.dir = Math.abs(vx) > Math.abs(vy) ? (vx < 0 ? 'l' : 'r') : (vy < 0 ? 'u' : 'd'); if (p.charging) { p.charging = false; 0; } }
+    if (mag > 0.05) { const sp = p.speed * (p.boost > 0 ? 1.45 : 1) * (p.slow > 0 ? 0.5 : 1); let mx = vx, my = vy; if (isFP()) { mx = Math.cos(p.yaw) * -vy - Math.sin(p.yaw) * vx; my = Math.sin(p.yaw) * -vy + Math.cos(p.yaw) * vx; } move(p, mx * sp * dt, my * sp * dt, HW, HH); p.moving = true; p.anim += dt * 9; p.dust = (p.dust || 0) - dt; if (p.dust <= 0) { p.dust = 0.17; S.parts.push({ x: p.x + rand(-2, 2), y: p.y + 2, vx: rand(-6, 6), vy: rand(-8, -3), t: 0, life: 0.5, col: '#d8c8b0', sz: 2, fade: 1 }); } if (!isFP()) p.ang = Math.atan2(vy, vx); p.dir = Math.abs(mx) > Math.abs(my) ? (mx < 0 ? 'l' : 'r') : (my < 0 ? 'u' : 'd'); if (p.charging) { p.charging = false; 0; } }
   }
   if (p.charging) {
     const st = S.W.f[p.f].objs.find(o => o.type === 'recharge');
@@ -386,11 +389,11 @@ function renderDark(g, cx, cy) { // solo durante el apagón: se ve oscuro pero v
 const VIG = Spr.mk(VW, VH, g => { for (let by = 0; by < VH; by += 4) for (let bx = 0; bx < VW; bx += 4) { const dx = (bx + 2 - 160) / 160, dy = (by + 2 - 90) / 90, d = Math.sqrt(dx * dx * 0.8 + dy * dy * 1.1), a = clamp((d - 0.55) / 0.75, 0, 1), q = Math.round(a * 6) / 6 * 0.62; if (q > 0.02) { g.fillStyle = 'rgba(8,0,24,' + q.toFixed(2) + ')'; g.fillRect(bx, by, 4, 4); } } });
 const VIGR = Spr.mk(VW, VH, g => { for (let by = 0; by < VH; by += 4) for (let bx = 0; bx < VW; bx += 4) { const dx = (bx + 2 - 160) / 160, dy = (by + 2 - 90) / 90, d = Math.sqrt(dx * dx * 0.8 + dy * dy * 1.1), a = clamp((d - 0.4) / 0.7, 0, 1), q = Math.round(a * 6) / 6 * 0.8; if (q > 0.02) { g.fillStyle = 'rgba(200,0,20,' + q.toFixed(2) + ')'; g.fillRect(bx, by, 4, 4); } } });
 const DUST = Array.from({ length: 34 }, () => ({ x: Math.random() * 320, y: Math.random() * 180, vx: rand(-6, 6), vy: rand(-5, 3), ph: Math.random() * 6, s: Math.random() < 0.25 ? 2 : 1 }));
-function renderFx(g) {
+function renderFx(g, fp) {
   const p = S.p, e = S.e;
-  g.fillStyle = CFG.style === 'A' ? 'rgba(70,20,120,0.12)' : 'rgba(30,10,60,0.05)'; g.fillRect(0, 0, VW, VH);
-  for (let i = 0; i < 4; i++) { const x = ((G.t * 7 + i * 110) % 460) - 70, y = 36 + i * 42 + Math.sin(G.t * 0.5 + i) * 8; E(g, x, y, 74, 11, 'rgba(210,200,255,0.05)'); E(g, x + 20, y + 4, 46, 7, 'rgba(210,200,255,0.05)'); }
-  for (const d of DUST) { const x = ((d.x + G.t * d.vx) % 320 + 320) % 320, y = ((d.y + G.t * d.vy) % 180 + 180) % 180; g.fillStyle = 'rgba(230,220,255,' + (0.25 + 0.2 * Math.sin(G.t * 2 + d.ph)).toFixed(2) + ')'; g.fillRect(x | 0, y | 0, d.s, d.s); }
+  if (!fp) { g.fillStyle = CFG.style === 'A' ? 'rgba(70,20,120,0.12)' : 'rgba(30,10,60,0.05)'; g.fillRect(0, 0, VW, VH); }
+  if (!fp) for (let i = 0; i < 4; i++) { const x = ((G.t * 7 + i * 110) % 460) - 70, y = 36 + i * 42 + Math.sin(G.t * 0.5 + i) * 8; E(g, x, y, 74, 11, 'rgba(210,200,255,0.05)'); E(g, x + 20, y + 4, 46, 7, 'rgba(210,200,255,0.05)'); }
+  if (!fp) for (const d of DUST) { const x = ((d.x + G.t * d.vx) % 320 + 320) % 320, y = ((d.y + G.t * d.vy) % 180 + 180) % 180; g.fillStyle = 'rgba(230,220,255,' + (0.25 + 0.2 * Math.sin(G.t * 2 + d.ph)).toFixed(2) + ')'; g.fillRect(x | 0, y | 0, d.s, d.s); }
   g.globalAlpha = 0.85 + 0.15 * Math.sin(G.t * 1.3); g.drawImage(VIG, 0, 0); g.globalAlpha = 1;
   const dist = e.f === p.f ? Math.hypot(e.x - p.x, e.y - p.y) : 999, prox = Math.max(clamp(1 - dist / 150, 0, 1), p.held ? 1 : 0);
   if (prox > 0.05 || e.state === 'chase' && e.f === p.f) { g.globalAlpha = clamp(prox * 0.9 + (e.state === 'chase' ? 0.15 : 0), 0, 1) * (0.55 + 0.45 * Math.sin(G.t * (5 + prox * 6))); g.drawImage(VIGR, 0, 0); g.globalAlpha = 1; }
@@ -468,7 +471,7 @@ function renderHud(g) {
   // mapa en la esquina
   { const mx = 236, my = 3; R(g, mx - 1, my - 1, 82, 50, '#000'); R(g, mx, my, 80, 48, 'rgba(8,4,20,0.78)'); g.drawImage(S.mini[p.f], mx, my);
     for (const o of S.W.f[p.f].objs) { if (o.type === 'door' && !o.removed) R(g, mx + o.x * 2, my + o.y * 2, 2, 2, KEY_COLORS[o.id]); else if (o.type === 'stairs') R(g, mx + o.x * 2, my + o.y * 2, 2, 2, '#ffd23f'); else if (o.type === 'exit') R(g, mx + o.x * 2, my + o.y * 2, 2, 2, '#3ae07a'); }
-    if ((G.t * 3 | 0) % 2) R(g, mx + tileOf(p.x) * 2 - 1, my + tileOf(p.y) * 2 - 1, 4, 4, '#fff'); R(g, mx + tileOf(p.x) * 2, my + tileOf(p.y) * 2, 2, 2, '#ff4a6a');
+    if ((G.t * 3 | 0) % 2) R(g, mx + tileOf(p.x) * 2 - 1, my + tileOf(p.y) * 2 - 1, 4, 4, '#fff'); R(g, mx + tileOf(p.x) * 2, my + tileOf(p.y) * 2, 2, 2, '#ff4a6a'); if (CFG.view === 'FP') { const ax = mx + tileOf(p.x) * 2 + 1 + Math.cos(p.yaw) * 5, ay = my + tileOf(p.y) * 2 + 1 + Math.sin(p.yaw) * 5; R(g, Math.round(ax), Math.round(ay), 2, 2, '#ffd23f'); }
     Txt.draw(g, String(p.f + 1), mx + 73, my + 40, { color: '#ffd23f', outline: '#000' }); }
   // joystick (siempre visible)
   const j = S.joy;
@@ -563,8 +566,14 @@ let Title = null;
 function say0() { Sfx.back(); }
 
 const Play = {
-  enter() { Render3D.show(CFG.view === '3D'); }, update(dt) { update(dt); },
+  enter() { Render3D.show(CFG.view === '3D'); if (typeof RenderFP !== 'undefined') RenderFP.show(CFG.view === 'FP'); }, update(dt) { update(dt); },
   render(g) {
+    if (isFP()) {
+      Render3D.show(false); RenderFP.show(true); g.clearRect(0, 0, VW, VH); RenderFP.draw(S); renderFx(g, true);
+      for (const q of S.parts) { const k = 1 - q.t / q.life, [sx, sy] = RenderFP.project(q.x, q.y, 0.3 + (q.star ? 0.7 : 0.1)); g.globalAlpha = clamp(q.fade ? k * 0.7 : 1 - Math.pow(q.t / q.life, 3), 0, 1); g.fillStyle = q.col; g.fillRect(Math.round(sx), Math.round(sy), 2, 2); } g.globalAlpha = 1;
+      renderHud(g); R(g, 159, 89, 2, 2, 'rgba(255,255,255,0.8)'); return;
+    }
+    RenderFP.show(false);
     if (CFG.view === '3D' && Render3D.ok) {
       Render3D.show(true); g.clearRect(0, 0, VW, VH); Render3D.draw(S); renderFx(g);
       for (const q of S.parts) { const k = 1 - q.t / q.life, [sx, sy] = Render3D.project(q.x, q.y, 0.4 + (q.star ? 0.6 : 0.1)); g.globalAlpha = clamp(q.fade ? k * 0.7 : 1 - Math.pow(q.t / q.life, 3), 0, 1); g.fillStyle = q.col; g.fillRect(Math.round(sx), Math.round(sy), q.star ? 2 : Math.max(1, q.sz - 1), q.star ? 2 : Math.max(1, q.sz - 1)); } g.globalAlpha = 1;
@@ -577,8 +586,8 @@ const Play = {
     if (c === 'Escape') { Sfx.setTension(0); if (typeof MPleave === 'function') MPleave(); setScene(Title); return; }
     if (c === 'KeyE' || c === 'KeyJ' || c === 'Space') press('use'); else if (c === 'KeyF' || c === 'KeyK') press('flash'); else if (c === 'KeyQ' || c === 'KeyL') press('item'); else if (c === 'KeyR' || c === 'Tab') cycleItem();
   },
-  pointerDown(id, x, y) {
-    G.touched = true;
+  pointerDown(id, x, y, type) {
+    G.touched = true; if (CFG.view === 'FP' && type === 'mouse' && !document.pointerLockElement && canvas.requestPointerLock) { try { canvas.requestPointerLock(); } catch (e) {} }
     if (S.intro > 0) { if (S.introT > 0.6) S.intro = 0; return; }
     if (S.overlay) {
       const ov = S.overlay;
@@ -589,10 +598,11 @@ const Play = {
     }
     for (const k in BTN) { const b = BTN[k]; if (Math.hypot(x - b.x, y - b.y) < b.r + 7) { if (k === 'item' && !S.p.held) { S.hold = { id, t: 0, fired: false }; return; } press(k); return; } }
     if (S.p.held) { mash(); return; }
+    if (CFG.view === 'FP' && (x >= 180 || type === 'mouse') && !(type === 'mouse' && x < 90 && y > 100)) { S.look = { id, x, y }; return; }
     if (x < 180 && y > 24) S.joy = { id, ox: clamp(x, 34, 150), oy: clamp(y, 64, 154), x, y };
   },
-  pointerMove(id, x, y) { if (S && S.joy && S.joy.id === id) { S.joy.x = x; S.joy.y = y; } },
-  pointerUp(id) { if (S && S.joy && S.joy.id === id) S.joy = null; if (S && S.hold && S.hold.id === id) { if (!S.hold.fired) press('item'); S.hold = null; } },
+  pointerMove(id, x, y) { if (S && S.joy && S.joy.id === id) { S.joy.x = x; S.joy.y = y; } if (S && S.look && S.look.id === id) { S.p.yaw += (x - S.look.x) * 0.012; S.p.pitch = clamp(S.p.pitch - (y - S.look.y) * 0.008, -0.8, 0.8); S.look.x = x; S.look.y = y; } },
+  pointerUp(id) { if (S && S.look && S.look.id === id) S.look = null; if (S && S.joy && S.joy.id === id) S.joy = null; if (S && S.hold && S.hold.id === id) { if (!S.hold.fired) press('item'); S.hold = null; } },
 };
 
 const End = {
@@ -628,7 +638,8 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => { G.keys[e.code] = false; });
 addEventListener('blur', () => { G.keys = {}; });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
-canvas.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !G.fullTried) { G.fullTried = true; goFull(); } const first = firstInput(); try { canvas.setPointerCapture(e.pointerId); } catch (x) {} if (first && G.scene === Title) return; const [x, y] = toLocal(e); G.scene.pointerDown && G.scene.pointerDown(e.pointerId, x, y); e.preventDefault(); });
+canvas.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !G.fullTried) { G.fullTried = true; goFull(); } const first = firstInput(); try { canvas.setPointerCapture(e.pointerId); } catch (x) {} if (first && G.scene === Title) return; const [x, y] = toLocal(e); G.scene.pointerDown && G.scene.pointerDown(e.pointerId, x, y, e.pointerType); e.preventDefault(); });
+addEventListener('mousemove', e => { if (document.pointerLockElement === canvas && S && G.scene === Play && CFG.view === 'FP') { S.p.yaw += e.movementX * 0.0025; S.p.pitch = clamp(S.p.pitch - e.movementY * 0.002, -0.8, 0.8); } });
 canvas.addEventListener('pointermove', e => { const [x, y] = toLocal(e); G.scene.pointerMove && G.scene.pointerMove(e.pointerId, x, y); });
 const up = e => { G.scene.pointerUp && G.scene.pointerUp(e.pointerId); };
 canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
