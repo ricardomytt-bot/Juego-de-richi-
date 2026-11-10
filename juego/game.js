@@ -19,10 +19,10 @@ CFG.cls = clamp(CFG.cls | 0, 0, CLASSES.length - 1); if (!SAVE.unlocked.includes
 const persist = () => { try { localStorage.setItem('nj_save', JSON.stringify(SAVE)); } catch (e) {} };
 const saveCfg = () => { try { localStorage.setItem('nj_cfg', JSON.stringify(CFG)); } catch (e) {} };
 const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
-function fit() { const s = Math.min(innerWidth / VW, innerHeight / VH), asp = (innerWidth / innerHeight) / (VW / VH), fill = asp > 0.8 && asp < 1.45; const w = fill ? innerWidth + 'px' : Math.floor(VW * s) + 'px', h = fill ? innerHeight + 'px' : Math.floor(VH * s) + 'px'; for (const id of ['wrap', 'gl', 'fp', 'c']) { const el = document.getElementById(id); if (el) { el.style.width = w; el.style.height = h; } } }
+function fit() { const s = Math.min(innerWidth / VW, innerHeight / VH), asp = (innerWidth / innerHeight) / (VW / VH), fill = (G.inFP && asp > 0.8 && asp < 1.8) || (asp > 0.8 && asp < 1.45); const w = fill ? innerWidth + 'px' : Math.floor(VW * s) + 'px', h = fill ? innerHeight + 'px' : Math.floor(VH * s) + 'px'; for (const id of ['wrap', 'gl', 'fp', 'c']) { const el = document.getElementById(id); if (el) { el.style.width = w; el.style.height = h; } } }
 addEventListener('resize', fit); fit();
 addEventListener('pointerdown', () => { try { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen && !/lowfp|nofs/.test(location.search)) d.requestFullscreen().then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }).catch(() => {}); } catch (e) {} }, { once: true });
-function setScene(s, ...a) { G.scene = s; if (s.enter) s.enter(...a); }
+function setScene(s, ...a) { G.scene = s; G.inFP = !!(s && s.name_ === 'play' && CFG.view === 'FP'); setTimeout(fit, 0); if (s.enter) s.enter(...a); }
 function panel(g, x, y, w, h, fill = '#14102a', border = '#4a3a8a') { R(g, x, y, w, h, '#000'); R(g, x + 1, y + 1, w - 2, h - 2, border); R(g, x + 2, y + 2, w - 4, h - 4, fill); }
 function circle(g, x, y, r, fill, border) { E(g, x, y, r + 1, r + 1, '#000'); E(g, x, y, r, r, border); E(g, x, y, r - 2, r - 2, fill); }
 function ring(g, x, y, r, col) { g.fillStyle = col; const n = Math.max(16, Math.round(r * 2.4)); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; g.fillRect(Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r), 1, 1); } }
@@ -353,7 +353,7 @@ function update(dt) {
   if (!S.blackout && !S.fixed && S.t >= S.blackoutAt) { S.blackout = true; p.charging = false; Sfx.power(); 0; }
   let [vx, vy] = inputVec();
   if (isFP()) { // movimiento propio de primera persona: el stick avanza/retrocede y GIRA suave; la vista se suaviza
-    if (JOYSRC) { const a = Math.abs(vx), t = Math.max(0, a - 0.22) / 0.78; if (!p.held && !S.overlay) p.yaw += Math.sign(vx) * t * t * 3.6 * dt; vx *= 0.3; }
+    if (JOYSRC) { const a = Math.abs(vx), t = Math.max(0, a - 0.22) / 0.78; vx *= 1; }
     const k = Math.min(1, dt * 9); FPV.sx += (vx - FPV.sx) * k; FPV.sy += (vy - FPV.sy) * k; if (Math.hypot(FPV.sx, FPV.sy) < 0.04 && !vx && !vy) { FPV.sx = FPV.sy = 0; } vx = FPV.sx; vy = FPV.sy;
   }
   const mag = Math.hypot(vx, vy);
@@ -584,6 +584,7 @@ let Title = null;
 function say0() { Sfx.back(); }
 
 const Play = {
+  name_: "play",
   enter() { Render3D.show(CFG.view === '3D'); if (typeof RenderFP !== 'undefined') RenderFP.show(CFG.view === 'FP'); }, update(dt) { update(dt); },
   render(g) {
     if (isFP()) {

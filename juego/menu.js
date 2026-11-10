@@ -45,6 +45,7 @@ function menuBackdrop(g, dim) {
 }
 function sideShade(g, w, a) { for (let i = 0; i < w / 4; i++) { g.fillStyle = 'rgba(8,4,24,' + (a * (1 - i / (w / 4))).toFixed(3) + ')'; g.fillRect(i * 4, 0, 4, VH); } }
 function chip(g, x, y) { // perfil: avatar, nombre y adamantium
+  UI.hits.push({ x, y, w: 92, h: 24, fn: () => { Sfx.click(); setScene(Profile); } });
   const KI = Spr.KI[CFG.style];
   R(g, x, y, 92, 24, '#000'); R(g, x + 1, y + 1, 90, 22, 'rgba(24,14,52,0.9)'); R(g, x + 1, y + 1, 90, 1, '#6a5ad0');
   g.drawImage(Spr.kid('d', 0, CFG.cls, CFG.style), x + 4, y + 22 - KI.fy - 1);
@@ -321,7 +322,28 @@ const Settings = {
   keydown(c) { UI.key(this, c); }, pointerDown(id, x, y) { UI.hit(x, y); },
 };
 
+const Profile = {
+  sel: 0,
+  enter() { this.sel = 0; }, back() { setScene(Menu); },
+  render(g) {
+    UI.reset(); menuBackdrop(g, 0.6); header(g, 'MI PERFIL', () => { Sfx.back(); this.back(); });
+    R(g, 40, 32, 240, 140, 'rgba(8,4,24,0.88)'); R(g, 40, 32, 240, 1, '#6a5ad0');
+    const KI = Spr.KI[CFG.style], im = Spr.kid('d', 0, CFG.cls, CFG.style); R(g, 52, 44, 64, 64, '#241c3a'); R(g, 52, 44, 64, 1, '#6a5ad0');
+    g.imageSmoothingEnabled = false; g.drawImage(im, 60, 48, im.width * 3, im.height * 3);
+    Txt.draw(g, SAVE.name, 128, 46, { s: 2, color: '#fff' });
+    g.drawImage(Spr.gem(), 128, 68, 7, 8); Txt.draw(g, 'ADAMANTIUM: ' + SAVE.adam, 140, 68, { color: '#e0b8ff' });
+    Txt.draw(g, 'CLASE: ' + CLASSES[CFG.cls].n, 128, 82, { color: '#ffd23f' });
+    Txt.draw(g, 'NIVEL MAXIMO: ' + SAVE.maxLevel + ' DE 10', 128, 94, { color: '#9ae0ff' });
+    Txt.draw(g, 'CLASES: ' + SAVE.unlocked.length + ' DE ' + CLASSES.length, 128, 106, { color: '#9aff9a' });
+    const f = () => UI.foc.length === this.sel;
+    UI.btn(g, 56, 118, 208, 16, 'CAMBIAR NOMBRE', { sel: f(), small: true, fn: () => askText('TU NOMBRE DE JUGADOR', SAVE.name, 10, v => { if (v) { SAVE.name = v; persist(); } }) });
+    UI.btn(g, 56, 138, 208, 16, 'ELEGIR CLASE', { sel: f(), small: true, fn: () => setScene(Story) });
+    UI.btn(g, 56, 156, 208, 14, 'VOLVER', { sel: f(), small: true, primary: true, fn: () => this.back() });
+  },
+  keydown(c) { UI.key(this, c); }, pointerDown(id, x, y) { UI.hit(x, y); },
+};
+
 // ---------------- arranque ----------------
 Title = Menu;
-window.__scenes.Title = Menu; window.__scenes.Menu = Menu; window.__scenes.Story = Story; window.__scenes.MultiMenu = MultiMenu; window.__scenes.Room = Room; window.__scenes.Settings = Settings; window.__Net = Net; window.__MP = () => MP;
+window.__scenes.Title = Menu; window.__scenes.Menu = Menu; window.__scenes.Story = Story; window.__scenes.MultiMenu = MultiMenu; window.__scenes.Room = Room; window.__scenes.Settings = Settings; window.__scenes.Profile = Profile; window.__Net = Net; window.__MP = () => MP;
 persist(); setScene(Menu); requestAnimationFrame(loop);

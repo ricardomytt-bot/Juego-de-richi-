@@ -285,9 +285,9 @@ const RenderFP = (() => {
   // ---------- dibujo ----------
   // calidad automática: si va lento, se apagan las sombras y baja la resolución
   const TPS = false; let camD = 3.3, lastT = 0, ema = 16, frames = 0, low = /lowfp/.test(location.search);
-  function lowQ() { low = true; ren.setSize(640, 360, false); ren.shadowMap.enabled = false; if (flash) flash.castShadow = false; if (scene) scene.traverse(o => { if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.needsUpdate = true; }); } }); }
+  function lowQ() { low = true; ren.setSize(640, Math.round(640 / (draw.asp || 1.78)), false); ren.shadowMap.enabled = false; if (flash) flash.castShadow = false; if (scene) scene.traverse(o => { if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.needsUpdate = true; }); } }); }
   function draw(S) {
-    if (!init()) return; const nowT = performance.now(); if (lastT) { ema += (Math.min(200, nowT - lastT) - ema) * 0.05; frames++; if (!low && frames > 150 && ema > 42) lowQ(); } lastT = nowT; if (low && !ren.__lowSet) { ren.__lowSet = true; ren.setSize(640, 360, false); ren.shadowMap.enabled = false; } if (!built || built.S !== S || built.cls !== CFG.cls) { build(S); } _S = S;
+    if (!init()) return; const asp = clampN(innerWidth / innerHeight, 1.2, 2.6); if (Math.abs(asp - (draw.asp || 0)) > 0.01) { draw.asp = asp; const W2 = low ? 640 : 960; ren.setSize(W2, Math.round(W2 / asp), false); cam.aspect = asp; cam.updateProjectionMatrix(); } const nowT = performance.now(); if (lastT) { ema += (Math.min(200, nowT - lastT) - ema) * 0.05; frames++; if (!low && frames > 150 && ema > 42) lowQ(); } lastT = nowT; if (low && !ren.__lowSet) { ren.__lowSet = true; ren.setSize(640, Math.round(640 / draw.asp), false); ren.shadowMap.enabled = false; } if (!built || built.S !== S || built.cls !== CFG.cls) { build(S); } _S = S;
     const p = S.p, e = S.e, t = G.t, px = p.x / 16, pz = p.y / 16, bo = S.blackout;
     built.floors.forEach((fg, i) => { fg.visible = i === p.f; });
     for (const d of built.doors) d.g.visible = !d.o.removed && d.o.f === p.f;
