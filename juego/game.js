@@ -19,8 +19,9 @@ CFG.cls = clamp(CFG.cls | 0, 0, CLASSES.length - 1); if (!SAVE.unlocked.includes
 const persist = () => { try { localStorage.setItem('nj_save', JSON.stringify(SAVE)); } catch (e) {} };
 const saveCfg = () => { try { localStorage.setItem('nj_cfg', JSON.stringify(CFG)); } catch (e) {} };
 const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
-function fit() { const s = Math.min(innerWidth / VW, innerHeight / VH), w = Math.floor(VW * s) + 'px', h = Math.floor(VH * s) + 'px'; for (const id of ['wrap', 'gl', 'fp', 'c']) { const el = document.getElementById(id); if (el) { el.style.width = w; el.style.height = h; } } }
+function fit() { const s = Math.min(innerWidth / VW, innerHeight / VH), asp = (innerWidth / innerHeight) / (VW / VH), fill = asp > 0.8 && asp < 1.45; const w = fill ? innerWidth + 'px' : Math.floor(VW * s) + 'px', h = fill ? innerHeight + 'px' : Math.floor(VH * s) + 'px'; for (const id of ['wrap', 'gl', 'fp', 'c']) { const el = document.getElementById(id); if (el) { el.style.width = w; el.style.height = h; } } }
 addEventListener('resize', fit); fit();
+addEventListener('pointerdown', () => { try { const d = document.documentElement; if (!document.fullscreenElement && d.requestFullscreen && !/lowfp|nofs/.test(location.search)) d.requestFullscreen().then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (e) {} }).catch(() => {}); } catch (e) {} }, { once: true });
 function setScene(s, ...a) { G.scene = s; if (s.enter) s.enter(...a); }
 function panel(g, x, y, w, h, fill = '#14102a', border = '#4a3a8a') { R(g, x, y, w, h, '#000'); R(g, x + 1, y + 1, w - 2, h - 2, border); R(g, x + 2, y + 2, w - 4, h - 4, fill); }
 function circle(g, x, y, r, fill, border) { E(g, x, y, r + 1, r + 1, '#000'); E(g, x, y, r, r, border); E(g, x, y, r - 2, r - 2, fill); }

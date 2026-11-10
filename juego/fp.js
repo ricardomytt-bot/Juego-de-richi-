@@ -250,7 +250,7 @@ const RenderFP = (() => {
       }
       scene.add(grp); built.floors.push(grp);
     }
-    player = { yaw: 0 }; doll = makeDoll(); scene.add(doll.g);
+    player = { yaw: 0 }; doll = makeDoll(); avatar = makeAvatar(); scene.add(avatar.g); scene.add(doll.g);
     for (let i = 0; i < 3; i++) { const gh = makeGhost(); gh.visible = false; scene.add(gh); ghosts.push(gh); }
     ring = new T.Mesh(new T.RingGeometry(0.92, 1, 48), new T.MeshBasicMaterial({ color: 0xff3c3c, transparent: true, opacity: 0.8, side: T.DoubleSide, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.06; ring.visible = false; scene.add(ring);
     // polvo flotante
@@ -264,12 +264,25 @@ const RenderFP = (() => {
     camPos = new T.Vector3(S.p.x / 16, 1.5, S.p.y / 16); lastF = S.p.f; built.cls = CFG.cls;
   }
 
+  let avatar = null;
+  function makeAvatar() {
+    const pal = Spr.PAL[CFG.cls % Spr.PAL.length], sk = M(pal.skin, { r: 0.6 }), sh = M(pal.shirt, { r: 0.85 }), pa = M('#2a3050', { r: 0.9 }), ha = M(pal.hair, { r: 0.8 }); const g = new T.Group(), inner = new T.Group(); g.add(inner);
+    const mkLeg = x => { const l = new T.Group(); l.add(box(0.15, 0.5, 0.17, pa, 0, -0.25, 0), box(0.17, 0.08, 0.24, '#1a1a22', 0, -0.52, 0.03)); l.position.set(x, 0.58, 0); inner.add(l); return l; };
+    const lL = mkLeg(-0.11), rL = mkLeg(0.11);
+    const mkArm = x => { const a = new T.Group(); a.add(box(0.12, 0.4, 0.13, sh, 0, -0.18, 0), sph(0.065, sk, 0, -0.42, 0)); a.position.set(x, 1.02, 0); inner.add(a); return a; };
+    const lA = mkArm(-0.26), rA = mkArm(0.26);
+    inner.add(box(0.4, 0.46, 0.24, sh, 0, 0.82, 0), box(0.41, 0.07, 0.25, pa, 0, 0.6, 0), sph(0.21, sk, 0, 1.2, 0), sph(0.215, ha, 0, 1.26, -0.03, 0.8, 0.95), box(0.03, 0.04, 0.02, '#111', -0.07, 1.2, 0.19), box(0.03, 0.04, 0.02, '#111', 0.07, 1.2, 0.19));
+    const hat = (typeof CLASSES !== 'undefined' && CLASSES[CFG.cls]) ? CLASSES[CFG.cls].hat : ''; if (hat) inner.add(cyl(0.23, 0.23, 0.08, M(CLASSES[CFG.cls].c || '#d8b028'), 0, 1.38, 0, 16));
+    const fl = new T.Group(); fl.add(cyl(0.035, 0.03, 0.22, M('#202028', { m: 'metal', r: 0.3 }), 0, 0, 0, 12), cyl(0.05, 0.04, 0.06, M('#d8b028', { m: 'metal', r: 0.3 }), 0, 0.13, 0, 12), cyl(0.045, 0.045, 0.01, emi('#fff6d0'), 0, 0.165, 0, 12)); fl.rotation.x = Math.PI / 2; fl.position.set(0, -0.42, 0.14); rA.add(fl); rA.rotation.x = -1.4;
+    g.traverse(m => { if (m.isMesh) { m.castShadow = true; } });
+    return { g, inner, lL, rL, lA, rA, ph: 0 };
+  }
   // ---------- dibujo ----------
   // calidad automática: si va lento, se apagan las sombras y baja la resolución
-  let lastT = 0, ema = 16, frames = 0, low = /lowfp/.test(location.search);
+  let camD = 3.3, lastT = 0, ema = 16, frames = 0, low = /lowfp/.test(location.search);
   function lowQ() { low = true; ren.setSize(640, 360, false); ren.shadowMap.enabled = false; if (flash) flash.castShadow = false; if (scene) scene.traverse(o => { if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.needsUpdate = true; }); } }); }
   function draw(S) {
-    if (!init()) return; const nowT = performance.now(); if (lastT) { ema += (Math.min(200, nowT - lastT) - ema) * 0.05; frames++; if (!low && frames > 150 && ema > 42) lowQ(); } lastT = nowT; if (low && !ren.__lowSet) { ren.__lowSet = true; ren.setSize(640, 360, false); ren.shadowMap.enabled = false; } if (!built || built.S !== S || built.cls !== CFG.cls) build(S); _S = S;
+    if (!init()) return; const nowT = performance.now(); if (lastT) { ema += (Math.min(200, nowT - lastT) - ema) * 0.05; frames++; if (!low && frames > 150 && ema > 42) lowQ(); } lastT = nowT; if (low && !ren.__lowSet) { ren.__lowSet = true; ren.setSize(640, 360, false); ren.shadowMap.enabled = false; } if (!built || built.S !== S || built.cls !== CFG.cls) { build(S); } _S = S;
     const p = S.p, e = S.e, t = G.t, px = p.x / 16, pz = p.y / 16, bo = S.blackout;
     built.floors.forEach((fg, i) => { fg.visible = i === p.f; });
     for (const d of built.doors) d.g.visible = !d.o.removed && d.o.f === p.f;
@@ -280,8 +293,16 @@ const RenderFP = (() => {
     if (p.dead) { eyeY = 0.45; roll = 0.9; pitch = -0.1; }
     if (p.held) { const dx = e.x / 16 - px, dz = e.y / 16 - pz, ty = Math.atan2(dz, dx); let d = ty - yaw; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; p.yaw += d * 0.2; yaw = p.yaw; pitch += (0.1 - pitch) * 0.1; eyeY -= 0.1; }
     const sh = S.shake > 0 ? S.shake * 0.12 : 0;
-    cam.position.set(px + (Math.random() - 0.5) * sh, eyeY, pz + (Math.random() - 0.5) * sh);
-    cam.rotation.order = 'YXZ'; cam.rotation.y = -yaw - Math.PI / 2; cam.rotation.x = pitch; cam.rotation.z = roll;
+    const cy = Math.cos(yaw), sy = Math.sin(yaw), solF = S.W.f[p.f].sol;
+    let dist = 3.3 - Math.max(0, pitch) * 1.2 + (p.moving ? 0 : 0); const camH = clampN(1.9 - pitch * 1.6, 0.7, 2.45);
+    // la cámara no atraviesa paredes
+    let ok2 = dist; for (let k = 0.4; k <= dist; k += 0.15) { const cx = px - cy * k - sy * 0.45 * Math.min(1, k / 1.2), cz = pz - sy * k + cy * 0.45 * Math.min(1, k / 1.2), tx = Math.floor(cx), tz = Math.floor(cz); if (!solF[tz] || solF[tz][tx] || solF[tz][tx] === undefined) { ok2 = Math.max(0.35, k - 0.3); break; } }
+    camD += (ok2 - camD) * (ok2 < camD ? 0.5 : 0.08); const sd = camD / dist, rx = 0.45 * Math.min(1, camD / 1.2);
+    cam.position.set(px - cy * camD - sy * rx + (Math.random() - 0.5) * sh, p.dead ? 1.2 : camH * (0.55 + 0.45 * sd), pz - sy * camD + cy * rx + (Math.random() - 0.5) * sh);
+    cam.up.set(0, 1, 0); cam.lookAt(px + cy * 4, p.dead ? 0.3 : 1.15 + pitch * 3.2, pz + sy * 4); cam.rotation.z += roll * 0.0;
+    // avatar del jugador
+    const A = avatar; A.g.position.set(px, 0, pz); A.g.rotation.y = -yaw + Math.PI / 2; A.g.visible = true;
+    if (p.moving) A.ph += 0.22; const sw = p.moving ? Math.sin(A.ph) * 0.7 : 0; A.lL.rotation.x = sw; A.rL.rotation.x = -sw; A.lA.rotation.x = p.held ? -0.6 : 0.5 * Math.sin(A.ph + 3) * (p.moving ? 1 : 0); A.rA.rotation.x = -1.4 + pitch * 0.6; A.inner.position.y = p.moving ? Math.abs(Math.sin(A.ph)) * 0.04 : Math.sin(t * 1.4) * 0.006; if (p.dead) { A.g.rotation.x = -1.4; A.g.position.y = 0.2; } else A.g.rotation.x = 0;
     // muñeca
     const D = doll; D.g.visible = e.f === p.f;
     if (D.g.visible) {
@@ -310,9 +331,9 @@ const RenderFP = (() => {
     amb.intensity += ((bo ? 0.1 : 0.55) - amb.intensity) * 0.1; hemi.intensity = bo ? 0.08 : 0.35; moonL.intensity = bo ? 0.1 : 0.35; scene.fog.density = bo ? 0.12 : 0.07;
     if (S.flick > 0) { amb.intensity *= 0.4; hemi.intensity *= 0.4; }
     const beam = p.beam > 0, ang = yaw, dirx = Math.cos(ang) * Math.cos(pitch), dirz = Math.sin(ang) * Math.cos(pitch), diry = Math.sin(pitch);
-    flash.position.set(px, eyeY - 0.1, pz); flash.target.position.set(px + dirx * 5, eyeY - 0.1 + diry * 5, pz + dirz * 5); flash.intensity = beam ? 9 * Math.min(1, p.beam / 0.35) : (bo ? 3.2 : 1.4); flash.angle = beam ? 0.6 : 0.5; flash.color.set(beam ? 0xffffff : 0xffe0a8);
+    flash.position.set(px + dirx * 0.3, 1.0, pz + dirz * 0.3); flash.target.position.set(px + dirx * 5, 1.0 + diry * 5, pz + dirz * 5); flash.intensity = beam ? 9 * Math.min(1, p.beam / 0.35) : (bo ? 3.2 : 1.4); flash.angle = beam ? 0.6 : 0.5; flash.color.set(beam ? 0xffffff : 0xffe0a8);
     vm.userData.beam.material.opacity = beam ? 0.18 * Math.min(1, p.beam / 0.35) : 0; vm.userData.fl.children[2].material = emi(beam ? '#ffffff' : '#ffe6a0');
-    vm.position.y = -0.25 + (p.moving ? Math.sin(bob * 1.9) * 0.012 : Math.sin(t * 1.5) * 0.004); vm.position.x = 0.27 + (p.moving ? Math.cos(bob * 0.95) * 0.012 : 0); vm.rotation.x = p.boost > 0 ? -0.08 : 0; vm.visible = !p.dead;
+    vm.position.y = -0.25 + (p.moving ? Math.sin(bob * 1.9) * 0.012 : Math.sin(t * 1.5) * 0.004); vm.position.x = 0.27 + (p.moving ? Math.cos(bob * 0.95) * 0.012 : 0); vm.rotation.x = p.boost > 0 ? -0.08 : 0; vm.visible = false;
     // luces de lámparas más cercanas
     const cands = lampSources.filter(l => l.f === p.f).map(l => ({ l, d: Math.hypot(l.wx - px, l.wz - pz) })).sort((a, b) => a.d - b.d);
     poolL.forEach((pl, i) => { const c = cands[i]; if (!c || c.d > 14) { pl.intensity = 0; return; } const fl2 = 0.88 + Math.sin(t * 9 + c.l.wx * 3) * 0.08 + (Math.random() < 0.02 ? 0.2 : 0); pl.position.set(c.l.wx, c.l.ceil ? WALLH - 0.5 : 1.5, c.l.wz); pl.intensity = (bo ? 0.08 : c.l.base * 1.4) * fl2; pl.color.set(c.l.ceil ? 0xffe0a0 : 0xffc070); });
