@@ -180,6 +180,41 @@ const Spr = (() => {
     return cache[k] = mk(22, 30, g => { const w = fr % 2; E(g, 11, 26, 7, 2, 'rgba(0,0,0,0.18)'); g.globalAlpha = 0.95; E(g, 11, 10, 9, 9, '#e8ecff'); R(g, 2, 10, 18, 12, '#e8ecff'); for (let i = 0; i < 5; i++) { R(g, 2 + i * 4, 22, 4, 3 + ((i + w) % 2) * 3, '#e8ecff'); } R(g, 3, 6, 4, 2, '#fff'); g.globalAlpha = 1;
       E(g, 8, 11, 2, 3, '#15102a'); E(g, 14, 11, 2, 3, '#15102a'); R(g, 8, 10, 1, 1, '#ff4a6a'); R(g, 14, 10, 1, 1, '#ff4a6a'); E(g, 11, 17, 2, 3 + w, '#15102a'); R(g, 0, 12, 3, 7, '#d0d6f0'); R(g, 19, 12, 3, 7, '#d0d6f0'); }); }
   function gemSpr() { return cache.gem || (cache.gem = mk(12, 14, g => { const c = '#b46aff'; R(g, 4, 0, 4, 1, OL); R(g, 2, 1, 8, 1, OL); R(g, 0, 3, 12, 1, OL); R(g, 2, 4, 8, 8, OL); R(g, 4, 12, 4, 1, OL); R(g, 5, 13, 2, 1, OL); R(g, 4, 1, 4, 2, '#e0b8ff'); R(g, 1, 3, 10, 2, c); R(g, 3, 5, 6, 6, c); R(g, 3, 5, 2, 4, '#e0b8ff'); R(g, 7, 6, 2, 5, '#7a3ac8'); R(g, 5, 11, 2, 1, '#7a3ac8'); })); }
+  // ================= ÍCONOS (12x12) de materiales y objetos =================
+  const ICON_DRAW = {
+    chatarra: g => { E(g, 6, 6, 5, 5, OL); E(g, 6, 6, 4, 4, '#9aa0b4'); R(g, 5, 0, 2, 2, '#9aa0b4'); R(g, 5, 10, 2, 2, '#9aa0b4'); R(g, 0, 5, 2, 2, '#9aa0b4'); R(g, 10, 5, 2, 2, '#9aa0b4'); E(g, 6, 6, 2, 2, OL); E(g, 6, 6, 1, 1, '#2a2a38'); R(g, 3, 3, 2, 1, '#e0e4f4'); },
+    cuerda: g => { E(g, 6, 6, 5, 5, OL); E(g, 6, 6, 4, 4, '#d8b878'); E(g, 6, 6, 2, 2, OL); E(g, 6, 6, 1, 1, '#8a6a38'); R(g, 3, 3, 3, 1, '#fff0c0'); R(g, 2, 6, 1, 1, '#a8884a'); R(g, 9, 5, 1, 2, '#a8884a'); R(g, 9, 9, 3, 1, '#d8b878'); R(g, 11, 10, 1, 2, '#d8b878'); },
+    pilas: g => { R(g, 3, 1, 6, 11, OL); R(g, 4, 2, 4, 9, '#ffd23f'); R(g, 4, 0, 4, 2, OL); R(g, 5, 0, 2, 2, '#aab0c0'); R(g, 4, 8, 4, 2, '#d0601a'); R(g, 4, 2, 1, 6, '#fff6a0'); R(g, 5, 4, 3, 1, OL); R(g, 6, 3, 1, 3, OL); },
+    tela: g => { R(g, 1, 2, 10, 9, OL); R(g, 2, 3, 8, 7, '#e86a9a'); R(g, 2, 5, 8, 1, '#f89aba'); R(g, 2, 7, 8, 1, '#f89aba'); R(g, 7, 3, 1, 7, '#b84a7a'); R(g, 3, 9, 1, 1, OL); R(g, 5, 9, 1, 1, OL); R(g, 2, 3, 8, 1, '#ffc0d4'); },
+    madera: g => { R(g, 0, 3, 12, 7, OL); R(g, 1, 4, 10, 5, '#b07a44'); R(g, 2, 5, 7, 1, '#8a5a2a'); R(g, 4, 7, 6, 1, '#8a5a2a'); R(g, 1, 4, 10, 1, '#d8a468'); E(g, 2, 6, 1, 1, '#6a4020'); R(g, 10, 4, 1, 5, '#8a5a2a'); },
+    aluminio: g => { R(g, 1, 2, 10, 8, OL); R(g, 2, 3, 8, 6, '#dfe6f4'); R(g, 2, 3, 8, 2, '#ffffff'); R(g, 2, 7, 8, 1, '#8a94a8'); R(g, 8, 9, 3, 3, OL); R(g, 8, 9, 3, 2, '#c8d0e4'); R(g, 1, 2, 1, 8, '#b0bacc'); },
+    lente: g => { E(g, 6, 6, 5, 5, OL); E(g, 6, 6, 4, 4, '#3a4a6a'); E(g, 6, 6, 3, 3, '#6ac8ff'); R(g, 4, 4, 2, 2, '#ffffff'); R(g, 7, 7, 1, 1, '#a8e8ff'); },
+    circuito: g => { R(g, 1, 1, 10, 10, OL); R(g, 2, 2, 8, 8, '#2a7a4a'); R(g, 4, 4, 4, 4, '#14141a'); for (const [x, y] of [[0, 3], [0, 6], [0, 8], [11, 3], [11, 6], [11, 8], [3, 0], [6, 0], [8, 0], [3, 11], [6, 11], [8, 11]]) R(g, x, y, 1, 1, '#ffd23f'); R(g, 2, 3, 2, 1, '#3ae07a'); R(g, 8, 8, 2, 1, '#3ae07a'); R(g, 6, 2, 1, 2, '#3ae07a'); },
+    aceite: g => { R(g, 4, 0, 4, 2, OL); R(g, 5, 0, 2, 2, '#c04040'); R(g, 3, 2, 6, 10, OL); R(g, 4, 3, 4, 8, '#c8a830'); R(g, 4, 3, 1, 6, '#fff0a0'); R(g, 5, 6, 3, 3, '#2a2a2a'); R(g, 6, 7, 1, 1, '#c8a830'); },
+    mascara: g => { E(g, 6, 6, 5, 5, OL); E(g, 6, 6, 4, 4, '#f0f0f8'); R(g, 3, 5, 2, 2, '#222'); R(g, 7, 5, 2, 2, '#222'); R(g, 4, 8, 4, 1, '#c04050'); R(g, 0, 5, 1, 2, '#3a3a58'); R(g, 11, 5, 1, 2, '#3a3a58'); },
+    taser: g => { R(g, 1, 3, 8, 5, OL); R(g, 2, 4, 6, 3, '#4aa8ff'); R(g, 2, 7, 3, 5, OL); R(g, 3, 7, 1, 4, '#2a5a9a'); R(g, 9, 3, 3, 1, '#ddd'); R(g, 9, 7, 3, 1, '#ddd'); R(g, 9, 5, 3, 1, '#ffd23f'); R(g, 10, 4, 1, 3, '#fff6a0'); },
+    petardos: g => { for (const [x, h, c] of [[1, 8, '#ff8a3a'], [5, 7, '#e86a1a'], [9, 8, '#ff8a3a']]) { R(g, x, 4 + (8 - h), 2, h, OL); R(g, x, 5 + (8 - h), 2, h - 2, c); R(g, x, 1 + (8 - h), 1, 3, '#ffd23f'); } },
+    barricada: g => { R(g, 0, 1, 12, 3, OL); R(g, 1, 2, 10, 1, '#b07a44'); R(g, 0, 5, 12, 3, OL); R(g, 1, 6, 10, 1, '#9a6a38'); R(g, 0, 9, 12, 3, OL); R(g, 1, 10, 10, 1, '#b07a44'); R(g, 1, 0, 2, 12, OL); R(g, 1, 0, 1, 12, '#6a4020'); R(g, 9, 0, 2, 12, OL); R(g, 10, 0, 1, 12, '#6a4020'); },
+    trampa: g => { E(g, 6, 6, 5, 5, OL); E(g, 6, 6, 4, 4, '#c8a060'); g.clearRect(4, 4, 4, 4); E(g, 6, 6, 1, 1, OL); R(g, 0, 5, 2, 1, '#e8d098'); R(g, 10, 6, 2, 1, '#e8d098'); R(g, 5, 0, 1, 2, '#e8d098'); R(g, 6, 10, 1, 2, '#e8d098'); },
+    musica: g => { R(g, 1, 4, 10, 8, OL); R(g, 2, 5, 8, 6, '#b05ac0'); R(g, 2, 5, 8, 1, '#d890e8'); R(g, 6, 0, 1, 5, '#ffd23f'); R(g, 6, 0, 3, 1, '#ffd23f'); E(g, 5, 5, 1, 1, '#ffd23f'); R(g, 4, 8, 4, 1, '#ffd23f'); },
+    mancha: g => { E(g, 6, 7, 5, 3, OL); E(g, 6, 7, 4, 2, '#1a1608'); R(g, 3, 6, 3, 1, '#9a9a40'); R(g, 7, 8, 2, 1, '#6a6a30'); R(g, 5, 2, 2, 3, OL); R(g, 5, 3, 2, 2, '#c8b030'); },
+    turbo: g => { R(g, 3, 1, 6, 11, OL); R(g, 4, 2, 4, 9, '#ffd23f'); R(g, 4, 0, 4, 2, OL); R(g, 5, 0, 2, 2, '#aab0c0'); R(g, 5, 3, 3, 1, '#fff'); R(g, 5, 4, 2, 2, '#fff'); R(g, 6, 6, 2, 1, '#fff'); R(g, 5, 7, 2, 2, '#fff'); },
+    pizza: g => { for (let y = 0; y < 12; y++) { const w = Math.max(1, 12 - y); R(g, (12 - w) >> 1, y, w, 1, OL); if (w > 2) R(g, ((12 - w) >> 1) + 1, y, w - 2, 1, y < 2 ? '#c8802a' : '#ffd860'); } R(g, 3, 4, 2, 2, '#d04030'); R(g, 6, 6, 2, 2, '#d04030'); R(g, 5, 2, 1, 1, '#d04030'); R(g, 5, 8, 1, 1, '#d04030'); },
+    camara: g => { R(g, 0, 3, 12, 8, OL); R(g, 1, 4, 10, 6, '#9aa0b8'); R(g, 1, 2, 3, 2, '#ffd23f'); R(g, 8, 2, 2, 1, '#e04040'); E(g, 6, 7, 3, 3, OL); E(g, 6, 7, 2, 2, '#6ac8ff'); R(g, 5, 6, 1, 1, '#fff'); },
+    nerf: g => { R(g, 0, 3, 10, 5, OL); R(g, 1, 4, 8, 3, '#ff6a4a'); R(g, 9, 4, 3, 3, '#ffd23f'); R(g, 2, 8, 3, 4, OL); R(g, 3, 8, 1, 3, '#e04a2a'); R(g, 6, 2, 3, 1, OL); R(g, 1, 4, 8, 1, '#ff9a7a'); },
+    engranaje: g => { for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; R(g, 5 + Math.round(Math.cos(a) * 5), 5 + Math.round(Math.sin(a) * 5), 2, 2, OL); } E(g, 6, 6, 5, 5, OL); E(g, 6, 6, 4, 4, '#c0c0d8'); E(g, 6, 6, 2, 2, OL); E(g, 6, 6, 1, 1, '#4a4a60'); R(g, 3, 3, 2, 1, '#f0f0ff'); },
+    escalera: g => { R(g, 2, 0, 2, 12, OL); R(g, 3, 0, 1, 12, '#c8935a'); R(g, 8, 0, 2, 12, OL); R(g, 8, 0, 1, 12, '#c8935a'); for (const y of [2, 5, 8, 11]) { R(g, 3, y, 6, 1, OL); R(g, 4, y, 4, 1, '#e8b87a'); } },
+    fusible: g => { R(g, 1, 3, 10, 6, OL); R(g, 2, 4, 8, 4, '#f4ead0'); R(g, 0, 3, 3, 6, OL); R(g, 0, 4, 2, 4, '#b8bcc8'); R(g, 9, 3, 3, 6, OL); R(g, 10, 4, 2, 4, '#b8bcc8'); R(g, 3, 6, 6, 1, '#ff9a3a'); R(g, 3, 4, 3, 1, '#ffffff'); },
+    ganzua: g => { for (let i = 0; i < 9; i++) { R(g, 1 + i, 9 - i, 2, 2, OL); R(g, 1 + i, 9 - i, 1, 1, '#c8c8a0'); } R(g, 8, 0, 3, 2, OL); R(g, 8, 0, 2, 1, '#c8c8a0'); R(g, 0, 10, 4, 2, OL); R(g, 1, 10, 2, 1, '#8a6a38'); },
+    jeringa: g => { R(g, 2, 3, 6, 6, OL); R(g, 3, 4, 4, 4, '#e8f8f0'); R(g, 3, 5, 2, 2, '#6ae0a0'); R(g, 8, 5, 3, 2, OL); R(g, 8, 5, 3, 1, '#ccc'); R(g, 10, 3, 1, 6, OL); R(g, 0, 6, 2, 1, '#ccc'); },
+    bebida: g => { R(g, 3, 1, 6, 10, OL); R(g, 4, 2, 4, 8, '#48e0ff'); R(g, 4, 0, 4, 2, OL); R(g, 5, 0, 2, 1, '#ccc'); R(g, 5, 4, 3, 1, '#fff'); R(g, 5, 5, 2, 2, '#fff'); R(g, 4, 2, 1, 6, '#a8f0ff'); },
+    humo: g => { for (const [x, y, r] of [[4, 8, 3], [8, 8, 3], [6, 5, 3], [3, 5, 2]]) E(g, x, y, r + 1, r + 1, OL); for (const [x, y, r] of [[4, 8, 3], [8, 8, 3], [6, 5, 3], [3, 5, 2]]) E(g, x, y, r, r, '#c0c0d0'); R(g, 5, 3, 2, 1, '#eeeef8'); },
+    torreta: g => { R(g, 1, 8, 10, 4, OL); R(g, 2, 9, 8, 2, '#e0505a'); R(g, 4, 3, 4, 5, OL); R(g, 5, 4, 2, 4, '#7a7a90'); R(g, 5, 0, 2, 3, OL); R(g, 5, 1, 2, 1, '#ffd23f'); },
+    racion: g => { R(g, 1, 4, 10, 8, OL); R(g, 2, 5, 8, 6, '#f0b878'); R(g, 5, 6, 2, 4, '#fff'); R(g, 4, 7, 4, 2, '#fff'); R(g, 3, 1, 1, 3, '#dde'); R(g, 6, 0, 1, 3, '#dde'); R(g, 9, 1, 1, 3, '#dde'); },
+    comida: g => { E(g, 6, 7, 5, 4, OL); E(g, 6, 7, 4, 3, '#d89860'); R(g, 4, 5, 2, 1, '#f0c090'); R(g, 7, 7, 2, 1, '#a86a30'); R(g, 9, 2, 2, 3, OL); R(g, 9, 2, 1, 2, '#eee'); R(g, 1, 3, 2, 3, OL); R(g, 1, 3, 1, 2, '#eee'); },
+    palanca: g => { for (let i = 0; i < 9; i++) { R(g, 2 + i, 10 - i, 2, 2, OL); R(g, 2 + i, 10 - i, 1, 1, '#9a9ab4'); } R(g, 0, 8, 3, 4, OL); R(g, 0, 9, 2, 2, '#8a8aa0'); R(g, 9, 0, 3, 3, OL); R(g, 10, 1, 1, 1, '#9a9ab4'); },
+  };
+  function iconSpr(id) { const k = 'ic_' + id; if (cache[k]) return cache[k]; const fn = ICON_DRAW[id]; return cache[k] = mk(12, 12, g => { if (fn) fn(g); else { R(g, 1, 1, 10, 10, OL); R(g, 2, 2, 8, 8, '#8a8aa0'); } }); }
   function dollSpr(dir, fr, mood = 'calm', style = 'A') {
     const k = 'd' + style + dir + fr + mood; if (cache[k]) return cache[k];
     if (dir === 'r') return cache[k] = flipX(dollSpr('l', fr, mood, style));
@@ -313,5 +348,5 @@ const Spr = (() => {
       case 'd_table': shadow(); rb(g, X, Y + 2, W, H - 2, '#7a5030'); R(g, X + 1, Y + 3, W - 2, H - 6, '#b88450'); R(g, X + 2, Y + 4, W - 4, 1, '#d8a870'); R(g, X + 4, Y + 7, 5, 4, '#f4ecd8'); if (W > 16) E(g, X + W - 8, Y + 9, 3, 2, '#e04040'); break;
     }
   }
-  return { mk, R, E, kid: kidSpr, doll: dollSpr, ghost: ghostSpr, gem: gemSpr, floorCanvas, obj, PAL, KI, DI, tile };
+  return { mk, R, E, kid: kidSpr, doll: dollSpr, ghost: ghostSpr, gem: gemSpr, icon: iconSpr, floorCanvas, obj, PAL, KI, DI, tile };
 })();
