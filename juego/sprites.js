@@ -212,6 +212,7 @@ const Spr = (() => {
     torreta: g => { R(g, 1, 8, 10, 4, OL); R(g, 2, 9, 8, 2, '#e0505a'); R(g, 4, 3, 4, 5, OL); R(g, 5, 4, 2, 4, '#7a7a90'); R(g, 5, 0, 2, 3, OL); R(g, 5, 1, 2, 1, '#ffd23f'); },
     racion: g => { R(g, 1, 4, 10, 8, OL); R(g, 2, 5, 8, 6, '#f0b878'); R(g, 5, 6, 2, 4, '#fff'); R(g, 4, 7, 4, 2, '#fff'); R(g, 3, 1, 1, 3, '#dde'); R(g, 6, 0, 1, 3, '#dde'); R(g, 9, 1, 1, 3, '#dde'); },
     comida: g => { E(g, 6, 7, 5, 4, OL); E(g, 6, 7, 4, 3, '#d89860'); R(g, 4, 5, 2, 1, '#f0c090'); R(g, 7, 7, 2, 1, '#a86a30'); R(g, 9, 2, 2, 3, OL); R(g, 9, 2, 1, 2, '#eee'); R(g, 1, 3, 2, 3, OL); R(g, 1, 3, 1, 2, '#eee'); },
+    llave: g => { E(g, 3, 3, 3, 3, OL); E(g, 3, 3, 2, 2, '#ffd23f'); E(g, 3, 3, 1, 1, OL); for (let i = 0; i < 8; i++) { R(g, 4 + i, 4 + i, 2, 2, OL); R(g, 4 + i, 4 + i, 1, 1, '#ffd23f'); } R(g, 9, 8, 3, 2, OL); R(g, 10, 8, 2, 1, '#ffd23f'); R(g, 7, 10, 3, 2, OL); R(g, 7, 10, 2, 1, '#ffd23f'); },
     palanca: g => { for (let i = 0; i < 9; i++) { R(g, 2 + i, 10 - i, 2, 2, OL); R(g, 2 + i, 10 - i, 1, 1, '#9a9ab4'); } R(g, 0, 8, 3, 4, OL); R(g, 0, 9, 2, 2, '#8a8aa0'); R(g, 9, 0, 3, 3, OL); R(g, 10, 1, 1, 1, '#9a9ab4'); },
   };
   function iconSpr(id) { const k = 'ic_' + id; if (cache[k]) return cache[k]; const fn = ICON_DRAW[id]; return cache[k] = mk(12, 12, g => { if (fn) fn(g); else { R(g, 1, 1, 10, 10, OL); R(g, 2, 2, 8, 8, '#8a8aa0'); } }); }

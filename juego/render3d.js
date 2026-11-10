@@ -1,7 +1,7 @@
 // Render 3D (Three.js) del mismo juego: usa el estado de la partida y lo dibuja en 3D con aspecto de baja resolución
 const Render3D = (() => {
   const T = typeof THREE !== 'undefined' ? THREE : null;
-  const W3 = 480, H3 = 270, WALLH = 1.05;
+  const W3 = 640, H3 = 360, WALLH = 1.05;
   let ren = null, scene = null, cam = null, ok = false, built = null, cv = null;
   const MM = {}, cm = c => MM[c] || (MM[c] = new T.MeshLambertMaterial({ color: c }));
   const BM = {}, bm = c => BM[c] || (BM[c] = new T.MeshBasicMaterial({ color: c }));
@@ -140,7 +140,7 @@ const Render3D = (() => {
   function build(S) {
     _S = S; clear(); built = { S, floors: [], doors: [], objs: [] };
     scene.background = new T.Color(0x0a0618); scene.fog = new T.Fog(0x140a28, 16, 40);
-    amb = new T.AmbientLight(0x9a84c8, 1.0); dirL = new T.DirectionalLight(0xfff0dc, 0.55); dirL.position.set(-6, 14, 8); pL = new T.PointLight(0xffd8a0, 0.9, 10, 1.4);
+    amb = new T.AmbientLight(0xb89ad8, 1.05); dirL = new T.DirectionalLight(0xffe2b8, 0.8); dirL.position.set(-6, 14, 8); pL = new T.PointLight(0xffd8a0, 0.9, 10, 1.4);
     spot = new T.SpotLight(0xfff4cc, 0, 15, 0.6, 0.4, 1); scene.add(amb, dirL, pL, spot, spot.target);
     // geometría de pared con la cara de arriba más oscura
     const wg = new T.BoxGeometry(1, 1, 1), n = wg.attributes.normal, col = new Float32Array(n.count * 3);

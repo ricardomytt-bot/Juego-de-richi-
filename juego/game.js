@@ -74,6 +74,7 @@ function newGame(seed) {
   Sfx.horrorStart(); Sfx.setTension(0);
 }
 function ico(g, id, x, y, w) { g.imageSmoothingEnabled = false; g.drawImage(Spr.icon(id), x, y, w, w); }
+function got(icon, text, n) { if (!S.toasts) S.toasts = []; if (S.toasts.length > 4) S.toasts.shift(); S.toasts.push({ icon, text, n, t: 0 }); }
 const say = (text, t = 2.4) => { S.msg = { text, t }; };
 
 // ---------------- jugador ----------------
@@ -115,8 +116,8 @@ function hintFor(o) {
 function sparkle(x, y, n = 12) { for (let i = 0; i < n; i++) S.parts.push({ x, y, vx: rand(-34, 34), vy: rand(-48, -14), g: 90, t: 0, life: rand(0.5, 0.9), col: ['#ffd23f', '#fff6a0', '#ff9ad0', '#8ae0ff'][i % 4], sz: 2, star: true }); }
 function giveLoot(o) {
   const p = S.p, parts = [];
-  for (const l of o.loot || []) { if (l.key) { p.keys.add(l.key); parts.push('LLAVE ' + KEY_NAMES[l.key]); } else if (l.item) { addItem(l.item, l.n); parts.push(l.n + ' ' + ITEMS[l.item].n); } else { p.mats[l.mat] = (p.mats[l.mat] || 0) + l.n; parts.push(l.n + ' ' + MAT_NAMES[l.mat]); } }
-  Sfx.pickup(); if (parts.length) say(parts.join(', '));
+  for (const l of o.loot || []) { if (l.key) { p.keys.add(l.key); parts.push('LLAVE ' + KEY_NAMES[l.key]); got('llave', 'LLAVE ' + KEY_NAMES[l.key], 1); } else if (l.item) { addItem(l.item, l.n); parts.push(l.n + ' ' + ITEMS[l.item].n); got(l.item, ITEMS[l.item].n, l.n); } else { p.mats[l.mat] = (p.mats[l.mat] || 0) + l.n; parts.push(l.n + ' ' + MAT_NAMES[l.mat]); got(l.mat, MAT_NAMES[l.mat], l.n); } }
+  Sfx.pickup(); 
 }
 function useAction() {
   const p = S.p, o = nearest(); if (!o) return;
@@ -134,7 +135,7 @@ function useAction() {
     case 'microwave':
       if (!o.opened) { if (p.inv.engranaje > 0) { takeItem('engranaje'); o.opened = true; Sfx.hit(); sparkle((o.x + 0.5) * TS, o.y * TS + 8, 14); say('¡MICROONDAS ABIERTO!'); } else if (p.inv.palanca > 0) { takeItem('palanca'); o.opened = true; Sfx.hit(); say('MICROONDAS ABIERTO'); } else say('MICROONDAS ATASCADO'); }
       else if (o.cooking) say('COCINANDO...');
-      else if (o.food) { o.food = false; if (S.cl.id === 'cocinero') { addItem('pizza', 2); say('2 PIZZAS'); } else { addItem('racion', 2); say('2 RACIONES'); } Sfx.pickup(); }
+      else if (o.food) { o.food = false; if (S.cl.id === 'cocinero') { addItem('pizza', 2); got('pizza', 'PIZZA', 2); } else { addItem('racion', 2); got('racion', 'RACION', 2); } Sfx.pickup(); }
       else if (p.inv.comida > 0) { takeItem('comida'); o.cooking = true; o.cookT = 6; say('COCINANDO...'); Sfx.cam(); }
       else say('MICROONDAS VACIO'); break;
     case 'computer': if (S.blackout && !S.fixed) S.overlay = newPuzzle(); break;
@@ -248,7 +249,7 @@ function overlayInput(kind, v) {
 function updateOverlay(dt) {
   const ov = S.overlay; if (!ov) return;
   if (ov.shake > 0) ov.shake -= dt;
-  if (ov.type === 'craft') { if (ov.warn > 0) ov.warn -= dt; if (ov.crafting) { ov.cT += dt; if (ov.cT >= 2.5 * (S.cl.craft || 1)) { ov.crafting = false; addItem(ov.rec.out, ov.rec.n); ov.grid = Array(9).fill(null); S.stats.crafts++; Sfx.pickup(); sparkle(S.p.x, S.p.y - 12, 10); say(ITEMS[ov.rec.out].n + (ov.rec.n > 1 ? ' x' + ov.rec.n : '')); } } return; }
+  if (ov.type === 'craft') { if (ov.warn > 0) ov.warn -= dt; if (ov.crafting) { ov.cT += dt; if (ov.cT >= 2.5 * (S.cl.craft || 1)) { ov.crafting = false; addItem(ov.rec.out, ov.rec.n); got(ov.rec.out, ITEMS[ov.rec.out].n, ov.rec.n); ov.grid = Array(9).fill(null); S.stats.crafts++; Sfx.pickup(); sparkle(S.p.x, S.p.y - 12, 10); say(ITEMS[ov.rec.out].n + (ov.rec.n > 1 ? ' x' + ov.rec.n : '')); } } return; }
   if (ov.type !== 'puzzle') return;
   if (ov.flashT > 0) ov.flashT -= dt; if (ov.fail > 0) ov.fail -= dt;
   if (ov.phase === 'show') { ov.t += dt; if (ov.fail <= 0 && ov.t > 0.9 * 3 + 1.0) { ov.phase = 'input'; ov.idx = 0; } }
@@ -348,6 +349,7 @@ function update(dt) {
   const p = S.p, e = S.e;
   S.t += dt; S.shake = Math.max(0, S.shake - dt); S.fade = Math.max(0, S.fade - dt);
   if (S.msg) { S.msg.t -= dt; if (S.msg.t <= 0) S.msg = null; }
+  if (S.toasts) { for (const q of S.toasts) q.t += dt; S.toasts = S.toasts.filter(q => q.t < 2.8); }
   for (const q of S.parts) { q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += (q.g || 0) * dt; } S.parts = S.parts.filter(q => q.t < q.life);
   if (p.stairCd > 0) p.stairCd -= dt; if (p.immune > 0) p.immune -= dt;
   if (!S.blackout && !S.fixed && S.t >= S.blackoutAt) { S.blackout = true; p.charging = false; Sfx.power(); 0; }
@@ -504,6 +506,15 @@ function renderHud(g) {
   if (it) { R(g, BTN.item.x - 7, BTN.item.y - 7, 14, 14, '#000'); R(g, BTN.item.x - 6, BTN.item.y - 6, 12, 12, '#2a2248'); ico(g, it, BTN.item.x - 6, BTN.item.y - 6, 12); Txt.draw(g, 'x' + p.inv[it], BTN.item.x + 10, BTN.item.y + 6, { align: 'c', color: '#fff', outline: '#000' }); for (let i = 0; i < il.length && i < 8; i++) R(g, BTN.item.x - il.length * 2 + i * 4, BTN.item.y - BTN.item.r - 5, 3, 3, il[i] === it ? '#ffd23f' : '#6a5ab0'); }
   else Txt.draw(g, '-', BTN.item.x, BTN.item.y - 3, { align: 'c', color: '#6a6a80' });
   Txt.draw(g, it ? ITEMS[it].n : 'OBJETO', BTN.item.x, BTN.item.y + BTN.item.r + 2, { align: 'c', color: '#c9c0ff', shadow: '#000' });
+  if (S.toasts) S.toasts.forEach((q, i) => { // aviso animado: HAS CONSEGUIDO
+    const a = q.t < 0.35 ? q.t / 0.35 : 1, out = q.t > 2.3 ? clamp(1 - (q.t - 2.3) / 0.5, 0, 1) : 1, bounce = q.t < 0.35 ? 1 + Math.sin(a * Math.PI) * 0.35 : 1, w = 112, h = 22, x = 6 + (1 - a) * -30, y = 34 + i * 24 - (1 - out) * 6;
+    g.save(); g.globalAlpha = Math.min(a, out); g.translate(x + w / 2, y + h / 2); g.scale(bounce, bounce); g.translate(-(x + w / 2), -(y + h / 2));
+    R(g, x, y, w, h, '#000'); R(g, x + 1, y + 1, w - 2, h - 2, '#241c4a'); R(g, x + 1, y + 1, w - 2, 1, '#ffd23f'); R(g, x + 1, y + h - 2, w - 2, 1, '#6a5ad0');
+    R(g, x + 3, y + 3, 16, 16, '#14102a'); ico(g, q.icon, x + 3, y + 3, 16);
+    Txt.draw(g, 'HAS CONSEGUIDO', x + 22, y + 3, { color: '#ffd23f' }); Txt.draw(g, (q.n > 1 ? q.n + ' ' : '') + q.text, x + 22, y + 12, { color: '#fff' });
+    if (q.t < 0.5) { g.fillStyle = 'rgba(255,255,255,' + (0.5 - q.t).toFixed(2) + ')'; g.fillRect(x, y, w, h); }
+    g.restore();
+  });
   if (S.msg) { g.globalAlpha = clamp(S.msg.t * 2, 0, 1); Txt.draw(g, S.msg.text, 160, 26, { align: 'c', color: '#fff', outline: '#000' }); g.globalAlpha = 1; }
   // forcejeo
   if (p.held) {
@@ -617,10 +628,10 @@ const Play = {
     }
     for (const k in BTN) { const b = BTN[k]; if (Math.hypot(x - b.x, y - b.y) < b.r + 7) { if (k === 'item' && !S.p.held) { S.hold = { id, t: 0, fired: false }; return; } press(k); return; } }
     if (S.p.held) { mash(); return; }
-    if (CFG.view === 'FP' && (x >= 180 || type === 'mouse') && !(type === 'mouse' && x < 90 && y > 100)) { S.look = { id, x, y }; return; }
-    if (x < 180 && y > 24) S.joy = { id, ox: clamp(x, 34, 150), oy: clamp(y, 64, 154), x, y };
+    if (CFG.view === 'FP' && (x >= 150 || type === 'mouse') && !(type === 'mouse' && x < 90 && y > 100)) { if (!S.look) S.look = { id, x, y }; return; }
+    if (x < 150 && y > 24 && !S.joy) S.joy = { id, ox: x, oy: y, x, y };
   },
-  pointerMove(id, x, y) { if (S && S.joy && S.joy.id === id) { S.joy.x = x; S.joy.y = y; } if (S && S.look && S.look.id === id) { fpAdd(x - S.look.x, y - S.look.y, 0.016); S.look.x = x; S.look.y = y; } },
+  pointerMove(id, x, y) { if (S && S.joy && S.joy.id === id) { S.joy.x = x; S.joy.y = y; } if (S && S.look && S.look.id === id) { { const dx = x - S.look.x, dy = y - S.look.y, m = 0.013 + Math.min(Math.hypot(dx, dy), 24) * 0.00045; fpAdd(dx, dy, m); } S.look.x = x; S.look.y = y; } },
   pointerUp(id) { if (S && S.look && S.look.id === id) S.look = null; if (S && S.joy && S.joy.id === id) S.joy = null; if (S && S.hold && S.hold.id === id) { if (!S.hold.fired) press('item'); S.hold = null; } },
 };
 

@@ -89,7 +89,7 @@ const Menu = {
     UI.btn(g, 14, 72, 142, 21, 'JUGAR', { sel: f(), primary: true, icon: IC.play, fn: () => this.quick() });
     UI.btn(g, 14, 97, 142, 21, 'MODO HISTORIA', { sel: f(), icon: IC.book, fn: () => { setScene(Story); } });
     UI.btn(g, 14, 122, 142, 21, 'MULTIJUGADOR', { sel: f(), icon: IC.people, fn: () => { setScene(MultiMenu); } });
-    UI.btn(g, 14, 147, 142, 21, 'TERCERA PERSONA', { sel: f(), sub: '', icon: IC.eye, fn: () => { CFG.view = 'FP'; saveCfg(); this.quick(); } });
+    UI.btn(g, 14, 147, 142, 21, 'PRIMERA PERSONA', { sel: f(), sub: '', icon: IC.eye, fn: () => { CFG.view = 'FP'; saveCfg(); this.quick(); } });
     // ajustes
     const gsel = UI.foc.length === this.sel; UI.foc.push({ fn: () => setScene(Settings) }); UI.hits.push({ x: 290, y: 140, w: 24, h: 24, fn: () => { Sfx.click(); setScene(Settings); } });
     R(g, 292, 144, 24, 24, '#000'); R(g, 293, 145, 22, 22, gsel ? '#e8a020' : '#3a2a8a'); R(g, 293, 145, 22, 11, gsel ? '#ffe27a' : '#7a6ae0'); IC.gear(g, 299, 151, gsel ? '#2a1400' : '#fff');
@@ -177,7 +177,7 @@ const Story = {
     for (const [k, x, l] of [['A', 212, 'REDONDO'], ['B', 262, 'CLASICO']]) { const on = CFG.style === k, K2 = Spr.KI[k]; R(g, x, 57, 48, 56, on ? '#ffd23f' : '#000'); R(g, x + 1, 58, 46, 54, on ? '#3a2a6a' : '#1c1436'); g.drawImage(Spr.kid('d', 0, cs, k), Math.round(x + 24 - K2.w), 100 - K2.fy * 2 + 8, K2.w * 2, K2.h * 2); Txt.draw(g, l, x + 24, 101, { align: 'c', color: on ? '#ffd23f' : '#9a8ab8' }); UI.hits.push({ x, y: 57, w: 48, h: 56, fn: () => { CFG.style = k; saveCfg(); Sfx.blip(); } }); }
     Txt.draw(g, 'VISTA', 212, 119, { color: '#c9a6ff', outline: '#10081c' });
     UI.btn(g, 212, 129, 32, 14, '3D', { sel: CFG.view === '3D', small: true, focus: false, fn: () => { CFG.view = '3D'; saveCfg(); Sfx.blip(); } });
-    UI.btn(g, 246, 129, 32, 14, '3P', { sel: CFG.view === 'FP', small: true, focus: false, fn: () => { CFG.view = 'FP'; saveCfg(); Sfx.blip(); } });
+    UI.btn(g, 246, 129, 32, 14, '1P', { sel: CFG.view === 'FP', small: true, focus: false, fn: () => { CFG.view = 'FP'; saveCfg(); Sfx.blip(); } });
     UI.btn(g, 280, 129, 32, 14, '2D', { sel: CFG.view === '2D', small: true, focus: false, fn: () => { CFG.view = '2D'; saveCfg(); Sfx.blip(); } });
     UI.btn(g, 212, 150, 100, 22, 'JUGAR', { sel: f(), primary: true, icon: IC.play, fn: () => this.play() });
     if (this.msgT > 0) { this.msgT -= 1 / 60; Txt.draw(g, this.msg, 160, 36, { align: 'c', color: '#ff9a9a', outline: '#10081c' }); }
@@ -312,7 +312,7 @@ const Settings = {
     const f = () => UI.foc.length === this.sel; if (this.confirm > 0) this.confirm -= 1 / 60;
     R(g, 40, 32, 240, 140, 'rgba(8,4,24,0.88)'); R(g, 40, 32, 240, 1, '#6a5ad0');
     UI.btn(g, 56, 40, 208, 18, 'SONIDO: ' + (Sfx.muted ? 'NO' : 'SI'), { sel: f(), small: true, fn: () => { Sfx.toggleMute(); } });
-    UI.btn(g, 56, 62, 208, 18, 'VISTA: ' + (CFG.view === 'FP' ? '3RA PERSONA' : CFG.view), { sel: f(), small: true, fn: () => { CFG.view = CFG.view === '3D' ? 'FP' : CFG.view === 'FP' ? '2D' : '3D'; saveCfg(); Sfx.blip(); } });
+    UI.btn(g, 56, 62, 208, 18, 'VISTA: ' + (CFG.view === 'FP' ? '1RA PERSONA' : CFG.view === '3D' ? '3RA PERSONA' : CFG.view), { sel: f(), small: true, fn: () => { CFG.view = CFG.view === '3D' ? 'FP' : CFG.view === 'FP' ? '2D' : '3D'; saveCfg(); Sfx.blip(); } });
     UI.btn(g, 56, 84, 208, 18, 'ESTILO: ' + (CFG.style === 'A' ? 'A REDONDO' : 'B CLASICO'), { sel: f(), small: true, fn: () => { CFG.style = CFG.style === 'A' ? 'B' : 'A'; saveCfg(); Sfx.blip(); } });
     UI.btn(g, 56, 106, 208, 18, 'MI NOMBRE: ' + SAVE.name, { sel: f(), small: true, fn: () => askText('TU NOMBRE DE JUGADOR', SAVE.name, 10, v => { if (v) { SAVE.name = v; persist(); } }) });
     UI.btn(g, 56, 128, 208, 18, this.confirm > 0 ? '¿SEGURO? PULSA OTRA VEZ' : 'BORRAR PROGRESO', { sel: f(), small: true, fn: () => this.wipe() });
