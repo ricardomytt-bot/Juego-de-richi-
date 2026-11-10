@@ -77,8 +77,14 @@ function ico(g, id, x, y, w) { g.imageSmoothingEnabled = false; g.drawImage(Spr.
 const say = (text, t = 2.4) => { S.msg = { text, t }; };
 
 // ---------------- jugador ----------------
+let VIG2 = null, GRAIN = null;
+function fpPost(g) { // viñeta, grano de película y pulso rojo cuando la muñeca está cerca
+  if (!VIG2) { VIG2 = Spr.mk(VW, VH, c => { const gr = c.createRadialGradient(VW / 2, VH / 2, VH * 0.35, VW / 2, VH / 2, VW * 0.62); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,8,0.78)'); c.fillStyle = gr; c.fillRect(0, 0, VW, VH); }); GRAIN = []; for (let i = 0; i < 4; i++) GRAIN.push(Spr.mk(VW, VH, c => { for (let n = 0; n < 700; n++) { c.fillStyle = Math.random() < 0.5 ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.16)'; c.fillRect(Math.random() * VW | 0, Math.random() * VH | 0, 1, 1); } })); }
+  g.drawImage(VIG2, 0, 0); g.drawImage(GRAIN[(G.t * 12 | 0) % 4], 0, 0);
+  const e = S.e, p = S.p; if (e.f === p.f && !p.dead) { const d = Math.hypot(e.x - p.x, e.y - p.y), k = clamp(1 - d / 110, 0, 1); if (k > 0) { g.fillStyle = 'rgba(200,0,20,' + (k * (0.14 + 0.08 * Math.sin(G.t * 9))).toFixed(3) + ')'; g.fillRect(0, 0, VW, VH); } }
+}
 const FPV = { sx: 0, sy: 0, dy: 0, dp: 0, sens: 1 };
-function fpLook(dt) { const k = 1 - Math.exp(-dt * 18), a = FPV.dy * k, b = FPV.dp * k; FPV.dy -= a; FPV.dp -= b; S.p.yaw += a; S.p.pitch = clamp(S.p.pitch + b, -0.8, 0.8); }
+function fpLook(dt) { const k = 1 - Math.exp(-dt * 32), a = FPV.dy * k, b = FPV.dp * k; FPV.dy -= a; FPV.dp -= b; S.p.yaw += a; S.p.pitch = clamp(S.p.pitch + b, -0.8, 0.8); }
 const fpAdd = (dx, dy, m) => { FPV.dy += clamp(dx, -60, 60) * m * FPV.sens; FPV.dp -= clamp(dy, -60, 60) * m * 0.7 * FPV.sens; };
 let JOYSRC = false;
 function inputVec() {
@@ -347,13 +353,13 @@ function update(dt) {
   if (!S.blackout && !S.fixed && S.t >= S.blackoutAt) { S.blackout = true; p.charging = false; Sfx.power(); 0; }
   let [vx, vy] = inputVec();
   if (isFP()) { // movimiento propio de primera persona: el stick avanza/retrocede y GIRA suave; la vista se suaviza
-    if (JOYSRC) { const a = Math.abs(vx), t = Math.max(0, a - 0.22) / 0.78; if (!p.held && !S.overlay) p.yaw += Math.sign(vx) * t * t * 2.1 * dt; vx *= 0.3; }
+    if (JOYSRC) { const a = Math.abs(vx), t = Math.max(0, a - 0.22) / 0.78; if (!p.held && !S.overlay) p.yaw += Math.sign(vx) * t * t * 3.6 * dt; vx *= 0.3; }
     const k = Math.min(1, dt * 9); FPV.sx += (vx - FPV.sx) * k; FPV.sy += (vy - FPV.sy) * k; if (Math.hypot(FPV.sx, FPV.sy) < 0.04 && !vx && !vy) { FPV.sx = FPV.sy = 0; } vx = FPV.sx; vy = FPV.sy;
   }
   const mag = Math.hypot(vx, vy);
   if (S.overlay && mag > 0.5) closeOverlay();
   p.moving = false;
-  if (isFP()) { fpLook(dt); const k = G.keys; if (k.ArrowLeft) p.yaw -= 2.2 * dt; if (k.ArrowRight) p.yaw += 2.2 * dt; if (k.ArrowUp) p.pitch = clamp(p.pitch + 1.2 * dt, -0.8, 0.8); if (k.ArrowDown) p.pitch = clamp(p.pitch - 1.2 * dt, -0.8, 0.8); p.ang = p.yaw; }
+  if (isFP()) { fpLook(dt); const k = G.keys; if (k.ArrowLeft) p.yaw -= 3.6 * dt; if (k.ArrowRight) p.yaw += 3.6 * dt; if (k.ArrowUp) p.pitch = clamp(p.pitch + 1.2 * dt, -0.8, 0.8); if (k.ArrowDown) p.pitch = clamp(p.pitch - 1.2 * dt, -0.8, 0.8); p.ang = p.yaw; }
   if (!p.held && !p.dead && !p.escaped && !S.overlay && !S.ended) {
     if (mag > 0.05) { const sp = p.speed * (p.boost > 0 ? 1.45 : 1) * (p.slow > 0 ? 0.5 : 1); let mx = vx, my = vy; if (isFP()) { mx = Math.cos(p.yaw) * -vy - Math.sin(p.yaw) * vx; my = Math.sin(p.yaw) * -vy + Math.cos(p.yaw) * vx; } move(p, mx * sp * dt, my * sp * dt, HW, HH); p.moving = true; p.anim += dt * 9; p.dust = (p.dust || 0) - dt; if (p.dust <= 0) { p.dust = 0.17; S.parts.push({ x: p.x + rand(-2, 2), y: p.y + 2, vx: rand(-6, 6), vy: rand(-8, -3), t: 0, life: 0.5, col: '#d8c8b0', sz: 2, fade: 1 }); } if (!isFP()) p.ang = Math.atan2(vy, vx); p.dir = Math.abs(mx) > Math.abs(my) ? (mx < 0 ? 'l' : 'r') : (my < 0 ? 'u' : 'd'); if (p.charging) { p.charging = false; 0; } }
   }
@@ -581,7 +587,7 @@ const Play = {
   enter() { Render3D.show(CFG.view === '3D'); if (typeof RenderFP !== 'undefined') RenderFP.show(CFG.view === 'FP'); }, update(dt) { update(dt); },
   render(g) {
     if (isFP()) {
-      Render3D.show(false); RenderFP.show(true); g.clearRect(0, 0, VW, VH); RenderFP.draw(S); renderFx(g, true);
+      Render3D.show(false); RenderFP.show(true); g.clearRect(0, 0, VW, VH); RenderFP.draw(S); renderFx(g, true); fpPost(g);
       for (const q of S.parts) { const k = 1 - q.t / q.life, [sx, sy] = RenderFP.project(q.x, q.y, 0.3 + (q.star ? 0.7 : 0.1)); g.globalAlpha = clamp(q.fade ? k * 0.7 : 1 - Math.pow(q.t / q.life, 3), 0, 1); g.fillStyle = q.col; g.fillRect(Math.round(sx), Math.round(sy), 2, 2); } g.globalAlpha = 1;
       renderHud(g); R(g, 159, 89, 2, 2, 'rgba(255,255,255,0.8)'); return;
     }
@@ -613,7 +619,7 @@ const Play = {
     if (CFG.view === 'FP' && (x >= 180 || type === 'mouse') && !(type === 'mouse' && x < 90 && y > 100)) { S.look = { id, x, y }; return; }
     if (x < 180 && y > 24) S.joy = { id, ox: clamp(x, 34, 150), oy: clamp(y, 64, 154), x, y };
   },
-  pointerMove(id, x, y) { if (S && S.joy && S.joy.id === id) { S.joy.x = x; S.joy.y = y; } if (S && S.look && S.look.id === id) { fpAdd(x - S.look.x, y - S.look.y, 0.0058); S.look.x = x; S.look.y = y; } },
+  pointerMove(id, x, y) { if (S && S.joy && S.joy.id === id) { S.joy.x = x; S.joy.y = y; } if (S && S.look && S.look.id === id) { fpAdd(x - S.look.x, y - S.look.y, 0.016); S.look.x = x; S.look.y = y; } },
   pointerUp(id) { if (S && S.look && S.look.id === id) S.look = null; if (S && S.joy && S.joy.id === id) S.joy = null; if (S && S.hold && S.hold.id === id) { if (!S.hold.fired) press('item'); S.hold = null; } },
 };
 
@@ -651,7 +657,7 @@ addEventListener('keyup', e => { G.keys[e.code] = false; });
 addEventListener('blur', () => { G.keys = {}; });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !G.fullTried) { G.fullTried = true; goFull(); } const first = firstInput(); try { canvas.setPointerCapture(e.pointerId); } catch (x) {} if (first && G.scene === Title) return; const [x, y] = toLocal(e); G.scene.pointerDown && G.scene.pointerDown(e.pointerId, x, y, e.pointerType); e.preventDefault(); });
-addEventListener('mousemove', e => { if (document.pointerLockElement === canvas && S && G.scene === Play && CFG.view === 'FP') { fpAdd(e.movementX, e.movementY, 0.0016); } });
+addEventListener('mousemove', e => { if (document.pointerLockElement === canvas && S && G.scene === Play && CFG.view === 'FP') { fpAdd(e.movementX, e.movementY, 0.0042); } });
 canvas.addEventListener('pointermove', e => { const [x, y] = toLocal(e); G.scene.pointerMove && G.scene.pointerMove(e.pointerId, x, y); });
 const up = e => { G.scene.pointerUp && G.scene.pointerUp(e.pointerId); };
 canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);

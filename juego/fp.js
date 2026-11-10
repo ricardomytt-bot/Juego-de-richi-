@@ -222,7 +222,7 @@ const RenderFP = (() => {
     BOXG = BOXG || new T.BoxGeometry(1, 1, 1); SPHG = SPHG || new T.SphereGeometry(1, 20, 14);
     scene = scene || new T.Scene(); scene.background = new T.Color(0x07040f); scene.fog = new T.FogExp2(0x0c0818, 0.07);
     amb = new T.AmbientLight(0x6a5a9a, 0.55); hemi = new T.HemisphereLight(0x8a9ad0, 0x2a1a30, 0.35); moonL = new T.DirectionalLight(0x8aa4ff, 0.35); moonL.position.set(-8, 14, -6);
-    flash = new T.SpotLight(0xfff0c8, 1.6, 22, 0.55, 0.5, 1.2); flash.castShadow = !low; flash.shadow.mapSize.set(1024, 1024); flash.shadow.bias = -0.0008; flash.shadow.camera.near = 0.2; flash.shadow.camera.far = 22;
+    flash = new T.SpotLight(0xfff0c8, 1.6, 22, 0.55, 0.5, 1.2); flash.castShadow = !low; flash.shadow.mapSize.set(2048, 2048); flash.shadow.bias = -0.0008; flash.shadow.camera.near = 0.2; flash.shadow.camera.far = 22;
     scene.add(amb, hemi, moonL, flash, flash.target);
     for (let i = 0; i < 5; i++) { const L = new T.PointLight(0xffc880, 0, 9, 1.6); scene.add(L); poolL.push(L); }
     const wallTex = mkTex(wallCanvas()), ceilTex = mkTex(ceilingCanvas(), MW / 2, MH / 2), doorTex = mkTex(doorCanvas()), winTex = mkTex(windowCanvas());
@@ -237,6 +237,11 @@ const RenderFP = (() => {
       const walls = []; for (let j = 0; j < MH; j++) for (let i = 0; i < MW; i++) if (F.g[j][i] === '#') walls.push([i, j]);
       const im = new T.InstancedMesh(BOXG, wallMat, walls.length), mtx = new T.Matrix4(), cc = new T.Color();
       walls.forEach(([i, j], k) => { let t = '.'; for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) { const c = (F.g[j + dy] || [])[i + dx]; if (c && WCOL[c]) { t = c; break; } } mtx.makeScale(1, WALLH, 1); mtx.setPosition(i + 0.5, WALLH / 2, j + 0.5); im.setMatrixAt(k, mtx); im.setColorAt(k, cc.set(WCOL[t])); });
+      { const trimM = new T.MeshStandardMaterial({ color: 0x3a2a22, roughness: 0.6 }), crownM = new T.MeshStandardMaterial({ color: 0xe8dcc8, roughness: 0.7 }), bb = [], cr = [];
+        for (const [i, j] of walls) for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) { const c = (F.g[j + dy] || [])[i + dx]; if (c && c !== '#' && c !== ' ') { const hz = dx === 0; bb.push([i + 0.5 + dx * 0.52, j + 0.5 + dy * 0.52, hz]); } }
+        const bi = new T.InstancedMesh(BOXG, trimM, bb.length), ci = new T.InstancedMesh(BOXG, crownM, bb.length), m4 = new T.Matrix4();
+        bb.forEach(([x, z, hz], k) => { m4.makeScale(hz ? 1.02 : 0.05, 0.2, hz ? 0.05 : 1.02); m4.setPosition(x, 0.1, z); bi.setMatrixAt(k, m4); m4.makeScale(hz ? 1.02 : 0.12, 0.12, hz ? 0.12 : 1.02); m4.setPosition(x, WALLH - 0.06, z); ci.setMatrixAt(k, m4); });
+        bi.receiveShadow = true; ci.receiveShadow = true; grp.add(bi, ci); }
       im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.castShadow = true; im.receiveShadow = true; grp.add(im);
       // ventanas con luz de luna, cuadros y lámparas de techo
       F.rooms.forEach((r, ri) => {
@@ -279,7 +284,7 @@ const RenderFP = (() => {
   }
   // ---------- dibujo ----------
   // calidad automática: si va lento, se apagan las sombras y baja la resolución
-  let camD = 3.3, lastT = 0, ema = 16, frames = 0, low = /lowfp/.test(location.search);
+  const TPS = false; let camD = 3.3, lastT = 0, ema = 16, frames = 0, low = /lowfp/.test(location.search);
   function lowQ() { low = true; ren.setSize(640, 360, false); ren.shadowMap.enabled = false; if (flash) flash.castShadow = false; if (scene) scene.traverse(o => { if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.needsUpdate = true; }); } }); }
   function draw(S) {
     if (!init()) return; const nowT = performance.now(); if (lastT) { ema += (Math.min(200, nowT - lastT) - ema) * 0.05; frames++; if (!low && frames > 150 && ema > 42) lowQ(); } lastT = nowT; if (low && !ren.__lowSet) { ren.__lowSet = true; ren.setSize(640, 360, false); ren.shadowMap.enabled = false; } if (!built || built.S !== S || built.cls !== CFG.cls) { build(S); } _S = S;
@@ -293,6 +298,8 @@ const RenderFP = (() => {
     if (p.dead) { eyeY = 0.45; roll = 0.9; pitch = -0.1; }
     if (p.held) { const dx = e.x / 16 - px, dz = e.y / 16 - pz, ty = Math.atan2(dz, dx); let d = ty - yaw; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; p.yaw += d * 0.2; yaw = p.yaw; pitch += (0.1 - pitch) * 0.1; eyeY -= 0.1; }
     const sh = S.shake > 0 ? S.shake * 0.12 : 0;
+    if (!TPS) { cam.position.set(px + (Math.random() - 0.5) * sh, eyeY, pz + (Math.random() - 0.5) * sh); cam.rotation.order = 'YXZ'; cam.rotation.y = -yaw - Math.PI / 2; cam.rotation.x = pitch; cam.rotation.z = roll; avatar.g.visible = false; }
+    else {
     const cy = Math.cos(yaw), sy = Math.sin(yaw), solF = S.W.f[p.f].sol;
     let dist = 3.3 - Math.max(0, pitch) * 1.2 + (p.moving ? 0 : 0); const camH = clampN(1.9 - pitch * 1.6, 0.7, 2.45);
     // la cámara no atraviesa paredes
@@ -302,7 +309,7 @@ const RenderFP = (() => {
     cam.up.set(0, 1, 0); cam.lookAt(px + cy * 4, p.dead ? 0.3 : 1.15 + pitch * 3.2, pz + sy * 4); cam.rotation.z += roll * 0.0;
     // avatar del jugador
     const A = avatar; A.g.position.set(px, 0, pz); A.g.rotation.y = -yaw + Math.PI / 2; A.g.visible = true;
-    if (p.moving) A.ph += 0.22; const sw = p.moving ? Math.sin(A.ph) * 0.7 : 0; A.lL.rotation.x = sw; A.rL.rotation.x = -sw; A.lA.rotation.x = p.held ? -0.6 : 0.5 * Math.sin(A.ph + 3) * (p.moving ? 1 : 0); A.rA.rotation.x = -1.4 + pitch * 0.6; A.inner.position.y = p.moving ? Math.abs(Math.sin(A.ph)) * 0.04 : Math.sin(t * 1.4) * 0.006; if (p.dead) { A.g.rotation.x = -1.4; A.g.position.y = 0.2; } else A.g.rotation.x = 0;
+    if (p.moving) A.ph += 0.22; const sw = p.moving ? Math.sin(A.ph) * 0.7 : 0; A.lL.rotation.x = sw; A.rL.rotation.x = -sw; A.lA.rotation.x = p.held ? -0.6 : 0.5 * Math.sin(A.ph + 3) * (p.moving ? 1 : 0); A.rA.rotation.x = -1.4 + pitch * 0.6; A.inner.position.y = p.moving ? Math.abs(Math.sin(A.ph)) * 0.04 : Math.sin(t * 1.4) * 0.006; if (p.dead) { A.g.rotation.x = -1.4; A.g.position.y = 0.2; } else A.g.rotation.x = 0; }
     // muñeca
     const D = doll; D.g.visible = e.f === p.f;
     if (D.g.visible) {
@@ -331,9 +338,9 @@ const RenderFP = (() => {
     amb.intensity += ((bo ? 0.1 : 0.55) - amb.intensity) * 0.1; hemi.intensity = bo ? 0.08 : 0.35; moonL.intensity = bo ? 0.1 : 0.35; scene.fog.density = bo ? 0.12 : 0.07;
     if (S.flick > 0) { amb.intensity *= 0.4; hemi.intensity *= 0.4; }
     const beam = p.beam > 0, ang = yaw, dirx = Math.cos(ang) * Math.cos(pitch), dirz = Math.sin(ang) * Math.cos(pitch), diry = Math.sin(pitch);
-    flash.position.set(px + dirx * 0.3, 1.0, pz + dirz * 0.3); flash.target.position.set(px + dirx * 5, 1.0 + diry * 5, pz + dirz * 5); flash.intensity = beam ? 9 * Math.min(1, p.beam / 0.35) : (bo ? 3.2 : 1.4); flash.angle = beam ? 0.6 : 0.5; flash.color.set(beam ? 0xffffff : 0xffe0a8);
+    const fy = TPS ? 1.0 : eyeY - 0.1; flash.position.set(px + dirx * 0.3, fy, pz + dirz * 0.3); flash.target.position.set(px + dirx * 5, fy + diry * 5, pz + dirz * 5); flash.intensity = beam ? 9 * Math.min(1, p.beam / 0.35) : (bo ? 3.2 : 1.4); flash.angle = beam ? 0.6 : 0.5; flash.color.set(beam ? 0xffffff : 0xffe0a8);
     vm.userData.beam.material.opacity = beam ? 0.18 * Math.min(1, p.beam / 0.35) : 0; vm.userData.fl.children[2].material = emi(beam ? '#ffffff' : '#ffe6a0');
-    vm.position.y = -0.25 + (p.moving ? Math.sin(bob * 1.9) * 0.012 : Math.sin(t * 1.5) * 0.004); vm.position.x = 0.27 + (p.moving ? Math.cos(bob * 0.95) * 0.012 : 0); vm.rotation.x = p.boost > 0 ? -0.08 : 0; vm.visible = false;
+    vm.position.y = -0.25 + (p.moving ? Math.sin(bob * 1.9) * 0.012 : Math.sin(t * 1.5) * 0.004); vm.position.x = 0.27 + (p.moving ? Math.cos(bob * 0.95) * 0.012 : 0); vm.rotation.x = p.boost > 0 ? -0.08 : 0; vm.visible = !TPS && !p.dead;
     // luces de lámparas más cercanas
     const cands = lampSources.filter(l => l.f === p.f).map(l => ({ l, d: Math.hypot(l.wx - px, l.wz - pz) })).sort((a, b) => a.d - b.d);
     poolL.forEach((pl, i) => { const c = cands[i]; if (!c || c.d > 14) { pl.intensity = 0; return; } const fl2 = 0.88 + Math.sin(t * 9 + c.l.wx * 3) * 0.08 + (Math.random() < 0.02 ? 0.2 : 0); pl.position.set(c.l.wx, c.l.ceil ? WALLH - 0.5 : 1.5, c.l.wz); pl.intensity = (bo ? 0.08 : c.l.base * 1.4) * fl2; pl.color.set(c.l.ceil ? 0xffe0a0 : 0xffc070); });
