@@ -70,7 +70,7 @@ function buildMap1() {
   for (const k in keyAt) giveP(keyAt[k], { key: +k });
   giveP(pick(free), { item: 'palanca', n: 1 });
   // materiales garantizados en la zona libre (para engranajes, escalera y fusible), el resto al azar
-  [['aluminio', 4], ['aluminio', 4], ['chatarra', 3], ['chatarra', 3], ['madera', 4], ['madera', 3], ['cuerda', 3], ['cuerda', 3], ['circuito', 2], ['pilas', 3], ['tela', 3]].forEach(([m, n]) => giveP(pick(free), { mat: m, n }));
+  [['aluminio', 4], ['aluminio', 4], ['aluminio', 4], ['chatarra', 3], ['chatarra', 3], ['chatarra', 2], ['madera', 4], ['madera', 3], ['cuerda', 3], ['cuerda', 3], ['circuito', 2], ['pilas', 3], ['tela', 3]].forEach(([m, n]) => giveP(pick(free), { mat: m, n }));
   giveP('c18', { mat: 'lente', n: 1 }); giveP('c19', { mat: 'aceite', n: 1 }); giveP('c20', { mat: 'circuito', n: 1 });
   for (const id in C) { if (id === 'fridge' || id === 'vault' || id === 'safe') continue; if (!hasStuff(C[id]) && Math.random() < 0.8) give(id, randLoot()[0]); }
   vault.loot.push({ mat: 'lente', n: 1 }); safe.loot.push({ mat: 'aceite', n: 2 });
@@ -87,7 +87,7 @@ function buildMap1() {
   D(0, 'boxes', 12, 17); D(0, 'boxes', 13, 17); D(0, 'lamp', 2, 16);
   D(0, 'plant', 17, 18); D(0, 'lamp', 22, 11); D(0, 'boxes', 24, 18); D(0, 'boxes', 25, 18); D(0, 'lamp', 33, 11);
   D(1, 'lamp', 10, 2); D(1, 'plant', 2, 8); D(1, 'lamp', 21, 2); D(1, 'plant', 13, 8); D(1, 'plant', 28, 8);
-  D(1, 'lamp', 32, 2); D(1, 'plant', 37, 8); D(1, 'lamp', 10, 10); D(1, 'lamp', 26, 10); D(1, 'plant', 3, 12); D(1, 'plant', 36, 12);
+  D(1, 'lamp', 32, 2); D(1, 'plant', 37, 8); D(1, 'lamp', 10, 10); D(1, 'lamp', 25, 10); D(1, 'plant', 3, 12); D(1, 'plant', 36, 12);
   D(1, 'shelf', 8, 14, 3, 1); D(1, 'lamp', 12, 21); D(1, 'plant', 2, 21);
   D(1, 'boxes', 20, 15); D(1, 'boxes', 23, 15); D(1, 'boxes', 24, 21); D(1, 'boxes', 23, 21);
   D(1, 'lamp', 27, 21); D(1, 'plant', 37, 21); D(1, 'boxes', 36, 15);

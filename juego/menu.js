@@ -90,6 +90,7 @@ const Menu = {
     UI.btn(g, 14, 97, 142, 21, 'MODO HISTORIA', { sel: f(), icon: IC.book, fn: () => { setScene(Story); } });
     UI.btn(g, 14, 122, 142, 21, 'MULTIJUGADOR', { sel: f(), icon: IC.people, fn: () => { setScene(MultiMenu); } });
     UI.btn(g, 14, 147, 142, 21, 'PRIMERA PERSONA', { sel: f(), sub: '', icon: IC.eye, fn: () => { CFG.view = 'FP'; saveCfg(); this.quick(); } });
+    UI.btn(g, 162, 147, 120, 21, 'SER MUÑECA', { sel: f(), sub: '', icon: IC.eye, fn: () => { startDoll(); } });
     // ajustes
     const gsel = UI.foc.length === this.sel; UI.foc.push({ fn: () => setScene(Settings) }); UI.hits.push({ x: 290, y: 140, w: 24, h: 24, fn: () => { Sfx.click(); setScene(Settings); } });
     R(g, 292, 144, 24, 24, '#000'); R(g, 293, 145, 22, 22, gsel ? '#e8a020' : '#3a2a8a'); R(g, 293, 145, 22, 11, gsel ? '#ffe27a' : '#7a6ae0'); IC.gear(g, 299, 151, gsel ? '#2a1400' : '#fff');
@@ -236,6 +237,7 @@ function MPend(g) {
   R(g, 200, 100, 112, 70, 'rgba(8,4,24,0.9)'); R(g, 200, 100, 112, 1, '#6a5ad0'); Txt.draw(g, 'SALA ' + MP.code, 256, 104, { align: 'c', color: '#ffd23f' });
   rs.slice(0, 6).forEach((r, i) => Txt.draw(g, (i + 1) + '. ' + r.name.slice(0, 7) + (r.kind === 'escape' ? ' SALIO' : r.kind === 'survive' ? ' 6AM' : ' CAYO'), 204, 115 + i * 9, { color: r.kind === 'escape' ? '#3ae07a' : r.kind === 'survive' ? '#c9c0ff' : '#ff8a8a' }));
 }
+function startDoll() { if (!SAVE.unlocked.includes(CFG.cls)) CFG.cls = 0; Sfx.click(); MPleave(); G.prevView = CFG.view; if (CFG.view === 'FP') CFG.view = '3D'; newGame(undefined, { doll: true }); setScene(Play); }
 function startMatch(m) {
   const hum = m.list.filter(p => !p.bot), mi = hum.findIndex(p => p.id === Net.id);
   MP = { code: Net.code, results: [], players: m.list, share: { i: Math.max(0, mi), n: hum.length }, pending: [] }; CFG.level = m.level; Sfx.click(); newGame(m.seed); setScene(Play);

@@ -168,17 +168,17 @@ const Render3D = (() => {
 
   function draw(S) {
     if (!init()) return; if (!built || built.S !== S || built.style !== CFG.style || built.cls !== CFG.cls) build(S); _S = S;
-    const p = S.p, e = S.e, t = G.t, px = p.x / 16, pz = p.y / 16;
-    built.floors.forEach((fg, i) => { fg.visible = i === p.f; });
-    for (const d of built.doors) d.g.visible = !d.o.removed && d.o.f === p.f;
-    for (const ob of built.objs) if (ob.o.f === p.f && ob.upd) ob.upd(ob.o, t);
+    const p = S.p, e = S.e, t = G.t, fo = S.dollMode ? e : p, px = fo.x / 16, pz = fo.y / 16, bx = p.x / 16, bz = p.y / 16;
+    built.floors.forEach((fg, i) => { fg.visible = i === fo.f; });
+    for (const d of built.doors) d.g.visible = !d.o.removed && d.o.f === fo.f;
+    for (const ob of built.objs) if (ob.o.f === fo.f && ob.upd) ob.upd(ob.o, t);
     // jugador
-    const P = player; P.g.visible = !p.escaped; P.g.position.set(px, p.boost > 0 ? .1 : 0, pz);
+    const P = player; P.g.visible = !p.escaped && p.f === fo.f; P.g.position.set(bx, p.boost > 0 ? .1 : 0, bz);
     const fa = Math.atan2(Math.cos(p.ang), Math.sin(p.ang)); let da = fa - P.g.rotation.y; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI; P.g.rotation.y += da * 0.35;
     const sw = p.moving ? Math.sin(p.anim * 1.2) * 0.8 : 0; P.lLeg.rotation.x = sw; P.rLeg.rotation.x = -sw; P.lArm.rotation.x = -sw * .8; P.rArm.rotation.x = sw * .8; P.g.position.y += p.moving ? Math.abs(Math.sin(p.anim * 1.2)) * .06 : 0;
     P.g.rotation.x = p.dead ? -1.4 : 0; P.g.children[0].visible = true;
     // muñeca
-    const D = doll; D.g.visible = e.f === p.f;
+    const D = doll; D.g.visible = e.f === fo.f;
     if (D.g.visible) {
       D.g.position.set(e.x / 16, 0, e.y / 16); const ef = Math.atan2(e.fx, e.fy); let d2 = ef - D.g.rotation.y; while (d2 > Math.PI) d2 -= 2 * Math.PI; while (d2 < -Math.PI) d2 += 2 * Math.PI; D.g.rotation.y += d2 * 0.3;
       const mv = e.path.length && e.stun <= 0 && e.state !== 'eat', s2 = mv ? Math.sin(e.anim * 8) * 0.7 : 0; D.lLeg.rotation.x = s2; D.rLeg.rotation.x = -s2; D.lArm.rotation.x = -s2 * .6; D.rArm.rotation.x = s2 * .6;
@@ -188,24 +188,24 @@ const Render3D = (() => {
       D.inner.scale.setScalar(e.blind > 0 ? .9 : 1);
     }
     // fantasmas
-    ghosts.forEach((gm, i) => { const gh = S.ghosts[i]; gm.visible = !!gh && gh.f === p.f; if (gm.visible) { gm.position.set(gh.x / 16, 0.3 + Math.sin(t * 3 + gh.ph) * .15, gh.y / 16); gm.rotation.y = Math.atan2(px - gm.position.x, pz - gm.position.z); gm.userData.mat.opacity = .62 * gh.a; } });
+    ghosts.forEach((gm, i) => { const gh = S.ghosts[i]; gm.visible = !!gh && gh.f === fo.f; if (gm.visible) { gm.position.set(gh.x / 16, 0.3 + Math.sin(t * 3 + gh.ph) * .15, gh.y / 16); gm.rotation.y = Math.atan2(px - gm.position.x, pz - gm.position.z); gm.userData.mat.opacity = .62 * gh.a; } });
     // radar
-    ring.visible = e.f === p.f && e.ring > 0; if (ring.visible) { const r = e.ring / 1.2 * S.df.radarR / 16; ring.position.set(e.x / 16, .08, e.y / 16); ring.scale.set(r, r, r); ring.material.opacity = Math.max(0, 1 - e.ring / 1.2) * .9; }
+    ring.visible = e.f === fo.f && e.ring > 0; if (ring.visible) { const r = e.ring / 1.2 * S.df.radarR / 16; ring.position.set(e.x / 16, .08, e.y / 16); ring.scale.set(r, r, r); ring.material.opacity = Math.max(0, 1 - e.ring / 1.2) * .9; }
     // objetos colocados
     const seen = new Set();
-    for (const q of S.placed) { if (q.f !== p.f) continue; seen.add(q); let m = placed.get(q); if (!m) { m = makePlaced(q); m.position.set(q.type === 'barricada' ? q.tx + .5 : q.x / 16, 0, q.type === 'barricada' ? q.ty + .5 : q.y / 16); scene.add(m); placed.set(q, m); } if (q.type === 'torreta' && q.fire > 0) m.rotation.y += .5; }
+    for (const q of S.placed) { if (q.f !== fo.f) continue; seen.add(q); let m = placed.get(q); if (!m) { m = makePlaced(q); m.position.set(q.type === 'barricada' ? q.tx + .5 : q.x / 16, 0, q.type === 'barricada' ? q.ty + .5 : q.y / 16); scene.add(m); placed.set(q, m); } if (q.type === 'torreta' && q.fire > 0) m.rotation.y += .5; }
     for (const [q, m] of placed) if (!seen.has(q)) { scene.remove(m); placed.delete(q); }
     // señuelo
-    const L = S.lure && S.lure.f === p.f ? S.lure : null, lk = L ? L.type : '';
+    const L = S.lure && S.lure.f === fo.f ? S.lure : null, lk = L ? L.type : '';
     if (lk !== lureKey) { if (lureM) scene.remove(lureM); lureM = null; lureKey = lk; if (L) { lureM = new T.Group(); if (L.type === 'pizza') lureM.add(cyl(.3, .3, .06, '#e0a040', 0, .06, 0), cyl(.25, .25, .07, '#d04030', 0, .08, 0)); else lureM.add(box(.5, .35, .4, '#b05ac0', 0, .2, 0), sph(.08, bm('#ffd23f'), 0, .5, 0)); scene.add(lureM); } }
     if (lureM) lureM.position.set(L.x / 16, 0, L.y / 16);
     // luces
     const bo = S.blackout; amb.intensity += ((bo ? 0.28 : 1.0) - amb.intensity) * 0.1; dirL.intensity = bo ? 0.12 : 0.55; pL.intensity = bo ? 1.5 : 0.9; pL.distance = bo ? 6 : 10;
     pL.position.set(px, 2.4, pz + .4); if (S.flick > 0) amb.intensity *= .55;
-    if (p.beam > 0) { spot.intensity = 4.5 * Math.min(1, p.beam / 0.4); spot.position.set(px, 1.1, pz); spot.target.position.set(px + Math.cos(p.ang) * 6, 0, pz + Math.sin(p.ang) * 6); } else spot.intensity = 0;
+    if (p.beam > 0) { spot.intensity = 4.5 * Math.min(1, p.beam / 0.4); spot.position.set(bx, 1.1, bz); spot.target.position.set(bx + Math.cos(p.ang) * 6, 0, bz + Math.sin(p.ang) * 6); } else spot.intensity = 0;
     // cámara (tercera persona desde arriba)
-    const tgt = p.dead && e.f === p.f ? { x: e.x / 16, z: e.y / 16 } : { x: px, z: pz }, off = { x: 0, y: 10.4, z: 4.6 };
-    if (lastF !== p.f) { lastF = p.f; cam.position.set(tgt.x + off.x, off.y, tgt.z + off.z); }
+    const tgt = S.dollMode || (p.dead && e.f === fo.f) ? { x: e.x / 16, z: e.y / 16 } : { x: px, z: pz }, off = { x: 0, y: 10.4, z: 4.6 };
+    if (lastF !== fo.f) { lastF = fo.f; cam.position.set(tgt.x + off.x, off.y, tgt.z + off.z); }
     cam.position.x += (tgt.x + off.x - cam.position.x) * 0.14; cam.position.y += (off.y - cam.position.y) * 0.14; cam.position.z += (tgt.z + off.z - cam.position.z) * 0.14;
     const sh = S.shake > 0 ? S.shake * 0.25 : 0; const cx = cam.position.x + (Math.random() - .5) * sh, cz = cam.position.z + (Math.random() - .5) * sh;
     const sp = cam.position.clone(); cam.position.set(cx, cam.position.y, cz); cam.lookAt(cam.position.x - off.x, 0.4, cam.position.z - off.z); ren.render(scene, cam); cam.position.copy(sp);
