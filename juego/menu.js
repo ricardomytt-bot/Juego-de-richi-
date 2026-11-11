@@ -210,6 +210,7 @@ const Net = {
   broadcast() { if (this.host) this.post({ t: 'players', list: this.players, level: this.level }); },
   msg(m) {
     if (!m) return;
+    if (m.t === 'give' || m.t === 'code') { if (typeof sharedMsg === 'function') sharedMsg(m); return; }
     if (this.host) {
       if (m.t === 'join') { if (this.players.length < 8 && !this.players.find(p => p.id === m.p.id)) { this.players.push(Object.assign({}, m.p, { host: false })); Sfx.pickup(); } this.broadcast(); }
       else if (m.t === 'leave') { this.players = this.players.filter(p => p.id !== m.id); this.broadcast(); }
@@ -236,7 +237,8 @@ function MPend(g) {
   rs.slice(0, 6).forEach((r, i) => Txt.draw(g, (i + 1) + '. ' + r.name.slice(0, 7) + (r.kind === 'escape' ? ' SALIO' : r.kind === 'survive' ? ' 6AM' : ' CAYO'), 204, 115 + i * 9, { color: r.kind === 'escape' ? '#3ae07a' : r.kind === 'survive' ? '#c9c0ff' : '#ff8a8a' }));
 }
 function startMatch(m) {
-  MP = { code: Net.code, results: [], players: m.list }; CFG.level = m.level; Sfx.click(); newGame(m.seed); setScene(Play);
+  const hum = m.list.filter(p => !p.bot), mi = hum.findIndex(p => p.id === Net.id);
+  MP = { code: Net.code, results: [], players: m.list, share: { i: Math.max(0, mi), n: hum.length }, pending: [] }; CFG.level = m.level; Sfx.click(); newGame(m.seed); setScene(Play);
 }
 
 // =====================================================================

@@ -66,13 +66,17 @@ function buildMap1() {
     if (!l.key && hasStuff(C[cid])) { const alt = Object.keys(C).filter(k => k !== 'fridge' && k !== 'vault' && k !== 'safe' && !hasStuff(C[k])); const af = alt.filter(k => free.includes(k)); if (af.length) cid = pick(af); else if (alt.length) cid = pick(alt); else return; }
     C[cid].loot.push(l); };
   const keyAt = { 1: pick(free), 2: pick(['c10', 'm01', 'm02']), 3: pick(['c15', 'k01']), 4: pick(['vault', 'c20']), 5: pick(['c18', 'k02']) };
-  for (const k in keyAt) give(keyAt[k], { key: +k });
-  give(pick(free), { item: 'palanca', n: 1 });
+  const giveP = (cid, l) => give(cid, Object.assign(l, { prog: true })); // 'prog' = sirve para progresar (se reparte entre jugadores)
+  for (const k in keyAt) giveP(keyAt[k], { key: +k });
+  giveP(pick(free), { item: 'palanca', n: 1 });
   // materiales garantizados en la zona libre (para engranajes, escalera y fusible), el resto al azar
-  [['aluminio', 4], ['aluminio', 4], ['chatarra', 3], ['chatarra', 3], ['madera', 4], ['madera', 3], ['cuerda', 3], ['cuerda', 3], ['circuito', 2], ['pilas', 3], ['tela', 3]].forEach(([m, n]) => give(pick(free), { mat: m, n }));
-  give('c18', { mat: 'lente', n: 1 }); give('c19', { mat: 'aceite', n: 1 }); give('c20', { mat: 'circuito', n: 1 });
+  [['aluminio', 4], ['aluminio', 4], ['chatarra', 3], ['chatarra', 3], ['madera', 4], ['madera', 3], ['cuerda', 3], ['cuerda', 3], ['circuito', 2], ['pilas', 3], ['tela', 3]].forEach(([m, n]) => giveP(pick(free), { mat: m, n }));
+  giveP('c18', { mat: 'lente', n: 1 }); giveP('c19', { mat: 'aceite', n: 1 }); giveP('c20', { mat: 'circuito', n: 1 });
   for (const id in C) { if (id === 'fridge' || id === 'vault' || id === 'safe') continue; if (!hasStuff(C[id]) && Math.random() < 0.8) give(id, randLoot()[0]); }
   vault.loot.push({ mat: 'lente', n: 1 }); safe.loot.push({ mat: 'aceite', n: 2 });
+  // multijugador: cada llave y material de progreso solo existe en el mapa de UN jugador (reparto por turnos); luego se comparte por la sala
+  const SH = typeof MAP_SHARE !== 'undefined' ? MAP_SHARE : null;
+  if (SH && SH.n > 1) { let k = 0; for (const id of Object.keys(C)) C[id].loot = C[id].loot.filter(l => !l.prog || (k++ % SH.n) === SH.i); }
 
   // ---------- decoración ----------
   const D = (f, kind, x, y, w = 1, h = 1) => obj(f, 'deco', x, y, { kind, w, h });

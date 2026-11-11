@@ -59,9 +59,11 @@ function bfs(f, sx, sy, gx, gy) {
 }
 
 function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let MAP_SHARE = null;
 function withSeed(seed, fn) { const o = Math.random; Math.random = mulberry(seed); try { return fn(); } finally { Math.random = o; } }
 function newGame(seed) {
-  const W = seed ? withSeed(seed, buildMap1) : buildMap1(), cl = CLASSES[CFG.cls], df = levelParams(CFG.level);
+  MAP_SHARE = (typeof MP !== 'undefined' && MP && MP.share && MP.share.n > 1) ? MP.share : null;
+  const W = seed ? withSeed(seed, buildMap1) : buildMap1(); MAP_SHARE = null; const cl = CLASSES[CFG.cls], df = levelParams(CFG.level);
   const sp = W.spawn, es = W.enemySpawn;
   S = {
     W, cl, df, t: 0, dur: FAST ? 60 : 360, blackoutAt: FAST ? 40 : df.blackout, floors: W.f.map(f => Spr.floorCanvas(f)),
@@ -71,6 +73,8 @@ function newGame(seed) {
   };
   S.mini = W.f.map(F => Spr.mk(80, 48, g => { const cols = { '#': '#3a2a5a', '.': '#b88454', k: '#6ab8b0', g: '#8a8aa0', r: '#b04868' }; for (let j = 0; j < MH; j++) for (let i = 0; i < MW; i++) { const c = F.g[j][i]; if (c === ' ') continue; g.fillStyle = cols[c] || cols['.']; g.fillRect(i * 2, j * 2, 2, 2); } }));
   S.parts = [];
+  if (typeof MP !== 'undefined' && MP && MP.pending && MP.pending.length) { const q = MP.pending; MP.pending = []; q.forEach(applyShared); }
+  if (typeof MP !== 'undefined' && MP && MP.share && MP.share.n > 1) say('CADA QUIEN TIENE PARTE DE LAS LLAVES: COMPARTEN', 4);
   Sfx.horrorStart(); Sfx.setTension(0);
 }
 function ico(g, id, x, y, w) { g.imageSmoothingEnabled = false; g.drawImage(Spr.icon(id), x, y, w, w); }
@@ -114,8 +118,19 @@ function hintFor(o) {
   } return null;
 }
 function sparkle(x, y, n = 12) { for (let i = 0; i < n; i++) S.parts.push({ x, y, vx: rand(-34, 34), vy: rand(-48, -14), g: 90, t: 0, life: rand(0.5, 0.9), col: ['#ffd23f', '#fff6a0', '#ff9ad0', '#8ae0ff'][i % 4], sz: 2, star: true }); }
+const shared = () => typeof MP !== 'undefined' && MP && MP.share && MP.share.n > 1 && typeof Net !== 'undefined' && Net.ch;
+function applyShared(m) { // llega algo que consiguió un compañero
+  if (!S || !S.p) { if (typeof MP !== 'undefined' && MP) (MP.pending = MP.pending || []).push(m); return; }
+  const p = S.p;
+  if (m.t === 'code') { if (m.part === 'A') p.codeA = m.digits; else p.codeB = m.digits; say(m.from + ' ENCONTRO EL CODIGO', 3); Sfx.pickup(); return; }
+  const l = m.loot; if (!l) return;
+  if (l.key) { p.keys.add(l.key); got('llave', 'LLAVE ' + KEY_NAMES[l.key], 1); } else if (l.item) { addItem(l.item, l.n); got(l.item, ITEMS[l.item].n, l.n); } else if (l.mat) { p.mats[l.mat] = (p.mats[l.mat] || 0) + l.n; got(l.mat, MAT_NAMES[l.mat], l.n); }
+  say(m.from + ' TE LO PASO', 2.6); Sfx.pickup();
+}
+function sharedMsg(m) { applyShared(m); }
 function giveLoot(o) {
   const p = S.p, parts = [];
+  if (shared()) for (const l of o.loot || []) if (l.prog) Net.post({ t: 'give', from: SAVE.name.slice(0, 8), loot: l });
   for (const l of o.loot || []) { if (l.key) { p.keys.add(l.key); parts.push('LLAVE ' + KEY_NAMES[l.key]); got('llave', 'LLAVE ' + KEY_NAMES[l.key], 1); } else if (l.item) { addItem(l.item, l.n); parts.push(l.n + ' ' + ITEMS[l.item].n); got(l.item, ITEMS[l.item].n, l.n); } else { p.mats[l.mat] = (p.mats[l.mat] || 0) + l.n; parts.push(l.n + ' ' + MAT_NAMES[l.mat]); got(l.mat, MAT_NAMES[l.mat], l.n); } }
   Sfx.pickup(); 
 }
@@ -128,8 +143,8 @@ function useAction() {
     case 'crate': if (o.opened) return; if (p.inv.palanca > 0) { o.opened = true; S.stats.chests++; Sfx.hit(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); } else say('TABLAS CLAVADAS'); break;
     case 'gap': if (o.bridged) return; if (p.inv.escalera > 0) { takeItem('escalera'); o.bridged = true; for (let j = 0; j < o.h; j++) for (let i = 0; i < o.w; i++) S.W.f[o.f].sol[o.y + j][o.x + i] = false; Sfx.door(); sparkle((o.x + 1) * TS, (o.y + 1.5) * TS, 12); say('PUENTE LISTO'); } else say('HUECO EN EL PISO'); break;
     case 'fusebox': if (o.powered) return; if (p.inv.fusible > 0) { takeItem('fusible'); o.powered = true; S.W.f[0].objs.find(x => x.type === 'exit').powered = true; Sfx.power(); Sfx.pickup(); say('ENERGIA RESTAURADA'); } else say('FALTA UN FUSIBLE'); break;
-    case 'vault': if (o.opened) say('PRIMERAS CIFRAS: ' + o.digits + '__'); else if (true) { o.opened = true; p.codeA = o.digits; Sfx.door(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); say('CODIGO: ' + o.digits + '__  (FALTAN 2 CIFRAS)', 4); } else say('BOVEDA CERRADA'); break;
-    case 'safe': if (o.opened) say('ULTIMAS CIFRAS: __' + o.digits); else if (true) { o.opened = true; p.codeB = o.digits; Sfx.door(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); say('CODIGO: __' + o.digits, 4); } break;
+    case 'vault': if (o.opened) say('PRIMERAS CIFRAS: ' + o.digits + '__'); else if (true) { o.opened = true; p.codeA = o.digits; if (shared()) Net.post({ t: 'code', part: 'A', digits: o.digits, from: SAVE.name.slice(0, 8) }); Sfx.door(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); say('CODIGO: ' + o.digits + '__  (FALTAN 2 CIFRAS)', 4); } else say('BOVEDA CERRADA'); break;
+    case 'safe': if (o.opened) say('ULTIMAS CIFRAS: __' + o.digits); else if (true) { o.opened = true; p.codeB = o.digits; if (shared()) Net.post({ t: 'code', part: 'B', digits: o.digits, from: SAVE.name.slice(0, 8) }); Sfx.door(); sparkle((o.x + 0.5) * TS, o.y * TS + 6); giveLoot(o); say('CODIGO: __' + o.digits, 4); } break;
     case 'recharge': if (S.blackout) say('SIN ENERGIA'); else if (p.charge >= 99.9) say('LINTERNA LLENA'); else { p.charging = true; say('RECARGANDO...'); } break;
     case 'table': S.overlay = newCraft(); break;
     case 'microwave':
