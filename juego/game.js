@@ -213,7 +213,7 @@ function mash() { const p = S.p; p.grab = Math.min(100, p.grab + 11); Sfx.mash()
 function press(kind) {
   if (S.intro > 0 || S.ended) return;
   if (S.dollMode) { if (kind === 'use') dollUse(); else if (kind === 'flash') dollPing(); return; }
-  if (S.p.held) { mash(); return; }
+  if (S.p.held && kind === 'use') return;
   if (S.p.dead || S.p.escaped) return;
   if (S.overlay) return;
   if (kind === 'use') useAction(); else if (kind === 'flash') flashAction(); else itemAction();
@@ -318,7 +318,7 @@ function updateEnemy(dt) {
     p.hp -= df.dmg * (e.dmgRed > 0 ? 0.5 : 1) * dt;
     if (p.grab >= 100) releaseGrab(2.5);
     else if (p.hp <= 0) { p.hp = 0; p.dead = true; p.held = false; e.state = 'patrol'; e.stun = 2; Sfx.scare(); S.shake = 0.6; }
-    else p.grab = Math.max(0, p.grab - (8 + 0.5 * CFG.level) * dt);
+    else p.grab = Math.min(100, p.grab + 100 / Math.max(1.6, 3 - 0.12 * CFG.level) * dt); // te sueltas solo; no hay que tocar nada
     return;
   }
   if (e.stun > 0) { e.stun -= dt; return; }
@@ -429,7 +429,6 @@ function botThink(dt) {
   const same = e.f === p.f, d = same ? Math.hypot(e.x - p.x, e.y - p.y) : 999, seen = same && los(p.f, p.x, p.y, e.x, e.y);
   B.react -= dt;
   if (p.held) { // forcejeo: aprieta unas 4.5 veces por segundo; usa el taser si lo tiene
-    B.mashT -= dt; if (B.mashT <= 0) { B.mashT = 0.16; mash(); }
     if (botHas('taser') && B.react <= 0) { botFace(e.x, e.y); if (botItem('taser')) B.react = 1.2; }
     return;
   }
@@ -678,9 +677,8 @@ function renderHud(g) {
   if (S.msg) { g.globalAlpha = clamp(S.msg.t * 2, 0, 1); Txt.draw(g, S.msg.text, 160, 26, { align: 'c', color: '#fff', outline: '#000' }); g.globalAlpha = 1; }
   // forcejeo
   if (p.held) {
-    panel(g, 100, 54, 120, 72, 'rgba(40,6,10,0.92)', '#e03030'); Txt.draw(g, '¡TE AGARRARON!', 160, 60, { align: 'c', color: '#ff6060' });
-    circle(g, 160, 92, 17 + ((G.t * 10 | 0) % 2), '#e03030', '#fff'); Txt.draw(g, 'TOCA', 160, 89, { align: 'c', color: '#fff' });
-    R(g, 110, 114, 100, 6, '#000'); R(g, 111, 115, Math.round(98 * p.grab / 100), 4, '#3ae07a');
+    Txt.draw(g, '¡TE AGARRARON!', 160, 56, { align: 'c', s: 2, color: '#ff6060', outline: '#000' });
+    R(g, 110, 76, 100, 6, '#000'); R(g, 111, 77, Math.round(98 * (1 - p.grab / 100)), 4, '#e03030');
   }
   // overlays
   const ov = S.overlay;
@@ -801,8 +799,7 @@ const Play = {
       else if (ov.phase === 'input') for (const b of puzBtns()) if (x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h) { overlayInput('p', b.i); return; }
       if (ov.type !== 'craft' && x >= PAD.x && x < PAD.x + PAD.w && y >= PAD.y && y < PAD.y + PAD.h) return;
     }
-    for (const k in BTN) { const b = BTN[k]; if (Math.hypot(x - b.x, y - b.y) < b.r + 7) { if (k === 'item' && !S.p.held) { S.hold = { id, t: 0, fired: false }; return; } press(k); return; } }
-    if (S.p.held) { mash(); return; }
+    for (const k in BTN) { const b = BTN[k]; if (Math.hypot(x - b.x, y - b.y) < b.r + 7) { if (k === 'item') { S.hold = { id, t: 0, fired: false }; return; } press(k); return; } }
     if (CFG.view === 'FP' && (x >= 150 || type === 'mouse') && !(type === 'mouse' && x < 90 && y > 100)) { if (!S.look) S.look = { id, x, y }; return; }
     if (x < 150 && y > 24 && !S.joy) S.joy = { id, ox: x, oy: y, x, y };
   },
