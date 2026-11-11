@@ -11,17 +11,25 @@ const ITEMS = {
 const ITEM_ORDER = Object.keys(ITEMS);
 // recetas (sin orden: solo importan los materiales dentro de la cuadrícula)
 const RECIPES = [
-  { out: 'engranaje', n: 1, ing: { aluminio: 3, chatarra: 1 } },
-  { out: 'escalera', n: 1, ing: { madera: 4, cuerda: 2, chatarra: 1 } },
-  { out: 'fusible', n: 1, ing: { circuito: 1, chatarra: 1, cuerda: 1 } },
-  { out: 'taser', n: 2, ing: { circuito: 1, pilas: 2, chatarra: 1 } },
-  { out: 'petardos', n: 3, ing: { aluminio: 1, tela: 1, chatarra: 1 } },
-  { out: 'mascara', n: 1, ing: { tela: 2, cuerda: 1 } },
-  { out: 'barricada', n: 1, ing: { madera: 3, chatarra: 1 } },
-  { out: 'trampa', n: 1, ing: { cuerda: 2, madera: 1 } },
-  { out: 'musica', n: 1, ing: { circuito: 1, pilas: 1, madera: 1 } },
-  { out: 'mancha', n: 1, ing: { aceite: 1, tela: 1 } },
-  { out: 'turbo', n: 1, ing: { pilas: 2, chatarra: 1 } },
+  // cat: P progreso, D defensa, A ataque, S supervivencia
+  { out: 'engranaje', n: 1, cat: 'P', d: 'ABRE LAS CAJAS DE MECANISMOS', ing: { aluminio: 3, chatarra: 1 } },
+  { out: 'escalera', n: 1, cat: 'P', d: 'CRUZA EL HUECO DEL PISO', ing: { madera: 4, cuerda: 2, chatarra: 1 } },
+  { out: 'fusible', n: 1, cat: 'P', d: 'REPARA LA CAJA DE FUSIBLES', ing: { circuito: 1, chatarra: 1, cuerda: 1 } },
+  { out: 'palanca', n: 1, cat: 'P', d: 'ABRE LOS CAJONES CLAVADOS', ing: { chatarra: 2, madera: 1 } },
+  { out: 'taser', n: 2, cat: 'A', d: 'ATURDE A LA MUÑECA', ing: { circuito: 1, pilas: 2, chatarra: 1 } },
+  { out: 'petardos', n: 3, cat: 'A', d: 'EXPLOTAN Y LA ASUSTAN', ing: { aluminio: 1, tela: 1, chatarra: 1 } },
+  { out: 'camara', n: 1, cat: 'A', d: 'FLASH QUE CEGA Y ESPANTA', ing: { lente: 1, circuito: 1, pilas: 1, aluminio: 1 } },
+  { out: 'nerf', n: 6, cat: 'A', d: 'DARDOS PARA DISPARAR', ing: { madera: 2, cuerda: 1, aluminio: 1 } },
+  { out: 'torreta', n: 1, cat: 'A', d: 'DISPARA SOLA 15 SEGUNDOS', ing: { chatarra: 3, pilas: 2, circuito: 1 } },
+  { out: 'mascara', n: 1, cat: 'D', d: 'LOS FANTASMAS NO TE VEN', ing: { tela: 2, cuerda: 1 } },
+  { out: 'barricada', n: 1, cat: 'D', d: 'BLOQUEA UN PASO', ing: { madera: 3, chatarra: 1 } },
+  { out: 'trampa', n: 1, cat: 'D', d: 'LA MUÑECA SE RALENTIZA', ing: { cuerda: 2, madera: 1 } },
+  { out: 'musica', n: 1, cat: 'D', d: 'LA DISTRAE CON UNA CANCION', ing: { circuito: 1, pilas: 1, madera: 1 } },
+  { out: 'mancha', n: 1, cat: 'D', d: 'LA RESBALA Y LA ATURDE', ing: { aceite: 1, tela: 1 } },
+  { out: 'humo', n: 2, cat: 'D', d: 'NUBE QUE TE ESCONDE', ing: { chatarra: 1, tela: 1, aceite: 1 } },
+  { out: 'turbo', n: 1, cat: 'S', d: 'RECARGA LA LINTERNA', ing: { pilas: 2, chatarra: 1 } },
+  { out: 'bebida', n: 1, cat: 'S', d: 'CORRES MAS RAPIDO 5 S', ing: { pilas: 1, aceite: 1, aluminio: 1 } },
+  { out: 'jeringa', n: 2, cat: 'S', d: 'CURA 40 DE VIDA', ing: { aluminio: 1, lente: 1, tela: 1 } },
 ];
 const MAT_COLORS = { chatarra: '#9aa0b0', cuerda: '#d8b878', pilas: '#ffd23f', tela: '#e86a9a', madera: '#b07a44', aluminio: '#d8e0f0', lente: '#6ac8ff', circuito: '#3ae07a', aceite: '#6a6a30' };
 // clases: cada una empieza con sus cosas y una ventaja

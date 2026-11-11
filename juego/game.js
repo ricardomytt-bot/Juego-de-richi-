@@ -209,24 +209,33 @@ const PAD = { x: 104, y: 14, w: 112, h: 154 };
 function padKeys() { const ks = []; ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'X'].forEach((k, i) => ks.push({ k, x: 112 + (i % 3) * 32, y: 54 + ((i / 3) | 0) * 26, w: 28, h: 22 })); return ks; }
 // ---- mesa de crafteo 3x3 (sin orden) ----
 const MAT_ORDER = ['chatarra', 'cuerda', 'pilas', 'tela', 'madera', 'aluminio', 'lente', 'circuito', 'aceite'];
-function newCraft() { return { type: 'craft', grid: Array(9).fill(null), tab: 'mat', crafting: false, cT: 0, rec: null, warn: 0 }; }
+function newCraft() { return { type: 'craft', grid: Array(9).fill(null), tab: 'rec', crafting: false, cT: 0, rec: null, warn: 0, sel: null, scroll: 0, all: false, made: 0 }; }
+const haveMat = (ov, k) => (S.p.mats[k] || 0) + (ov ? ov.grid.filter(x => x === k).length : 0);
+const recCan = (ov, r) => Math.min(...Object.keys(r.ing).map(k => Math.floor(haveMat(ov, k) / r.ing[k])));
+const recList = ov => RECIPES.map((r, i) => ({ r, i, can: recCan(ov, r) })).sort((a, b) => (b.can > 0) - (a.can > 0) || a.i - b.i);
 function craftMatch(grid) { const cnt = {}; for (const m of grid) if (m) cnt[m] = (cnt[m] || 0) + 1; const ks = Object.keys(cnt); if (!ks.length) return null; return RECIPES.find(r => { const rk = Object.keys(r.ing); return rk.length === ks.length && rk.every(k => cnt[k] === r.ing[k]); }) || null; }
 function craftAdd(ov, m) { if ((S.p.mats[m] || 0) <= 0 || ov.crafting) return false; const i = ov.grid.indexOf(null); if (i < 0) return false; ov.grid[i] = m; S.p.mats[m]--; Sfx.blip(); return true; }
 function craftRemove(ov, i) { if (ov.crafting) return; const m = ov.grid[i]; if (!m) return; ov.grid[i] = null; S.p.mats[m] = (S.p.mats[m] || 0) + 1; Sfx.blip(); }
 function craftClear(ov) { if (ov.crafting) return; for (let i = 0; i < 9; i++) craftRemove(ov, i); }
 function craftFill(ov, r) { craftClear(ov); for (const k in r.ing) for (let n = 0; n < r.ing[k]; n++) if (!craftAdd(ov, k)) { craftClear(ov); ov.warn = 0.7; Sfx.hit(); return false; } return true; }
-function craftStart(ov) { const r = craftMatch(ov.grid); if (r && !ov.crafting) { ov.crafting = true; ov.cT = 0; ov.rec = r; Sfx.cam(); } }
+function craftStart(ov, all) { const r = craftMatch(ov.grid); if (r && !ov.crafting) { ov.crafting = true; ov.cT = 0; ov.rec = r; ov.all = !!all; ov.made = 0; Sfx.cam(); } }
 function closeOverlay() { const ov = S.overlay; if (!ov) return; if (ov.type === 'craft') for (let i = 0; i < 9; i++) if (ov.grid[i]) S.p.mats[ov.grid[i]] = (S.p.mats[ov.grid[i]] || 0) + 1; S.overlay = null; }
-const CRAFT = { slot: i => ({ x: 20 + (i % 3) * 30, y: 28 + ((i / 3) | 0) * 30, w: 28, h: 28 }), res: { x: 130, y: 34, w: 32, h: 32 }, btn: { x: 118, y: 98, w: 56, h: 18 }, clr: { x: 118, y: 120, w: 56, h: 14 }, close: { x: 290, y: 9, w: 16, h: 12 }, tabM: { x: 190, y: 24, w: 64, h: 12 }, tabR: { x: 256, y: 24, w: 46, h: 12 }, matRow: i => ({ x: 190, y: 40 + i * 14, w: 112, h: 13 }), recRow: i => ({ x: 190, y: 40 + i * 16, w: 112, h: 15 }) };
+const CRAFT = { slot: i => ({ x: 20 + (i % 3) * 30, y: 28 + ((i / 3) | 0) * 30, w: 28, h: 28 }), res: { x: 130, y: 34, w: 32, h: 32 }, btn: { x: 118, y: 72, w: 62, h: 16 }, all: { x: 118, y: 91, w: 62, h: 14 }, clr: { x: 118, y: 108, w: 62, h: 12 }, close: { x: 290, y: 9, w: 16, h: 12 }, tabM: { x: 190, y: 24, w: 52, h: 12 }, tabR: { x: 244, y: 24, w: 58, h: 12 }, matRow: i => ({ x: 190, y: 40 + i * 14, w: 112, h: 13 }), recRow: i => ({ x: 190, y: 40 + i * 15, w: 112, h: 14 }), up: { x: 190, y: 162, w: 54, h: 11 }, dn: { x: 248, y: 162, w: 54, h: 11 }, ROWS: 8 };
 const inR = (r, x, y) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
 function craftPointer(x, y) {
   const ov = S.overlay;
   if (inR(CRAFT.close, x, y)) { closeOverlay(); return true; }
   for (let i = 0; i < 9; i++) if (inR(CRAFT.slot(i), x, y)) { craftRemove(ov, i); return true; }
-  if (inR(CRAFT.btn, x, y)) { craftStart(ov); return true; } if (inR(CRAFT.clr, x, y)) { craftClear(ov); return true; }
-  if (inR(CRAFT.tabM, x, y)) { ov.tab = 'mat'; return true; } if (inR(CRAFT.tabR, x, y)) { ov.tab = 'rec'; return true; }
+  if (inR(CRAFT.btn, x, y)) { craftStart(ov, false); return true; }
+  if (inR(CRAFT.all, x, y)) { craftStart(ov, true); return true; }
+  if (inR(CRAFT.clr, x, y)) { craftClear(ov); return true; }
+  if (inR(CRAFT.tabM, x, y)) { ov.tab = 'mat'; Sfx.blip(); return true; } if (inR(CRAFT.tabR, x, y)) { ov.tab = 'rec'; Sfx.blip(); return true; }
   if (ov.tab === 'mat') { for (let i = 0; i < 9; i++) if (inR(CRAFT.matRow(i), x, y)) { craftAdd(ov, MAT_ORDER[i]); return true; } }
-  else for (let i = 0; i < RECIPES.length; i++) if (inR(CRAFT.recRow(i), x, y)) { craftFill(ov, RECIPES[i]); return true; }
+  else {
+    const L = recList(ov), mx = Math.max(0, L.length - CRAFT.ROWS);
+    if (inR(CRAFT.up, x, y)) { ov.scroll = clamp(ov.scroll - CRAFT.ROWS + 1, 0, mx); Sfx.blip(); return true; } if (inR(CRAFT.dn, x, y)) { ov.scroll = clamp(ov.scroll + CRAFT.ROWS - 1, 0, mx); Sfx.blip(); return true; }
+    for (let i = 0; i < CRAFT.ROWS; i++) if (inR(CRAFT.recRow(i), x, y) && L[ov.scroll + i]) { const e = L[ov.scroll + i]; if (!ov.crafting) { ov.sel = e.i; craftFill(ov, e.r); } return true; }
+  }
   return x > 10 && x < 310 && y > 4 && y < 176;
 }
 function puzBtns() { return [0, 1, 2, 3].map(i => ({ i, x: 118 + (i % 2) * 44, y: 76 + ((i / 2) | 0) * 38, w: 40, h: 34 })); }
@@ -249,7 +258,7 @@ function overlayInput(kind, v) {
 function updateOverlay(dt) {
   const ov = S.overlay; if (!ov) return;
   if (ov.shake > 0) ov.shake -= dt;
-  if (ov.type === 'craft') { if (ov.warn > 0) ov.warn -= dt; if (ov.crafting) { ov.cT += dt; if (ov.cT >= 2.5 * (S.cl.craft || 1)) { ov.crafting = false; addItem(ov.rec.out, ov.rec.n); got(ov.rec.out, ITEMS[ov.rec.out].n, ov.rec.n); ov.grid = Array(9).fill(null); S.stats.crafts++; Sfx.pickup(); sparkle(S.p.x, S.p.y - 12, 10); say(ITEMS[ov.rec.out].n + (ov.rec.n > 1 ? ' x' + ov.rec.n : '')); } } return; }
+  if (ov.type === 'craft') { if (ov.warn > 0) ov.warn -= dt; if (ov.crafting) { ov.cT += dt; if (ov.cT >= 2.5 * (S.cl.craft || 1)) { ov.crafting = false; addItem(ov.rec.out, ov.rec.n); got(ov.rec.out, ITEMS[ov.rec.out].n, ov.rec.n); ov.grid = Array(9).fill(null); S.stats.crafts++; ov.made++; Sfx.pickup(); sparkle(S.p.x, S.p.y - 12, 10); if (ov.all && craftFill(ov, ov.rec)) { ov.crafting = true; ov.cT = 0; } else ov.all = false; } } return; }
   if (ov.type !== 'puzzle') return;
   if (ov.flashT > 0) ov.flashT -= dt; if (ov.fail > 0) ov.fail -= dt;
   if (ov.phase === 'show') { ov.t += dt; if (ov.fail <= 0 && ov.t > 0.9 * 3 + 1.0) { ov.phase = 'input'; ov.idx = 0; } }
@@ -535,18 +544,33 @@ function renderHud(g) {
     } else if (ov.type === 'craft') {
       panel(g, 10, 4, 300, 172, '#1a1230', '#6a5ad0'); Txt.draw(g, 'MESA DE CRAFTEO', 20, 10, { color: '#ffd23f' });
       const cx = CRAFT.close; R(g, cx.x, cx.y, cx.w, cx.h, '#000'); R(g, cx.x + 1, cx.y + 1, cx.w - 2, cx.h - 2, '#6a2030'); Txt.draw(g, 'X', cx.x + 8, cx.y + 3, { align: 'c', color: '#fff' });
-      const match = craftMatch(ov.grid);
-      for (let i = 0; i < 9; i++) { const r = CRAFT.slot(i), m = ov.grid[i]; R(g, r.x, r.y, r.w, r.h, '#000'); R(g, r.x + 1, r.y + 1, r.w - 2, r.h - 2, '#2a2248'); if (m) { ico(g, m, r.x + 2, r.y + 2, 24); } }
-      Txt.draw(g, '>', 114, 50, { s: 2, align: 'c', color: '#6a5ab0' });
+      const match = craftMatch(ov.grid), L = recList(ov), nCan = L.filter(e => e.can > 0).length;
+      Txt.draw(g, 'PUEDES HACER: ' + nCan + '/' + L.length, 212, 11, { align: 'c', color: nCan ? '#3ae07a' : '#8a7fb0' });
+      for (let i = 0; i < 9; i++) { const r = CRAFT.slot(i), m = ov.grid[i]; R(g, r.x, r.y, r.w, r.h, '#000'); R(g, r.x + 1, r.y + 1, r.w - 2, r.h - 2, '#2a2248'); if (m) ico(g, m, r.x + 2, r.y + 2, 24); }
+      Txt.draw(g, '>', 114, 44, { s: 2, align: 'c', color: '#6a5ab0' });
       const rs = CRAFT.res; R(g, rs.x, rs.y, rs.w, rs.h, '#000'); R(g, rs.x + 1, rs.y + 1, rs.w - 2, rs.h - 2, match ? '#2a3a22' : '#241c3a');
-      if (match) { const it = ITEMS[match.out]; ico(g, match.out, rs.x + 4, rs.y + 4, 24); if (match.n > 1) Txt.draw(g, 'x' + match.n, rs.x + 28, rs.y + 25, { align: 'c', color: '#fff', outline: '#000' }); Txt.wrap(it.n, 62).forEach((l, k) => Txt.draw(g, l, 146, 70 + k * 9, { align: 'c', color: '#ffd23f' })); } else Txt.draw(g, '?', rs.x + 16, rs.y + 11, { align: 'c', s: 1, color: '#6a5ab0' });
-      const bt = CRAFT.btn, can = match && !ov.crafting; R(g, bt.x, bt.y, bt.w, bt.h, '#000'); R(g, bt.x + 1, bt.y + 1, bt.w - 2, bt.h - 2, can ? '#3ae07a' : '#2a3a30'); Txt.draw(g, ov.crafting ? 'HACIENDO' : 'FABRICAR', bt.x + 28, bt.y + 6, { align: 'c', color: can ? '#06210f' : '#6a8a70' });
-      const cl = CRAFT.clr; R(g, cl.x, cl.y, cl.w, cl.h, '#000'); R(g, cl.x + 1, cl.y + 1, cl.w - 2, cl.h - 2, '#5a4a20'); Txt.draw(g, 'VACIAR', cl.x + 28, cl.y + 3, { align: 'c', color: '#fff' });
-      if (ov.crafting) { const dur = 2.5 * (S.cl.craft || 1); R(g, 118, 140, 56, 6, '#000'); R(g, 119, 141, Math.round(54 * clamp(ov.cT / dur, 0, 1)), 4, '#ffd23f'); }
-      if (ov.warn > 0) Txt.draw(g, 'FALTAN MATERIALES', 146, 152, { align: 'c', color: '#ff6060' });
-      [['mat', CRAFT.tabM, 'MATERIALES'], ['rec', CRAFT.tabR, 'RECETAS']].forEach(([k, r, l]) => { R(g, r.x, r.y, r.w, r.h, '#000'); R(g, r.x + 1, r.y + 1, r.w - 2, r.h - 2, ov.tab === k ? '#4a42a0' : '#241c3a'); Txt.draw(g, l, r.x + r.w / 2, r.y + 3, { align: 'c', color: ov.tab === k ? '#fff' : '#8a7fb0' }); });
+      if (match) { ico(g, match.out, rs.x + 4, rs.y + 4, 24); if (match.n > 1) Txt.draw(g, 'x' + match.n, rs.x + rs.w - 2, rs.y + rs.h - 9, { align: 'r', color: '#fff', outline: '#000' }); } else Txt.draw(g, '?', rs.x + 16, rs.y + 11, { align: 'c', s: 1, color: '#6a5ab0' });
+      const bt = CRAFT.btn, can = match && !ov.crafting; R(g, bt.x, bt.y, bt.w, bt.h, '#000'); R(g, bt.x + 1, bt.y + 1, bt.w - 2, bt.h - 2, can ? '#3ae07a' : '#2a3a30'); Txt.draw(g, ov.crafting ? (ov.all ? 'HACIENDO ' + (ov.made + 1) : 'HACIENDO') : 'FABRICAR', bt.x + bt.w / 2, bt.y + 5, { align: 'c', color: can ? '#06210f' : '#6a8a70' });
+      const al = CRAFT.all, canAll = match && !ov.crafting && recCan(ov, match) + 1 > 1 || false; R(g, al.x, al.y, al.w, al.h, '#000'); R(g, al.x + 1, al.y + 1, al.w - 2, al.h - 2, can ? '#2a8ad0' : '#1e2a38'); Txt.draw(g, 'FABRICAR TODO'.slice(0, 0) + 'REPETIR', al.x + al.w / 2, al.y + 4, { align: 'c', color: can ? '#fff' : '#5a6a80' });
+      const cl = CRAFT.clr; R(g, cl.x, cl.y, cl.w, cl.h, '#000'); R(g, cl.x + 1, cl.y + 1, cl.w - 2, cl.h - 2, '#5a4a20'); Txt.draw(g, 'VACIAR', cl.x + cl.w / 2, cl.y + 3, { align: 'c', color: '#fff' });
+      if (ov.crafting) { const dur = 2.5 * (S.cl.craft || 1); R(g, 118, 124, 62, 6, '#000'); R(g, 119, 125, Math.round(60 * clamp(ov.cT / dur, 0, 1)), 4, '#ffd23f'); }
+      if (ov.warn > 0) Txt.draw(g, 'FALTAN MATERIALES', 150, 134, { align: 'c', color: '#ff6060' });
+      // detalle de la receta elegida
+      const dr = ov.sel != null ? RECIPES[ov.sel] : null; R(g, 14, 138, 168, 34, '#120c26'); R(g, 14, 138, 168, 1, '#4a3a8a');
+      if (dr) {
+        Txt.draw(g, ITEMS[dr.out].n + (dr.n > 1 ? '  X' + dr.n : ''), 18, 141, { color: '#ffd23f' }); Txt.draw(g, dr.d, 18, 162, { color: '#c9c0ff' });
+        let xx = 18; for (const k in dr.ing) { const hv = haveMat(ov, k), ok = hv >= dr.ing[k]; ico(g, k, xx, 150, 10); Txt.draw(g, hv + '/' + dr.ing[k], xx + 11, 152, { color: ok ? '#3ae07a' : '#ff6060' }); xx += 38; }
+      } else Txt.draw(g, 'TOCA UNA RECETA DEL LIBRO', 98, 152, { align: 'c', color: '#6a5ab0' });
+      [['mat', CRAFT.tabM, 'MATERIAL'], ['rec', CRAFT.tabR, 'LIBRO']].forEach(([k, r, l]) => { R(g, r.x, r.y, r.w, r.h, '#000'); R(g, r.x + 1, r.y + 1, r.w - 2, r.h - 2, ov.tab === k ? '#4a42a0' : '#241c3a'); Txt.draw(g, l, r.x + r.w / 2, r.y + 3, { align: 'c', color: ov.tab === k ? '#fff' : '#8a7fb0' }); });
       if (ov.tab === 'mat') MAT_ORDER.forEach((m, i) => { const r = CRAFT.matRow(i), n = S.p.mats[m] || 0; R(g, r.x, r.y, r.w, r.h, n ? '#2a2248' : '#1a1630'); ico(g, m, r.x + 1, r.y + 1, 11); Txt.draw(g, MAT_NAMES[m], r.x + 15, r.y + 3, { color: n ? '#fff' : '#5a5080' }); Txt.draw(g, String(n), r.x + r.w - 4, r.y + 3, { align: 'r', color: n ? '#ffd23f' : '#5a5080' }); });
-      else RECIPES.forEach((rc, i) => { const r = CRAFT.recRow(i), ok = Object.keys(rc.ing).every(k => (S.p.mats[k] || 0) + ov.grid.filter(x => x === k).length >= rc.ing[k]); R(g, r.x, r.y, r.w, r.h, ok ? '#24402a' : '#1a1630'); const it = ITEMS[rc.out]; ico(g, rc.out, r.x + 1, r.y + 1, 12); let xx = r.x + 17; for (const k in rc.ing) { for (let n = 0; n < rc.ing[k]; n++) { ico(g, k, xx, r.y + 3, 8); xx += 8; } } if (rc.n > 1) Txt.draw(g, 'x' + rc.n, r.x + r.w - 4, r.y + 4, { align: 'r', color: '#ffd23f' }); });
+      else {
+        const mx = Math.max(0, L.length - CRAFT.ROWS); ov.scroll = clamp(ov.scroll, 0, mx);
+        for (let i = 0; i < CRAFT.ROWS; i++) { const e = L[ov.scroll + i]; if (!e) break; const r = CRAFT.recRow(i), sel = ov.sel === e.i, it = ITEMS[e.r.out];
+          R(g, r.x, r.y, r.w, r.h, sel ? '#4a42a0' : e.can > 0 ? '#24402a' : '#1a1630'); if (e.can > 0) R(g, r.x, r.y, 2, r.h, '#3ae07a');
+          ico(g, e.r.out, r.x + 3, r.y + 1, 12); Txt.draw(g, it.n.slice(0, 11), r.x + 18, r.y + 4, { color: e.can > 0 || sel ? '#fff' : '#6a6090' });
+          if (e.can > 0) Txt.draw(g, 'X' + e.can, r.x + r.w - 3, r.y + 4, { align: 'r', color: '#3ae07a' }); else Txt.draw(g, '-', r.x + r.w - 4, r.y + 4, { align: 'r', color: '#4a4070' }); }
+        for (const [b, lab, dis] of [[CRAFT.up, 'SUBIR', ov.scroll <= 0], [CRAFT.dn, 'BAJAR', ov.scroll >= mx]]) { R(g, b.x, b.y, b.w, b.h, '#000'); R(g, b.x + 1, b.y + 1, b.w - 2, b.h - 2, dis ? '#1a1630' : '#3a3470'); Txt.draw(g, lab, b.x + b.w / 2, b.y + 3, { align: 'c', color: dis ? '#4a4070' : '#fff' }); }
+      }
     } else {
       panel(g, PAD.x, PAD.y, PAD.w, PAD.h); Txt.draw(g, 'COMPUTADORA', 160, 26, { align: 'c', color: '#3ae07a' });
       const lab = ov.phase === 'show' ? (ov.fail > 0 ? '¡ERROR! OTRA VEZ' : 'MEMORIZA EL ORDEN') : ov.phase === 'input' ? 'REPITE EL ORDEN (' + ov.idx + '/3)' : 'REINICIANDO... ' + Math.ceil(ov.wait) + ' (NO TE MUEVAS)';
@@ -667,6 +691,7 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => { G.keys[e.code] = false; });
 addEventListener('blur', () => { G.keys = {}; });
+canvas.addEventListener('wheel', e => { if (S && S.overlay && S.overlay.type === 'craft' && G.scene === Play) { S.overlay.scroll = Math.max(0, S.overlay.scroll + (e.deltaY > 0 ? 1 : -1)); e.preventDefault(); } }, { passive: false });
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('pointerdown', e => { if (e.pointerType === 'touch' && !G.fullTried) { G.fullTried = true; goFull(); } const first = firstInput(); try { canvas.setPointerCapture(e.pointerId); } catch (x) {} if (first && G.scene === Title) return; const [x, y] = toLocal(e); G.scene.pointerDown && G.scene.pointerDown(e.pointerId, x, y, e.pointerType); e.preventDefault(); });
 addEventListener('mousemove', e => { if (document.pointerLockElement === canvas && S && G.scene === Play && CFG.view === 'FP') { fpAdd(e.movementX, e.movementY, 0.0042); } });
