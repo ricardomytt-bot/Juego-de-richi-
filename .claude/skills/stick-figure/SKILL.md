@@ -18,7 +18,8 @@ Estilo para videos verticales de `video-studio/` (referencia completa: `src/Avio
 - **Apertura**: el personaje asomado a la ventanilla de un avión que entra volando (nubes con parallax), título "¿Y si te digo que…?"; luego **zoom out** (el avión se hace pequeño y aparece el mapa/escenario con zoom) y el personaje queda como narrador pequeño abajo a la izquierda.
 - Mapas y gráficos: **líneas que se dibujan solas**, línea punteada "que avanza" (marching ants), avioncito que recorre la ruta con **estela**, cámara que **sigue al avión** con zoom, el mapa con un balanceo suave (rotación/desplazamiento).
 - Globos o esquemas que giran, contadores que suben, golpes de zoom y *shake* en los momentos clave, textos que entran con rebote.
-- Cada cambio de escena lleva un efecto de sonido (whoosh) y cada golpe, uno de impacto.
+- Cada cambio de escena lleva un efecto de sonido (whoosh) y cada golpe, uno de impacto. **Nunca** uses sonido de pizarrón/lápiz al dibujar líneas.
+- Si el usuario dice que el estilo aburre, cambia de estilo por completo (ver `/y-si-te-digo-que`, lecciones).
 
 ## Reglas técnicas
 - Zonas seguras: título y=300–560, visual y=600–1150, subtítulos desde y=1240; nada importante a la derecha bajo y=1000.

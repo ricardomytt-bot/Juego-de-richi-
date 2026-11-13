@@ -359,12 +359,12 @@ const SKY: [string, string] = ['#BFE6FF', '#5DB8F2'];
 const FLAT = (c: number): any => [[0, 1, 540, 800], [999, c, 540, 800]];
 
 const DEFS: Def[] = [
-  {id: 'hook', key: null, bg: SKY, C: N1, cam: FLAT(1), fx: [{f: 'plane', at: 0, v: 0.55}, {f: 'swoosh_in', at: 0, v: 0.45}, {f: 'pop2', at: 8, v: 0.5}, {f: 'riser', at: 62, v: 0.4}, {f: 'swoosh_out', at: 80, v: 0.55}, {f: 'boom', at: 112, v: 0.55}, {f: 'scribble', at: 120, v: 0.5}, {f: 'plane', at: 130, v: 0.45}]},
-  {id: 'mex', key: 'mira', bg: PAPER, C: N2, cam: FLAT(1), fx: [{f: 'swoosh_in', at: 0, v: 0.5}, {f: 'scribble', at: 10, v: 0.5}, {f: 'scribble', at: 36, v: 0.55}, {f: 'plane', at: 40, v: 0.55}, {f: 'ding2', at: 112, v: 0.35}]},
+  {id: 'hook', key: null, bg: SKY, C: N1, cam: FLAT(1), fx: [{f: 'plane', at: 0, v: 0.55}, {f: 'swoosh_in', at: 0, v: 0.45}, {f: 'pop2', at: 8, v: 0.5}, {f: 'riser', at: 62, v: 0.4}, {f: 'swoosh_out', at: 80, v: 0.55}, {f: 'boom', at: 112, v: 0.55}, {f: 'plane', at: 130, v: 0.45}]},
+  {id: 'mex', key: 'mira', bg: PAPER, C: N2, cam: FLAT(1), fx: [{f: 'swoosh_in', at: 0, v: 0.5}, {f: 'plane', at: 40, v: 0.55}, {f: 'ding2', at: 112, v: 0.35}]},
   {id: 'porque', key: 'por', bg: PAPER, C: N3, cam: FLAT(1), fx: [{f: 'swoosh_in', at: 0, v: 0.5}, {f: 'pop2', at: 14, v: 0.55}, {f: 'hit', at: 30, v: 0.6}, {f: 'pop2', at: 42, v: 0.55}, {f: 'riser', at: 52, v: 0.3}]},
-  {id: 'circulo', key: 'en', bg: PAPER, C: N4, cam: FLAT(1), fx: [{f: 'swoosh_out', at: 0, v: 0.5}, {f: 'riser', at: 6, v: 0.35}, {f: 'scribble', at: 24, v: 0.55}, {f: 'ding2', at: 98, v: 0.5}, {f: 'sparkle', at: 102, v: 0.4}]},
-  {id: 'lon', key: 'aplanarla', off: -2, bg: PAPER, C: N5, cam: FLAT(1), fx: [{f: 'swoosh_in', at: 0, v: 0.5}, {f: 'scribble', at: 8, v: 0.5}, {f: 'scribble', at: 30, v: 0.55}, {f: 'plane', at: 34, v: 0.55}, {f: 'boom', at: 76, v: 0.7}, {f: 'sparkle', at: 82, v: 0.4}]},
-  {id: 'lat', key: 'cuanto', bg: PAPER, C: N6, cam: FLAT(1), fx: [{f: 'swoosh_out', at: 0, v: 0.5}, {f: 'scribble', at: 12, v: 0.5}, {f: 'scribble', at: 30, v: 0.5}, {f: 'scribble', at: 46, v: 0.5}, {f: 'pop2', at: 62, v: 0.55}, {f: 'plane', at: 70, v: 0.4}]},
+  {id: 'circulo', key: 'en', bg: PAPER, C: N4, cam: FLAT(1), fx: [{f: 'swoosh_out', at: 0, v: 0.5}, {f: 'riser', at: 6, v: 0.35}, {f: 'ding2', at: 98, v: 0.5}, {f: 'sparkle', at: 102, v: 0.4}]},
+  {id: 'lon', key: 'aplanarla', off: -2, bg: PAPER, C: N5, cam: FLAT(1), fx: [{f: 'swoosh_in', at: 0, v: 0.5}, {f: 'plane', at: 34, v: 0.55}, {f: 'boom', at: 76, v: 0.7}, {f: 'sparkle', at: 82, v: 0.4}]},
+  {id: 'lat', key: 'cuanto', bg: PAPER, C: N6, cam: FLAT(1), fx: [{f: 'swoosh_out', at: 0, v: 0.5}, {f: 'pop2', at: 62, v: 0.55}, {f: 'plane', at: 70, v: 0.4}]},
   {id: 'viento', key: 'ademas', bg: PAPER, C: N7, cam: FLAT(1), fx: [{f: 'swoosh_in', at: 0, v: 0.5}, {f: 'whoosh_up', at: 6, v: 0.5}, {f: 'plane', at: 10, v: 0.5}, {f: 'pop2', at: 24, v: 0.5}, {f: 'pop2', at: 30, v: 0.5}]},
   {id: 'conclusion', key: 'entonces', bg: ['#2E7D32', '#0A260C'], C: E8, cam: [[0, 1, 540, 800], [44, 1.0, 540, 900], [56, 1.14, 540, 960], [999, 1.18, 540, 960]], shakeAt: [44], fx: [{f: 'swoosh_in', at: 0, v: 0.5}, {f: 'riser', at: 20, v: 0.35}, {f: 'boom', at: 44, v: 0.7}, {f: 'ding2', at: 48, v: 0.55}, {f: 'pop2', at: 92, v: 0.55}, {f: 'sparkle', at: 96, v: 0.4}]},
   {id: 'cta', key: 'sigueme', bg: ['#4A148C', '#12052E'], C: E9, cam: FLAT(1.08), fx: [{f: 'swoosh_in', at: 0, v: 0.5}, {f: 'pop2', at: 6, v: 0.6}, {f: 'ding2', at: 14, v: 0.5}, {f: 'sparkle', at: 30, v: 0.4}]},

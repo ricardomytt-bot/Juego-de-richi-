@@ -76,7 +76,7 @@ export const buildScenes = (defs: Def[], v: Voz, total: number) => {
   });
 };
 
-export const Video: React.FC<{defs: Def[]; v: Voz; audio: string; overlay?: React.ReactNode}> = ({defs, v, audio, overlay}) => {
+export const Video: React.FC<{defs: Def[]; v: Voz; audio: string; overlay?: React.ReactNode; captions?: React.ReactNode}> = ({defs, v, audio, overlay, captions}) => {
   const f = useCurrentFrame();
   const total = Math.ceil((v.duracion + 0.9) * FPS);
   const scenes = React.useMemo(() => buildScenes(defs, v, total), [defs, v, total]);
@@ -106,7 +106,7 @@ export const Video: React.FC<{defs: Def[]; v: Voz; audio: string; overlay?: Reac
         </Sequence>
       ))}
       {overlay}
-      <Captions v={v} top={1240} />
+      {captions ?? <Captions v={v} top={1240} />}
       <div style={{position: 'absolute', left: 0, top: 0, height: 14, width: `${(f / total) * 100}%`, background: C.miel}} />
       <Audio src={staticFile(audio)} />
     </AbsoluteFill>

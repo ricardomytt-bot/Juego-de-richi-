@@ -8,6 +8,7 @@ import {Banana, bananaFrames} from './Banana';
 import {Nintendo, nintendoFrames} from './Nintendo';
 import {Avion, avionFrames} from './Avion';
 import {Avion2, avion2Frames} from './Avion2';
+import {Avion3, avion3Frames} from './Avion3';
 import brian from '../public/voces/brian.json';
 import harry from '../public/voces/harry.json';
 import daniel from '../public/voces/daniel.json';
@@ -36,5 +37,6 @@ export const Root: React.FC = () => (
     <Composition id="nintendo-eric" component={Nintendo} width={1080} height={1920} fps={30} durationInFrames={nintendoFrames()} />
     <Composition id="avion-eric" component={Avion} width={1080} height={1920} fps={30} durationInFrames={avionFrames()} />
     <Composition id="avion2-eric" component={Avion2} width={1080} height={1920} fps={30} durationInFrames={avion2Frames()} />
+    <Composition id="avion3-eric" component={Avion3} width={1080} height={1920} fps={30} durationInFrames={avion3Frames()} />
   </>
 );

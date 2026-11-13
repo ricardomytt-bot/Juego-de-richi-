@@ -44,6 +44,12 @@ Muestra el guion al usuario antes de producir cuando el tema sea nuevo o dudoso.
 - Prueba primero con `--scale=0.5` y revisa una hoja de contacto de fotogramas (cortes de texto, solapes con subtítulos). Corrige y luego renderiza el final.
 - Comprime con `ffmpeg -c:v libx264 -crf 25 -c:a aac -movflags +faststart`.
 
+## Lecciones del usuario (respetar siempre)
+- **Nada de sonido de pizarrón/lápiz/borrado** en los efectos. Usa whoosh, ping, golpe grave, glitch, ticks, boom.
+- **Si el video aburre, está mal**: cortes o cambios visuales cada 2–4 s, cámara siempre en movimiento, números que cuentan, comparaciones que se "ven" (carreras, medidores, contadores), un golpe de impacto en el dato clave.
+- Si el usuario pide **cambiar el estilo por completo**, no reutilices el look anterior. Un estilo que funcionó: **nocturno/neón** (fondo azul oscuro con estrellas, globo 3D con costas luminosas, rutas neón cian/rosa, tarjetas de cristal, subtítulos con brillo). Referencia: `video-studio/src/Avion3.tsx`.
+- Si hay datos que se pueden **calcular** (distancias, porcentajes), calcúlalos y muéstralos como contador; dilo en el mensaje como "calculado".
+
 ## 6. Entrega
 - Sube el MP4 a `videos/` en el repo (rama de trabajo de la sesión) y envíalo con SendUserFile.
 - **Termina el mensaje con el link de descarga** de GitHub:
