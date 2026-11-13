@@ -1,0 +1,1 @@
+{"name":"miel-video","version":"1.0.0","private":true,"type":"module","dependencies":{"@remotion/cli":"^4.0.541","@remotion/media-utils":"^4.0.541","@types/react":"^19.3.0","react":"^19.3.1","react-dom":"^19.3.1","remotion":"^4.0.541","typescript":"^7.0.2"}}
