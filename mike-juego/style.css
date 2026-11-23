@@ -1,0 +1,7 @@
+html,body{margin:0;height:100%;background:#05030f;overflow:hidden}
+body{display:flex;align-items:center;justify-content:center}
+#c{image-rendering:pixelated;image-rendering:crisp-edges;background:#000;touch-action:none}
+#touch{display:none;position:fixed;left:0;right:0;bottom:8px;justify-content:space-between;padding:0 10px;pointer-events:none}
+#touch .pad{display:flex;gap:10px;pointer-events:auto}
+#touch button{width:62px;height:62px;border-radius:50%;border:2px solid #fff8;background:#0008;color:#fff;font:bold 22px monospace;touch-action:none}
+@media (pointer:coarse){#touch{display:flex}}
