@@ -83,7 +83,7 @@ def mike(f,evil=False):
         s.P(poly([(11,9),(20,13),(20,11)]),BK,shade=False);s.P(poly([(37,9),(28,13),(28,11)]),BK,shade=False)
         s.P(rr(16,22,32,26),WH,ol=True,shade=False)
         for x in range(18,32,3):s.P(rect(x,22,x,26),BK,shade=False)
-        s.P(rr(17,35,31,38),WH,ol=True,shade=False)
+        s.P(rr(17,35,31,38),WH,ol=True,shade=False);s.P(rr(18,27,30,28),C('#d02040'),ol=True,shade=False)
     else:
         eye(s,17,15,5,5,1,1,2);eye(s,31,15,5,5,-1,1,2)
         s.P(rect(23,20,25,21),BK,shade=False);s.P(rr(22,23,26,25),C('#e02828'),ol=True,shade=False)
@@ -110,8 +110,8 @@ def cartero(f):
     s.P(rr(11,29+dl,14,33+dl),yl);s.P(rr(34,29-dl,37,33-dl),yl)
     s.P(rr(11,33+dl,14,40+dl),sk);s.P(rr(34,33-dl,37,40-dl),sk)
     s.P(ell(9,19,3,3),C('#b06840'));s.P(ell(39,19,3,3),C('#b06840'))
-    s.P(ell(24,17,14,11),sk)
-    s.P(ell(24,8,14,6),BK);s.P(rr(37,8,42,22),BK);s.P(poly([(11,9),(5,8),(14,6)]),BK)
+    s.P(ell(24,17,15,12),sk)
+    s.P(ell(24,8,15,6),BK);s.P(rr(37,8,42,22),BK);s.P(poly([(11,9),(5,8),(14,6)]),BK)
     eye(s,18,18,4,4,2,0,1);eye(s,30,18,4,4,2,0,1)
     s.P(rect(22,24,25,24),BK,shade=False)
     return s
@@ -238,7 +238,7 @@ def romano(f):
     s.P(rr(11,30+dl,14,38+dl),sk);s.P(rr(34,30-dl,37,38-dl),sk)
     s.P(poly([(5,16),(8,12),(11,16),(10,32),(6,32)]),C('#30e070'),ol=True)
     s.P(ell(24,17,14,11),sk)
-    s.P(ell(24,9,15,6),ar,ol=True);s.P(rr(9,9,39,13),ar);s.P(poly([(17,6),(24,-1),(31,6),(34,9),(14,9)]),rd,ol=True)
+    s.P(poly([(18,8),(21,1),(27,1),(30,8)]),rd,ol=True);s.P(ell(24,10,14,6),ar,ol=True);s.P(rr(10,11,13,20),ar);s.P(rr(35,11,38,20),ar)
     eye(s,18,19,3,3,0,0,1,C('#30e070'));eye(s,30,19,3,3,0,0,1,C('#30e070'))
     return s
 chars=[('01_mike',mike),('02_mike_malvado',lambda f:mike(f,True)),('03_perro_negro',dog),('04_cartero',cartero),
