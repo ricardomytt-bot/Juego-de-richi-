@@ -1,6 +1,6 @@
 'use strict';
 // ===== Lógica (vista desde arriba): estado, movimiento, combate, enemigos, jefe =====
-const SPEED = 185;
+const SPEED = 330;
 const BOSS_HP = 18;
 const CH = {
   mike: '01_mike', exe: '02_mike_malvado', willy: '03_perro_negro', ambrosio: '04_cartero', aquela: '05_gata_azul',
@@ -17,7 +17,8 @@ const S = {
   timers: [], busy: false, skip: false, t: 0, dia: 0, deaths: 0, playTime: 0,
   fade: 0, fadeAnim: null, shake: 0, hitstop: 0, cam: { x: 0, y: 0 }, boss: null, bossLock: false,
   bossStarted: false, gateOpen: false, gotLetter: false, checkpoint: [0, 0], hint: '', hintT: 0, willy: null,
-  leaving: false, nearNpc: null, bossDefeated: false, stepT: 0, keys: [0, 0, 0]
+  leaving: false, nearNpc: null, bossDefeated: false, stepT: 0, keys: [0, 0, 0],
+  q: { gotLetters: false, delivered: {}, count: 0, total: 7, done: false, trainStarted: false }, fav: {}, flags: {}, wave: null, camShot: null
 };
 const P = {
   x: 0, y: 0, hw: 10, hh: 12, vx: 0, vy: 0, dx: 0, dy: 1, face: 1, hp: 5, maxHp: 5, inv: 0,
@@ -53,16 +54,31 @@ function say(who, text, opt = {}) {
     };
   });
 }
+function ask(who, text, options, opt = {}) {
+  if (S.skip) return Promise.resolve(0);
+  return new Promise(res => {
+    S.dialog = { who, text, shown: 0, res, side: opt.side || (who === 'mike' ? 'L' : 'R'), portrait: opt.portrait !== false && !!CH[who] && who !== 'narr', red: !!opt.red, name: opt.name != null ? opt.name : (NAMES[who] || who), choices: options, sel: 0, age: 0, seed: opt.seed || 0 };
+  });
+}
 function updateDialog(dt) {
   const d = S.dialog; if (!d) return;
-  if (S.skip) { S.dialog = null; d.res(); return; }
+  if (S.skip) { S.dialog = null; d.res(d.choices ? 0 : undefined); return; }
+  d.age = (d.age || 0) + dt;
   const before = Math.floor(d.shown);
-  d.shown = Math.min(d.text.length, d.shown + dt * 48);
-  if (Math.floor(d.shown) !== before && Math.floor(d.shown) % 2 === 0 && d.who !== 'narr') sfx.blip();
-  if (wasPressed(K.ok)) {
-    if (d.shown < d.text.length) d.shown = d.text.length;
-    else { S.dialog = null; d.res(); }
+  d.shown = Math.min(d.text.length, d.shown + dt * (d.who === 'timba' ? 40 : 52));
+  const now = Math.floor(d.shown);
+  if (now !== before) { const ch = d.text[now - 1]; if (ch && ch !== ' ' && now % 2 === 0 && d.who !== 'narr') sfx.voice(d.who, now + (d.seed || 0) * 7); }
+  const done = d.shown >= d.text.length;
+  if (d.choices && done) {
+    if (wasPressed(K.up)) { d.sel = (d.sel + d.choices.length - 1) % d.choices.length; sfx.move(); }
+    if (wasPressed(K.down)) { d.sel = (d.sel + 1) % d.choices.length; sfx.move(); }
+    if (PTR.hit && d.rects) {
+      for (let i = 0; i < d.rects.length; i++) { const r = d.rects[i]; if (PTR.x > r.x && PTR.x < r.x + r.w && PTR.y > r.y && PTR.y < r.y + r.h) { PTR.hit = false; S.dialog = null; sfx.select(); d.res(i); return; } }
+    }
+    if (wasPressed(K.ok)) { S.dialog = null; sfx.select(); d.res(d.sel); }
+    return;
   }
+  if (wasPressed(K.ok)) { if (!done) d.shown = d.text.length; else { S.dialog = null; d.res(); } }
 }
 function showHint(t, sec) { S.hint = t; S.hintT = Math.max(S.hintT, sec); }
 
@@ -120,7 +136,8 @@ function spawnEnts(L) {
       case 'dia': S.ents.push({ type: 'dia', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'key': S.ents.push({ type: 'key', k: d.k, x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'heart': S.ents.push({ type: 'heart', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
-      case 'npc': S.ents.push({ type: 'npc', id: d.id, x: cx, y: fy, hw: 10, hh: 10 }); break;
+      case 'npc': S.ents.push({ type: 'npc', id: d.id, x: cx, y: fy, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, corrupt: false }); break;
+      case 'citizen': S.ents.push({ type: 'citizen', id: 'citizen' + d.seed, seed: d.seed, x: cx, y: fy, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, wt: rnd(0, 3), hx: cx, hy: fy }); break;
       case 'dummy': S.ents.push({ type: 'dummy', x: cx, y: fy, hw: 10, hh: 10, bh: 24, rad: 20, hit: 0 }); break;
     }
   }
@@ -156,8 +173,8 @@ function updateEnt(e, dt) {
     const d = dist(P.x, P.y, e.x, e.y);
     if (e.hop <= 0) {
       e.hop = rnd(.6, 1.1);
-      if (d < 340) { const a = Math.atan2(P.y - e.y, P.x - e.x); e.vx = Math.cos(a) * 190; e.vy = Math.sin(a) * 190; }
-      else { const a = rnd(0, 6.28); e.vx = Math.cos(a) * 110; e.vy = Math.sin(a) * 110; }
+      if (d < 340) { const a = Math.atan2(P.y - e.y, P.x - e.x); e.vx = Math.cos(a) * (e.corrupt ? 290 : 235); e.vy = Math.sin(a) * (e.corrupt ? 290 : 235); }
+      else { const a = rnd(0, 6.28); e.vx = Math.cos(a) * 130; e.vy = Math.sin(a) * 130; }
       e.hopT = .35; if (d < 420) sfx.squish();
     }
     const f = Math.exp(-dt * (e.hopT > 0 ? 1.5 : 9)); e.vx *= f; e.vy *= f; e.hopT -= dt;
@@ -168,11 +185,29 @@ function updateEnt(e, dt) {
     e.t += dt;
     const near = dist(P.x, P.y, e.x, e.y) < 300;
     let tx = near ? P.x + Math.cos(e.t * 2.2) * 70 : e.hx + Math.cos(e.t) * 40, ty = near ? P.y + Math.sin(e.t * 2.2) * 50 : e.hy + Math.sin(e.t * 1.3) * 30;
-    const a = Math.atan2(ty - e.y, tx - e.x), sp = near ? 115 : 50;
+    const a = Math.atan2(ty - e.y, tx - e.x), sp = near ? 150 : 60;
     e.vx = approach(e.vx, Math.cos(a) * sp, 500 * dt); e.vy = approach(e.vy, Math.sin(a) * sp, 500 * dt);
     moveBody(L, e, dt);
     const c = { x: e.x, y: e.y - e.z - Math.sin(e.t * 5) * 3 };
     if (dist(c.x, c.y, pb.x, pb.y) < 24) hurtPlayer(1, e.x, e.y);
+  } else if (e.type === 'npc' || e.type === 'citizen') {
+    e.t = (e.t || 0) + dt;
+    if (e.goto) {
+      const dx = e.goto.x - e.x, dy = e.goto.y - e.y, d = Math.hypot(dx, dy);
+      if (d < 8) { e.vx = e.vy = 0; const f = e.goto.done; e.goto = null; if (f) f(); }
+      else { e.vx = dx / d * e.goto.speed; e.vy = dy / d * e.goto.speed; e.face = Math.atan2(dx, dy); }
+      moveBody(L, e, dt);
+    } else if (e.type === 'citizen' && !S.wave) {
+      e.wt -= dt;
+      if (e.wt <= 0) { e.wt = rnd(1.5, 4); if (Math.random() < .6) { const a = rnd(0, 6.28), s = rnd(40, 70); e.vx = Math.cos(a) * s; e.vy = Math.sin(a) * s; } else e.vx = e.vy = 0; }
+      if (dist(e.x, e.y, e.hx, e.hy) > 160) { const a = Math.atan2(e.hy - e.y, e.hx - e.x); e.vx = Math.cos(a) * 55; e.vy = Math.sin(a) * 55; }
+      moveBody(L, e, dt); if (e.hitWall) { e.vx = -e.vx; e.vy = -e.vy; }
+      if (Math.hypot(e.vx, e.vy) > 10) e.face = Math.atan2(e.vx, e.vy);
+    } else {
+      const dx = P.x - e.x, dy = P.y - e.y; if (Math.hypot(dx, dy) < 220) e.face = Math.atan2(dx, dy);
+    }
+  } else if (e.type === 'exe3d') {
+    e.t = (e.t || 0) + dt;
   } else if (e.type === 'key') {
     e.t += dt;
     if (dist(e.x, e.y, pb.x, pb.y) < 30) {
@@ -226,7 +261,7 @@ function updatePlayer(dt) {
   const [ix, iy] = getMove(), il = Math.hypot(ix, iy);
   p.moving = il > 0.05;
   if (p.moving && p.atk <= 0) { const nx = ix / il, ny = iy / il; p.dx = nx; p.dy = ny; if (Math.abs(nx) > .3) p.face = sign(nx); }
-  const sp = (p.atk > .12 ? SPEED * .45 : SPEED), acc = 2600 * dt;
+  const sp = (p.atk > .12 ? SPEED * .6 : SPEED), acc = 5200 * dt;
   p.vx = approach(p.vx, ix * sp, acc); p.vy = approach(p.vy, iy * sp, acc);
   if (wasPressed(K.atk) && p.atkCd <= 0) {
     p.atk = .26; p.atkCd = .3; p.hitSet = new Set(); sfx.swing();
@@ -312,7 +347,7 @@ function updateBoss(dt) {
   const b = S.boss; if (!b || b.dead) return;
   const L = S.lvl, A = L.arena;
   b.anim += dt; b.flash = Math.max(0, b.flash - dt);
-  const dx = P.x - b.x, dy = P.y - b.y, d = Math.hypot(dx, dy) || 1, spd = b.phase === 2 ? 100 : 66;
+  const dx = P.x - b.x, dy = P.y - b.y, d = Math.hypot(dx, dy) || 1, spd = b.phase === 2 ? 125 : 86;
   switch (b.state) {
     case 'idle': case 'saved': b.vx = b.vy = 0; break;
     case 'walk':
@@ -397,6 +432,15 @@ function updateProj(dt) {
 }
 
 // ---------- Cámara / niveles / disparadores ----------
+function npcNeedsLetter(e) { return S.lvlId === 0 && S.q.gotLetters && e.type === 'npc' && !e.tag && LETTER_TO[e.id] && !S.q.delivered[e.id]; }
+const LETTER_TO = { timba: 1, rius: 1, mayo: 1, esparta: 1, raptor: 1, invictor: 1, acenix: 1 };
+function questTarget() {
+  if (S.lvlId !== 0) return null; const q = S.q;
+  if (!q.gotLetters) return S.ents.find(e => e.id === 'ambrosio') || null;
+  if (!q.done) { let best = null, bd = 1e9; for (const e of S.ents) if (npcNeedsLetter(e)) { const d = dist(e.x, e.y, P.x, P.y); if (d < bd) { bd = d; best = e; } } return best; }
+  if (!q.trainStarted) { const s = S.lvl.station; return { x: (s.x0 + s.x1) / 2 * T, y: 40 * T }; }
+  return null;
+}
 function updateCamera(dt, snap) {
   const L = S.lvl; let tx, ty;
   if (S.bossLock) { tx = (L.arena.x0 + L.arena.x1) / 2 - W / 2; ty = (L.arena.y0 + L.arena.y1) / 2 - H / 2; }
@@ -436,13 +480,30 @@ function openGate() {
   sfx.door(); S.shake = .25; spawnP(g.x + 24, g.y + 72, 36, '#7df3ff', 320, 1);
   showHint('¡La puerta se abrió! Adelante... pero con cuidado.', 3);
 }
+function spawnCorrupt(x, y, type) {
+  const base = type === 'flyer' ? { type: 'flyer', x, y, hw: 9, hh: 7, bh: 30, rad: 15, vx: 0, vy: 0, hp: 1, t: rnd(0, 6), flash: 0, hx: x, hy: y, z: 30 } : { type: 'slime', x, y, hw: 11, hh: 9, bh: 14, rad: 18, vx: 0, vy: 0, hp: 2, hop: rnd(.1, .5), hopT: 0, flash: 0 };
+  base.corrupt = true; base.born = .4; S.ents.push(base); spawnP(x, y - 10, 12, '#ff4a8a', 200, .6); sfx.pop();
+}
+function startWave(n) {
+  const L = S.lvl, total = [0, 7, 9, 12][n], spots = L.trainDoors;
+  S.wave = { n, total, spawned: 0, t: .5, done: false };
+  showHint('¡Oleada ' + n + ' de 3!  Defiéndete de los slimes corrompidos', 4); sfx.boss();
+}
+function updateWave(dt) {
+  const w = S.wave; if (!w || w.done || S.busy || S.dialog) return;
+  const L = S.lvl, doors = L.trainDoors;
+  if (w.spawned < w.total) {
+    w.t -= dt;
+    if (w.t <= 0) { w.t = Math.max(.45, 1.1 - w.n * .2); const d = doors[w.spawned % doors.length]; spawnCorrupt(d[0], d[1] + rnd(10, 30), (w.spawned % 4 === 3) ? 'flyer' : 'slime'); w.spawned++; }
+  } else if (!S.ents.some(e => e.corrupt && !e.dead)) {
+    w.done = true; if (w.n < 3) { const k = w.n + 1; setTimeout(() => { if (S.wave && S.wave.done) startWave(k); }, 1800); showHint('¡Oleada superada!', 2); sfx.win(); } else csTrainEnd();
+  }
+}
 function checkTriggers() {
   const L = S.lvl, pb = pbody();
-  if (L.exit && pb.x > L.exit.x && pb.x < L.exit.x + L.exit.w && pb.y > L.exit.y && pb.y < L.exit.y + L.exit.h) {
-    if (S.lvlId === 0 && !S.gotLetter) showHint('Primero habla con Ambrosio (botón ACTUAR)', 1.2);
-    else if (!S.leaving) { S.leaving = true; goNext(); }
-  }
-  if (L.gate && !S.gateOpen && dist(P.x, P.y, L.gate.x + T / 2, L.gate.y + 1.5 * T) < 130) {
+  if (L.exit && pb.x > L.exit.x && pb.x < L.exit.x + L.exit.w && pb.y > L.exit.y && pb.y < L.exit.y + L.exit.h && !S.leaving) { S.leaving = true; goNext(); }
+  if (L.station && S.q.done && !S.q.trainStarted && P.x / T > L.station.x0 && P.x / T < L.station.x1 && P.y / T > L.station.y0 && P.y / T < L.station.y1) { S.q.trainStarted = true; csTrain(); }
+  if (L.gate && !L.gate.station && !S.gateOpen && dist(P.x, P.y, L.gate.x + T / 2, L.gate.y + 1.5 * T) < 130) {
     if (S.dia >= L.diaNeed) openGate(); else showHint('La puerta del jefe necesita 3 diamantes  (' + S.dia + '/3)', .3);
   }
   tryDoors();
@@ -450,7 +511,7 @@ function checkTriggers() {
 }
 function nearestNpc() {
   let best = null, bd = 78;
-  for (const e of S.ents) if (e.type === 'npc') { const d = dist(e.x, e.y, P.x, P.y); if (d < bd) { bd = d; best = e; } }
+  for (const e of S.ents) if ((e.type === 'npc' || e.type === 'citizen') && !e.hidden && !e.goto) { const d = dist(e.x, e.y, P.x, P.y); if (d < bd) { bd = d; best = e; } }
   return best;
 }
 
@@ -469,7 +530,7 @@ function update(dt) {
   if (S.mode === 'title') { updateMenu(dt); return; }
   if (!MENU.open && wasPressed('Escape', 'KeyP') && !(S.stage && S.stage.end)) { openMenu('pause'); delete pressed['Escape']; delete pressed['KeyP']; }
   if (MENU.open) { updateMenu(dt); return; }
-  if (PTR.hit && S.dialog) { pressed['Enter'] = true; PTR.hit = false; }
+  if (PTR.hit && S.dialog && !(S.dialog.choices && S.dialog.shown >= S.dialog.text.length)) { pressed['Enter'] = true; PTR.hit = false; }
   const had = !!S.dialog;
   updateDialog(dt);
   if (S.stage) { updateStage(dt); updateFx(dt); return; }
@@ -480,7 +541,7 @@ function update(dt) {
   updateWilly(dt);
   for (const e of S.ents) updateEnt(e, dt);
   S.ents = S.ents.filter(e => !e.dead);
-  updateBoss(dt); updateProj(dt); updateFx(dt);
+  updateBoss(dt); updateProj(dt); updateWave(dt); updateFx(dt);
   S.nearNpc = nearestNpc();
   if (S.nearNpc && wasPressed(K.talk)) talkNpc(S.nearNpc);
   checkTriggers();

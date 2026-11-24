@@ -17,14 +17,11 @@ Solo hay **un joystick y dos botones**:
 En el menú puedes ajustar la música y los efectos, ocultar los botones en pantalla, poner pantalla completa y saltar las cinemáticas.
 
 ## Qué incluye el piloto
-1. **Cinemática de apertura** con retratos grandes pixelados de cada personaje, cámara que se acerca, aurora, las siete estrellas y Exe con el poder de las estrellas oscuras. Los personajes corruptos se ven con efecto glitch rojo.
-2. **Tutorial en la casa de Mike** con un **jardín-laberinto** donde está la **llave de bronce**, una puerta de bronce y el portal al Valle del Sueño.
-3. **Nivel 1: Valle del Sueño**, un mapa enorme de 120 x 84 casillas con:
-   - **Tres laberintos** (ruinas del oeste, pantano de setos y cámara de oro) y un bosque abierto muy grande.
-   - **Tres puertas con llave** (bronce, plata y oro) y **tres diamantes** que abren la puerta del jefe.
-   - Corazones escondidos en los callejones sin salida, antorchas, enemigos y un **mapa completo** en el menú de pausa que se va descubriendo.
-4. **Jefe: Timba corrupto** con ataques avisados en el suelo, fase 2 y siestas en las que recibe el doble de daño.
-5. **Cinemática de rescate**, recompensa (la Almohada de Estrella, +2 corazones) y **final con gancho**.
+Gráficos **3D con cámara inclinada** (estilo Minecraft Dungeons, three.js) con personajes de bloques y retratos pixelados en los diálogos. Cada personaje tiene su **voz** (como Undertale/Deltarune) y puedes **elegir tus respuestas**: las conversaciones cambian y la amistad afecta lo que dicen después.
+1. **Nivel 1: La Ciudad de Diamanti.** El juego empieza en la calle de Mike (vive con Trolino y Willy Perro). Ambrosio te pide repartir **7 cartas** a Timba, Rius, Mayo, Esparta, Raptor, Invictor (¡juguetón y feliz!) y Acenix. Al terminar se abre la estación.
+2. **El tren:** Exe aparece, posee a tus amigos con las estrellas oscuras y lanza **slimes corrompidos** en oleadas.
+3. **Nivel 2: Valle del Sueño**, mapa de 120 x 84 con tres laberintos, llaves de bronce/plata/oro y tres diamantes que abren la puerta del jefe.
+4. **Jefe: Timba corrupto**, recompensa y final con gancho (siguen Acenix y los demás como jefes).
 
 Cada nivel se **verifica automáticamente**: el juego comprueba que se pueda llegar a todas las llaves, puertas, diamantes y al jefe.
 

@@ -3,7 +3,7 @@
 // Suelo: '.' pasto  ',' camino  'a' piso de piedra  'f' flores  'm' hongos
 // Sólidos: 'T' árbol 'R' roca 'W' muro 'C' muro agrietado 'G' puerta de diamantes '~' agua 'H' casa 'd' puerta de casa
 //          'b' arbusto/seto 'k' antorcha  'X' puerta de bronce  'Y' puerta de plata  'Z' puerta de oro
-const SOLID = 'TRWCG~HdbkXYZ';
+const SOLID = 'TRWCG~HdbkXYZN';
 const DOORKEY = { X: 0, Y: 1, Z: 2 };
 const KEYNAMES = ['bronce', 'plata', 'oro'];
 const solidCh = c => SOLID.includes(c);
@@ -11,7 +11,7 @@ class Level {
   constructor(w, h, theme) {
     this.w = w; this.h = h; this.theme = theme;
     this.g = []; for (let y = 0; y < h; y++) this.g.push(new Array(w).fill('T'));
-    this.ents = []; this.signs = []; this.hp = {}; this.diaNeed = 0; this.must = [];
+    this.ents = []; this.signs = []; this.hp = {}; this.diaNeed = 0; this.must = []; this.buildings = []; this.train = null; this.station = null;
     this.start = [3, 3]; this.exit = null; this.gate = null; this.arena = null; this.seen = null;
   }
   get(x, y) { if (x < 0 || y < 0 || x >= this.w || y >= this.h) return 'T'; return this.g[y][x]; }
@@ -20,6 +20,11 @@ class Level {
   ent(type, tx, ty, extra) { this.ents.push(Object.assign({ type, tx, ty }, extra || {})); }
   sign(tx, ty, text) { this.signs.push({ x: (tx + .5) * T, y: (ty + 1) * T - 6, text }); }
   mustReach(tx, ty) { this.must.push([tx, ty]); }
+  // edificio sólido con puerta; face 'S' (puerta al sur) o 'N' (puerta al norte)
+  building(x0, y0, x1, y1, o) {
+    this.fill(x0, y0, x1, y1, 'H'); const dx = o.dx != null ? o.dx : Math.floor((x0 + x1) / 2), dy = o.face === 'N' ? y0 : y1, fy = o.face === 'N' ? y0 - 1 : y1 + 1;
+    this.set(dx, dy, 'd'); this.buildings.push(Object.assign({ x0, y0, x1, y1, dx, dy, fy, face: 'S' }, o)); this.mustReach(dx, fy); return [dx, fy];
+  }
   // alcance: ¿se llega desde el inicio a todos los puntos obligatorios? (las puertas cuentan como abiertas)
   reachFrom(sx, sy, doorsOpen = true) {
     const seen = new Uint8Array(this.w * this.h), q = [[sx, sy]]; seen[sy * this.w + sx] = 1;
@@ -90,40 +95,56 @@ function carveMaze(L, x0, y0, cw, ch, seed, o) {
 }
 const pick = (arr, r) => arr[Math.floor(r() * arr.length)];
 
-// ---- Nivel 0: la casa de Mike (tutorial con un jardín-laberinto) ----
+// ---- Nivel 0: la ciudad de Diamantia (calles, casas de los compas y estación de tren) ----
 function level0() {
-  const L = new Level(64, 44, 'day'); L.diaNeed = 1; L.start = [8, 10];
-  L.fill(3, 3, 60, 40, '.');
-  L.fill(5, 3, 11, 7, 'H'); L.set(8, 7, 'd');
-  L.fill(7, 8, 9, 13, ','); L.fill(5, 14, 58, 16, ',');
-  L.fill(16, 20, 23, 28, '~'); L.fill(14, 29, 17, 29, '~');
-  // muro de la plaza del portal con la puerta de bronce
-  L.fill(52, 3, 52, 40, 'W'); L.fill(52, 14, 52, 16, 'X');
-  // jardín-laberinto con la llave de bronce
-  const M = carveMaze(L, 33, 20, 5, 4, 5, { floor: '.', wall: 'b', entrance: { side: 'N', row: 2 }, braid: .15 });
-  L.fill(M.entrance.ex, 17, M.entrance.ex + 1, M.entrance.ey, ',');
-  const farC = M.far[0], deadC = M.dead.filter(c => c !== farC);
-  L.ent('key', farC.tx, farC.ty, { k: 0 }); L.mustReach(farC.tx, farC.ty);
-  if (deadC[0]) { L.ent('heart', deadC[0].tx, deadC[0].ty); L.mustReach(deadC[0].tx, deadC[0].ty); }
-  L.ent('slime', M.cells[7].tx, M.cells[7].ty); L.ent('slime', M.cells[14].tx, M.cells[14].ty);
-  // inicio, NPC y práctica
-  L.ent('dummy', 14, 15);
-  L.ent('npc', 5, 10, { id: 'aquela' });
-  L.ent('npc', 30, 15, { id: 'ambrosio' });
-  L.ent('dia', 26, 33); L.ent('heart', 12, 10); L.ent('slime', 40, 34); L.ent('slime', 20, 35);
-  L.exit = { x: 58 * T, y: 14 * T, w: 3 * T, h: 3 * T };
-  for (const [x, y] of [[8, 10], [52, 15], [58, 15], [26, 33], [30, 15], [5, 10]]) L.mustReach(x, y);
-  L.scatter(3, 3, 60, 40, 'T', 40, 11, [[8, 10, 3], [14, 15, 2], [30, 15, 2], [53, 15, 3]]);
-  L.scatter(3, 3, 60, 40, 'R', 16, 12, [[8, 10, 3]]);
-  L.scatter(3, 3, 51, 40, 'b', 24, 14, [[8, 10, 3]]);
-  L.scatter(3, 3, 60, 40, 'f', 140, 13, [], '.');
-  L.sign(9, 11, 'JOYSTICK / FLECHAS :  MOVERTE');
-  L.sign(12, 13, 'ATACAR  (J / Espacio) :  tu espada pega hacia donde miras');
-  L.sign(17, 17, '¡Prueba tu espada con el muñeco!');
-  L.sign(32, 14, '¡Habla con Ambrosio!   ACTUAR (E)');
-  L.sign(37, 18, 'Jardín-laberinto:  la llave de bronce está dentro');
-  L.sign(50, 17, 'La puerta de bronce necesita su llave  →');
-  L.sign(55, 17, 'Entra al portal  →');
+  const L = new Level(110, 80, 'city'); L.diaNeed = 3; L.start = [9, 66];
+  const R = (a, b, c, d, ch = '.') => L.fill(a, b, c, d, ch), r = mkRng(17);
+  R(3, 3, 106, 76);
+  // avenidas y calles
+  R(3, 63, 106, 68, ','); R(3, 38, 87, 41, ','); R(3, 16, 106, 19, ',');
+  for (const x of [24, 48, 76]) R(x, 16, x + 3, 68, ',');
+  // plaza central con fuente
+  R(40, 22, 60, 35, 'a'); R(48, 26, 52, 30, '~');
+  // estación
+  R(88, 27, 106, 50, 'a'); R(88, 27, 88, 50, 'W'); R(88, 38, 88, 41, 'G'); R(91, 28, 105, 32, 'N');
+  L.train = { x0: 91, y0: 28, x1: 105, y1: 32 }; L.trainDoors = [[94.5 * T, 33.2 * T], [98.5 * T, 33.2 * T], [102.5 * T, 33.2 * T]]; L.station = { x0: 89, y0: 34, x1: 106, y1: 49 };
+  L.gate = { x: 88 * T, y: 38 * T, w: T, h: 4 * T, tiles: [[88, 38], [88, 39], [88, 40], [88, 41]], station: true };
+  // casas (puerta al sur salvo la de Mike)
+  const mike = L.building(6, 69, 13, 75, { id: 'mike', color: '#e8c24a', roof: '#c0392b', label: 'CASA DE MIKE', face: 'N' });
+  const post = L.building(14, 56, 21, 62, { id: 'ambrosio', color: '#f2d24a', roof: '#d35400', label: 'CORREOS' });
+  const timba = L.building(30, 56, 37, 62, { id: 'timba', color: '#5b8de8', roof: '#2a3f8a', label: 'CASA DE TIMBA' });
+  const rius = L.building(56, 56, 63, 62, { id: 'rius', color: '#f0e0b0', roof: '#c0392b', label: 'GRANJA DE RIUS' });
+  const mayo = L.building(84, 56, 91, 62, { id: 'mayo', color: '#ecebf5', roof: '#cc2a2a', label: 'PIZZERÍA MAYO' });
+  const ace = L.building(8, 31, 15, 37, { id: 'acenix', color: '#f6b6d2', roof: '#d6609a', label: 'CAFÉ GATUNO' });
+  const esp = L.building(30, 9, 38, 15, { id: 'esparta', color: '#9ab8e8', roof: '#3a68b8', label: 'GIMNASIO ESPARTA' });
+  const rap = L.building(56, 9, 63, 15, { id: 'raptor', color: '#e85a5a', roof: '#7a2a2a', label: 'TIENDA DE ANIME' });
+  const inv = L.building(84, 9, 92, 15, { id: 'invictor', color: '#f4efe6', roof: '#b82a2a', label: 'VILLA ROMANA' });
+  // personajes en las puertas
+  const npcAt = (id, p, extra) => L.ent('npc', p[0], p[1], Object.assign({ id }, extra || {}));
+  npcAt('trolino', [mike[0] + 2, mike[1] - 1]); npcAt('ambrosio', post); npcAt('timba', timba); npcAt('rius', rius); npcAt('mayo', mayo);
+  npcAt('acenix', ace); npcAt('esparta', esp); npcAt('raptor', rap); npcAt('invictor', inv);
+  npcAt('aquela', [mike[0] - 2, mike[1] - 1]);
+  // ciudadanos que pasean
+  const cit = [[30, 65], [44, 66], [70, 65], [95, 66], [20, 40], [56, 40], [45, 28], [57, 24], [26, 30], [78, 50], [50, 18], [100, 18]];
+  cit.forEach((p, i) => L.ent('citizen', p[0], p[1], { seed: i + 1 }));
+  // diamantes escondidos y corazones
+  L.ent('dia', 6, 52); L.ent('dia', 70, 11); L.ent('dia', 102, 60);
+  for (const p of [[22, 66], [40, 40], [60, 18], [80, 65], [96, 40], [10, 40], [45, 24], [30, 18]]) L.ent('heart', p[0], p[1]);
+  for (const p of [mike, post, timba, rius, mayo, ace, esp, rap, inv]) L.mustReach(p[0], p[1]);
+  for (const [x, y] of [[9, 66], [6, 52], [70, 11], [102, 60], [87, 39], [89, 39], [96, 40], [50, 33], [45, 28]]) L.mustReach(x, y);
+  // decoración sin cortar caminos
+  const keep = [[9, 66, 3]];
+  L.scatter(3, 3, 106, 76, 'T', 170, 31, keep); L.scatter(3, 3, 106, 76, 'b', 70, 32, keep); L.scatter(3, 3, 106, 76, 'R', 24, 33, keep);
+  L.scatter(3, 3, 106, 76, 'f', 220, 34, [], '.');
+  for (let x = 8; x <= 104; x += 8) for (const y of [63, 68, 38, 41, 16, 19]) { if (L.get(x, y) === ',') { L.set(x, y, 'k'); if (!L.allReachable()) L.set(x, y, ','); } }
+  // letreros
+  L.sign(9, 67, 'Calle de Mike  ·  Correos está al este →');
+  L.sign(18, 64, 'CORREOS: ¡Ambrosio necesita ayuda!');
+  L.sign(50, 36, 'Plaza de Diamantia');
+  L.sign(86, 42, 'ESTACIÓN  →  (abre cuando entregues todas las cartas)');
+  L.sign(6, 54, '¿Ese brillo es un diamante?');
+  L.sign(68, 12, 'Parque del Norte  ·  ¡algo brilla por aquí!');
+  L.sign(100, 62, 'Rincón del Sureste');
   return L;
 }
 

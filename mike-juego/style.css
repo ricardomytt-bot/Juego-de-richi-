@@ -1,6 +1,10 @@
 html,body{margin:0;height:100%;background:#05030f;overflow:hidden;-webkit-user-select:none;user-select:none}
 body{display:flex;align-items:center;justify-content:center}
-#c{image-rendering:pixelated;image-rendering:crisp-edges;background:#000;touch-action:none;max-width:100%;outline:none}
+#wrap{position:relative;max-width:100%}
+#wrap canvas{position:absolute;left:0;top:0;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;outline:none}
+#c{background:transparent}
+#gl{background:#000}
+#gl.off{display:none}
 #touch{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;padding:0 max(16px,env(safe-area-inset-left,0px)) calc(16px + env(safe-area-inset-bottom,0px));pointer-events:none}
 #joy{position:relative;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),rgba(255,255,255,.05));border:3px solid rgba(255,255,255,.55);pointer-events:auto;touch-action:none}
 #joy::before{content:"";position:absolute;inset:34px;border-radius:50%;border:2px dashed rgba(255,255,255,.3)}

@@ -7,8 +7,10 @@ ctx.imageSmoothingEnabled = false;
 function fit() {
   let s = Math.min(innerWidth / W, innerHeight / H);
   if (s >= 2) s = Math.floor(s);
-  cv.style.width = Math.round(W * s) + 'px';
-  cv.style.height = Math.round(H * s) + 'px';
+  const w = Math.round(W * s) + 'px', h = Math.round(H * s) + 'px', wr = document.getElementById('wrap'), gl = document.getElementById('gl');
+  cv.style.width = w; cv.style.height = h;
+  if (gl) { gl.style.width = w; gl.style.height = h; }
+  if (wr) { wr.style.width = w; wr.style.height = h; }
 }
 addEventListener('resize', fit); fit();
 
@@ -127,7 +129,23 @@ const AUDIO = {
   },
   noise(d, v, hp) { if (this.c) this.noiseAt(this.c.currentTime, d, v, hp); }
 };
+// Voces de los personajes (blips por letra, como Undertale / Deltarune)
+const VOICES = {
+  mike: { f: 560, v: 90, type: 'triangle', len: .05, g: .05 }, willy: { f: 310, v: 40, type: 'square', len: .06, g: .04, gl: -90 },
+  ambrosio: { f: 430, v: 130, type: 'square', len: .045, g: .035 }, trolino: { f: 150, v: 30, type: 'sawtooth', len: .06, g: .04 },
+  timba: { f: 240, v: 20, type: 'sine', len: .09, g: .07, gl: -50 }, rius: { f: 900, v: 220, type: 'square', len: .035, g: .03 },
+  mayo: { f: 700, v: 0, type: 'square', len: .05, g: .03, steps: [500, 700, 900, 620] }, esparta: { f: 190, v: 25, type: 'sawtooth', len: .07, g: .05 },
+  raptor: { f: 640, v: 150, type: 'triangle', len: .035, g: .05 }, invictor: { f: 760, v: 150, type: 'triangle', len: .04, g: .055, gl: 120 },
+  acenix: { f: 880, v: 40, type: 'sine', len: .09, g: .06, gl: 260 }, aquela: { f: 690, v: 60, type: 'sine', len: .06, g: .06 },
+  exe: { f: 105, v: 15, type: 'sawtooth', len: .08, g: .05, det: 1.06 }, narr: null, default: { f: 400, v: 120, type: 'square', len: .04, g: .03 }
+};
+let voiceStep = 0;
 const sfx = {
+  voice(id, seed) {
+    const v = id in VOICES ? VOICES[id] : VOICES.default; if (!v || !AUDIO.c) return;
+    const f = v.steps ? v.steps[(voiceStep++) % v.steps.length] : v.f + (((seed || voiceStep++) * 9301 + 49297) % 233280 / 233280 * 2 - 1) * v.v;
+    AUDIO.tone(f, v.len, v.type, v.g, v.gl || 0); if (v.det) AUDIO.tone(f * v.det, v.len, v.type, v.g * .7, v.gl || 0);
+  },
   swing() { AUDIO.tone(480, .11, 'sawtooth', .035, -320); AUDIO.noise(.08, .05, 3000); },
   hit() { AUDIO.tone(170, .12, 'square', .07, -100); AUDIO.noise(.1, .08, 1500); },
   hurt() { AUDIO.tone(240, .28, 'sawtooth', .08, -170); AUDIO.noise(.18, .06, 600); },

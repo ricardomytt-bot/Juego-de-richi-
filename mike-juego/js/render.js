@@ -549,12 +549,19 @@ function drawHUD() {
       ctx.globalAlpha = 1; if (has) txt('×' + S.keys[i], x + 20, 72, { size: 12, outline: false, color: '#fff' });
     });
   }
+  { const q = S.q, lines = []; if (S.lvlId === 0 && S.mode === 'play') {
+      if (S.wave && !S.wave.done) { const left = S.ents.filter(e => e.corrupt && !e.dead).length + (S.wave.total - S.wave.spawned); lines.push('OLEADA ' + S.wave.n + ' / 3', 'Slimes: ' + left); }
+      else if (!q.gotLetters) lines.push('MISIÓN', 'Habla con Ambrosio (Correos)');
+      else if (!q.done) lines.push('REPARTE LAS CARTAS  ' + q.count + ' / ' + q.total, 'Sigue la flecha amarilla');
+      else if (!q.trainStarted) lines.push('MISIÓN', 'Ve a la estación del tren');
+    }
+    if (lines.length) { const y = S.keys && S.ents.some(e => e.type === 'key') ? 112 : 64; ctx.font = 'bold 17px "Courier New"'; const w = Math.max(...lines.map(s => ctx.measureText(s).width)) + 36; panel(12, y, w, 20 + lines.length * 24); lines.forEach((s, i) => txt(s, 30, y + 11 + i * 24, { size: i ? 15 : 17, color: i ? '#fff' : '#ffe14a', outline: false })); } }
   panel(W - 126, 12, 114, 46); ctx.drawImage(DIA, W - 118, 20, 36, 32);
   txt(S.dia + '/' + L.diaNeed, W - 72, 22, { size: 24, color: S.dia >= L.diaNeed ? '#7df3ff' : '#fff' });
   // minimapa
   if (MM && L.seen) {
     minimapUpdate(); const sc = 2, mw = L.w * sc, mh = L.h * sc, mx = W - 12 - mw - 6, my = 66;
-    ctx.fillStyle = 'rgba(10,8,30,.78)'; ctx.fillRect(mx - 6, my - 6, mw + 12, mh + 12); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(mx - 5, my - 5, mw + 10, mh + 10);
+    ctx.fillStyle = 'rgba(10,8,30,.96)'; ctx.fillRect(mx - 6, my - 6, mw + 12, mh + 12); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(mx - 5, my - 5, mw + 10, mh + 10);
     ctx.drawImage(MM.c, mx, my, mw, mh);
     for (const e of S.ents) if (e.type === 'dia' && L.seen[Math.floor(e.y / T) * L.w + Math.floor(e.x / T)]) { ctx.fillStyle = '#7df3ff'; ctx.fillRect(mx + Math.floor(e.x / T) * sc - 1, my + Math.floor(e.y / T) * sc - 1, 5, 5); }
     if (Math.floor(S.t * 3) % 2) { ctx.fillStyle = '#ff3b5c'; ctx.fillRect(mx + Math.floor(P.x / T) * sc - 1, my + Math.floor(P.y / T) * sc - 1, 5, 5); }
@@ -717,13 +724,13 @@ function drawTitle() {
 function drawDialog() {
   const d = S.dialog; if (!d) return;
   d.age = (d.age || 0) + 1 / 60;
-  const bx = 40, by = H - 158, bw = W - 80, bh = 128, left = d.side === 'L';
-  const inStage = !!S.stage, ease = 1 - Math.pow(1 - Math.min(1, d.age / .3), 3);
+  const nOpt = d.choices ? d.choices.length : 0, bh = nOpt ? 112 + nOpt * 38 : 128, bx = 40, by = H - 28 - bh, bw = W - 80, left = d.side === 'L';
+  const ease = 1 - Math.pow(1 - Math.min(1, d.age / .3), 3);
   if (d.portrait) {
     const px = left ? 190 : W - 190, dx = (1 - ease) * (left ? -160 : 160), talking = d.shown < d.text.length;
     const rimc = S.stage && S.stage.dark ? '#ff6a8a' : '#a8d8ff';
     ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .28 * ease; ctx.drawImage(glow(S.stage && S.stage.dark ? 'rgba(255,60,100,.9)' : 'rgba(150,190,255,.9)'), px - 270, by - 330, 540, 540); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
-    if (!drawPortrait(d.who, px, by + 38, d.who === 'exe' ? 3.2 : 3.6, { red: d.red || d.who === 'exe' && false, rim: rimc, talk: talking, dx, alpha: ease })) { shadow(px, by + 20, 70, 14, .3); drawChar(d.who, px, by + 20, { scale: 4, flip: !left, red: d.red }); }
+    if (!drawPortrait(d.who, px, by + 38, d.who === 'exe' ? 3.2 : 3.6, { red: d.red, rim: rimc, talk: talking, dx, alpha: ease })) { shadow(px, by + 20, 70, 14, .3); drawChar(d.who, px, by + 20, { scale: 4, flip: !left, red: d.red }); }
   }
   ctx.fillStyle = 'rgba(8,6,26,.94)'; rrect(bx, by, bw, bh, 16); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; rrect(bx + 2, by + 2, bw - 4, bh - 4, 14); ctx.stroke();
   ctx.strokeStyle = 'rgba(255,225,74,.6)'; ctx.lineWidth = 2; rrect(bx + 8, by + 8, bw - 16, bh - 16, 10); ctx.stroke();
@@ -738,13 +745,24 @@ function drawDialog() {
     const l = lines[i], take = clamp(full - n, 0, l.length); n += l.length + 1;
     txt(l.slice(0, take), narr ? W / 2 : bx + 34, by + 24 + i * 30, { size: 22, align: narr ? 'center' : 'left', color: narr ? '#ffeaa0' : '#fff', outline: false });
   }
-  if (d.shown >= d.text.length && Math.floor(S.t * 3) % 2) txt('▼', bx + bw - 40, by + bh - 36, { size: 20, outline: false });
+  if (nOpt && d.shown >= d.text.length) {
+    d.rects = []; const oy = by + 24 + Math.min(lines.length, 2) * 30 + 10;
+    d.choices.forEach((c, i) => {
+      const y = oy + i * 38, sel = i === d.sel, x = bx + 30, w = bw - 60;
+      ctx.fillStyle = sel ? 'rgba(255,225,74,.95)' : 'rgba(255,255,255,.1)'; rrect(x, y, w, 32, 9); ctx.fill();
+      if (sel) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; rrect(x, y, w, 32, 9); ctx.stroke(); }
+      txt((sel ? '▶ ' : '   ') + c, x + 14, y + 6, { size: 20, color: sel ? '#1a1020' : '#fff', outline: false }); d.rects.push({ x, y, w, h: 32 });
+    });
+  } else if (!nOpt && d.shown >= d.text.length && Math.floor(S.t * 3) % 2) txt('▼', bx + bw - 40, by + bh - 36, { size: 20, outline: false });
 }
 function drawFrame() {
-  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  const world = S.mode !== 'title' && !S.stage && S.lvl, use3d = world && typeof GL !== 'undefined' && GL.ok;
+  const glc = document.getElementById('gl'); if (glc) { const off = !use3d; if (glc.classList.contains('off') !== off) glc.classList.toggle('off', off); }
+  ctx.clearRect(0, 0, W, H);
+  if (!use3d) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); }
   if (S.mode === 'title') drawTitle();
   else if (S.stage) drawStage();
-  else if (S.lvl) drawWorld();
+  else if (S.lvl) { if (use3d) { glFrame(S.dtv || 1 / 60); drawOverlay3D(); ctx.drawImage(VIG, 0, 0); drawHUD(); } else drawWorld(); }
   drawDialog();
   drawMenu();
   if (S.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${S.fade})`; ctx.fillRect(0, 0, W, H); }
