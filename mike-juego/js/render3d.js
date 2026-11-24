@@ -45,7 +45,7 @@ function labelCanvas(text, bg, fg) {
 // ---------- construcción del nivel ----------
 function glClearLevel() {
   if (GL.lvlGroup) { GL.scene.remove(GL.lvlGroup); GL.lvlGroup.traverse(o => { if (o.isInstancedMesh) o.dispose(); }); }
-  for (const [k, o] of GL.objs) GL.root.remove(o.group); GL.objs.clear(); GL.dyn = []; GL.shotObjs = [];
+  for (const [k, o] of GL.objs) GL.root.remove(o.group); GL.objs.clear(); GL.dyn = []; GL.shotObjs = []; GL.portals = []; GL.trainGrp = null; GL.trainBody = null; GL.clouds = null;
 }
 function glBuildLevel(L) {
   if (!GL.ok) return; glClearLevel(); GL.lvlRef = L; GL.trainX = 0; GL.exeShow = 0; GL.blds = [];
@@ -212,6 +212,12 @@ function glDeco(g, L) {
     else if (d.k === 'stall') { const c = d.c || '#e84a4a'; m.add(mesh(geoBox(1.9, .9, .9), wood, 0, .45, .2), mesh(geoBox(.1, 2, .1), dwood, -.9, 1, -.35), mesh(geoBox(.1, 2, .1), dwood, .9, 1, -.35), mesh(geoBox(2.2, .14, 1.5), lam(c), 0, 2.05, .05)); for (let i = 0; i < 4; i++) m.add(mesh(geoBox(.3, .06, 1.5), lam(0xffffff), -.75 + i * .5, 2.13, .05, false)); for (let i = 0; i < 4; i++) m.add(mesh(geoBox(.22, .22, .22), lam([0xff4a4a, 0xffd24a, 0x58c058, 0xff9a3a][i]), -.6 + i * .4, 1.0, .2, false)); }
     else if (d.k === 'table') { const c = d.c || '#e84a4a'; m.add(mesh(geoBox(.12, 1.1, .12), dwood, 0, .55, 0), mesh(geoBox(1.0, .1, 1.0), lam(0xfff4dc), 0, 1.0, 0), mesh(new THREE.ConeGeometry(.85, .5, 8), lam(c), 0, 2.1, 0), mesh(geoBox(.08, 1.2, .08), lam(0xdddddd), 0, 1.6, 0, false)); for (const sx of [-1, 1]) m.add(mesh(geoBox(.34, .4, .34), wood, sx * .8, .2, 0)); }
     else if (d.k === 'gazebo') { for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) m.add(mesh(geoBox(.2, 2.2, .2), lam(0xf4f0e8), sx * .8, 1.1, sz * .8)); m.add(mesh(new THREE.ConeGeometry(1.5, 1.0, 4), lam(0x3a8a5a), 0, 2.7, 0), mesh(geoBox(1.9, .14, 1.9), lam(0xf4f0e8), 0, 2.2, 0)); m.children[m.children.length - 1].castShadow = true; m.children[m.children.length - 2].rotation.y = Math.PI / 4; }
+    else if (d.k === 'portal') {
+      const col = d.lock === 'boss' ? 0xff9ad0 : 0x7df3ff, ring = new THREE.Mesh(new THREE.TorusGeometry(1.3, .14, 8, 28), new THREE.MeshBasicMaterial({ color: col })); ring.position.y = 1.5; ring.rotation.x = -Math.PI / 2 + .0; ring.userData.spin = 1;
+      const disc = new THREE.Mesh(new THREE.CircleGeometry(1.2, 24), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .35, depthWrite: false, side: THREE.DoubleSide })); disc.position.y = 1.5; disc.rotation.x = -Math.PI / 2;
+      const base = mesh(new THREE.CylinderGeometry(1.5, 1.7, .3, 14), lam(0x3a3a58), 0, .15, 0); const glow = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.MeshBasicMaterial({ map: glowTex(d.lock === 'boss' ? '#ff9ad0' : '#7df3ff'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: .6 })); glow.position.y = 1.6; glow.userData.billboard = true;
+      m.add(base, ring, disc, glow); m.userData.portal = d; (GL.portals = GL.portals || []).push(m);
+    }
     else if (d.k === 'mail') m.add(mesh(geoBox(.1, .7, .1), dwood, 0, .35, 0), mesh(geoBox(.4, .3, .3), lam(0x2a6ad8), 0, .8, 0));
     else if (d.k === 'tree2') { const cols = [0xff8ab0, 0xffb0c8, 0xffa0d0]; m.add(mesh(geoBox(.34, 1.3, .34), lam(0x6b4424), 0, .65, 0)); for (const [x, y, z, w] of [[0, 1.6, 0, 1.4], [-.4, 1.4, .2, 1.0], [.4, 1.5, -.2, 1.0], [0, 2.1, 0, .9]]) m.add(mesh(geoBox(w, .7, w), lam(cols[(d.x + d.y) % 3]), x, y, z)); }
     g.add(m);

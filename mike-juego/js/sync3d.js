@@ -154,6 +154,7 @@ function glFrame(dt) {
   glSync(dt); glCamera(dt);
   // edificios que tapan a Mike se 'abren' (vista en corte)
   if (GL.blds) for (const gr of GL.blds) { const b = gr.userData.b, px = P.x / T, pz = P.y / T, occ = px > b.x0 - 2.5 && px < b.x1 + 3.5 && pz < b.y1 + 1.2 && pz > b.y0 - 9; gr.scale.y = lerp(gr.scale.y, occ ? .4 : 1, 1 - Math.exp(-S.dtv * 8)); const hide = occ || gr.scale.y < .95; for (const c of gr.children) if (c.position.y >= 2.5) c.visible = !hide; }
+  if (GL.portals) for (const pm of GL.portals) { const d = pm.userData.portal; pm.visible = !d.lock || lockOK(d.lock); pm.children[1].rotation.z += dt * 1.5; pm.children[1].position.y = 1.5 + Math.sin(S.t * 2) * .08; }
   // animaciones ambientales
   if (GL.waterFrames) { GL.waterMat.map = GL.waterFrames[Math.floor(Math.max(0, S.t) * 2.2) % 3]; }
   if (GL.clouds) { GL.clouds.children.forEach(c => { c.position.x += dt * .9; if (c.position.x > 140) c.position.x = -20; }); }

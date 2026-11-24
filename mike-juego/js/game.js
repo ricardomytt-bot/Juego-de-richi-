@@ -375,7 +375,7 @@ function hitBoss(dm = 1) {
 }
 const bt = (a, c) => (S.boss && S.boss.kind === 'acenix') ? c : a;
 function defeatBoss() {
-  const b = S.boss; b.state = 'saved'; b.vx = b.vy = 0; b.lift = 0; b.flash = 0; S.proj = []; S.warns = []; S.bossDefeated = true;
+  const b = S.boss; b.state = 'saved'; b.vx = b.vy = 0; b.lift = 0; b.flash = 0; S.proj = []; S.warns = []; S.bossDefeated = true; (S.defeated = S.defeated || {})[S.lvlId] = true;
   S.shake = .4; sfx.boss(); spawnP(b.x, b.y - 50, 36, '#ff4a5a', 340, 1);
   if (b.kind === 'acenix') csAcenixSaved(); else csTimbaSaved();
 }
@@ -493,7 +493,7 @@ function updateCamera(dt, snap) {
 }
 function loadLevel(id) {
   S.lvlId = id; const L = S.lvl = LEVELS[id](); { const v = verifyLevel(L); if (!v.ok) console.warn('Nivel imposible:', v.missing.join(' ')); }
-  spawnEnts(L); S.shots = []; S.proj = []; S.warns = []; S.particles = []; S.floaters = []; L.seen = new Uint8Array(L.w * L.h); minimapReset();
+  spawnEnts(L); S.ents.forEach((e, i) => e._i = i); S.nSpawn = S.ents.length; S.shots = []; S.proj = []; S.warns = []; S.particles = []; S.floaters = []; L.seen = new Uint8Array(L.w * L.h); minimapReset();
   S.keys = [0, 0, 0]; S.dia = 0; S.boss = null; S.bossLock = false; S.bossStarted = false; S.gateOpen = false; S.hint = ''; S.hintT = 0; S.bossDefeated = false;
   P.x = (L.start[0] + .5) * T; P.y = (L.start[1] + 1) * T - 8;
   P.vx = P.vy = 0; P.hp = P.maxHp; P.inv = 0; P.dead = false; P.dx = 0; P.dy = 1; P.face = 1; P.atk = 0;

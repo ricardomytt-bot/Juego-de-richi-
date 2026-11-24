@@ -282,7 +282,7 @@ async function csTrainEnd() {
   const aq = S.ents.find(e => e.id === 'aquela'); if (aq) { aq.hidden = false; aq.x = 94 * T; aq.y = 46 * T; aq.face = 0; }
   await say('aquela', 'Mike, el tren se fue... pero conozco un atajo: el portal del Valle del Sueño. Ahí es donde Exe llevó a los compas.');
   await M('¡Vamos! ¡Willy, a trabajar!'); await say('willy', '¡Guau! (Traducción: ¡por fin hago algo!)');
-  S.camShot = null; await goNext();
+  S.camShot = null; S.flags.trainDone = true; await enterZone(1, [60, 77]);
 }
 
 // ---------- cambio de nivel ----------
@@ -337,10 +337,10 @@ async function csTimbaSaved() {
   showHint('¡ALMOHADA DE ESTRELLA!  +25% de daño', 5);
   await say('timba', 'Yo los ayudo desde tu casa, Mike. Pero antes... ¿alguien tiene un colchón?');
   await M('¡Gracias, Timba! ¡Vamos por los demás!');
-  await fadeTo(1, .8);
-  if (window.BOSS_ONLY || window.VALLE_ONLY) { await csEnding(); return; }
-  await say('aquela', 'Exe se llevó a los demás a Pastelandia, un reino de dulces. Mike... Acenix está ahí. Prepárate.');
-  S.q.timbaSaved = true; await goNext();
+  if (window.BOSS_ONLY || window.VALLE_ONLY) { await fadeTo(1, .8); await csEnding(); return; }
+  S.bossLock = false; { const L = S.lvl; for (const [gx, gy] of L.gate.tiles) L.set(gx, gy, 'a'); } sfx.portal(); S.shake = .2;
+  await say('aquela', 'Mira, Mike: el portal del fondo de la arena se abrió. Exe se llevó a los demás a Pastelandia, un reino de dulces. Acenix está ahí. ¡Prepárate!');
+  showHint('Portal a Pastelandia abierto (fondo de la arena)  ·  Puedes volver a la ciudad por el portal del sur', 7); S.busy = false;
 }
 async function csAcenixSaved() {
   S.busy = true; S.skip = false; setMusic('story');
@@ -353,7 +353,7 @@ async function csAcenixSaved() {
   CHOCO_CD = 20; P.chocoCd = 0; P.hp = P.maxHp; sfx.win(); S.shake = .1; spawnP(P.x, P.y - 30, 34, '#ffd24a', 300, 1);
   showHint('¡MUFFIN DORADO!  El chocolate se recarga cada 20 s', 5);
   await say('acenix', 'Yo me quedo a hornear. ¡Vayan por los demás!');
-  await fadeTo(1, .8); await csEnding();
+  S.bossLock = false; await fadeTo(1, .8); await csEnding();
 }
 async function csEnding() {
   S.skip = false; S.busy = true;
@@ -401,5 +401,5 @@ async function csEnding() {
     PTR.hit = false;
     requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  if (document.readyState === 'complete') requestAnimationFrame(frame); else addEventListener('load', () => requestAnimationFrame(frame));
 })();

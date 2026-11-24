@@ -41,3 +41,6 @@ Texturas pintadas con píxeles de 2 px (pasto, caminos, muros de ladrillo y agua
 
 ## Atajos para probar
 Añade esto al final de la dirección: `?lvl=0` (tutorial), `?lvl=1` (Valle del Sueño), `?boss` (directo al jefe) o `?end` (final).
+
+## Mundo conectado
+Ciudad, Valle del Sueño y Pastelandia son un solo juego: se viajan por portales (el de la ciudad se abre tras la escena del tren; el de Pastelandia, tras vencer a Timba) y se puede volver atrás por el portal del sur de cada zona. Cada zona recuerda lo que hiciste. La partida se guarda sola y desde el menú (usa el almacenamiento del navegador).

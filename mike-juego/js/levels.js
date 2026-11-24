@@ -178,11 +178,12 @@ function level0() {
   L.sign(70, 12, '¡algo brilla por aquí!');
   L.sign(100, 62, 'Rincón del Sureste');
   L.sign(41, 51, 'Restaurante La Estrella  ·  ¡Hoy hay pizza!');
+  L.prop('portal', 99, 47, { solid: false, lock: 'train', to: 1 }); L.exits = [{ x0: 97, y0: 46, x1: 101, y1: 48, to: 1, spawn: [60, 77], lock: 'train', msg: 'El portal del Valle del Sueño aún no se abre... ¡sigue la historia!' }];
   return L;
 }
 
 // ---- Nivel 1: Valle del Sueño (grande, con laberintos y llaves) ----
-function buildValley(theme, so, SG) {
+function buildValley(theme, so, SG, EX) {
   const L = new Level(120, 84, theme); L.diaNeed = 3; L.start = [61, 75];
   const R = (a, b, c, d, ch = '.') => L.fill(a, b, c, d, ch), r = mkRng(7 + so);
   // zona central
@@ -240,12 +241,16 @@ function buildValley(theme, so, SG) {
   for (const M of [A, C, D]) for (const c of M.dead.slice(0, 3)) if (c !== M.far[0]) L.ent('heart', c.tx, c.ty);
   L.ent('heart', 58, 72); L.ent('heart', 64, 72); L.ent('heart', 32, 22); L.ent('heart', 76, 36); L.ent('heart', 40, 12);
   L.ent('npc', 61, 72, { id: 'aquela' });
+  // portales entre zonas
+  R(58, 79, 62, 81, ','); L.prop('portal', 60, 80, { solid: false, to: EX.back[0] }); L.exits = [{ x0: 58, y0: 80, x1: 62, y1: 81, to: EX.back[0], spawn: EX.back[1], lock: null }];
+  if (EX.next) { L.prop('portal', 8, 21, { solid: false, lock: 'boss', to: EX.next[0] }); L.exits.push({ x0: 7, y0: 20, x1: 8, y1: 22, to: EX.next[0], spawn: EX.next[1], lock: 'boss', msg: 'El portal está dormido... derrota al jefe para abrirlo' }); }
+  for (let x = 58; x <= 62; x++) for (let y = 79; y <= 81; y++) L.mustReach(x, y);
   // cartelitos
   SG.forEach((t, i) => { const P_ = [[60, 76], [53, 68], [67, 68], [56, 57], [34, 23], [80, C.entrance.ey + 3], [28, 24], [45, 18]][i]; L.sign(P_[0], P_[1], t); });
   return L;
 }
-const level1 = () => buildValley('dream', 0, ['VALLE DEL SUEÑO  —  un mundo enorme: ¡explóralo!', '← Ruinas del oeste  (laberinto de piedra)', 'Cámara de oro  →  (necesita la llave de oro)', '↑ Puerta de bronce al Bosque de Almohadas', 'Un escondite de rocas... ¡algo brilla adentro!', 'Puerta de plata  →  Pantano de setos', 'El jefe espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves']);
-const level2 = () => buildValley('sweet', 100, ['PASTELANDIA  —  un reino de dulces: ¡explóralo!', '← Ruinas de galleta  (laberinto)', 'Cámara de caramelo  →  (necesita la llave de oro)', '↑ Puerta de bronce al Bosque de Algodón', 'Un cercado de rocas de azúcar... ¡algo brilla!', 'Puerta de plata  →  Pantano de chocolate', 'Acenix espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves']);
+const level1 = () => buildValley('dream', 0, ['VALLE DEL SUEÑO  —  un mundo enorme: ¡explóralo!', '← Ruinas del oeste  (laberinto de piedra)', 'Cámara de oro  →  (necesita la llave de oro)', '↑ Puerta de bronce al Bosque de Almohadas', 'Un escondite de rocas... ¡algo brilla adentro!', 'Puerta de plata  →  Pantano de setos', 'El jefe espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves'], { back: [0, [99, 45]], next: [2, [61, 76]] });
+const level2 = () => buildValley('sweet', 100, ['PASTELANDIA  —  un reino de dulces: ¡explóralo!', '← Ruinas de galleta  (laberinto)', 'Cámara de caramelo  →  (necesita la llave de oro)', '↑ Puerta de bronce al Bosque de Algodón', 'Un cercado de rocas de azúcar... ¡algo brilla!', 'Puerta de plata  →  Pantano de chocolate', 'Acenix espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves'], { back: [1, [9, 21]], next: null });
 // comprueba que el nivel se puede completar aunque las puertas empiecen cerradas
 function verifyLevel(L) {
   const have = [false, false, false], opened = {}, missing = [];
