@@ -100,7 +100,7 @@ function drawMenu() {
     if (Math.floor(t * 3) % 2) { ctx.fillStyle = '#ff3b5c'; ctx.fillRect(mx + P.x / T * sc - 3, my + P.y / T * sc - 3, 7, 7); }
     txt('◆ diamante   ● llave   ■ tú (parpadea)   Explora para descubrir el mapa', (W / 2), my + mh + 12, { size: 13, align: 'center', color: '#bcd', outline: false });
   } else if (MENU.page === 'credits') {
-    const L = ['Mike y las Estrellas Oscuras  ·  Piloto', 'Un juego de fans basado en', 'Las Perrerías de Mike, de Mikecrack.', 'Historia original, sprites y código', 'hechos con Claude Code.'];
+    const L = ['Mikecrack y las Estrellas Oscuras  ·  Piloto', 'Un juego de fans basado en', 'Las Perrerías de Mike, de Mikecrack.', 'Historia original, sprites y código', 'hechos con Claude Code.'];
     L.forEach((s, i) => txt(s, (W / 2), py + 78 + i * 28, { size: i === 0 ? 20 : 17, align: 'center', color: i === 0 ? '#ffe14a' : '#fff', outline: false }));
   }
   items.forEach((it, i) => {

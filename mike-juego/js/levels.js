@@ -191,8 +191,11 @@ function buildValley(theme, so, SG) {
   const A = carveMaze(L, 6, 54, 10, 8, 11 + so, { floor: 'a', wall: 'W', entrance: { side: 'E', row: 4 }, braid: .12 });
   R(A.entrance.ex, A.entrance.ey, 47, A.entrance.ey + 1, ',');
   // ---- B: bosque de almohadas (claro enorme)
-  R(30, 12, 78, 40);
-  R(58, 41, 60, 59, ','); R(58, 50, 60, 50, 'X');
+  R(44, 28, 78, 40); R(28, 10, 50, 26);
+  // marcos de seto que hacen cada zona un cuadrado claro
+  const frame = (x0, y0, x1, y1) => { for (let x = x0 - 1; x <= x1 + 1; x++) for (const y of [y0 - 1, y1 + 1]) if (L.get(x, y) === 'T') L.set(x, y, 'b'); for (let y = y0 - 1; y <= y1 + 1; y++) for (const x of [x0 - 1, x1 + 1]) if (L.get(x, y) === 'T') L.set(x, y, 'b'); };
+  frame(44, 28, 78, 40); frame(28, 10, 50, 26); frame(48, 60, 72, 78);
+  R(58, 41, 60, 59, ','); R(58, 50, 60, 50, 'X'); R(47, 27, 49, 27, ',');
   // ---- C: pantano (laberinto de setos) → llave de oro y diamante 2
   const C = carveMaze(L, 92, 14, 8, 9, 22 + so, { floor: ',', wall: 'b', entrance: { side: 'W', row: 4 }, braid: .12 });
   R(79, C.entrance.ey, C.entrance.ex, C.entrance.ey + 1, ','); R(85, C.entrance.ey, 85, C.entrance.ey + 1, 'Y');
@@ -213,29 +216,29 @@ function buildValley(theme, so, SG) {
   const kA = A.far[0], dC = C.far[0], kC = C.far.find(c => Math.abs(c.i - dC.i) + Math.abs(c.j - dC.j) > 5), dD = D.far[0];
   L.ent('key', kA.tx, kA.ty, { k: 0 });
   L.ent('dia', 36, 17);
-  L.ent('key', 74, 16, { k: 1 });
+  L.ent('key', 74, 31, { k: 1 });
   L.ent('dia', dC.tx, dC.ty); L.ent('key', kC.tx, kC.ty, { k: 2 });
   L.ent('dia', dD.tx, dD.ty);
-  for (const [x, y] of [[kA.tx, kA.ty], [36, 17], [74, 16], [dC.tx, dC.ty], [kC.tx, kC.ty], [dD.tx, dD.ty], [61, 75], [58, 49], [59, 51], [84, C.entrance.ey], [86, C.entrance.ey], [74, D.entrance.ey], [76, D.entrance.ey], [26, 21], [22, 21], [36, 22], [47, A.entrance.ey]]) L.mustReach(x, y);
+  for (const [x, y] of [[kA.tx, kA.ty], [36, 17], [74, 31], [dC.tx, dC.ty], [kC.tx, kC.ty], [dD.tx, dD.ty], [61, 75], [58, 49], [59, 51], [84, C.entrance.ey], [86, C.entrance.ey], [74, D.entrance.ey], [76, D.entrance.ey], [26, 21], [22, 21], [36, 22], [47, A.entrance.ey]]) L.mustReach(x, y);
   for (let x = 79; x <= 91; x++) for (let y = C.entrance.ey; y <= C.entrance.ey + 1; y++) L.mustReach(x, y);
   for (let x = 25; x <= 30; x++) L.mustReach(x, 21);
   // ---- decoración sin cortar caminos
-  const keep = [[61, 75, 4], [36, 17, 2], [74, 16, 3]];
+  const keep = [[61, 75, 4], [36, 17, 2], [74, 31, 3], [47, 27, 2]];
   L.scatter(48, 60, 72, 78, 'T', 14, 21 + so, keep); L.scatter(48, 60, 72, 78, 'R', 6, 22 + so, keep); L.scatter(48, 60, 72, 78, 'b', 16, 23 + so, keep);
   R(40, 20, 48, 26, '~'); R(60, 28, 70, 35, '~'); R(44, 33, 50, 37, '~');
-  L.scatter(30, 12, 78, 40, 'T', 70, 24 + so, keep); L.scatter(30, 12, 78, 40, 'R', 20, 25 + so, keep); L.scatter(30, 12, 78, 40, 'b', 36, 26 + so, keep);
-  L.scatter(30, 12, 78, 40, 'm', 90, 27 + so, [], '.'); L.scatter(48, 60, 72, 78, 'm', 40, 28 + so, [], '.');
-  for (const [x, y] of [[56, 70], [66, 70], [56, 64], [66, 64], [72, 14], [76, 14], [72, 18], [76, 18]]) L.set(x, y, 'k');
+  L.scatter(44, 28, 78, 40, 'T', 40, 24 + so, keep); L.scatter(44, 28, 78, 40, 'R', 10, 25 + so, keep); L.scatter(28, 10, 50, 26, 'T', 22, 34 + so, keep); L.scatter(28, 10, 50, 26, 'R', 8, 35 + so, keep); L.scatter(28, 10, 50, 26, 'b', 14, 36 + so, keep); L.scatter(44, 28, 78, 40, 'b', 16, 26 + so, keep);
+  L.scatter(44, 28, 78, 40, 'm', 60, 27 + so, [], '.'); L.scatter(28, 10, 50, 26, 'f', 90, 37 + so, [], '.'); L.scatter(48, 60, 72, 78, 'm', 40, 28 + so, [], '.');
+  for (const [x, y] of [[56, 70], [66, 70], [56, 64], [66, 64], [46, 30], [76, 30], [46, 38], [76, 38], [30, 12], [48, 12], [30, 24], [48, 24]]) L.set(x, y, 'k');
   // ---- enemigos
   const openIn = (x0, y0, x1, y1, ch = '.') => { const a = []; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (L.get(x, y) === ch) a.push([x, y]); return a; };
   const place = (arr, type, n, minD = 0) => { let k = 0, t = 0; while (k < n && t++ < n * 30) { const [x, y] = pick(arr, r); if (Math.hypot(x - 61, y - 75) < minD) continue; if (L.ents.some(e => Math.abs(e.tx - x) < 2 && Math.abs(e.ty - y) < 2)) continue; L.ent(type, x, y); k++; } };
   place(openIn(48, 60, 72, 78), 'slime', 5, 8);
-  place(openIn(30, 12, 78, 40), 'slime', 14, 6); place(openIn(30, 12, 78, 40), 'flyer', 10, 6);
+  place(openIn(44, 28, 78, 40), 'slime', 9, 6); place(openIn(44, 28, 78, 40), 'flyer', 6, 6); place(openIn(28, 10, 50, 26), 'slime', 8, 6); place(openIn(28, 10, 50, 26), 'flyer', 5, 6);
   for (const M of [A, D]) { const cs = M.cells.filter(c => c.d > 3); for (let i = 0; i < 10; i++) { const c = pick(cs, r); L.ent(i % 3 === 0 ? 'flyer' : 'slime', c.tx, c.ty); } }
   { const cs = C.cells.filter(c => c.d > 3); for (let i = 0; i < 9; i++) { const c = pick(cs, r); L.ent(i % 2 ? 'flyer' : 'slime', c.tx, c.ty); } }
-  L.ent('flyer', 72, 15); L.ent('flyer', 76, 17); L.ent('slime', 74, 18);   // guardianes de la llave de plata
+  L.ent('flyer', 72, 30); L.ent('flyer', 76, 33); L.ent('slime', 74, 34);   // guardianes de la llave de plata
   for (const M of [A, C, D]) for (const c of M.dead.slice(0, 3)) if (c !== M.far[0]) L.ent('heart', c.tx, c.ty);
-  L.ent('heart', 58, 72); L.ent('heart', 64, 72); L.ent('heart', 34, 38); L.ent('heart', 76, 36); L.ent('heart', 40, 12);
+  L.ent('heart', 58, 72); L.ent('heart', 64, 72); L.ent('heart', 32, 22); L.ent('heart', 76, 36); L.ent('heart', 40, 12);
   L.ent('npc', 61, 72, { id: 'aquela' });
   // cartelitos
   SG.forEach((t, i) => { const P_ = [[60, 76], [53, 68], [67, 68], [56, 57], [34, 23], [80, C.entrance.ey + 3], [28, 24], [45, 18]][i]; L.sign(P_[0], P_[1], t); });

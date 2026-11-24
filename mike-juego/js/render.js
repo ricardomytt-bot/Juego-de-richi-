@@ -626,9 +626,9 @@ function drawPortrait(id, x, yb, sc, o = {}) {
   g.globalCompositeOperation = 'destination-out';
   const gr = g.createLinearGradient(0, pad + h * .7, 0, pad + h); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,1)'); g.fillStyle = gr; g.fillRect(0, pad + h * .7, PTMP.width, h * .3 + pad);
   g.globalCompositeOperation = 'source-over';
-  const breathe = Math.sin(t * 1.8) * 3, talk = o.talk ? Math.abs(Math.sin(t * 13)) * 4 : 0;
+  const breathe = Math.sin(t * 1.8) * 3, talk = o.talk ? Math.abs(Math.sin(t * 13)) * 6 : 0, sq = o.talk ? 1 + Math.sin(t * 13) * .018 : 1;
   ctx.save(); ctx.globalAlpha = o.alpha == null ? 1 : o.alpha;
-  ctx.translate(Math.round(x + (o.dx || 0)), Math.round(yb + breathe - talk)); if (o.flip) ctx.scale(-1, 1);
+  ctx.translate(Math.round(x + (o.dx || 0)), Math.round(yb + breathe - talk)); if (o.flip) ctx.scale(-1, 1); ctx.scale(1 / sq, sq);
   ctx.drawImage(PTMP, -PTMP.width / 2, -PTMP.height + pad, PTMP.width, PTMP.height);
   if (o.red) {
     const q = mkRng(Math.floor(t * 12) + 7);
@@ -733,18 +733,21 @@ function drawTitle() {
   drawGroundBand(420, false);
   for (const f of FLY) { const a = (Math.sin(t * 2 + f.p) + 1) / 2; ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .3 + a * .6; ctx.fillStyle = '#fff6a0'; ctx.fillRect((f.x + Math.sin(t * .6 + f.p) * 30) % W, 240 + (f.y % 220) + Math.cos(t * .5 + f.p) * 20, 4, 4); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
   if (Math.sin(t * .8) < .92) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .6; ctx.drawImage(glow('rgba(255,0,60,.9)'), 800, 190, 120, 120); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = '#ff1a3a'; ctx.fillRect(838, 244, 14, 10); ctx.fillRect(868, 244, 14, 10); }
-  shadow(120, 478, 70, 22, .4); drawChar('mike', 120, 476 - Math.abs(Math.sin(t * 2.6)) * 22, { scale: 4 });
-  shadow(245, 478, 36, 12, .4); drawChar('willy', 245, 476, { scale: 2, frame: 0 });
+  drawPortrait('mike', 150, H + 6, 3.4, { rim: '#ffe14a', talk: false }); drawPortrait('willy', W - 150, H + 6, 3.0, { rim: '#9ad0ff', flip: true });
   ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = .5; ctx.drawImage(glow('rgba(255,225,74,.9)'), W / 2 - 300, 0, 600, 260); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
-  txt('MIKE', W / 2, 44, { size: 104, align: 'center', color: '#ffe14a', lw: 12 });
+  txt('MIKECRACK', W / 2, 52, { size: 84, align: 'center', color: '#ffe14a', lw: 12 });
   txt('Y LAS ESTRELLAS OSCURAS', W / 2, 160, { size: 38, align: 'center', color: '#fff', lw: 8 });
   txt('— PILOTO —', W / 2, 212, { size: 20, align: 'center', color: '#9ad0ff' });
   const sp = (t * .22) % 1; if (sp < .35) { const k = sp / .35, sx = 120 + k * 520, sy = 40 + k * 190; ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 12; i++) { ctx.globalAlpha = (1 - k) * (1 - i / 12) * .8; ctx.fillStyle = '#fff'; ctx.fillRect(sx - i * 7, sy - i * 3.6, 5, 5); } ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
   ctx.drawImage(VIG, 0, 0, W, H);
 }
 function drawDialog() {
-  const d = S.dialog; if (!d) return;
+  const d = S.dialog; if (!d) { S.cineK = Math.max(0, (S.cineK || 0) - 1 / 20); if (S.cineK > 0) { const bh = 54 * S.cineK; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, bh); ctx.fillRect(0, H - bh, W, bh); } return; }
   d.age = (d.age || 0) + 1 / 60;
+  const cineOn = S.busy && !S.talking && !S.stage; S.cineK = cineOn ? Math.min(1, (S.cineK || 0) + 1 / 15) : Math.max(0, (S.cineK || 0) - 1 / 15);
+  if (S.cineK > 0) { const bh = 54 * S.cineK; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, bh); ctx.fillRect(0, H - bh, W, bh); }
+  if (!S.lastSpk || S.lastSpk.who !== d.who) { if (S.curSpk && S.curSpk.who !== d.who) S.lastSpk = S.curSpk; S.curSpk = { who: d.who, side: d.side, red: d.red }; }
+  if (d.portrait && S.lastSpk && S.lastSpk.who !== d.who && S.lastSpk.side !== d.side && !d.choices) { const l = S.lastSpk, lx = l.side === 'L' ? 190 : W - 190; drawPortrait(l.who, lx, H - 28 - 128 + 38, 3.0, { red: l.red, rim: '#7a88aa', talk: false, alpha: .4 }); }
   const nOpt = d.choices ? d.choices.length : 0, bh = nOpt ? 112 + nOpt * 38 : 128, bx = 40, by = H - 28 - bh, bw = W - 80, left = d.side === 'L';
   const ease = 1 - Math.pow(1 - Math.min(1, d.age / .3), 3);
   if (d.portrait) {

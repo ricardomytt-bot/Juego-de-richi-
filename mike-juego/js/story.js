@@ -207,14 +207,14 @@ async function citizenTalk(e) {
   await say(e.id, c[2][r], { name: 'Vecino', seed, portrait: false });
 }
 async function talkNpc(e) {
-  S.busy = true; S.skip = false; camTalk(e);
+  S.busy = true; S.talking = true; S.skip = false; camTalk(e);
   try {
     if (S.lvlId === 0) { if (e.type === 'citizen') await citizenTalk(e); else await (CITY[e.id] || (async () => { }))(e); }
     else if (e.id === 'aquela') {
       if (S.dia < 3) await say('aquela', 'La puerta del jefe necesita 3 diamantes. Hay puertas de colores y llaves escondidas en los laberintos. ¡Explora y mira el mapa en el menú!');
       else await say('aquela', 'Ya tienes los 3 diamantes. Detrás de la puerta está ' + (S.lvlId === 2 ? 'Acenix. Recuerda: ¡cuando se pone a comer, golpéalo más fuerte!' : 'Timba. Recuerda: ¡cuando se duerme, golpéalo más fuerte!') + '');
     }
-  } finally { camClear(); S.busy = false; }
+  } finally { camClear(); S.busy = false; S.talking = false; }
 }
 
 // ---------- apertura ----------
