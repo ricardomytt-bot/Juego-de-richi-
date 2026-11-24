@@ -338,7 +338,7 @@ async function csTimbaSaved() {
   await say('timba', 'Yo los ayudo desde tu casa, Mike. Pero antes... ¿alguien tiene un colchón?');
   await M('¡Gracias, Timba! ¡Vamos por los demás!');
   await fadeTo(1, .8);
-  if (window.BOSS_ONLY) { await csEnding(); return; }
+  if (window.BOSS_ONLY || window.VALLE_ONLY) { await csEnding(); return; }
   await say('aquela', 'Exe se llevó a los demás a Pastelandia, un reino de dulces. Mike... Acenix está ahí. Prepárate.');
   S.q.timbaSaved = true; await goNext();
 }

@@ -76,35 +76,35 @@ function drawMenu() {
   if (!title) { ctx.fillStyle = 'rgba(4,2,16,.62)'; ctx.fillRect(0, 0, W, H); }
   const heads = { pause: 'PAUSA', options: 'OPCIONES', controls: 'CONTROLES', credits: 'CRÉDITOS', map: 'MAPA' };
   let px, py, pw, ph, y0, gap = 58;
-  if (title) { pw = 380; ph = items.length * gap + 36; px = 480 - pw / 2; py = 258; y0 = py + 24; }
+  if (title) { pw = 380; ph = items.length * gap + 36; px = (W / 2) - pw / 2; py = 258 - Math.max(0, items.length - 4) * 46; y0 = py + 24; }
   else {
     const extra = MENU.page === 'controls' ? 250 : MENU.page === 'credits' ? 200 : MENU.page === 'map' ? 330 : 0;
-    pw = MENU.page === 'options' ? 640 : MENU.page === 'map' ? 700 : 560; ph = 90 + items.length * gap + extra; px = 480 - pw / 2; py = Math.max(24, 270 - ph / 2); y0 = py + 78 + extra;
+    pw = MENU.page === 'options' ? 640 : MENU.page === 'map' ? 700 : 560; ph = 90 + items.length * gap + extra; px = (W / 2) - pw / 2; py = Math.max(24, 270 - ph / 2); y0 = py + 78 + extra;
     menuPanel(px, py, pw, ph);
-    txt(heads[MENU.page] || '', 480, py + 24, { size: 34, align: 'center', color: '#ffe14a', lw: 6 });
+    txt(heads[MENU.page] || '', (W / 2), py + 24, { size: 34, align: 'center', color: '#ffe14a', lw: 6 });
   }
   if (title) { ctx.fillStyle = 'rgba(8,6,30,.8)'; rrect(px, py, pw, ph, 16); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 3; rrect(px + 1.5, py + 1.5, pw - 3, ph - 3, 14); ctx.stroke(); }
   if (MENU.page === 'controls') {
-    drawPad(250, py + 130, 'ACTUAR', 'E · K', '#7df3ff'); drawPad(710, py + 130, 'ATACAR', 'J · ESPACIO', '#ff8a9a');
-    ctx.fillStyle = 'rgba(255,255,255,.2)'; ctx.beginPath(); ctx.arc(480, py + 132, 46, 0, 6.3); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(480 + Math.sin(t * 2) * 14, py + 132 + Math.cos(t * 2) * 10, 22, 0, 6.3); ctx.fill();
-    txt('JOYSTICK', 480, py + 188, { size: 14, align: 'center', color: '#bcd', outline: false });
-    txt('Flechas o WASD también te mueven', 480, py + 214, { size: 16, align: 'center', outline: false });
-    txt('ACTUAR: hablar con los personajes y avanzar los diálogos', 480, py + 238, { size: 16, align: 'center', outline: false });
-    txt('ATACAR: usa tu espada hacia donde miras', 480, py + 262, { size: 16, align: 'center', outline: false });
+    drawPad(W / 2 - 230, py + 130, 'ACTUAR', 'E · K', '#7df3ff'); drawPad(W / 2 + 230, py + 130, 'ATACAR', 'J · ESPACIO', '#ff8a9a');
+    ctx.fillStyle = 'rgba(255,255,255,.2)'; ctx.beginPath(); ctx.arc((W / 2), py + 132, 46, 0, 6.3); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc((W / 2) + Math.sin(t * 2) * 14, py + 132 + Math.cos(t * 2) * 10, 22, 0, 6.3); ctx.fill();
+    txt('JOYSTICK', (W / 2), py + 188, { size: 14, align: 'center', color: '#bcd', outline: false });
+    txt('Flechas o WASD también te mueven', (W / 2), py + 214, { size: 16, align: 'center', outline: false });
+    txt('ACTUAR: hablar con los personajes y avanzar los diálogos', (W / 2), py + 238, { size: 16, align: 'center', outline: false });
+    txt('ATACAR: usa tu espada hacia donde miras', (W / 2), py + 262, { size: 16, align: 'center', outline: false });
   } else if (MENU.page === 'map' && MM && S.lvl) {
-    const L = S.lvl, sc = Math.max(2, Math.floor(Math.min(640 / L.w, 300 / L.h))), mw = L.w * sc, mh = L.h * sc, mx = 480 - mw / 2, my = py + 70;
+    const L = S.lvl, sc = Math.max(2, Math.floor(Math.min(640 / L.w, 300 / L.h))), mw = L.w * sc, mh = L.h * sc, mx = (W / 2) - mw / 2, my = py + 70;
     ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(mx - 4, my - 4, mw + 8, mh + 8); ctx.drawImage(MM.c, mx, my, mw, mh);
     const sd = (x, y) => L.seen && L.seen[Math.floor(y / T) * L.w + Math.floor(x / T)];
     for (const e of S.ents) if (sd(e.x, e.y)) { if (e.type === 'dia') { ctx.fillStyle = '#7df3ff'; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } else if (e.type === 'key') { ctx.fillStyle = ['#e0a060', '#dfe6ff', '#ffd24a'][e.k]; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } }
     if (Math.floor(t * 3) % 2) { ctx.fillStyle = '#ff3b5c'; ctx.fillRect(mx + P.x / T * sc - 3, my + P.y / T * sc - 3, 7, 7); }
-    txt('◆ diamante   ● llave   ■ tú (parpadea)   Explora para descubrir el mapa', 480, my + mh + 12, { size: 13, align: 'center', color: '#bcd', outline: false });
+    txt('◆ diamante   ● llave   ■ tú (parpadea)   Explora para descubrir el mapa', (W / 2), my + mh + 12, { size: 13, align: 'center', color: '#bcd', outline: false });
   } else if (MENU.page === 'credits') {
     const L = ['Mike y las Estrellas Oscuras  ·  Piloto', 'Un juego de fans basado en', 'Las Perrerías de Mike, de Mikecrack.', 'Historia original, sprites y código', 'hechos con Claude Code.'];
-    L.forEach((s, i) => txt(s, 480, py + 78 + i * 28, { size: i === 0 ? 20 : 17, align: 'center', color: i === 0 ? '#ffe14a' : '#fff', outline: false }));
+    L.forEach((s, i) => txt(s, (W / 2), py + 78 + i * 28, { size: i === 0 ? 20 : 17, align: 'center', color: i === 0 ? '#ffe14a' : '#fff', outline: false }));
   }
   items.forEach((it, i) => {
-    const y = y0 + i * gap, sel = i === MENU.idx, w = title ? 320 : pw - 120, x = 480 - w / 2;
+    const y = y0 + i * gap, sel = i === MENU.idx, w = title ? 320 : pw - 120, x = (W / 2) - w / 2;
     ctx.fillStyle = sel ? 'rgba(255,225,74,.95)' : 'rgba(255,255,255,.08)'; rrect(x, y, w, 46, 12); ctx.fill();
     if (sel) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; rrect(x, y, w, 46, 12); ctx.stroke(); }
     const col = sel ? '#1a1020' : '#fff', bob = sel ? Math.sin(t * 8) * 3 : 0;
@@ -122,10 +122,10 @@ function drawMenu() {
       txt(SETTINGS[it.toggle] ? 'SÍ' : 'NO', x + w - 26, y + 12, { size: 20, align: 'right', color: SETTINGS[it.toggle] ? (sel ? '#0a6a2a' : '#7dff8a') : (sel ? '#8a1a1a' : '#ff8a8a'), outline: false });
       MENU.rects.push({ x, y, w, h: 46 });
     } else {
-      txt(it.t, 480, y + 12, { size: 22, align: 'center', color: col, outline: false });
+      txt(it.t, (W / 2), y + 12, { size: 22, align: 'center', color: col, outline: false });
       MENU.rects.push({ x, y, w, h: 46 });
     }
   });
-  if (!title) txt('↑ ↓ elegir   ·   ACTUAR / ATACAR aceptar   ·   ESC volver', 480, H - 30, { size: 14, align: 'center', color: '#bcd', outline: false });
-  else txt('Joystick o flechas para elegir  ·  ACTUAR o ATACAR para aceptar', 480, H - 28, { size: 14, align: 'center', color: '#bcd', lw: 3 });
+  if (!title) txt('↑ ↓ elegir   ·   ACTUAR / ATACAR aceptar   ·   ESC volver', (W / 2), H - 30, { size: 14, align: 'center', color: '#bcd', outline: false });
+  else txt('Joystick o flechas para elegir  ·  ACTUAR o ATACAR para aceptar', (W / 2), H - 28, { size: 14, align: 'center', color: '#bcd', lw: 3 });
 }
