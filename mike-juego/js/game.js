@@ -1,6 +1,6 @@
 'use strict';
 // ===== Lógica (vista desde arriba): estado, movimiento, combate, enemigos, jefe =====
-const SPEED = 185, DASH_V = 640;
+const SPEED = 185;
 const BOSS_HP = 18;
 const CH = {
   mike: '01_mike', exe: '02_mike_malvado', willy: '03_perro_negro', ambrosio: '04_cartero', aquela: '05_gata_azul',
@@ -14,14 +14,14 @@ const NAMES = {
 
 const S = {
   mode: 'title', lvl: null, lvlId: 0, ents: [], proj: [], warns: [], particles: [], floaters: [], stage: null, dialog: null,
-  timers: [], busy: false, skip: false, t: 0, dia: 0, hasDash: false, deaths: 0, playTime: 0,
+  timers: [], busy: false, skip: false, t: 0, dia: 0, deaths: 0, playTime: 0,
   fade: 0, fadeAnim: null, shake: 0, hitstop: 0, cam: { x: 0, y: 0 }, boss: null, bossLock: false,
   bossStarted: false, gateOpen: false, gotLetter: false, checkpoint: [0, 0], hint: '', hintT: 0, willy: null,
   leaving: false, nearNpc: null, bossDefeated: false, stepT: 0
 };
 const P = {
   x: 0, y: 0, hw: 10, hh: 12, vx: 0, vy: 0, dx: 0, dy: 1, face: 1, hp: 5, maxHp: 5, inv: 0,
-  atk: 0, atkCd: 0, adx: 0, ady: 1, hitSet: new Set(), dash: 0, dashCd: 0, ddx: 0, ddy: 0, anim: 0, moving: false, dead: false, hitWall: false
+  atk: 0, atkCd: 0, adx: 0, ady: 1, hitSet: new Set(), anim: 0, moving: false, dead: false, hitWall: false
 };
 const pbody = () => ({ x: P.x, y: P.y - 22 });
 
@@ -127,7 +127,7 @@ function spawnEnts(L) {
 const ebody = e => ({ x: e.x, y: e.y - (e.bh || 20) });
 function hurtPlayer(n, fx, fy) {
   if (P.inv > 0 || P.dead || S.busy) return;
-  P.hp -= n; P.inv = 1.15; P.dash = 0;
+  P.hp -= n; P.inv = 1.15;
   const a = Math.atan2(P.y - fy, P.x - fx); P.vx = Math.cos(a) * 300; P.vy = Math.sin(a) * 300;
   S.shake = .25; S.hitstop = .07; sfx.hurt();
   spawnP(P.x, P.y - 20, 12, '#ff4a5a', 220);
@@ -214,21 +214,14 @@ function doAttack() {
 function updatePlayer(dt) {
   const p = P, L = S.lvl;
   if (p.dead) return;
-  p.inv = Math.max(0, p.inv - dt); p.atkCd = Math.max(0, p.atkCd - dt); p.dashCd = Math.max(0, p.dashCd - dt);
+  p.inv = Math.max(0, p.inv - dt); p.atkCd = Math.max(0, p.atkCd - dt);
   p.anim += dt;
-  let ix = (isDown(K.right) ? 1 : 0) - (isDown(K.left) ? 1 : 0), iy = (isDown(K.down) ? 1 : 0) - (isDown(K.up) ? 1 : 0);
-  const il = Math.hypot(ix, iy); if (il > 0) { ix /= il; iy /= il; }
-  p.moving = il > 0;
-  if (il > 0 && p.atk <= 0) { p.dx = ix; p.dy = iy; if (Math.abs(ix) > .3) p.face = sign(ix); }
-  if (p.dash > 0) { p.dash -= dt; p.vx = p.ddx * DASH_V; p.vy = p.ddy * DASH_V; if (Math.random() < .7) S.particles.push({ x: p.x + rnd(-8, 8), y: p.y - rnd(4, 40), vx: 0, vy: 0, life: .28, max: .28, color: '#bfe9ff', size: 6 }); }
-  else {
-    const sp = p.atk > .12 ? SPEED * .45 : SPEED, acc = 2600 * dt;
-    p.vx = approach(p.vx, ix * sp, acc); p.vy = approach(p.vy, iy * sp, acc);
-  }
-  if (S.hasDash && wasPressed(K.dash) && p.dashCd <= 0 && p.dash <= 0) {
-    p.dash = .18; p.dashCd = .55; p.inv = Math.max(p.inv, .26); p.ddx = il > 0 ? ix : p.dx; p.ddy = il > 0 ? iy : p.dy; sfx.dash();
-  }
-  if (wasPressed(K.atk) && p.atkCd <= 0 && p.dash <= 0) {
+  const [ix, iy] = getMove(), il = Math.hypot(ix, iy);
+  p.moving = il > 0.05;
+  if (p.moving && p.atk <= 0) { const nx = ix / il, ny = iy / il; p.dx = nx; p.dy = ny; if (Math.abs(nx) > .3) p.face = sign(nx); }
+  const sp = (p.atk > .12 ? SPEED * .45 : SPEED), acc = 2600 * dt;
+  p.vx = approach(p.vx, ix * sp, acc); p.vy = approach(p.vy, iy * sp, acc);
+  if (wasPressed(K.atk) && p.atkCd <= 0) {
     p.atk = .26; p.atkCd = .3; p.hitSet = new Set(); sfx.swing();
     p.adx = p.dx; p.ady = p.dy; if (p.adx === 0 && p.ady === 0) p.ady = 1;
     if (Math.abs(p.adx) > .3) p.face = sign(p.adx);
@@ -236,7 +229,7 @@ function updatePlayer(dt) {
   if (p.atk > 0) { p.atk -= dt; if (p.atk < .2 && p.atk > .08) doAttack(); }
   moveBody(L, p, dt);
   S.stepT -= dt;
-  if (p.moving && S.stepT <= 0 && p.dash <= 0) { S.stepT = .24; sfx.step(); S.particles.push({ x: p.x + rnd(-4, 4), y: p.y - 1, vx: rnd(-10, 10), vy: rnd(-10, 10), life: .35, max: .35, color: S.lvl.theme === 'dream' ? '#9a8cf0' : '#cfa86a', size: 4 }); }
+  if (p.moving && S.stepT <= 0) { S.stepT = .24; sfx.step(); S.particles.push({ x: p.x + rnd(-4, 4), y: p.y - 1, vx: rnd(-10, 10), vy: rnd(-10, 10), life: .35, max: .35, color: S.lvl.theme === 'dream' ? '#9a8cf0' : '#cfa86a', size: 4 }); }
   // revelar minimapa
   if (L.seen) {
     const cx = Math.floor(p.x / T), cy = Math.floor(p.y / T);
@@ -249,10 +242,10 @@ async function killPlayer() {
   await wait(.9); await fadeTo(1, .45);
   respawn();
   await fadeTo(0, .45); S.busy = false;
-  showHint('¡Acenix te dio pastel! ¡Otra vez!', 2.5);
+  showHint('¡Aquela te dio ánimos! ¡Otra vez!', 2.5);
 }
 function respawn() {
-  P.hp = P.maxHp; P.dead = false; P.inv = 1; P.vx = P.vy = 0; P.dash = 0;
+  P.hp = P.maxHp; P.dead = false; P.inv = 1; P.vx = P.vy = 0;
   P.x = S.checkpoint[0]; P.y = S.checkpoint[1];
   S.proj = []; S.warns = [];
   if (S.bossStarted && S.boss && !S.boss.dead && S.boss.state !== 'saved') { S.boss = makeBoss(); S.boss.state = 'walk'; S.boss.t = 1.2; }
@@ -411,9 +404,9 @@ function loadLevel(id) {
   spawnEnts(L); S.proj = []; S.warns = []; S.particles = []; S.floaters = []; L.seen = new Uint8Array(L.w * L.h); minimapReset();
   S.dia = 0; S.boss = null; S.bossLock = false; S.bossStarted = false; S.gateOpen = false; S.hint = ''; S.hintT = 0; S.bossDefeated = false;
   P.x = (L.start[0] + .5) * T; P.y = (L.start[1] + 1) * T - 8;
-  P.vx = P.vy = 0; P.hp = P.maxHp; P.inv = 0; P.dead = false; P.dx = 0; P.dy = 1; P.face = 1; P.dash = 0; P.atk = 0;
+  P.vx = P.vy = 0; P.hp = P.maxHp; P.inv = 0; P.dead = false; P.dx = 0; P.dy = 1; P.face = 1; P.atk = 0;
   S.checkpoint = [P.x, P.y]; initWilly(); updateCamera(0, true);
-  setMusic(L.theme === 'dream' ? 'dream' : 'day');
+  setMusic(L.theme === 'dream' ? 'dream' : 'day'); setAmbient(L.theme === 'dream' ? 'dream' : 'day');
 }
 function openGate() {
   const L = S.lvl, g = L.gate; S.gateOpen = true;
@@ -424,7 +417,7 @@ function openGate() {
 function checkTriggers() {
   const L = S.lvl, pb = pbody();
   if (L.exit && pb.x > L.exit.x && pb.x < L.exit.x + L.exit.w && pb.y > L.exit.y && pb.y < L.exit.y + L.exit.h) {
-    if (S.lvlId === 0 && !S.gotLetter) showHint('Primero habla con Ambrosio (tecla E)', 1.2);
+    if (S.lvlId === 0 && !S.gotLetter) showHint('Primero habla con Ambrosio (botón ACTUAR)', 1.2);
     else if (!S.leaving) { S.leaving = true; goNext(); }
   }
   if (L.gate && !S.gateOpen && dist(P.x, P.y, L.gate.x + T / 2, L.gate.y + 1.5 * T) < 130) {
@@ -440,14 +433,13 @@ function nearestNpc() {
 
 // ---------- Actualización general ----------
 function update(dt) {
-  S.t += dt; updateTimers(dt); updateFade(dt);
+  if (MENU.open) { S.t += dt; } else { S.t += dt; updateTimers(dt); updateFade(dt); }
   S.shake = Math.max(0, S.shake - dt); S.hintT = Math.max(0, S.hintT - dt);
   if (S.skip && !S.busy && !S.stage && !S.dialog) S.skip = false;
-  if (S.mode === 'title') {
-    if (wasPressed(['Enter', 'Space', 'KeyJ'])) startGame();
-    return;
-  }
-  if ((S.stage || S.dialog) && wasPressed('Escape')) S.skip = true;
+  if (S.mode === 'title') { updateMenu(dt); return; }
+  if (!MENU.open && wasPressed('Escape', 'KeyP') && !(S.stage && S.stage.end)) { openMenu('pause'); }
+  if (MENU.open) { updateMenu(dt); return; }
+  if (PTR.hit && S.dialog) { pressed['Enter'] = true; PTR.hit = false; }
   const had = !!S.dialog;
   updateDialog(dt);
   if (S.stage) { updateStage(dt); updateFx(dt); return; }

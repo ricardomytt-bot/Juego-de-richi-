@@ -1,0 +1,122 @@
+'use strict';
+// ===== Menús: título, pausa, opciones, controles y créditos =====
+const MENU = { open: true, page: 'main', prev: 'main', idx: 0, t: 0, rects: [] };
+function openMenu(page) { MENU.open = true; MENU.page = page; MENU.prev = page; MENU.idx = 0; sfx.select(); }
+function closeMenu() { MENU.open = false; sfx.back(); }
+function gotoPage(p) { if (MENU.page === 'main' || MENU.page === 'pause') MENU.prev = MENU.page; MENU.page = p; MENU.idx = 0; sfx.select(); }
+function backPage() { if (MENU.page === 'options' || MENU.page === 'controls' || MENU.page === 'credits') { MENU.page = MENU.prev; MENU.idx = 0; sfx.back(); } else if (MENU.page === 'pause') closeMenu(); }
+function goFullscreen() { try { const el = document.documentElement; if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen(); } catch (e) { } }
+function menuItems() {
+  switch (MENU.page) {
+    case 'main': return [
+      { t: 'JUGAR', go: () => startGame() }, { t: 'OPCIONES', go: () => gotoPage('options') },
+      { t: 'CONTROLES', go: () => gotoPage('controls') }, { t: 'CRÉDITOS', go: () => gotoPage('credits') }];
+    case 'pause': {
+      const a = [{ t: 'CONTINUAR', go: () => closeMenu() }, { t: 'OPCIONES', go: () => gotoPage('options') }, { t: 'CONTROLES', go: () => gotoPage('controls') }];
+      if (S.stage || S.dialog) a.push({ t: 'SALTAR ESCENA', go: () => { S.skip = true; MENU.open = false; } });
+      a.push({ t: 'SALIR AL TÍTULO', go: () => location.reload() }); return a;
+    }
+    case 'options': return [
+      { t: 'MÚSICA', slider: 'music' }, { t: 'EFECTOS', slider: 'sfx' },
+      { t: 'BOTONES EN PANTALLA', toggle: 'touch' }, { t: 'PANTALLA COMPLETA', go: goFullscreen }, { t: 'VOLVER', go: backPage }];
+    default: return [{ t: 'VOLVER', go: backPage }];
+  }
+}
+function menuActivate(it) {
+  if (it.slider) return;
+  if (it.toggle) { SETTINGS[it.toggle] = !SETTINGS[it.toggle]; saveSettings(); sfx.select(); return; }
+  if (it.go) { if (MENU.page !== 'main' || it.t !== 'JUGAR') sfx.select(); it.go(); }
+}
+function menuAdjust(it, d) {
+  if (it.slider) { SETTINGS[it.slider] = clamp(SETTINGS[it.slider] + d, 0, 10); saveSettings(); sfx.move(); }
+  else if (it.toggle) { SETTINGS[it.toggle] = !SETTINGS[it.toggle]; saveSettings(); sfx.move(); }
+}
+function updateMenu(dt) {
+  MENU.t += dt;
+  const items = menuItems(); if (MENU.idx >= items.length) MENU.idx = 0;
+  if (wasPressed(K.up)) { MENU.idx = (MENU.idx + items.length - 1) % items.length; sfx.move(); }
+  if (wasPressed(K.down)) { MENU.idx = (MENU.idx + 1) % items.length; sfx.move(); }
+  const it = items[MENU.idx];
+  if (wasPressed(K.left)) menuAdjust(it, -1);
+  if (wasPressed(K.right)) menuAdjust(it, 1);
+  if (wasPressed(K.ok)) menuActivate(it);
+  else if (wasPressed('Escape') && MENU.page !== 'main') backPage();
+  else if (wasPressed('KeyP') && MENU.page === 'pause') closeMenu();
+  if (PTR.hit) {
+    PTR.hit = false;
+    for (let i = 0; i < MENU.rects.length; i++) {
+      const r = MENU.rects[i]; if (!r || PTR.x < r.x || PTR.x > r.x + r.w || PTR.y < r.y || PTR.y > r.y + r.h) continue;
+      MENU.idx = i; const t = items[i];
+      if (t.slider) { const v = clamp(Math.round((PTR.x - r.bx) / r.bw * 10), 0, 10); SETTINGS[t.slider] = v; saveSettings(); sfx.move(); }
+      else menuActivate(t);
+      break;
+    }
+  }
+}
+function rrect(x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function menuPanel(x, y, w, h) {
+  const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, 'rgba(34,26,78,.94)'); g.addColorStop(1, 'rgba(12,8,36,.96)');
+  ctx.fillStyle = g; rrect(x, y, w, h, 18); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 4; rrect(x + 2, y + 2, w - 4, h - 4, 16); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,225,74,.55)'; ctx.lineWidth = 2; rrect(x + 9, y + 9, w - 18, h - 18, 12); ctx.stroke();
+}
+function drawPad(x, y, label, sub, col) {
+  ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.arc(x, y + 6, 40, 0, 6.3); ctx.fill();
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(x, y, 40, 0, 6.3); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
+  txt(label, x, y - 10, { size: 20, align: 'center', outline: false, color: '#1a1020' }); txt(sub, x, y + 12, { size: 12, align: 'center', outline: false, color: '#1a1020' });
+}
+function drawMenu() {
+  if (!MENU.open) return;
+  const title = S.mode === 'title' && MENU.page === 'main', items = menuItems(), t = MENU.t;
+  MENU.rects = [];
+  if (!title) { ctx.fillStyle = 'rgba(4,2,16,.62)'; ctx.fillRect(0, 0, W, H); }
+  const heads = { pause: 'PAUSA', options: 'OPCIONES', controls: 'CONTROLES', credits: 'CRÉDITOS' };
+  let px, py, pw, ph, y0, gap = 58;
+  if (title) { pw = 380; ph = items.length * gap + 36; px = 480 - pw / 2; py = 258; y0 = py + 24; }
+  else {
+    const extra = MENU.page === 'controls' ? 250 : MENU.page === 'credits' ? 200 : 0;
+    pw = MENU.page === 'options' ? 640 : 560; ph = 90 + items.length * gap + extra; px = 480 - pw / 2; py = Math.max(24, 270 - ph / 2); y0 = py + 78 + extra;
+    menuPanel(px, py, pw, ph);
+    txt(heads[MENU.page] || '', 480, py + 24, { size: 34, align: 'center', color: '#ffe14a', lw: 6 });
+  }
+  if (title) { ctx.fillStyle = 'rgba(8,6,30,.8)'; rrect(px, py, pw, ph, 16); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 3; rrect(px + 1.5, py + 1.5, pw - 3, ph - 3, 14); ctx.stroke(); }
+  if (MENU.page === 'controls') {
+    drawPad(250, py + 130, 'ACTUAR', 'E · K', '#7df3ff'); drawPad(710, py + 130, 'ATACAR', 'J · ESPACIO', '#ff8a9a');
+    ctx.fillStyle = 'rgba(255,255,255,.2)'; ctx.beginPath(); ctx.arc(480, py + 132, 46, 0, 6.3); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(480 + Math.sin(t * 2) * 14, py + 132 + Math.cos(t * 2) * 10, 22, 0, 6.3); ctx.fill();
+    txt('JOYSTICK', 480, py + 188, { size: 14, align: 'center', color: '#bcd', outline: false });
+    txt('Flechas o WASD también te mueven', 480, py + 214, { size: 16, align: 'center', outline: false });
+    txt('ACTUAR: hablar con los personajes y avanzar los diálogos', 480, py + 238, { size: 16, align: 'center', outline: false });
+    txt('ATACAR: usa tu espada hacia donde miras', 480, py + 262, { size: 16, align: 'center', outline: false });
+  } else if (MENU.page === 'credits') {
+    const L = ['Mike y las Estrellas Oscuras  ·  Piloto', 'Un juego de fans basado en', 'Las Perrerías de Mike, de Mikecrack.', 'Historia original, sprites y código', 'hechos con Claude Code.'];
+    L.forEach((s, i) => txt(s, 480, py + 78 + i * 28, { size: i === 0 ? 20 : 17, align: 'center', color: i === 0 ? '#ffe14a' : '#fff', outline: false }));
+  }
+  items.forEach((it, i) => {
+    const y = y0 + i * gap, sel = i === MENU.idx, w = title ? 320 : pw - 120, x = 480 - w / 2;
+    ctx.fillStyle = sel ? 'rgba(255,225,74,.95)' : 'rgba(255,255,255,.08)'; rrect(x, y, w, 46, 12); ctx.fill();
+    if (sel) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; rrect(x, y, w, 46, 12); ctx.stroke(); }
+    const col = sel ? '#1a1020' : '#fff', bob = sel ? Math.sin(t * 8) * 3 : 0;
+    if (sel) txt('▶', x + 14 + bob, y + 11, { size: 22, color: '#1a1020', outline: false });
+    if (it.slider) {
+      txt(it.t, x + 44, y + 12, { size: 20, color: col, outline: false });
+      const bw = 190, bx = x + w - bw - 24, v = SETTINGS[it.slider];
+      ctx.fillStyle = sel ? 'rgba(26,16,32,.35)' : 'rgba(255,255,255,.18)'; ctx.fillRect(bx, y + 17, bw, 12);
+      ctx.fillStyle = sel ? '#1a1020' : '#ffe14a'; ctx.fillRect(bx, y + 17, bw * v / 10, 12);
+      ctx.fillStyle = sel ? '#fff' : '#fff'; ctx.fillRect(bx + bw * v / 10 - 4, y + 11, 8, 24);
+      txt(String(v), bx - 16, y + 12, { size: 20, align: 'right', color: col, outline: false });
+      MENU.rects.push({ x, y, w, h: 46, bx, bw });
+    } else if (it.toggle) {
+      txt(it.t, x + 44, y + 12, { size: 20, color: col, outline: false });
+      txt(SETTINGS[it.toggle] ? 'SÍ' : 'NO', x + w - 26, y + 12, { size: 20, align: 'right', color: SETTINGS[it.toggle] ? (sel ? '#0a6a2a' : '#7dff8a') : (sel ? '#8a1a1a' : '#ff8a8a'), outline: false });
+      MENU.rects.push({ x, y, w, h: 46 });
+    } else {
+      txt(it.t, 480, y + 12, { size: 22, align: 'center', color: col, outline: false });
+      MENU.rects.push({ x, y, w, h: 46 });
+    }
+  });
+  if (!title) txt('↑ ↓ elegir   ·   ACTUAR / ATACAR aceptar   ·   ESC volver', 480, H - 30, { size: 14, align: 'center', color: '#bcd', outline: false });
+  else txt('Joystick o flechas para elegir  ·  ACTUAR o ATACAR para aceptar', 480, H - 28, { size: 14, align: 'center', color: '#bcd', lw: 3 });
+}

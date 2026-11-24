@@ -28,7 +28,7 @@ function bang(dark) { if (S.stage) { S.stage.flash = 1; S.stage.shake = .6; if (
 // ---------- Cinemática 1: la noche en que todo cambió ----------
 async function csIntro() {
   S.skip = false; S.busy = true; S.stage = newStage(); setMusic('title');
-  const order = ['invictor', 'rius', 'mayo', 'esparta', 'raptor', 'mike', 'timba', 'trolino', 'acenix', 'aquela', 'willy'];
+  const order = ['invictor', 'rius', 'mayo', 'esparta', 'raptor', 'mike', 'timba', 'trolino', 'aquela', 'willy'];
   const C = {}; order.forEach((id, i) => { C[id] = addChar(id, 100 + i * 76, 346, { face: i < 5 ? 1 : -1 }); });
   C.mike.face = 1; C.willy.face = -1;
   await fadeTo(0, 1.2);
@@ -41,7 +41,6 @@ async function csIntro() {
   await say('raptor', 'Les juro que esta escena es igualita a un anime que vi ayer.');
   await say('trolino', 'Nadie toca mi corona. Nadie. Ni siquiera el viento.');
   await say('invictor', '... (asiente muy serio, con cara de héroe)');
-  await say('acenix', 'Miau. Yo solo quiero pastel.');
   await say('aquela', 'Mike... las estrellas parpadean muy raro. Algo no está bien.');
   bang(true); await wait(.9);
   const ex = addChar('exe', 480, 262, { scale: 4, float: true, face: -1 });
@@ -64,7 +63,6 @@ async function csIntro() {
   S.stage.flash = 1; sfx.boss(); removeChar(ex); await wait(.7);
   await say('mike', '¡Timba! ¡Raptor! ¡Chicos! ...No me escuchan. ¡Se fueron más rápido que la pizza de Mayo!');
   await say('aquela', 'Están bajo el poder de las estrellas oscuras. Solo tú puedes restaurarlos, Mike: tu diamante es el único que sigue puro.');
-  await say('acenix', 'Y yo te cuido con pastel. Es mi superpoder.');
   await say('willy', '¡Guau! (Traducción: ¡Vamos, jefe, que se me enfría el hueso!)');
   await say('mike', '¡Pues andando! Primero iremos por Timba. Seguro está dormido y será fácil... ¿verdad?');
   await say('aquela', 'Ay, Mike. Nunca digas "será fácil".');
@@ -82,13 +80,9 @@ async function talkNpc(e) {
   const id = e.id, lv = S.lvlId;
   if (lv === 0) {
     if (id === 'aquela') {
-      await say('aquela', 'Hola, Mike. Muévete con las flechas o con A y D, y salta con ESPACIO. Si te caes al foso... bueno, duele. Pero con estilo.');
+      await say('aquela', 'Hola, Mike. Muévete con el joystick (o con las flechas). Pulsa ATACAR para usar tu espada y ACTUAR para hablar con la gente. Solo hay dos botones, ¡es facilísimo!');
       await say('mike', '¡Gracias, Aquela! Ya me siento un héroe.');
-      await say('aquela', 'Todavía no. Primero golpea al muñeco con J. Es muy fácil... bueno, eso dicen.');
-    } else if (id === 'acenix') {
-      await say('acenix', '¿Te duele algo? Tengo pastel de chocolate. Es medicina, créeme.');
-      healPlayer();
-      await say('mike', '¡Mmm! ¡Ahora me siento nuevecito!');
+      await say('aquela', 'Todavía no. Primero golpea al muñeco con ATACAR. Es muy fácil... bueno, eso dicen.');
     } else if (id === 'ambrosio') {
       if (!S.gotLetter) {
         await say('ambrosio', '¡Correo para Mike! Soy Ambrosio, cartero oficial... en prácticas... en muy malas prácticas.');
@@ -101,11 +95,8 @@ async function talkNpc(e) {
       } else await say('ambrosio', 'Mucha suerte, Mike. Y si ves a mi jefe, dile que sí entregué las cartas. (Algunas.)');
     }
   } else {
-    if (id === 'acenix') {
-      await say('acenix', 'Antes de la puerta conviene ir con el estómago lleno. ¡Pastel para el héroe!');
-      healPlayer();
-    } else if (id === 'aquela') {
-      if (S.dia < 3) await say('aquela', 'La puerta del fondo necesita 3 diamantes puros: uno sobre las nubes, otro en la saliente alta, y uno escondido tras unas grietas. ¡Golpea las paredes sospechosas!');
+    if (id === 'aquela') {
+      if (S.dia < 3) await say('aquela', 'La puerta del fondo necesita 3 diamantes puros: uno en el prado del estanque, otro en el claro del norte, y uno escondido tras unas grietas. ¡Golpea las paredes sospechosas!');
       else await say('aquela', 'Ya tienes los 3 diamantes. Detrás de la puerta está Timba. Recuerda: ¡cuando se duerme, golpéalo más fuerte!');
     }
   }
@@ -148,10 +139,10 @@ async function csTimbaSaved() {
   await say('mike', '¡Timba! ¡Volviste! ¡Estabas bajo el control de Exe!');
   await say('timba', '¿Yo? Solo recuerdo un sueño muy raro donde lanzaba almohadas... y fue lo más divertido que hice en años.');
   await say('aquela', 'Las estrellas oscuras te dominaron. Pero Mike restauró tu conciencia.');
-  await say('timba', 'Gracias, Mike. Toma: la Almohada de Estrella. Te dará un esquive muy suave. Es lo único que tengo... aparte de sueño.');
-  S.hasDash = true; sfx.win(); S.shake = .1;
+  await say('timba', 'Gracias, Mike. Toma: la Almohada de Estrella. Te hará más fuerte: ¡dos corazones más! Es lo único que tengo... aparte de sueño.');
+  P.maxHp += 2; P.hp = P.maxHp; sfx.win(); S.shake = .1;
   spawnP(P.x, P.y - 30, 34, '#9ad0ff', 300, 1);
-  showHint('¡NUEVO PODER: ESQUIVE ALMOHADA!  (SHIFT)', 5);
+  showHint('¡ALMOHADA DE ESTRELLA!  +2 corazones', 5);
   await say('timba', 'Yo los ayudo desde tu casa, Mike. Pero antes... ¿alguien tiene un colchón?');
   await say('mike', '¡Gracias, Timba! ¡Vamos por los demás!');
   await fadeTo(1, .8);
@@ -161,7 +152,7 @@ async function csEnding() {
   S.skip = false; S.busy = true;
   S.stage = newStage({ dark: true }); setMusic('title');
   const C = {};
-  [['willy', 230, -1], ['mike', 330, 1], ['timba', 430, 1], ['aquela', 530, -1], ['acenix', 630, -1]].forEach(([id, x, f]) => { C[id] = addChar(id, x, 346, { face: f }); });
+  [['willy', 230, -1], ['mike', 330, 1], ['timba', 430, 1], ['aquela', 530, -1]].forEach(([id, x, f]) => { C[id] = addChar(id, x, 346, { face: f }); });
   C.willy.face = 1;
   await fadeTo(0, .8);
   await say('narr', 'Esa noche, en lo alto del cielo de Diamantia...');
@@ -180,14 +171,14 @@ async function csEnding() {
 
 // ---------- Arranque ----------
 function startGame() {
-  S.mode = 'play'; S.fade = 1; AUDIO.unlock(); csIntro();
+  MENU.open = false; S.mode = 'play'; S.fade = 1; AUDIO.unlock(); sfx.start(); csIntro();
 }
 (function boot() {
   const q = new URLSearchParams(location.search);
-  setMusic('title');
+  setMusic('title'); setAmbient('dream');
   if (q.has('lvl') || q.has('boss') || q.has('end')) {
-    S.mode = 'play'; S.fade = 0;
-    if (q.has('boss')) { loadLevel(1); S.dia = 3; S.gotLetter = true; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 71.5 * T; P.y = 10.5 * T; initWilly(); updateCamera(0, true); S.hasDash = q.get('dash') !== '0'; }
+    S.mode = 'play'; S.fade = 0; MENU.open = false;
+    if (q.has('boss')) { loadLevel(1); S.dia = 3; S.gotLetter = true; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 71.5 * T; P.y = 10.5 * T; initWilly(); updateCamera(0, true) }
     else if (q.has('end')) { loadLevel(1); S.dia = 3; csEnding(); }
     else { S.gotLetter = true; loadLevel(parseInt(q.get('lvl')) || 0); }
   }
@@ -196,6 +187,7 @@ function startGame() {
     const dt = clamp((now - last) / 1000, 0, .05); last = now;
     update(dt); drawFrame();
     for (const k in pressed) delete pressed[k];
+    PTR.hit = false;
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

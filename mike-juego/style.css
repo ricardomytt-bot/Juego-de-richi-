@@ -1,9 +1,13 @@
-html,body{margin:0;height:100%;background:#05030f;overflow:hidden}
+html,body{margin:0;height:100%;background:#05030f;overflow:hidden;-webkit-user-select:none;user-select:none}
 body{display:flex;align-items:center;justify-content:center}
-#c{image-rendering:pixelated;image-rendering:crisp-edges;background:#000;touch-action:none}
-#touch{display:none;position:fixed;left:0;right:0;bottom:8px;justify-content:space-between;padding:0 10px;pointer-events:none}
-#touch .pad{display:flex;gap:10px;pointer-events:auto}
-#touch button{width:62px;height:62px;border-radius:50%;border:2px solid #fff8;background:#0008;color:#fff;font:bold 22px monospace;touch-action:none}
-@media (pointer:coarse){#touch{display:flex}}
-#touch .dpad{display:grid;grid-template-columns:62px 62px 62px;grid-template-rows:62px 62px;grid-template-areas:'. u .' 'l d r'}
-#touch .u{grid-area:u}#touch .l{grid-area:l}#touch .r{grid-area:r}#touch .d{grid-area:d}
+#c{image-rendering:pixelated;image-rendering:crisp-edges;background:#000;touch-action:none;max-width:100%;outline:none}
+#touch{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:flex-end;padding:0 max(16px,env(safe-area-inset-left,0px)) calc(16px + env(safe-area-inset-bottom,0px));pointer-events:none}
+#joy{position:relative;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),rgba(255,255,255,.05));border:3px solid rgba(255,255,255,.55);pointer-events:auto;touch-action:none}
+#joy::before{content:"";position:absolute;inset:34px;border-radius:50%;border:2px dashed rgba(255,255,255,.3)}
+#knob{position:absolute;left:43px;top:43px;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#b9c3ff 60%,#7a85e0);border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.45);pointer-events:none}
+#touch .btns{position:relative;width:210px;height:150px;pointer-events:none}
+#touch button{position:absolute;border-radius:50%;border:3px solid #fff;color:#1a1020;font:bold 15px "Courier New",monospace;letter-spacing:.5px;pointer-events:auto;touch-action:none;box-shadow:0 5px 12px rgba(0,0,0,.5);opacity:.88}
+#touch button.on{transform:scale(.93);opacity:1;filter:brightness(1.15)}
+#btnAtk{right:0;bottom:0;width:104px;height:104px;background:radial-gradient(circle at 35% 30%,#ffd0d6,#ff6a82)}
+#btnAct{left:0;bottom:48px;width:84px;height:84px;background:radial-gradient(circle at 35% 30%,#d6fbff,#4fd8ef)}
+#btnMenu{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:50%;margin-left:-22px;width:44px;height:44px;border-radius:12px;border:3px solid #fff;background:rgba(20,14,60,.8);color:#fff;font:bold 22px monospace;z-index:5;opacity:.85;pointer-events:auto}
