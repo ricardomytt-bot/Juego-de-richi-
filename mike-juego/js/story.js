@@ -320,10 +320,10 @@ async function csTimbaSaved() {
   await M('¡Timba! ¡Volviste! ¡Estabas bajo el control de Exe!');
   await say('timba', S.q.delivered.timba ? '¿Yo? Solo recuerdo un sueño muy raro donde lanzaba almohadas... y tu carta. Esa sí la recuerdo. Gracias, Mike.' : '¿Yo? Solo recuerdo un sueño muy raro donde lanzaba almohadas... y fue lo más divertido que hice en años.');
   await say('aquela', 'Las estrellas oscuras te dominaron. Pero Mike restauró tu conciencia.');
-  await say('timba', 'Gracias, Mike. Toma: la Almohada de Estrella. Te hará más fuerte: ¡dos corazones más! Es lo único que tengo... aparte de sueño.');
-  P.maxHp += 2; P.hp = P.maxHp; sfx.win(); S.shake = .1;
+  await say('timba', 'Gracias, Mike. Toma: la Almohada de Estrella. Te hará más fuerte: ¡+25% de daño! Es lo único que tengo... aparte de sueño.');
+  P.dmgMul += .25; P.hp = P.maxHp; P.chocoCd = 0; sfx.win(); S.shake = .1;
   spawnP(P.x, P.y - 30, 34, '#9ad0ff', 300, 1);
-  showHint('¡ALMOHADA DE ESTRELLA!  +2 corazones', 5);
+  showHint('¡ALMOHADA DE ESTRELLA!  +25% de daño', 5);
   await say('timba', 'Yo los ayudo desde tu casa, Mike. Pero antes... ¿alguien tiene un colchón?');
   await M('¡Gracias, Timba! ¡Vamos por los demás!');
   await fadeTo(1, .8);

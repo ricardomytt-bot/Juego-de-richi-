@@ -33,7 +33,12 @@ function makeKey(k) {
   const gl = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), new THREE.MeshBasicMaterial({ map: glowTex(['rgba(255,170,90,.9)', 'rgba(200,215,255,.9)', 'rgba(255,220,80,.9)'][k]), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); gl.userData.billboard = true; g.add(gl); return { group: g, spin: pivot };
 }
 function wrapOuter(B) { const g = new THREE.Group(); g.add(B.g); B.outer = g; B.group = g; return B; }
-function makeCharObj(id, seed) { return wrapOuter(makeChar(id, seed)); }
+const OUTM = typeof THREE !== 'undefined' ? new THREE.MeshBasicMaterial({ color: 0x120a1e, side: THREE.BackSide }) : null;
+function addOutline(g) {
+  const list = []; g.traverse(m => { if (m.isMesh && m.geometry && m.geometry.type === 'BoxGeometry' && !m.userData.ol) list.push(m); });
+  for (const m of list) { const p = m.geometry.parameters, o = new THREE.Mesh(m.geometry, OUTM); o.userData.ol = 1; o.scale.set(1 + .09 / p.width, 1 + .09 / p.height, 1 + .09 / p.depth); m.add(o); }
+}
+function makeCharObj(id, seed) { const B = makeChar(id, seed); if (B.g) addOutline(B.g); return wrapOuter(B); }
 
 const PCOL = {};
 function pcol(s) { if (PCOL[s]) return PCOL[s]; const c = new THREE.Color(s); return PCOL[s] = [c.r, c.g, c.b]; }
@@ -84,6 +89,13 @@ function glSync(dt) {
     o.outer.scale.y = (b.state === 'slam' && b.lift === 0 && b.t > .77) ? .88 : 1; animChar(o, t, Math.hypot(b.vx, b.vy) > 10 ? .8 : 0, { talk: S.dialog && S.dialog.who === 'timba' }); setFlash(o, b.flash > 0);
     o.outer.rotation.z = sleep ? Math.sin(t * 2) * .05 : 0;
   }
+  // ---- disparos del jugador
+  GL.shotObjs = GL.shotObjs || []; let si = 0;
+  for (const q of S.shots) {
+    let o = GL.shotObjs[si]; if (!o) { o = new THREE.Group(); o.add(mesh(geoBox(.12, .12, .8), new THREE.MeshBasicMaterial({ color: 0xfff0b0 }), 0, 0, 0, false), mesh(geoBox(.3, .3, .3), new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 0, .5, false)); GL.lvlGroup.add(o); GL.shotObjs.push(o); }
+    o.visible = true; o.position.set(q.x / T, q.z / T, q.y / T); o.rotation.y = Math.atan2(q.vx, q.vy); o.children[0].material.color.set(q.star ? 0xffe14a : 0xfff0b0); o.rotation.z = q.star ? t * 12 : 0; si++;
+  }
+  for (; si < GL.shotObjs.length; si++) GL.shotObjs[si].visible = false;
   // ---- proyectiles y avisos
   for (const q of S.proj) {
     if (q.type === 'pillow') { const o = glGet(q, () => { const g = new THREE.Group(); g.add(mesh(geoBox(.7, .4, .5), lam(0xffffff, { emissive: 0x444466 }), 0, 0, 0), mesh(geoBox(.72, .12, .52), lam(0x9ad0ff), 0, 0, 0)); return { group: g }; }); gp(o, q.x, q.z / T * 1.1 + .4, q.y); o.group.rotation.set(q.rot, q.rot * .7, 0); }
@@ -102,7 +114,8 @@ function glSync(dt) {
   if (!P.dead) {
     pl.outer.visible = !(P.inv > 0 && Math.floor(P.inv * 18) % 2 === 0); pl.outer.position.set(P.x / T, 0, P.y / T);
     const aim = P.atk > 0 ? Math.atan2(P.adx, P.ady) : Math.atan2(P.dx, P.dy); pl.outer.rotation.y = yawTo(pl.outer.rotation.y, aim, P.atk > 0 ? .5 : .28);
-    const k = P.atk > 0 ? 1 - P.atk / .26 : null; animChar(pl, P.anim * 1.25, P.moving ? 1 : 0, { atk: k, talk: S.dialog && S.dialog.who === 'mike' });
+    if (pl.parts.wm) { const wid = curW().id; for (const k2 in pl.parts.wm) pl.parts.wm[k2].visible = k2 === wid; pl.parts.wm.dagger.scale.setScalar(.6); }
+    const k = P.atk > 0 && !curW().ranged ? 1 - P.atk / (P.atkMax || .26) : null; animChar(pl, P.anim * 1.25, P.moving ? 1 : 0, { atk: k, talk: S.dialog && S.dialog.who === 'mike' });
     pl.slash.position.set(P.x / T, .9, P.y / T); pl.slash.rotation.z = Math.atan2(-P.ady, P.adx); pl.slash.material.opacity = k != null ? Math.sin(clamp(k, 0, 1) * Math.PI) * .75 : 0; pl.slash.visible = k != null;
   } else { pl.outer.visible = false; pl.slash.visible = false; }
   for (const [key, o] of GL.objs) if (!o.seen && key !== 'player') { GL.root.remove(o.group || o.outer); GL.objs.delete(key); }

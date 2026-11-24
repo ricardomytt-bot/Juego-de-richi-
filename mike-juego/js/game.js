@@ -18,12 +18,27 @@ const S = {
   fade: 0, fadeAnim: null, shake: 0, hitstop: 0, cam: { x: 0, y: 0 }, boss: null, bossLock: false,
   bossStarted: false, gateOpen: false, gotLetter: false, checkpoint: [0, 0], hint: '', hintT: 0, willy: null,
   leaving: false, nearNpc: null, bossDefeated: false, stepT: 0, keys: [0, 0, 0],
-  q: { gotLetters: false, delivered: {}, count: 0, total: 7, done: false, trainStarted: false }, fav: {}, flags: {}, wave: null, camShot: null
+  q: { gotLetters: false, delivered: {}, count: 0, total: 7, done: false, trainStarted: false }, fav: {}, flags: {}, wave: null, camShot: null, shots: []
 };
 const P = {
-  x: 0, y: 0, hw: 10, hh: 12, vx: 0, vy: 0, dx: 0, dy: 1, face: 1, hp: 5, maxHp: 5, inv: 0,
+  x: 0, y: 0, hw: 10, hh: 12, vx: 0, vy: 0, dx: 0, dy: 1, face: 1, hp: 100, maxHp: 100, inv: 0, sel: 0, chocoCd: 0, dmgMul: 1, special: false, kills: 0, pend: 0, atkMax: .26,
   atk: 0, atkCd: 0, adx: 0, ady: 1, hitSet: new Set(), anim: 0, moving: false, dead: false, hitWall: false
 };
+const WEAPONS = {
+  dagger: { id: 'dagger', name: 'Dagas', icon: '🗡️', type: 'CORTA', dmg: .5, cd: .17, anim: .17, wind: .05, reach: 30, R: 40 },
+  hammer: { id: 'hammer', name: 'Martillo', icon: '🔨', type: 'PESADA', dmg: 3, cd: 1.0, anim: .55, wind: .3, reach: 42, R: 64, heavy: true },
+  bow: { id: 'bow', name: 'Arco', icon: '🏹', type: 'LARGA', dmg: 1, cd: .5, anim: .25, wind: .08, ranged: true, speed: 560, life: 1.1 },
+  star: { id: 'star', name: 'Cetro Estelar', icon: '✨', type: 'ESPECIAL', dmg: 1.3, cd: .6, anim: .3, wind: .08, ranged: true, spread: 3, pierce: true, speed: 470, life: 1.3 }
+};
+const WSLOTS = () => P.special ? ['dagger', 'hammer', 'bow', 'star'] : ['dagger', 'hammer', 'bow'];
+const curW = () => WEAPONS[WSLOTS()[Math.min(P.sel, WSLOTS().length - 1)]];
+const CHOCO_CD = 30;
+function selectW(i) { if (i < 0 || i >= WSLOTS().length || i === P.sel) return; P.sel = i; sfx.select(); floater(P.x - 30, P.y - 80, curW().icon + ' ' + curW().name, '#ffe14a'); }
+function useChoco() {
+  if (P.chocoCd > 0 || P.dead || S.busy) return;
+  if (P.hp >= P.maxHp) { floater(P.x - 40, P.y - 70, '¡Vida llena!', '#fff'); return; }
+  P.hp = P.maxHp; P.chocoCd = CHOCO_CD; sfx.heal(); spawnP(P.x, P.y - 30, 26, '#8a4a22', 200, 1); spawnP(P.x, P.y - 30, 14, '#ffd24a', 160, 1); floater(P.x - 50, P.y - 70, '¡Chocolate! 100%', '#ffb070');
+}
 const pbody = () => ({ x: P.x, y: P.y - 22 });
 
 // ---------- Promesas de tiempo / diálogo (para cinemáticas) ----------
@@ -145,7 +160,7 @@ function spawnEnts(L) {
 const ebody = e => ({ x: e.x, y: e.y - (e.bh || 20) });
 function hurtPlayer(n, fx, fy) {
   if (P.inv > 0 || P.dead || S.busy) return;
-  P.hp -= n; P.inv = 1.15;
+  P.hp -= n * 14; P.inv = 1.15;
   const a = Math.atan2(P.y - fy, P.x - fx); P.vx = Math.cos(a) * 300; P.vy = Math.sin(a) * 300;
   S.shake = .25; S.hitstop = .07; sfx.hurt();
   spawnP(P.x, P.y - 20, 12, '#ff4a5a', 220);
@@ -153,16 +168,17 @@ function hurtPlayer(n, fx, fy) {
 }
 function healPlayer() { P.hp = P.maxHp; sfx.heal(); spawnP(P.x, P.y - 30, 18, '#ff7aa8', 160, .9); floater(P.x - 20, P.y - 60, '¡Pastel! ♥', '#ff9ac0'); }
 
-function hitEnt(e) {
+function hitEnt(e, dmg = 1) {
   sfx.hit();
   if (e.type === 'dummy') { e.hit = .3; floater(e.x - 20, e.y - 70, ['¡Auch!', '¡Oye!', '¡Pum!', '¿Por qué?'][Math.floor(rnd(0, 4))], '#ffe14a'); spawnP(e.x, e.y - 24, 8, '#c9a15a'); return; }
-  e.hp--; e.flash = .14;
+  e.hp -= dmg * P.dmgMul; e.flash = .14; floater(e.x - 8, e.y - (e.bh || 20) - 26, '' + Math.round(dmg * P.dmgMul * 20), '#fff');
   const a = Math.atan2(e.y - P.y, e.x - P.x); e.vx = Math.cos(a) * 300; e.vy = Math.sin(a) * 300;
   const c = ebody(e);
   spawnP(c.x, c.y, 10, e.type === 'slime' ? '#7dff8a' : '#c26aff', 200);
   if (e.hp <= 0) {
     e.dead = true; spawnP(c.x, c.y, 20, '#fff', 260); sfx.poof();
     if (Math.random() < .28) S.ents.push({ type: 'heart', x: e.x, y: e.y - 10, t: 0 });
+    P.kills++; if (!P.special && P.kills >= 5) { P.special = true; sfx.key(); S.shake = .12; spawnP(P.x, P.y - 30, 30, '#ffe14a', 280, 1); floater(P.x - 70, P.y - 90, '¡ARMA ESPECIAL: Cetro Estelar!', '#ffe14a'); showHint('¡Nueva arma especial! Cámbiala con ARMA (tecla Q o 4)', 5); }
   }
 }
 function updateEnt(e, dt) {
@@ -222,24 +238,24 @@ function updateEnt(e, dt) {
         spawnP(e.x, e.y, 22, '#7df3ff', 280, .8);
         floater(e.x - 50, e.y - 40, '+1 DIAMANTE  ' + S.dia + '/' + S.lvl.diaNeed, '#7df3ff');
         if (S.dia >= S.lvl.diaNeed && S.lvlId === 1) showHint('¡Tienes los 3 diamantes! Ve a la puerta del salón →', 3.5);
-      } else if (P.hp < P.maxHp) { e.dead = true; P.hp++; sfx.heal(); floater(e.x, e.y - 30, '♥', '#ff7aa8'); }
+      } else if (P.hp < P.maxHp) { e.dead = true; P.hp = Math.min(P.maxHp, P.hp + 20); sfx.heal(); floater(e.x, e.y - 30, '+20%', '#ff7aa8'); }
     }
   } else if (e.type === 'dummy') { e.hit = Math.max(0, e.hit - dt); }
 }
 
 // ---------- Jugador ----------
-function doAttack() {
-  const p = P, L = S.lvl, reach = 34, R = 46;
+function doAttack(w) {
+  const p = P, L = S.lvl, reach = w.reach, R = w.R; if (w.heavy) { S.shake = .22; spawnP(p.x + p.adx * reach, p.y - 4, 14, '#cfa86a', 240, .6); sfx.slam(); }
   const cx = p.x + p.adx * reach, cy = p.y - 22 + p.ady * reach;
   let any = false;
   for (const e of S.ents) {
     if (e.dead || !(e.type === 'slime' || e.type === 'flyer' || e.type === 'dummy') || p.hitSet.has(e)) continue;
     const c = e.type === 'flyer' ? { x: e.x, y: e.y - e.z } : ebody(e);
-    if (dist(cx, cy, c.x, c.y) < R + e.rad) { p.hitSet.add(e); hitEnt(e); any = true; }
+    if (dist(cx, cy, c.x, c.y) < R + e.rad) { p.hitSet.add(e); hitEnt(e, w.dmg); any = true; }
   }
   const b = S.boss;
   if (b && !b.dead && b.state !== 'saved' && b.state !== 'idle' && !p.hitSet.has(b)) {
-    if (dist(cx, cy, b.x, b.y - 46) < R + 48) { p.hitSet.add(b); hitBoss(); any = true; }
+    if (dist(cx, cy, b.x, b.y - 46) < R + 48) { p.hitSet.add(b); hitBoss(w.dmg); any = true; }
   }
   const tx0 = Math.floor((cx - R) / T), tx1 = Math.floor((cx + R) / T), ty0 = Math.floor((cy - R) / T), ty1 = Math.floor((cy + R) / T);
   for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
@@ -253,22 +269,45 @@ function doAttack() {
   }
   if (any) { S.hitstop = .05; p.vx -= p.adx * 60; p.vy -= p.ady * 60; }
 }
+function fireShot(w) {
+  const p = P, n = w.spread || 1, a0 = Math.atan2(p.ady, p.adx); sfx.whoosh();
+  for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * .3; S.shots.push({ x: p.x + Math.cos(a) * 18, y: p.y + Math.sin(a) * 18, z: 24, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed, dmg: w.dmg, pierce: !!w.pierce, life: w.life, star: w.id === 'star', hit: new Set() }); }
+}
+function updateShots(dt) {
+  const L = S.lvl;
+  for (let i = S.shots.length - 1; i >= 0; i--) {
+    const q = S.shots[i]; q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt; let gone = q.life <= 0;
+    const bx = q.x, by = q.y - q.z;
+    if (!gone && solidCh(L.get(Math.floor(q.x / T), Math.floor(q.y / T)))) { gone = true; spawnP(q.x, q.y - q.z, 6, '#fff', 120); }
+    if (!gone) for (const e of S.ents) {
+      if (e.dead || !(e.type === 'slime' || e.type === 'flyer' || e.type === 'dummy') || q.hit.has(e)) continue;
+      const c = e.type === 'flyer' ? { x: e.x, y: e.y - e.z } : ebody(e);
+      if (dist(bx, by, c.x, c.y) < 18 + e.rad) { q.hit.add(e); hitEnt(e, q.dmg); if (!q.pierce) { gone = true; break; } }
+    }
+    const b = S.boss;
+    if (!gone && b && !b.dead && b.state !== 'saved' && b.state !== 'idle' && !q.hit.has(b) && dist(bx, by, b.x, b.y - 46) < 18 + 48) { q.hit.add(b); hitBoss(q.dmg); if (!q.pierce) gone = true; }
+    if (gone) S.shots.splice(i, 1);
+  }
+}
 function updatePlayer(dt) {
   const p = P, L = S.lvl;
   if (p.dead) return;
-  p.inv = Math.max(0, p.inv - dt); p.atkCd = Math.max(0, p.atkCd - dt);
-  p.anim += dt; p.lowT = (p.lowT || 0) - dt; if (p.hp === 1 && p.lowT <= 0) { p.lowT = 1.4; sfx.low(); }
+  p.inv = Math.max(0, p.inv - dt); p.atkCd = Math.max(0, p.atkCd - dt); p.chocoCd = Math.max(0, p.chocoCd - dt);
+  if (wasPressed('KeyQ')) { const n = WSLOTS().length; selectW((P.sel + 1) % n); } for (let i = 0; i < 4; i++) if (wasPressed('Digit' + (i + 1))) selectW(i);
+  if (wasPressed('KeyR', 'KeyH')) useChoco();
+  p.anim += dt; p.lowT = (p.lowT || 0) - dt; if (p.hp < 25 && p.lowT <= 0) { p.lowT = 1.4; sfx.low(); }
   const [ix, iy] = getMove(), il = Math.hypot(ix, iy);
   p.moving = il > 0.05;
   if (p.moving && p.atk <= 0) { const nx = ix / il, ny = iy / il; p.dx = nx; p.dy = ny; if (Math.abs(nx) > .3) p.face = sign(nx); }
   const sp = (p.atk > .12 ? SPEED * .6 : SPEED), acc = 5200 * dt;
   p.vx = approach(p.vx, ix * sp, acc); p.vy = approach(p.vy, iy * sp, acc);
   if (wasPressed(K.atk) && p.atkCd <= 0) {
-    p.atk = .26; p.atkCd = .3; p.hitSet = new Set(); sfx.swing();
+    const w = curW(); p.atk = p.atkMax = w.anim; p.atkCd = w.cd; p.hitSet = new Set(); p.pend = w.wind; p.wcur = w; sfx.swing();
     p.adx = p.dx; p.ady = p.dy; if (p.adx === 0 && p.ady === 0) p.ady = 1;
     if (Math.abs(p.adx) > .3) p.face = sign(p.adx);
   }
-  if (p.atk > 0) { p.atk -= dt; if (p.atk < .2 && p.atk > .08) doAttack(); }
+  if (p.pend > 0) { p.pend -= dt; if (p.pend <= 0) { if (p.wcur.ranged) fireShot(p.wcur); else doAttack(p.wcur); } }
+  if (p.atk > 0) p.atk -= dt;
   moveBody(L, p, dt);
   S.stepT -= dt;
   if (p.moving && S.stepT <= 0) { S.stepT = .24; sfx.step(); S.particles.push({ x: p.x + rnd(-4, 4), y: p.y - 1, vx: rnd(-10, 10), vy: rnd(-10, 10), life: .35, max: .35, color: S.lvl.theme === 'dream' ? '#9a8cf0' : '#cfa86a', size: 4 }); }
@@ -289,7 +328,7 @@ async function killPlayer() {
 function respawn() {
   P.hp = P.maxHp; P.dead = false; P.inv = 1; P.vx = P.vy = 0;
   P.x = S.checkpoint[0]; P.y = S.checkpoint[1];
-  S.proj = []; S.warns = [];
+  S.proj = []; S.warns = []; S.shots = []; P.chocoCd = 0;
   if (S.bossStarted && S.boss && !S.boss.dead && S.boss.state !== 'saved') { S.boss = makeBoss(); S.boss.state = 'walk'; S.boss.t = 1.2; }
   initWilly(); updateCamera(0, true);
 }
@@ -321,10 +360,10 @@ function makeBoss() {
     face: -1, flash: 0, phase: 1, count: 0, anim: 0, dead: false, fired: false, rain: 0, zzz: 0, lift: 0, ox: 0, oy: 0, tx: 0, ty: 0, hitWall: false
   };
 }
-function hitBoss() {
+function hitBoss(dm = 1) {
   const b = S.boss; if (!b || b.dead) return;
-  let d = 1; const sleeping = b.state === 'sleep';
-  if (sleeping) { d = 2; floater(b.x - 10, b.y - 120, '¡x2!', '#7df3ff'); }
+  let d = dm * P.dmgMul; const sleeping = b.state === 'sleep';
+  if (sleeping) { d *= 2; floater(b.x - 10, b.y - 120, '¡x2!', '#7df3ff'); }
   b.hp -= d; b.flash = .14; sfx.hit(); S.shake = .1;
   spawnP(b.x, b.y - 50, 12, '#fff', 260);
   if (b.hp <= 0) { b.hp = 0; defeatBoss(); return; }
@@ -452,7 +491,7 @@ function updateCamera(dt, snap) {
 }
 function loadLevel(id) {
   S.lvlId = id; const L = S.lvl = LEVELS[id](); { const v = verifyLevel(L); if (!v.ok) console.warn('Nivel imposible:', v.missing.join(' ')); }
-  spawnEnts(L); S.proj = []; S.warns = []; S.particles = []; S.floaters = []; L.seen = new Uint8Array(L.w * L.h); minimapReset();
+  spawnEnts(L); S.shots = []; S.proj = []; S.warns = []; S.particles = []; S.floaters = []; L.seen = new Uint8Array(L.w * L.h); minimapReset();
   S.keys = [0, 0, 0]; S.dia = 0; S.boss = null; S.bossLock = false; S.bossStarted = false; S.gateOpen = false; S.hint = ''; S.hintT = 0; S.bossDefeated = false;
   P.x = (L.start[0] + .5) * T; P.y = (L.start[1] + 1) * T - 8;
   P.vx = P.vy = 0; P.hp = P.maxHp; P.inv = 0; P.dead = false; P.dx = 0; P.dy = 1; P.face = 1; P.atk = 0;
@@ -541,7 +580,7 @@ function update(dt) {
   updateWilly(dt);
   for (const e of S.ents) updateEnt(e, dt);
   S.ents = S.ents.filter(e => !e.dead);
-  updateBoss(dt); updateProj(dt); updateWave(dt); updateFx(dt);
+  updateBoss(dt); updateProj(dt); updateShots(dt); updateWave(dt); updateFx(dt);
   S.nearNpc = nearestNpc();
   if (S.nearNpc && wasPressed(K.talk)) talkNpc(S.nearNpc);
   checkTriggers();

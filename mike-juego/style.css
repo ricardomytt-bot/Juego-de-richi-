@@ -9,11 +9,13 @@ body{display:flex;align-items:center;justify-content:center}
 #joy{position:relative;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.14),rgba(255,255,255,.05));border:3px solid rgba(255,255,255,.55);pointer-events:auto;touch-action:none}
 #joy::before{content:"";position:absolute;inset:34px;border-radius:50%;border:2px dashed rgba(255,255,255,.3)}
 #knob{position:absolute;left:43px;top:43px;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#b9c3ff 60%,#7a85e0);border:3px solid #fff;box-shadow:0 4px 10px rgba(0,0,0,.45);pointer-events:none}
-#touch .btns{position:relative;width:210px;height:150px;pointer-events:none}
+#touch .btns{position:relative;width:270px;height:170px;pointer-events:none}
 #touch button{position:absolute;border-radius:50%;border:3px solid #fff;color:#1a1020;font:bold 15px "Courier New",monospace;letter-spacing:.5px;pointer-events:auto;touch-action:none;box-shadow:0 5px 12px rgba(0,0,0,.5);opacity:.88}
 #touch button.on{transform:scale(.93);opacity:1;filter:brightness(1.15)}
+#btnWpn{left:92px;bottom:0;width:62px;height:62px;background:radial-gradient(circle at 35% 30%,#fff3b8,#ffc23a);font-size:12px}
+#btnChoc{left:100px;bottom:76px;width:62px;height:62px;background:radial-gradient(circle at 35% 30%,#d9a070,#7a4622);font-size:26px}
 #btnAtk{right:0;bottom:0;width:104px;height:104px;background:radial-gradient(circle at 35% 30%,#ffd0d6,#ff6a82)}
-#btnAct{left:0;bottom:48px;width:84px;height:84px;background:radial-gradient(circle at 35% 30%,#d6fbff,#4fd8ef)}
+#btnAct{left:0;bottom:60px;width:84px;height:84px;background:radial-gradient(circle at 35% 30%,#d6fbff,#4fd8ef)}
 #btnMenu{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:50%;margin-left:-22px;width:44px;height:44px;border-radius:12px;border:3px solid #fff;background:rgba(20,14,60,.8);color:#fff;font:bold 22px monospace;z-index:5;opacity:.85;pointer-events:auto}
 
 #touch.hide,#touch.off,#btnMenu.hide{display:none}

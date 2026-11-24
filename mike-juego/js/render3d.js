@@ -6,7 +6,7 @@ function initGL() {
   try {
     if (!V3) return; const canvas = document.getElementById('gl'); if (!canvas) return;
     const r = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-    r.setPixelRatio(1); r.setSize(Math.round(W * .6667), Math.round(H * .6667), false); r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
+    r.setPixelRatio(1); r.setSize(Math.round(W * .6667), Math.round(H * .6667), false); r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = .92; r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
     GL.r = r; GL.scene = new THREE.Scene(); GL.cam = new THREE.PerspectiveCamera(38, W / H, .1, 220);
     GL.root = new THREE.Group(); GL.scene.add(GL.root);
     GL.amb = new THREE.AmbientLight(0xffffff, 1); GL.hemi = new THREE.HemisphereLight(0xbfe0ff, 0x4a6a3a, .5);
@@ -45,7 +45,7 @@ function labelCanvas(text, bg, fg) {
 // ---------- construcción del nivel ----------
 function glClearLevel() {
   if (GL.lvlGroup) { GL.scene.remove(GL.lvlGroup); GL.lvlGroup.traverse(o => { if (o.isInstancedMesh) o.dispose(); }); }
-  for (const [k, o] of GL.objs) GL.root.remove(o.group); GL.objs.clear(); GL.dyn = [];
+  for (const [k, o] of GL.objs) GL.root.remove(o.group); GL.objs.clear(); GL.dyn = []; GL.shotObjs = [];
 }
 function glBuildLevel(L) {
   if (!GL.ok) return; glClearLevel(); GL.lvlRef = L; GL.trainX = 0; GL.exeShow = 0; GL.blds = [];
@@ -53,7 +53,7 @@ function glBuildLevel(L) {
   const dm = L.theme === 'dream', texs = TEXS[dm ? 'dream' : 'day'];
   // --- ambiente por tema
   const sc = GL.scene;
-  if (dm) { sc.background = new THREE.Color(0x140e36); sc.fog = new THREE.Fog(0x241a58, 14, 46); GL.amb.color.set(0x8a7ad0); GL.amb.intensity = 1.05; GL.hemi.color.set(0x8a8aff); GL.hemi.groundColor.set(0x2a1a60); GL.hemi.intensity = .45; GL.sun.color.set(0xb4bcff); GL.sun.intensity = 1.5; GL.plight.intensity = 46; GL.plight.color.set(0xffe2b0); }
+  if (dm) { sc.background = new THREE.Color(0x140e36); sc.fog = new THREE.Fog(0x241a58, 14, 46); GL.amb.color.set(0x8a7ad0); GL.amb.intensity = 1.05; GL.hemi.color.set(0x8a8aff); GL.hemi.groundColor.set(0x2a1a60); GL.hemi.intensity = .45; GL.sun.color.set(0xb4bcff); GL.sun.intensity = 1.5; GL.plight.intensity = 26; GL.plight.color.set(0xffe2b0); }
   else { sc.background = new THREE.Color(0x8fd3ff); sc.fog = new THREE.Fog(0xb4e2ff, 34, 100); GL.amb.color.set(0xffffff); GL.amb.intensity = 1.15; GL.hemi.color.set(0xbfe0ff); GL.hemi.groundColor.set(0x5a7a3a); GL.hemi.intensity = .5; GL.sun.color.set(0xfff0d4); GL.sun.intensity = 2.5; GL.plight.intensity = 0; }
   GL.blight.intensity = 0;
   // --- suelo (instanciado por tipo/variante)

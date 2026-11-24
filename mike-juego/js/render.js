@@ -538,8 +538,29 @@ function panel(x, y, w, h) {
 }
 function drawHUD() {
   const L = S.lvl;
-  panel(12, 12, 20 + P.maxHp * 34, 46);
-  for (let i = 0; i < P.maxHp; i++) ctx.drawImage(i < P.hp ? HEART_F : HEART_E, 24 + i * 34, 22);
+  { // barra de vida (porcentaje)
+    panel(12, 12, 290, 46); const pc = Math.max(0, P.hp / P.maxHp), bw = 200;
+    ctx.fillStyle = '#1a1020'; ctx.fillRect(66, 24, bw + 4, 22); ctx.fillStyle = '#3a2a3a'; ctx.fillRect(68, 26, bw, 18);
+    const gr = ctx.createLinearGradient(68, 0, 68 + bw, 0); gr.addColorStop(0, pc > .5 ? '#4ae860' : pc > .25 ? '#ffd24a' : '#ff4a5a'); gr.addColorStop(1, pc > .5 ? '#a8ff7a' : pc > .25 ? '#ffe98a' : '#ff8a8a');
+    ctx.fillStyle = gr; ctx.fillRect(68, 26, bw * pc, 18); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(68, 26, bw * pc, 5);
+    if (P.hp < 25 && Math.floor(S.t * 6) % 2) { ctx.strokeStyle = '#ff4a5a'; ctx.lineWidth = 3; ctx.strokeRect(66, 24, bw + 4, 22); }
+    txt('VIDA', 22, 27, { size: 16, color: '#ffe14a' }); txt(Math.round(pc * 100) + '%', 68 + bw / 2, 27, { size: 16, align: 'center' });
+  }
+  { // armas y chocolate
+    const ws = WSLOTS(), sw = 62, gap = 8, tot = ws.length * sw + (ws.length - 1) * gap + sw + 26, x0 = W / 2 - tot / 2, y0 = H - 82;
+    ws.forEach((id, i) => {
+      const w = WEAPONS[id], x = x0 + i * (sw + gap), sel = i === Math.min(P.sel, ws.length - 1);
+      ctx.fillStyle = sel ? 'rgba(255,225,74,.95)' : 'rgba(20,12,40,.82)'; rrect(x, y0, sw, sw, 10); ctx.fill(); ctx.strokeStyle = sel ? '#fff' : 'rgba(255,255,255,.5)'; ctx.lineWidth = 3; rrect(x + 1.5, y0 + 1.5, sw - 3, sw - 3, 9); ctx.stroke();
+      ctx.font = '28px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; ctx.fillText(w.icon, x + sw / 2, y0 + 26);
+      txt(w.type, x + sw / 2, y0 + 44, { size: 10, align: 'center', color: sel ? '#3a1a00' : '#ffe14a', outline: false }); txt(String(i + 1), x + 6, y0 + 4, { size: 11, color: sel ? '#3a1a00' : '#aaa', outline: false });
+      if (sel && P.atkCd > 0) { ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(x + 3, y0 + 3, sw - 6, (sw - 6) * Math.min(1, P.atkCd / w.cd)); }
+    });
+    const cx = x0 + ws.length * (sw + gap) + 26, ready = P.chocoCd <= 0;
+    ctx.fillStyle = ready ? 'rgba(122,70,34,.95)' : 'rgba(20,12,40,.82)'; rrect(cx, y0, sw, sw, 10); ctx.fill(); ctx.strokeStyle = ready ? '#ffd24a' : 'rgba(255,255,255,.5)'; ctx.lineWidth = 3; rrect(cx + 1.5, y0 + 1.5, sw - 3, sw - 3, 9); ctx.stroke();
+    ctx.font = '28px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff'; ctx.fillText('🍫', cx + sw / 2, y0 + 26);
+    if (!ready) { ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(cx + 3, y0 + 3, sw - 6, (sw - 6) * (P.chocoCd / CHOCO_CD)); txt(Math.ceil(P.chocoCd) + 's', cx + sw / 2, y0 + 20, { size: 18, align: 'center' }); }
+    txt(ready ? 'LISTO' : 'CURA', cx + sw / 2, y0 + 44, { size: 10, align: 'center', color: '#ffe14a', outline: false }); txt('R', cx + 6, y0 + 4, { size: 11, color: '#ddd', outline: false });
+  }
   if (S.keys && (S.keys.some(k => k > 0) || L.ents.some(e => e.type === 'key') || S.ents.some(e => e.type === 'key'))) {
     panel(12, 64, 150, 38);
     ['#e0a060', '#dfe6ff', '#ffd24a'].forEach((c, i) => {

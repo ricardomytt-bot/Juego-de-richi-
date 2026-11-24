@@ -11,7 +11,9 @@ Solo hay **un joystick y dos botones**:
 |---|---|
 | Joystick en pantalla, flechas o `W` `A` `S` `D` | Moverte |
 | Botón **ACTUAR** (`E` o `K`) | Hablar con los personajes y avanzar los diálogos |
-| Botón **ATACAR** (`J`, `X` o `Espacio`) | Usar la espada hacia donde miras |
+| Botón **ATACAR** (`J`, `X` o `Espacio`) | Usar el arma equipada hacia donde miras |
+| Botón **ARMA** (`Q`, o `1`-`4`) | Cambiar de arma: Dagas (corta, rápida), Martillo (pesada), Arco (larga) y Cetro Estelar (especial, se gana derrotando enemigos) |
+| Botón 🍫 (`R`) | Chocolate: restaura toda la vida, se recarga cada 30 s |
 | Botón ☰ o `Esc` | Abrir el menú de pausa |
 
 En el menú puedes ajustar la música y los efectos, ocultar los botones en pantalla, poner pantalla completa y saltar las cinemáticas.
