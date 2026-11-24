@@ -182,22 +182,22 @@ function level0() {
 }
 
 // ---- Nivel 1: Valle del Sueño (grande, con laberintos y llaves) ----
-function level1() {
-  const L = new Level(120, 84, 'dream'); L.diaNeed = 3; L.start = [61, 75];
-  const R = (a, b, c, d, ch = '.') => L.fill(a, b, c, d, ch), r = mkRng(7);
+function buildValley(theme, so, SG) {
+  const L = new Level(120, 84, theme); L.diaNeed = 3; L.start = [61, 75];
+  const R = (a, b, c, d, ch = '.') => L.fill(a, b, c, d, ch), r = mkRng(7 + so);
   // zona central
   R(48, 60, 72, 78);
   // ---- A: ruinas del oeste (laberinto) → llave de bronce
-  const A = carveMaze(L, 6, 54, 10, 8, 11, { floor: 'a', wall: 'W', entrance: { side: 'E', row: 4 }, braid: .12 });
+  const A = carveMaze(L, 6, 54, 10, 8, 11 + so, { floor: 'a', wall: 'W', entrance: { side: 'E', row: 4 }, braid: .12 });
   R(A.entrance.ex, A.entrance.ey, 47, A.entrance.ey + 1, ',');
   // ---- B: bosque de almohadas (claro enorme)
   R(30, 12, 78, 40);
   R(58, 41, 60, 59, ','); R(58, 50, 60, 50, 'X');
   // ---- C: pantano (laberinto de setos) → llave de oro y diamante 2
-  const C = carveMaze(L, 92, 14, 8, 9, 22, { floor: ',', wall: 'b', entrance: { side: 'W', row: 4 }, braid: .12 });
+  const C = carveMaze(L, 92, 14, 8, 9, 22 + so, { floor: ',', wall: 'b', entrance: { side: 'W', row: 4 }, braid: .12 });
   R(79, C.entrance.ey, C.entrance.ex, C.entrance.ey + 1, ','); R(85, C.entrance.ey, 85, C.entrance.ey + 1, 'Y');
   // ---- D: cámara de oro (laberinto grande) → diamante 3
-  const D = carveMaze(L, 78, 52, 11, 8, 33, { floor: 'a', wall: 'W', entrance: { side: 'W', row: 4 }, braid: .1 });
+  const D = carveMaze(L, 78, 52, 11, 8, 33 + so, { floor: 'a', wall: 'W', entrance: { side: 'W', row: 4 }, braid: .1 });
   R(73, D.entrance.ey, D.entrance.ex, D.entrance.ey + 1, ','); R(75, D.entrance.ey, 75, D.entrance.ey + 1, 'Z');
   // ---- arena del jefe y puerta de diamantes (al oeste del bosque)
   R(6, 16, 23, 26, 'a'); R(5, 15, 24, 15, 'W'); R(5, 27, 24, 27, 'W'); R(5, 15, 5, 27, 'W'); R(24, 15, 24, 27, 'W');
@@ -221,10 +221,10 @@ function level1() {
   for (let x = 25; x <= 30; x++) L.mustReach(x, 21);
   // ---- decoración sin cortar caminos
   const keep = [[61, 75, 4], [36, 17, 2], [74, 16, 3]];
-  L.scatter(48, 60, 72, 78, 'T', 14, 21, keep); L.scatter(48, 60, 72, 78, 'R', 6, 22, keep); L.scatter(48, 60, 72, 78, 'b', 16, 23, keep);
+  L.scatter(48, 60, 72, 78, 'T', 14, 21 + so, keep); L.scatter(48, 60, 72, 78, 'R', 6, 22 + so, keep); L.scatter(48, 60, 72, 78, 'b', 16, 23 + so, keep);
   R(40, 20, 48, 26, '~'); R(60, 28, 70, 35, '~'); R(44, 33, 50, 37, '~');
-  L.scatter(30, 12, 78, 40, 'T', 70, 24, keep); L.scatter(30, 12, 78, 40, 'R', 20, 25, keep); L.scatter(30, 12, 78, 40, 'b', 36, 26, keep);
-  L.scatter(30, 12, 78, 40, 'm', 90, 27, [], '.'); L.scatter(48, 60, 72, 78, 'm', 40, 28, [], '.');
+  L.scatter(30, 12, 78, 40, 'T', 70, 24 + so, keep); L.scatter(30, 12, 78, 40, 'R', 20, 25 + so, keep); L.scatter(30, 12, 78, 40, 'b', 36, 26 + so, keep);
+  L.scatter(30, 12, 78, 40, 'm', 90, 27 + so, [], '.'); L.scatter(48, 60, 72, 78, 'm', 40, 28 + so, [], '.');
   for (const [x, y] of [[56, 70], [66, 70], [56, 64], [66, 64], [72, 14], [76, 14], [72, 18], [76, 18]]) L.set(x, y, 'k');
   // ---- enemigos
   const openIn = (x0, y0, x1, y1, ch = '.') => { const a = []; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (L.get(x, y) === ch) a.push([x, y]); return a; };
@@ -238,16 +238,11 @@ function level1() {
   L.ent('heart', 58, 72); L.ent('heart', 64, 72); L.ent('heart', 34, 38); L.ent('heart', 76, 36); L.ent('heart', 40, 12);
   L.ent('npc', 61, 72, { id: 'aquela' });
   // cartelitos
-  L.sign(60, 76, 'VALLE DEL SUEÑO  —  un mundo enorme: ¡explóralo!');
-  L.sign(53, 68, '← Ruinas del oeste  (laberinto de piedra)');
-  L.sign(67, 68, 'Cámara de oro  →  (necesita la llave de oro)');
-  L.sign(56, 57, '↑ Puerta de bronce al Bosque de Almohadas');
-  L.sign(34, 23, 'Un escondite de rocas... ¡algo brilla adentro!');
-  L.sign(80, C.entrance.ey + 3, 'Puerta de plata  →  Pantano de setos');
-  L.sign(28, 24, 'El jefe espera al oeste.  3 diamantes abren la puerta');
-  L.sign(45, 18, 'Hay puertas de colores: busca sus llaves');
+  SG.forEach((t, i) => { const P_ = [[60, 76], [53, 68], [67, 68], [56, 57], [34, 23], [80, C.entrance.ey + 3], [28, 24], [45, 18]][i]; L.sign(P_[0], P_[1], t); });
   return L;
 }
+const level1 = () => buildValley('dream', 0, ['VALLE DEL SUEÑO  —  un mundo enorme: ¡explóralo!', '← Ruinas del oeste  (laberinto de piedra)', 'Cámara de oro  →  (necesita la llave de oro)', '↑ Puerta de bronce al Bosque de Almohadas', 'Un escondite de rocas... ¡algo brilla adentro!', 'Puerta de plata  →  Pantano de setos', 'El jefe espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves']);
+const level2 = () => buildValley('sweet', 100, ['PASTELANDIA  —  un reino de dulces: ¡explóralo!', '← Ruinas de galleta  (laberinto)', 'Cámara de caramelo  →  (necesita la llave de oro)', '↑ Puerta de bronce al Bosque de Algodón', 'Un cercado de rocas de azúcar... ¡algo brilla!', 'Puerta de plata  →  Pantano de chocolate', 'Acenix espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves']);
 // comprueba que el nivel se puede completar aunque las puertas empiecen cerradas
 function verifyLevel(L) {
   const have = [false, false, false], opened = {}, missing = [];
@@ -273,4 +268,4 @@ function verifyLevel(L) {
   if (L.gate) { const g = L.gate.tiles[0]; if (!seen[g[1] * L.w + g[0] - 1]) missing.push('puerta-jefe'); }
   return { ok: missing.length === 0, missing };
 }
-const LEVELS = [level0, level1];
+const LEVELS = [level0, level1, level2];

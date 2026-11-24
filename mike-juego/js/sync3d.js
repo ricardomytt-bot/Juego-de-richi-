@@ -82,11 +82,11 @@ function glSync(dt) {
   const w = S.willy; if (w) { const o = glGet('willy', () => makeCharObj('willy')); o.outer.position.set(w.x / T, 0, w.y / T); const mv = Math.hypot(w.vx, w.vy); if (mv > 20) o.outer.rotation.y = yawTo(o.outer.rotation.y, Math.atan2(w.vx, w.vy), .2); animChar(o, t * 1.3, mv > 25 ? 1 : 0); }
   // ---- jefe
   const b = S.boss; if (b && !b.dead) {
-    const o = glGet('boss', () => { const B = makeCharObj('timba'); B.g.scale.multiplyScalar(1.5); B.faceNorm = B.parts.headMesh.material[4].map; B.faceRed = cTex(faceCanvas({ eyes: 'red', mouth: 'open', iris: '#101018' })); B.faceZ = cTex(faceCanvas({ eyes: 'closed', mouth: 'tiny' })); return B; });
+    const o = glGet('boss', () => { const B = makeCharObj(b.kind || 'timba'); B.g.scale.multiplyScalar(b.kind === 'acenix' ? 1.35 : 1.5); B.faceNorm = B.parts.headMesh.material[4].map; const ac = b.kind === 'acenix'; B.faceRed = cTex(faceCanvas({ skin: ac ? '#a4a9b6' : undefined, eyes: 'red', mouth: ac ? 'cat' : 'open', iris: '#101018' })); B.faceZ = cTex(faceCanvas({ skin: ac ? '#a4a9b6' : undefined, eyes: 'closed', mouth: ac ? 'cat' : 'tiny' })); return B; });
     const lift = (b.lift || 0) / T * 1.4; o.outer.position.set(b.x / T, lift, b.y / T);
     const sleep = b.state === 'sleep', red = b.state !== 'saved', fm = o.parts.headMesh.material[4], want = sleep ? o.faceZ : (red ? o.faceRed : o.faceNorm); if (fm.map !== want) { fm.map = want; fm.needsUpdate = true; }
     o.outer.rotation.y = yawTo(o.outer.rotation.y, b.face > 0 ? Math.PI / 2 : -Math.PI / 2 + (Math.abs(P.x - b.x) < 30 ? 0 : 0), .1); if (b.state !== 'sleep' && b.state !== 'idle') o.outer.rotation.y = yawTo(o.outer.rotation.y, Math.atan2(P.x - b.x, P.y - b.y), .12);
-    o.outer.scale.y = (b.state === 'slam' && b.lift === 0 && b.t > .77) ? .88 : 1; animChar(o, t, Math.hypot(b.vx, b.vy) > 10 ? .8 : 0, { talk: S.dialog && S.dialog.who === 'timba' }); setFlash(o, b.flash > 0);
+    o.outer.scale.y = (b.state === 'slam' && b.lift === 0 && b.t > .77) ? .88 : 1; animChar(o, t, Math.hypot(b.vx, b.vy) > 10 ? .8 : 0, { talk: S.dialog && S.dialog.who === (b.kind || 'timba') }); setFlash(o, b.flash > 0);
     o.outer.rotation.z = sleep ? Math.sin(t * 2) * .05 : 0;
   }
   // ---- disparos del jugador
@@ -98,7 +98,7 @@ function glSync(dt) {
   for (; si < GL.shotObjs.length; si++) GL.shotObjs[si].visible = false;
   // ---- proyectiles y avisos
   for (const q of S.proj) {
-    if (q.type === 'pillow') { const o = glGet(q, () => { const g = new THREE.Group(); g.add(mesh(geoBox(.7, .4, .5), lam(0xffffff, { emissive: 0x444466 }), 0, 0, 0), mesh(geoBox(.72, .12, .52), lam(0x9ad0ff), 0, 0, 0)); return { group: g }; }); gp(o, q.x, q.z / T * 1.1 + .4, q.y); o.group.rotation.set(q.rot, q.rot * .7, 0); }
+    if (q.type === 'pillow') { const o = glGet(q, () => { const g = new THREE.Group(); if (q.kind === 'acenix') g.add(mesh(geoBox(.5, .34, .5), lam(0x7a4222), 0, 0, 0), mesh(geoBox(.56, .2, .56), lam(0xff9ac8, { emissive: 0x552233 }), 0, .26, 0), mesh(geoBox(.16, .16, .16), lam(0xff3040), 0, .44, 0)); else g.add(mesh(geoBox(.7, .4, .5), lam(0xffffff, { emissive: 0x444466 }), 0, 0, 0), mesh(geoBox(.72, .12, .52), lam(0x9ad0ff), 0, 0, 0)); return { group: g }; }); gp(o, q.x, q.z / T * 1.1 + .4, q.y); o.group.rotation.set(q.rot, q.rot * .7, 0); }
     else if (q.type === 'ring') { const o = glGet(q, () => { const m = new THREE.Mesh(new THREE.RingGeometry(.92, 1, 40), new THREE.MeshBasicMaterial({ color: 0xe0d0ff, transparent: true, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending })); m.rotation.x = -Math.PI / 2; const g = new THREE.Group(); g.add(m); return { group: g, m }; }); gp(o, q.x, .08, q.y); o.group.scale.setScalar(q.r / T); o.m.material.opacity = clamp(1 - q.r / q.max, 0, 1); }
   }
   for (const wn of S.warns) {

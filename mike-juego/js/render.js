@@ -464,7 +464,7 @@ function drawWorld() {
     lights.push({ x: b.x, y: b.y - 40, r: 170, col: 'rgba(255,60,90,.35)' });
     items.push({ y: b.y, d: () => {
       const sc = 1 - b.lift / 400; shadow(b.x, b.y - 2, 46 * sc, 16 * sc, .38);
-      drawChar('timba', b.x, b.y, { scale: 2, frame: fr, flip: b.face > 0, flash: b.flash > 0, red: b.state !== 'saved', sleep: b.state === 'sleep', lift: b.lift, sy: crouch });
+      drawChar(b.kind || 'timba', b.x, b.y, { scale: 2, frame: fr, flip: b.face > 0, flash: b.flash > 0, red: b.state !== 'saved', sleep: b.state === 'sleep', lift: b.lift, sy: crouch });
     } });
   }
   for (const q of S.proj) if (q.type === 'pillow') items.push({ y: q.y, d: () => { shadow(q.x, q.y, 14, 6, .3); drawProj(q); } });
@@ -590,7 +590,7 @@ function drawHUD() {
   const b = S.boss;
   if (b && S.bossStarted && b.state !== 'saved' && !S.dialog) {
     const bw = 480, bx = (W - bw) / 2, by = 70;
-    txt('TIMBA  (corrupto)', W / 2, by - 28, { size: 18, align: 'center', color: '#ffb0b0' });
+    txt(S.boss && S.boss.kind === 'acenix' ? 'ACENIX  (corrupto)' : 'TIMBA  (corrupto)', W / 2, by - 28, { size: 18, align: 'center', color: '#ffb0b0' });
     ctx.fillStyle = '#1a1020'; ctx.fillRect(bx - 5, by - 5, bw + 10, 26); ctx.fillStyle = '#4a1020'; ctx.fillRect(bx, by, bw, 16);
     ctx.fillStyle = b.state === 'sleep' ? '#6ac8ff' : '#ff3b5c'; ctx.fillRect(bx, by, bw * b.hp / b.max, 16); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(bx, by, bw * b.hp / b.max, 5);
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(bx - 4, by - 4, bw + 8, 24);
@@ -608,7 +608,7 @@ function drawGroundBand(y, dark) {
 }
 // ---------- Retratos grandes para los diálogos ----------
 const PORT = {};
-['mike', 'exe', 'willy', 'ambrosio', 'aquela', 'rius', 'mayo', 'esparta', 'raptor', 'timba', 'trolino', 'invictor'].forEach(k => { const im = new Image(); im.src = `assets/retratos/${k}.png`; PORT[k] = im; });
+['mike', 'exe', 'willy', 'ambrosio', 'aquela', 'rius', 'mayo', 'esparta', 'raptor', 'timba', 'trolino', 'invictor', 'acenix'].forEach(k => { const im = new Image(); im.src = `assets/retratos/${k}.png`; PORT[k] = im; });
 const PSIL = {};
 function portSil(id, color) {
   const key = id + color; if (PSIL[key]) return PSIL[key];

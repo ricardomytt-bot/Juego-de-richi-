@@ -32,7 +32,7 @@ const WEAPONS = {
 };
 const WSLOTS = () => P.special ? ['dagger', 'hammer', 'bow', 'star'] : ['dagger', 'hammer', 'bow'];
 const curW = () => WEAPONS[WSLOTS()[Math.min(P.sel, WSLOTS().length - 1)]];
-const CHOCO_CD = 30;
+let CHOCO_CD = 30;
 function selectW(i) { if (i < 0 || i >= WSLOTS().length || i === P.sel) return; P.sel = i; sfx.select(); floater(P.x - 30, P.y - 80, curW().icon + ' ' + curW().name, '#ffe14a'); }
 function useChoco() {
   if (P.chocoCd > 0 || P.dead || S.busy) return;
@@ -238,7 +238,7 @@ function updateEnt(e, dt) {
         e.dead = true; S.dia++; sfx.dia(); S.shake = .08;
         spawnP(e.x, e.y, 22, '#7df3ff', 280, .8);
         floater(e.x - 50, e.y - 40, '+1 DIAMANTE  ' + S.dia + '/' + S.lvl.diaNeed, '#7df3ff');
-        if (S.dia >= S.lvl.diaNeed && S.lvlId === 1) showHint('¡Tienes los 3 diamantes! Ve a la puerta del salón →', 3.5);
+        if (S.dia >= S.lvl.diaNeed && S.lvlId >= 1) showHint('¡Tienes los 3 diamantes! Ve a la puerta del salón →', 3.5);
       } else if (P.hp < P.maxHp) { e.dead = true; P.hp = Math.min(P.maxHp, P.hp + 20); sfx.heal(); floater(e.x, e.y - 30, '+20%', '#ff7aa8'); }
     }
   } else if (e.type === 'dummy') { e.hit = Math.max(0, e.hit - dt); }
@@ -358,7 +358,7 @@ function makeBoss() {
   const A = S.lvl.arena;
   return {
     x: A.spawn[0], y: A.spawn[1], hw: 26, hh: 18, vx: 0, vy: 0, hp: BOSS_HP, max: BOSS_HP, state: 'idle', t: 0,
-    face: -1, flash: 0, phase: 1, count: 0, anim: 0, dead: false, fired: false, rain: 0, zzz: 0, lift: 0, ox: 0, oy: 0, tx: 0, ty: 0, hitWall: false
+    kind: S.lvlId === 2 ? 'acenix' : 'timba', face: -1, flash: 0, phase: 1, count: 0, anim: 0, dead: false, fired: false, rain: 0, zzz: 0, lift: 0, ox: 0, oy: 0, tx: 0, ty: 0, hitWall: false
   };
 }
 function hitBoss(dm = 1) {
@@ -373,10 +373,11 @@ function hitBoss(dm = 1) {
     floater(b.x - 80, b.y - 130, '¡YA NO TENGO SUEÑO!', '#ff4a5a'); S.shake = .3;
   }
 }
+const bt = (a, c) => (S.boss && S.boss.kind === 'acenix') ? c : a;
 function defeatBoss() {
   const b = S.boss; b.state = 'saved'; b.vx = b.vy = 0; b.lift = 0; b.flash = 0; S.proj = []; S.warns = []; S.bossDefeated = true;
   S.shake = .4; sfx.boss(); spawnP(b.x, b.y - 50, 36, '#ff4a5a', 340, 1);
-  csTimbaSaved();
+  if (b.kind === 'acenix') csAcenixSaved(); else csTimbaSaved();
 }
 function bossImpact(x, y, r) {
   sfx.slam(); S.shake = .35; spawnP(x, y, 22, '#d0c0ff', 300);
@@ -395,14 +396,14 @@ function updateBoss(dt) {
       if (d > 80) { b.vx = dx / d * spd; b.vy = dy / d * spd; } else { b.vx = b.vy = 0; }
       if (b.t <= 0) {
         b.vx = b.vy = 0; b.count++;
-        if (b.count % 4 === 0) { b.state = 'sleep'; b.t = 2.8; floater(b.x - 60, b.y - 130, '¡Me dio sueñito...!', '#9ad0ff'); }
+        if (b.count % 4 === 0) { b.state = 'sleep'; b.t = 2.8; floater(b.x - 60, b.y - 130, bt('¡Me dio sueñito...!', '¡Me dio hambre...!'), '#9ad0ff'); }
         else {
           const r = Math.random();
-          if (b.phase === 2 && r < .3) { b.state = 'rain'; b.t = 4; b.rain = 0; floater(b.x - 70, b.y - 130, '¡CONTANDO OVEJAS!', '#fff'); }
-          else if (r < .6) { b.state = 'throw'; b.t = .75; b.fired = false; floater(b.x - 50, b.y - 130, '¡ALMOHADAZO!', '#fff'); }
+          if (b.phase === 2 && r < .3) { b.state = 'rain'; b.t = 4; b.rain = 0; floater(b.x - 70, b.y - 130, bt('¡CONTANDO OVEJAS!', '¡LLUVIA DE MUFFINS!'), '#fff'); }
+          else if (r < .6) { b.state = 'throw'; b.t = .75; b.fired = false; floater(b.x - 50, b.y - 130, bt('¡ALMOHADAZO!', '¡MUFFINAZO!'), '#fff'); }
           else {
             b.state = 'slam'; b.t = 1.1; b.ox = b.x; b.oy = b.y; b.tx = P.x; b.ty = P.y;
-            S.warns.push({ x: b.tx, y: b.ty, r: 70, t: 0, dur: 1.1, kind: 'slam' }); sfx.warn(); floater(b.x - 40, b.y - 130, '¡Siesta-azo!', '#fff');
+            S.warns.push({ x: b.tx, y: b.ty, r: 70, t: 0, dur: 1.1, kind: 'slam' }); sfx.warn(); floater(b.x - 40, b.y - 130, bt('¡Siesta-azo!', '¡Miau-azo!'), '#fff');
           }
         }
       }
@@ -411,7 +412,7 @@ function updateBoss(dt) {
       b.vx = b.vy = 0; b.t -= dt; b.face = sign(dx) || b.face;
       if (b.t <= .3 && !b.fired) {
         b.fired = true; const n = b.phase === 2 ? 5 : 2, a0 = Math.atan2(dy, dx);
-        for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * .32; S.proj.push({ type: 'pillow', x: b.x, y: b.y, z: 50, vx: Math.cos(a) * 340, vy: Math.sin(a) * 340, rot: 0, life: 3 }); }
+        for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * .32; S.proj.push({ type: 'pillow', x: b.x, y: b.y, z: 50, vx: Math.cos(a) * 340, vy: Math.sin(a) * 340, rot: 0, life: 3, kind: b.kind }); }
         sfx.whoosh();
       }
       if (b.t <= -.4) { b.state = 'walk'; b.t = rnd(.7, 1.2); }
@@ -440,7 +441,7 @@ function updateBoss(dt) {
     case 'sleep':
       b.vx = b.vy = 0; b.t -= dt; b.zzz -= dt;
       if (b.zzz <= 0) { b.zzz = .6; floater(b.x + 20, b.y - 120, 'Z', '#9ad0ff'); }
-      if (b.t <= 0) { b.state = 'walk'; b.t = rnd(.8, 1.2); floater(b.x - 20, b.y - 130, '¡¿Qué?!', '#fff'); }
+      if (b.t <= 0) { b.state = 'walk'; b.t = rnd(.8, 1.2); floater(b.x - 20, b.y - 130, bt('¡¿Qué?!', '¡¿Dónde está mi muffin?!'), '#fff'); }
       break;
   }
   if (b.state !== 'slam') moveBody(L, b, dt);
@@ -497,7 +498,7 @@ function loadLevel(id) {
   P.x = (L.start[0] + .5) * T; P.y = (L.start[1] + 1) * T - 8;
   P.vx = P.vy = 0; P.hp = P.maxHp; P.inv = 0; P.dead = false; P.dx = 0; P.dy = 1; P.face = 1; P.atk = 0;
   S.checkpoint = [P.x, P.y]; initWilly(); updateCamera(0, true);
-  setMusic(L.theme === 'dream' ? 'dream' : 'city'); setAmbient(L.theme === 'dream' ? 'dream' : 'day');
+  setMusic(L.theme === 'dream' ? 'dream' : L.theme === 'sweet' ? 'day' : 'city'); setAmbient(L.theme === 'dream' ? 'dream' : 'day');
 }
 function openDoorGroup(x, y, c) {
   const L = S.lvl, st = [[x, y]], seen = new Set();

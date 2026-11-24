@@ -35,6 +35,7 @@ function camClear() { S.camShot = null; }
 function glMood(dark) {
   if (!GL.ok) return; const L = S.lvl;
   if (dark) { GL.scene.background = new THREE.Color(0x2a0a1a); GL.scene.fog = new THREE.Fog(0x4a1228, 20, 70); GL.amb.color.set(0xff8ca0); GL.amb.intensity = .85; GL.hemi.color.set(0xff6a8a); GL.hemi.groundColor.set(0x3a0a1a); GL.sun.color.set(0xff5070); GL.sun.intensity = 1.6; }
+  else if (L && L.theme === 'sweet') { GL.scene.background = new THREE.Color(0xffc4e4); GL.scene.fog = new THREE.Fog(0xffd6ee, 30, 90); GL.amb.color.set(0xfff0f8); GL.amb.intensity = 1.2; GL.hemi.color.set(0xffd0f0); GL.sun.color.set(0xfff4d0); GL.sun.intensity = 2.3; }
   else if (L && L.theme === 'dream') { GL.scene.background = new THREE.Color(0x140e36); GL.scene.fog = new THREE.Fog(0x241a58, 14, 46); GL.amb.color.set(0x8a7ad0); GL.amb.intensity = 1.05; GL.sun.color.set(0xb4bcff); GL.sun.intensity = 1.5; }
   else { GL.scene.background = new THREE.Color(0x8fd3ff); GL.scene.fog = new THREE.Fog(0xb4e2ff, 34, 100); GL.amb.color.set(0xffffff); GL.amb.intensity = 1.15; GL.hemi.color.set(0xbfe0ff); GL.hemi.groundColor.set(0x5a7a3a); GL.sun.color.set(0xfff0d4); GL.sun.intensity = 2.5; }
 }
@@ -211,7 +212,7 @@ async function talkNpc(e) {
     if (S.lvlId === 0) { if (e.type === 'citizen') await citizenTalk(e); else await (CITY[e.id] || (async () => { }))(e); }
     else if (e.id === 'aquela') {
       if (S.dia < 3) await say('aquela', 'La puerta del jefe necesita 3 diamantes. Hay puertas de colores y llaves escondidas en los laberintos. ¡Explora y mira el mapa en el menú!');
-      else await say('aquela', 'Ya tienes los 3 diamantes. Detrás de la puerta está Timba. Recuerda: ¡cuando se duerme, golpéalo más fuerte!');
+      else await say('aquela', 'Ya tienes los 3 diamantes. Detrás de la puerta está ' + (S.lvlId === 2 ? 'Acenix. Recuerda: ¡cuando se pone a comer, golpéalo más fuerte!' : 'Timba. Recuerda: ¡cuando se duerme, golpéalo más fuerte!') + '');
     }
   } finally { camClear(); S.busy = false; }
 }
@@ -290,8 +291,9 @@ async function goNext() {
   await fadeTo(1, .6);
   loadLevel(S.lvlId + 1); S.leaving = false; glMood(false); if (GL.ok) GL.camInit = false;
   await fadeTo(0, .6);
-  await say('narr', 'Capítulo 2: El Valle del Sueño. Aquí todo flota, es suave y bonito... y probablemente peligroso.');
-  await say('willy', '¡Guau! (Traducción: huele a almohada con maldad.)');
+  if (S.lvlId === 2) { setMusic('day'); await say('narr', 'Capítulo 3: Pastelandia. Todo es dulce, esponjoso y huele delicioso... y probablemente tiene trampa.'); await say('willy', '¡Guau! (Traducción: huele a muffin con maldad.)'); }
+  else { await say('narr', 'Capítulo 2: El Valle del Sueño. Aquí todo flota, es suave y bonito... y probablemente peligroso.');
+  await say('willy', '¡Guau! (Traducción: huele a almohada con maldad.)'); }
   S.busy = false; showHint('Explora los laberintos, busca las llaves y consigue 3 diamantes', 6);
 }
 
@@ -303,6 +305,15 @@ async function startBoss() {
   S.boss = makeBoss(); S.boss.state = 'idle'; setMusic('dark');
   if (S.willy) { const fs = freeSpot(L, P.x - 50, P.y + 10, 9, 8); S.willy.x = fs[0]; S.willy.y = fs[1]; S.willy.vx = S.willy.vy = 0; }
   await wait(.6);
+  if (S.lvlId === 2) {
+    await say('acenix', 'Miau... Miau... ¿Quién pisa mi cocina? ¡Aquí solo entran clientes con hambre!', { red: true });
+    await M('¡Acenix! ¡Soy yo, Mike! ¡Te llevé tu carta!');
+    await say('acenix', 'Los clientes no hablan. Los clientes COMEN. ¡Exe me prometió pasteles infinitos si te derroto!', { red: true });
+    await M('¡Acenix, tú ya tienes pasteles infinitos!');
+    await say('acenix', '...Ah. Es verdad. Bueno, igual me da hambre. ¡MIAU!', { red: true });
+    await say('aquela', 'Mike, ¡cuando se pone a comer, aprovecha! ¡Le harás el doble de daño!');
+    S.boss.state = 'walk'; S.boss.t = 1.4; setMusic('boss'); showHint('¡Esquiva los muffins! Si se pone a comer... ¡golpea fuerte!', 4); S.busy = false; return;
+  }
   await say('timba', '(roncando) Zzz... zzz... ¿Quién osa interrumpir mi siesta?', { red: true });
   await M('¡Timba! ¡Soy yo, Mike! ¡Despierta! ¡Te entregué tu carta y todo!');
   await say('timba', 'Mike no existe: eres un sueño. Y yo soy el pesadillo. ¡Exe me prometió una cama más grande si te derroto!', { red: true });
@@ -327,21 +338,36 @@ async function csTimbaSaved() {
   await say('timba', 'Yo los ayudo desde tu casa, Mike. Pero antes... ¿alguien tiene un colchón?');
   await M('¡Gracias, Timba! ¡Vamos por los demás!');
   await fadeTo(1, .8);
-  await csEnding();
+  if (window.BOSS_ONLY) { await csEnding(); return; }
+  await say('aquela', 'Exe se llevó a los demás a Pastelandia, un reino de dulces. Mike... Acenix está ahí. Prepárate.');
+  S.q.timbaSaved = true; await goNext();
+}
+async function csAcenixSaved() {
+  S.busy = true; S.skip = false; setMusic('story');
+  await wait(.9);
+  await say('acenix', '(parpadea) Miau... ¿Qué pasó? ...¿Por qué hay muffins por todo el suelo?');
+  await M('¡Acenix! ¡Volviste! ¡Estabas bajo el control de Exe!');
+  await say('acenix', 'Solo recuerdo que tenía MUCHA hambre... y que alguien me pidió una carta. Gracias por la entrega, Mike.');
+  await say('aquela', 'Las estrellas oscuras te dominaron, pero Mike restauró tu conciencia.');
+  await say('acenix', 'Toma: el Muffin Dorado. Está tan bueno que te recarga el chocolate más rápido. ¡Cada 20 segundos! Miau.');
+  CHOCO_CD = 20; P.chocoCd = 0; P.hp = P.maxHp; sfx.win(); S.shake = .1; spawnP(P.x, P.y - 30, 34, '#ffd24a', 300, 1);
+  showHint('¡MUFFIN DORADO!  El chocolate se recarga cada 20 s', 5);
+  await say('acenix', 'Yo me quedo a hornear. ¡Vayan por los demás!');
+  await fadeTo(1, .8); await csEnding();
 }
 async function csEnding() {
   S.skip = false; S.busy = true;
-  S.stage = newStage({ dark: true }); setMusic('dark');
+  S.stage = newStage({ dark: true }); setMusic('dark'); const AC = S.lvlId === 2;
   const C = {};
-  [['willy', 240, -1], ['mike', 350, 1], ['timba', 470, 1], ['aquela', 590, -1]].forEach(([id, x, f]) => { C[id] = addChar(id, x, 344, { face: f, scale: 2 }); });
-  C.willy.face = 1;
+  [['willy', 240, -1], ['mike', 350, 1], [AC ? 'acenix' : 'timba', 470, 1], ['aquela', 590, -1]].forEach(([id, x, f]) => { C[id] = addChar(id, x, 344, { face: f, scale: 2 }); });
+  C.willy.face = 1; const sv = AC ? 'acenix' : 'timba';
   await fadeTo(0, .8);
   await say('narr', 'Esa noche, en lo alto del cielo de Diamantia...');
   bang(); const ex = addChar('exe', 760, 215, { scale: 3, float: true, face: -1 });
   await say('exe', '¡Vaya, vaya! El perrito restauró a uno de mis empleados. ¡Eso sí que me dio sueño! ...No, espera, eso era de Timba.');
   await M('¡Exe, vamos a restaurar a todos tus empleados! ¡Y después te toca a ti!');
-  await say('exe', 'Quedan SIETE guardianes: Rius, Mayo, Esparta, Raptor, Invictor, Trolino y Acenix. Ven por mí... si te atreves. ¡Muajajá!');
-  await say('timba', 'Mike, ¿puedo dormir un ratito? ...¿Mike?');
+  await say('exe', '' + (AC ? 'Quedan SEIS guardianes: Rius, Mayo, Esparta, Raptor, Invictor y Trolino.' : 'Quedan SIETE guardianes: Rius, Mayo, Esparta, Raptor, Invictor, Trolino y Acenix.') + ' Ven por mí... si te atreves. ¡Muajajá!');
+  await say(sv, AC ? 'Miau. ¿Alguien quiere pastel? ...¿Mike?' : 'Mike, ¿puedo dormir un ratito? ...¿Mike?');
   await M('¡Equipo, prepárense! ¡El próximo capítulo viene con más diamantes y menos siestas!');
   S.stage.flash = 1; sfx.boss(); removeChar(ex); await wait(.8);
   S.skip = false;
@@ -362,7 +388,7 @@ async function csEnding() {
       showHint('Toca la pantalla o pulsa una tecla para empezar la batalla', 60);
       const go = () => { removeEventListener('pointerdown', go); removeEventListener('keydown', go); AUDIO.unlock(); startBoss(); }; addEventListener('pointerdown', go); addEventListener('keydown', go);
     }
-    else if (q.has('boss')) { loadLevel(1); S.dia = 3; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 26.5 * T; P.y = 21.5 * T; initWilly(); updateCamera(0, true); }
+    else if (q.has('boss')) { loadLevel(parseInt(q.get('boss')) || 1); S.dia = 3; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 26.5 * T; P.y = 21.5 * T; initWilly(); updateCamera(0, true); }
     else if (q.has('end')) { loadLevel(1); S.dia = 3; csEnding(); }
     else if (q.has('train')) { loadLevel(0); S.q.gotLetters = true; S.q.done = true; openStationGate(); P.x = 87 * T; P.y = 39.5 * T; initWilly(); }
     else loadLevel(parseInt(q.get('lvl')) || 0);

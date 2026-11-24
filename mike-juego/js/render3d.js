@@ -55,6 +55,7 @@ function glBuildLevel(L) {
   const sc = GL.scene;
   if (dm) { sc.background = new THREE.Color(0x140e36); sc.fog = new THREE.Fog(0x241a58, 14, 46); GL.amb.color.set(0x8a7ad0); GL.amb.intensity = 1.05; GL.hemi.color.set(0x8a8aff); GL.hemi.groundColor.set(0x2a1a60); GL.hemi.intensity = .45; GL.sun.color.set(0xb4bcff); GL.sun.intensity = 1.5; GL.plight.intensity = 26; GL.plight.color.set(0xffe2b0); }
   else { sc.background = new THREE.Color(0x8fd3ff); sc.fog = new THREE.Fog(0xb4e2ff, 34, 100); GL.amb.color.set(0xffffff); GL.amb.intensity = 1.15; GL.hemi.color.set(0xbfe0ff); GL.hemi.groundColor.set(0x5a7a3a); GL.hemi.intensity = .5; GL.sun.color.set(0xfff0d4); GL.sun.intensity = 2.5; GL.plight.intensity = 0; }
+  const sw = L.theme === 'sweet'; if (sw) { sc.background = new THREE.Color(0xffc4e4); sc.fog = new THREE.Fog(0xffd6ee, 30, 90); GL.amb.color.set(0xfff0f8); GL.amb.intensity = 1.2; GL.hemi.color.set(0xffd0f0); GL.hemi.groundColor.set(0xc08ad0); GL.sun.color.set(0xfff4d0); GL.sun.intensity = 2.3; }
   GL.blight.intensity = 0;
   // --- suelo (instanciado por tipo/variante)
   const floors = {}, add = (k, x, z) => (floors[k] || (floors[k] = [])).push({ x: x + .5, y: -.15, z: z + .5 });
@@ -69,13 +70,13 @@ function glBuildLevel(L) {
     else if (c === 'W') blocks.W.push([x, y, h]);
   }
   const fgeo = geoBox(1, .3, 1);
-  for (const k in floors) { const base = k.replace(/\d+$/, ''), v = parseInt(k.slice(base.length)); inst(g, fgeo, new THREE.MeshLambertMaterial({ map: tx(texs[base][v]) }), floors[k], false, true); }
+  for (const k in floors) { const base = k.replace(/\d+$/, ''), v = parseInt(k.slice(base.length)); inst(g, fgeo, new THREE.MeshLambertMaterial({ map: tx(texs[base][v]), color: sw ? (base === 'path' ? 0xfff0d0 : base === 'arena' ? 0xffd8f0 : 0xffd0ec) : 0xffffff }), floors[k], false, true); }
   // agua
   GL.waterTex = cTex(texs.water[0]); GL.waterTex.wrapS = GL.waterTex.wrapT = THREE.RepeatWrapping;
-  const wm = new THREE.MeshLambertMaterial({ map: GL.waterTex, transparent: true, opacity: .88 }); GL.waterMat = wm; GL.waterFrames = texs.water.map(c => cTex(c));
+  const wm = new THREE.MeshLambertMaterial({ map: GL.waterTex, transparent: true, opacity: .9, color: sw ? 0xa86a44 : 0xffffff }); GL.waterMat = wm; GL.waterFrames = texs.water.map(c => cTex(c));
   inst(g, geoBox(1, .3, 1), wm, waters, false, true);
   // muros de piedra
-  const wallMat = new THREE.MeshLambertMaterial({ map: tx(texs.wall) });
+  const wallMat = new THREE.MeshLambertMaterial({ map: tx(texs.wall), color: sw ? 0xffe4f2 : 0xffffff });
   inst(g, geoBox(1, 1.5, 1), wallMat, blocks.W.map(([x, y]) => ({ x: x + .5, y: .75, z: y + .5 })), true, true);
   // dinámicos: grietas, puertas, puerta de diamantes
   const crackMat = new THREE.MeshLambertMaterial({ map: tx(texs.crack) }), doorTex = DOORCANV.map(c => cTex(c));
@@ -87,7 +88,7 @@ function glBuildLevel(L) {
     else if (DOORKEY[c] !== undefined) { const m = mesh(geoBox(1, 1.5, 1), new THREE.MeshLambertMaterial({ map: doorTex[DOORKEY[c]] }), x + .5, .75, y + .5, true, true); g.add(m); GL.dyn.push({ x, y, c, m }); }
   }
   // árboles de bloques (tronco + 3 capas de hojas)
-  const pal = dm ? [0x6a4ad8, 0xc64ea0, 0x3a78d8, 0x8a6af0] : [0x3aa04a, 0x2f8f3a, 0x4cb85a, 0x58c060];
+  const pal = dm ? [0x6a4ad8, 0xc64ea0, 0x3a78d8, 0x8a6af0] : sw ? [0xff9ac8, 0xff7ab8, 0xffb8d8, 0xc8a0ff] : [0x3aa04a, 0x2f8f3a, 0x4cb85a, 0x58c060];
   const tr = [], l1 = [], l2 = [], l3 = [], rnd3 = (h, k) => ((h >>> k) & 255) / 255;
   for (const [x, y, h] of trees) {
     const s = .85 + rnd3(h, 3) * .45, col = new THREE.Color(pal[h % pal.length]).multiplyScalar(.9 + rnd3(h, 11) * .2), jx = (rnd3(h, 5) - .5) * .25, jz = (rnd3(h, 9) - .5) * .25, ry = (h % 4) * Math.PI / 2;
