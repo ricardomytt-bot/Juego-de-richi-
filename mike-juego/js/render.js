@@ -589,8 +589,8 @@ function drawHUD() {
   }
   const b = S.boss;
   if (b && S.bossStarted && b.state !== 'saved' && !S.dialog) {
-    const bw = 480, bx = (W - bw) / 2, by = H - 44;
-    txt('TIMBA  (corrupto)', W / 2, by - 30, { size: 18, align: 'center', color: '#ffb0b0' });
+    const bw = 480, bx = (W - bw) / 2, by = 70;
+    txt('TIMBA  (corrupto)', W / 2, by - 28, { size: 18, align: 'center', color: '#ffb0b0' });
     ctx.fillStyle = '#1a1020'; ctx.fillRect(bx - 5, by - 5, bw + 10, 26); ctx.fillStyle = '#4a1020'; ctx.fillRect(bx, by, bw, 16);
     ctx.fillStyle = b.state === 'sleep' ? '#6ac8ff' : '#ff3b5c'; ctx.fillRect(bx, by, bw * b.hp / b.max, 16); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(bx, by, bw * b.hp / b.max, 5);
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(bx - 4, by - 4, bw + 8, 24);

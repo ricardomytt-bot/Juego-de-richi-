@@ -355,9 +355,14 @@ async function csEnding() {
   initGL();
   const q = new URLSearchParams(location.search);
   setMusic('title'); setAmbient('dream');
-  if (q.has('lvl') || q.has('boss') || q.has('end') || q.has('train') || q.has('city')) {
+  if (window.BOSS_ONLY || q.has('lvl') || q.has('boss') || q.has('end') || q.has('train') || q.has('city')) {
     S.mode = 'play'; S.fade = 0; MENU.open = false;
-    if (q.has('boss')) { loadLevel(1); S.dia = 3; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 26.5 * T; P.y = 21.5 * T; initWilly(); updateCamera(0, true); }
+    if (window.BOSS_ONLY) {
+      loadLevel(1); S.dia = 3; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 26.5 * T; P.y = 21.5 * T; P.special = true; P.kills = 5; initWilly(); updateCamera(0, true);
+      showHint('Toca la pantalla o pulsa una tecla para empezar la batalla', 60);
+      const go = () => { removeEventListener('pointerdown', go); removeEventListener('keydown', go); AUDIO.unlock(); startBoss(); }; addEventListener('pointerdown', go); addEventListener('keydown', go);
+    }
+    else if (q.has('boss')) { loadLevel(1); S.dia = 3; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 26.5 * T; P.y = 21.5 * T; initWilly(); updateCamera(0, true); }
     else if (q.has('end')) { loadLevel(1); S.dia = 3; csEnding(); }
     else if (q.has('train')) { loadLevel(0); S.q.gotLetters = true; S.q.done = true; openStationGate(); P.x = 87 * T; P.y = 39.5 * T; initWilly(); }
     else loadLevel(parseInt(q.get('lvl')) || 0);
