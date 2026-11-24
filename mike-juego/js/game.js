@@ -1,7 +1,7 @@
 'use strict';
 // ===== Lógica (vista desde arriba): estado, movimiento, combate, enemigos, jefe =====
 const SPEED = 330;
-const BOSS_HP = 110;
+const BOSS_HP = 55;
 const CH = {
   mike: '01_mike', exe: '02_mike_malvado', willy: '03_perro_negro', ambrosio: '04_cartero', aquela: '05_gata_azul',
   rius: '06_gallo_espada', mayo: '07_robot_pizza', acenix: '08_gato_blanco_pastel', esparta: '09_chico_capucha_azul',
@@ -99,6 +99,7 @@ function showHint(t, sec) { S.hint = t; S.hintT = Math.max(S.hintT, sec); }
 
 // ---------- Efectos ----------
 function spawnP(x, y, n, color, spd = 160, life = .5, size = 4) {
+  n = Math.ceil(n * .5);
   for (let i = 0; i < n; i++) {
     const a = rnd(0, Math.PI * 2), s = rnd(.3, 1) * spd;
     S.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rnd(.5, 1) * life, max: life, color, size });
@@ -171,7 +172,7 @@ function healPlayer() { P.hp = P.maxHp; sfx.heal(); spawnP(P.x, P.y - 30, 18, '#
 function hitEnt(e, dmg = 1) {
   sfx.hit();
   if (e.type === 'dummy') { e.hit = .3; floater(e.x - 20, e.y - 70, ['¡Auch!', '¡Oye!', '¡Pum!', '¿Por qué?'][Math.floor(rnd(0, 4))], '#ffe14a'); spawnP(e.x, e.y - 24, 8, '#c9a15a'); return; }
-  e.hp -= dmg * P.dmgMul; e.flash = .14; floater(e.x - 8, e.y - (e.bh || 20) - 26, '' + Math.round(dmg * P.dmgMul * 20), '#fff');
+  e.hp -= dmg * P.dmgMul; e.flash = .14;
   const a = Math.atan2(e.y - P.y, e.x - P.x); e.vx = Math.cos(a) * 300; e.vy = Math.sin(a) * 300;
   const c = ebody(e);
   spawnP(c.x, c.y, 10, e.type === 'slime' ? '#7dff8a' : '#c26aff', 200);
@@ -255,7 +256,7 @@ function doAttack(w) {
   }
   const b = S.boss;
   if (b && !b.dead && b.state !== 'saved' && b.state !== 'idle' && !p.hitSet.has(b)) {
-    if (dist(cx, cy, b.x, b.y - 46) < R + 48) { p.hitSet.add(b); hitBoss(w.dmg); any = true; }
+    if (dist(cx, cy, b.x, b.y - 36) < R + 38) { p.hitSet.add(b); hitBoss(w.dmg); any = true; }
   }
   const tx0 = Math.floor((cx - R) / T), tx1 = Math.floor((cx + R) / T), ty0 = Math.floor((cy - R) / T), ty1 = Math.floor((cy + R) / T);
   for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) {
@@ -285,7 +286,7 @@ function updateShots(dt) {
       if (dist(bx, by, c.x, c.y) < 18 + e.rad) { q.hit.add(e); hitEnt(e, q.dmg); if (!q.pierce) { gone = true; break; } }
     }
     const b = S.boss;
-    if (!gone && b && !b.dead && b.state !== 'saved' && b.state !== 'idle' && !q.hit.has(b) && dist(bx, by, b.x, b.y - 46) < 18 + 48) { q.hit.add(b); hitBoss(q.dmg); if (!q.pierce) gone = true; }
+    if (!gone && b && !b.dead && b.state !== 'saved' && b.state !== 'idle' && !q.hit.has(b) && dist(bx, by, b.x, b.y - 36) < 18 + 38) { q.hit.add(b); hitBoss(q.dmg); if (!q.pierce) gone = true; }
     if (gone) S.shots.splice(i, 1);
   }
 }

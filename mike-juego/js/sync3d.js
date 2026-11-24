@@ -82,7 +82,7 @@ function glSync(dt) {
   const w = S.willy; if (w) { const o = glGet('willy', () => makeCharObj('willy')); o.outer.position.set(w.x / T, 0, w.y / T); const mv = Math.hypot(w.vx, w.vy); if (mv > 20) o.outer.rotation.y = yawTo(o.outer.rotation.y, Math.atan2(w.vx, w.vy), .2); animChar(o, t * 1.3, mv > 25 ? 1 : 0); }
   // ---- jefe
   const b = S.boss; if (b && !b.dead) {
-    const o = glGet('boss', () => { const B = makeCharObj('timba'); B.g.scale.multiplyScalar(2.1); B.faceNorm = B.parts.headMesh.material[4].map; B.faceRed = cTex(faceCanvas({ eyes: 'red', mouth: 'open', iris: '#101018' })); B.faceZ = cTex(faceCanvas({ eyes: 'closed', mouth: 'tiny' })); return B; });
+    const o = glGet('boss', () => { const B = makeCharObj('timba'); B.g.scale.multiplyScalar(1.5); B.faceNorm = B.parts.headMesh.material[4].map; B.faceRed = cTex(faceCanvas({ eyes: 'red', mouth: 'open', iris: '#101018' })); B.faceZ = cTex(faceCanvas({ eyes: 'closed', mouth: 'tiny' })); return B; });
     const lift = (b.lift || 0) / T * 1.4; o.outer.position.set(b.x / T, lift, b.y / T);
     const sleep = b.state === 'sleep', red = b.state !== 'saved', fm = o.parts.headMesh.material[4], want = sleep ? o.faceZ : (red ? o.faceRed : o.faceNorm); if (fm.map !== want) { fm.map = want; fm.needsUpdate = true; }
     o.outer.rotation.y = yawTo(o.outer.rotation.y, b.face > 0 ? Math.PI / 2 : -Math.PI / 2 + (Math.abs(P.x - b.x) < 30 ? 0 : 0), .1); if (b.state !== 'sleep' && b.state !== 'idle') o.outer.rotation.y = yawTo(o.outer.rotation.y, Math.atan2(P.x - b.x, P.y - b.y), .12);
@@ -136,17 +136,17 @@ function glParticles() {
 }
 // ---------- cámara, luces y dibujo ----------
 function glCamera(dt) {
-  const L = S.lvl, c = GL.cam; let tx, tz, td = 15.5;
+  const L = S.lvl, c = GL.cam; let tx, tz, td = 11.5;
   if (S.camShot) { tx = S.camShot.x; tz = S.camShot.z; td = S.camShot.dist || 14; }
-  else if (S.bossLock && GL.arenaC) { tx = GL.arenaC[0]; tz = GL.arenaC[1] + 1; td = 25; }
+  else if (S.bossLock && GL.arenaC) { const bb = S.boss; tx = (P.x / T * 2 + (bb ? bb.x / T : GL.arenaC[0])) / 3; tz = (P.y / T * 2 + (bb ? bb.y / T : GL.arenaC[1])) / 3 - .3; td = 13.5; }
   else { tx = P.x / T + P.dx * 1.4; tz = P.y / T + P.dy * .9 - .5; }
   const k = 1 - Math.exp(-dt * (GL.camInit ? 4.5 : 100)); GL.camInit = true;
   GL.cx = lerp(GL.cx, tx, k); GL.cz = lerp(GL.cz, tz, k); GL.dist = lerp(GL.dist, td, 1 - Math.exp(-dt * 2));
-  const pitch = 1.12, sh = S.shake > 0 ? S.shake * .5 : 0;
+  const pitch = 1.0, sh = S.shake > 0 ? S.shake * .22 : 0;
   c.position.set(GL.cx + (sh ? rnd(-sh, sh) : 0), GL.dist * Math.sin(pitch), GL.cz + GL.dist * Math.cos(pitch) + (sh ? rnd(-sh, sh) : 0)); c.lookAt(GL.cx, 0, GL.cz);
   const sx = GL.cx, sz = GL.cz; GL.sun.position.set(sx + 14, 26, sz + 10); GL.sun.target.position.set(sx, 0, sz); GL.sun.target.updateMatrixWorld();
   GL.plight.position.set(P.x / T, 2.4, P.y / T);
-  if (S.bossLock && GL.arenaC) { GL.blight.position.set(GL.arenaC[0], 5, GL.arenaC[1]); GL.blight.intensity = 80; } else GL.blight.intensity = 0;
+  if (S.bossLock && GL.arenaC) { GL.blight.position.set(GL.arenaC[0], 5, GL.arenaC[1]); GL.blight.intensity = 0; } else GL.blight.intensity = 0;
 }
 function glFrame(dt) {
   if (!GL.ok || !S.lvl) return;

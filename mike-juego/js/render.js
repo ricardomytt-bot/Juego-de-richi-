@@ -106,7 +106,7 @@ function buildTex(theme) {
   });
   T_.gate = tex(g => { g.drawImage(T_.wall, 0, 0, 48, 48, 0, 0, 24, 24); g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(3, 3, 18, 18); g.fillStyle = '#2a2040'; g.fillRect(4, 4, 16, 16); g.fillStyle = 'rgba(255,255,255,.1)'; g.fillRect(4, 4, 16, 2); });
   T_.arena = [0, 1].map(i => tex(g => {
-    noise(g, P_.arena[0], P_.arena[1], 600 + i, .4);
+    noise(g, P_.arena[0], P_.arena[1], 600 + i, .12);
     for (const [x, y] of [[0, 0], [12, 0], [0, 12], [12, 12]]) { px1(g, x, y, 'rgba(255,255,255,.16)', 12, 1); px1(g, x, y, 'rgba(255,255,255,.1)', 1, 12); px1(g, x, y + 11, 'rgba(0,0,0,.3)', 12, 1); px1(g, x + 11, y, 'rgba(0,0,0,.3)', 1, 12); }
     if (i) { px1(g, 9, 9, 'rgba(210,190,255,.22)', 6, 1); px1(g, 11, 7, 'rgba(210,190,255,.22)', 2, 5); }
   }));
@@ -561,7 +561,7 @@ function drawHUD() {
     if (!ready) { ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(cx + 3, y0 + 3, sw - 6, (sw - 6) * (P.chocoCd / CHOCO_CD)); txt(Math.ceil(P.chocoCd) + 's', cx + sw / 2, y0 + 20, { size: 18, align: 'center' }); }
     txt(ready ? 'LISTO' : 'CURA', cx + sw / 2, y0 + 44, { size: 10, align: 'center', color: '#ffe14a', outline: false }); txt('R', cx + 6, y0 + 4, { size: 11, color: '#ddd', outline: false });
   }
-  if (S.keys && (S.keys.some(k => k > 0) || L.ents.some(e => e.type === 'key') || S.ents.some(e => e.type === 'key'))) {
+  if (!S.bossLock && S.keys && (S.keys.some(k => k > 0) || L.ents.some(e => e.type === 'key') || S.ents.some(e => e.type === 'key'))) {
     panel(12, 64, 150, 38);
     ['#e0a060', '#dfe6ff', '#ffd24a'].forEach((c, i) => {
       const x = 24 + i * 46, has = S.keys[i] > 0; ctx.globalAlpha = has ? 1 : .28;
@@ -580,7 +580,7 @@ function drawHUD() {
   panel(W - 126, 12, 114, 46); ctx.drawImage(DIA, W - 118, 20, 36, 32);
   txt(S.dia + '/' + L.diaNeed, W - 72, 22, { size: 24, color: S.dia >= L.diaNeed ? '#7df3ff' : '#fff' });
   // minimapa
-  if (MM && L.seen) {
+  if (MM && L.seen && !S.bossLock) {
     minimapUpdate(); const sc = 2, mw = L.w * sc, mh = L.h * sc, mx = W - 12 - mw - 6, my = 66;
     ctx.fillStyle = 'rgba(10,8,30,.96)'; ctx.fillRect(mx - 6, my - 6, mw + 12, mh + 12); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(mx - 5, my - 5, mw + 10, mh + 10);
     ctx.drawImage(MM.c, mx, my, mw, mh);
