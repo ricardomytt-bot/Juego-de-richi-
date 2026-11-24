@@ -4,7 +4,7 @@ const MENU = { open: true, page: 'main', prev: 'main', idx: 0, t: 0, rects: [] }
 function openMenu(page) { MENU.open = true; MENU.page = page; MENU.prev = page; MENU.idx = 0; sfx.select(); }
 function closeMenu() { MENU.open = false; sfx.back(); }
 function gotoPage(p) { if (MENU.page === 'main' || MENU.page === 'pause') MENU.prev = MENU.page; MENU.page = p; MENU.idx = 0; sfx.select(); }
-function backPage() { if (MENU.page === 'options' || MENU.page === 'inv' || MENU.page === 'controls' || MENU.page === 'credits' || MENU.page === 'map') { MENU.page = MENU.prev; MENU.idx = 0; sfx.back(); } else if (MENU.page === 'pause') closeMenu(); }
+function backPage() { if (MENU.page === 'shop') closeMenu(); else if (MENU.page === 'options' || MENU.page === 'inv' || MENU.page === 'controls' || MENU.page === 'credits' || MENU.page === 'map') { MENU.page = MENU.prev; MENU.idx = 0; sfx.back(); } else if (MENU.page === 'pause') closeMenu(); }
 function goFullscreen() { try { const el = document.documentElement; if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen(); } catch (e) { } }
 function menuItems() {
   switch (MENU.page) {
@@ -17,6 +17,19 @@ function menuItems() {
       a.push({ t: 'OPCIONES', go: () => gotoPage('options') }, { t: 'CONTROLES', go: () => gotoPage('controls') });
       if (S.stage || S.dialog) a.push({ t: 'SALTAR ESCENA', go: () => { S.skip = true; MENU.open = false; } });
       a.push({ t: 'SALIR AL TÍTULO', go: () => location.reload() }); return a;
+    }
+    case 'shop': {
+      const U = P.up, mapNext = [1, 2, 3, 4, 5, 6, 7, 8].find(i => !S.maps[i]);
+      const it = (t, price, can, buy) => ({ t: t + (can ? '   ' + price + ' 🪙' : '   (agotado)'), go: () => { if (!can) { sfx.back(); return; } if (S.coins < price) { sfx.low(); showHint('No te alcanzan las monedas', 1.5); return; } S.coins -= price; buy(); sfx.key(); } });
+      const list = [];
+      if (mapNext) list.push(it('🗺️ Mapa: ' + ZNAME[mapNext], 20 + mapNext * 8, true, () => { S.maps[mapNext] = true; if (S.lvlId === mapNext && S.lvl.seen) S.lvl.seen.fill(1); }));
+      list.push(it('🍫 Chocolate mejorado (+10% cura)', [40, 60, 80][U.choco] || 0, U.choco < 3, () => { U.choco++; P.chocoHeal = Math.min(1, P.chocoHeal + .1); }));
+      list.push(it('⏱️ Chocolate rápido (recarga -6 s)', 80, U.fast < 1, () => { U.fast++; CHOCO_CD = Math.max(8, CHOCO_CD - 6); }));
+      list.push(it('🧣 Bufanda térmica (-12% daño)', [60, 90][U.scarf] || 0, U.scarf < 2, () => { U.scarf++; P.defMul *= .88; }));
+      list.push(it('👟 Botas veloces (+10% velocidad)', [50, 80][U.boots] || 0, U.boots < 2, () => { U.boots++; P.speedMul += .1; }));
+      list.push(it('🗡️ Afilador (+12% daño)', [70, 100, 130][U.sharp] || 0, U.sharp < 3, () => { U.sharp++; P.dmgMul += .12; }));
+      list.push({ t: 'SALIR', go: () => closeMenu() });
+      return list;
     }
     case 'inv': return [...[0, 1, 2].map(i => { const w = WEAPONS[P.equip[i]]; return { t: (i + 1) + '   ' + w.icon + ' ' + w.name + '   (' + w.type + ')', go: () => cycleSlot(i), slot: i }; }), { t: 'VOLVER', go: backPage }];
     case 'options': return [
@@ -75,11 +88,11 @@ function drawMenu() {
   const title = S.mode === 'title' && MENU.page === 'main', items = menuItems(), t = MENU.t;
   MENU.rects = [];
   if (!title) { ctx.fillStyle = 'rgba(4,2,16,.62)'; ctx.fillRect(0, 0, W, H); }
-  const heads = { inv: 'INVENTARIO', pause: 'PAUSA', options: 'OPCIONES', controls: 'CONTROLES', credits: 'CRÉDITOS', map: 'MAPA' };
+  const heads = { shop: 'TIENDA DE TROLINO', inv: 'INVENTARIO', pause: 'PAUSA', options: 'OPCIONES', controls: 'CONTROLES', credits: 'CRÉDITOS', map: 'MAPA' };
   let px, py, pw, ph, y0, gap = 58;
   if (title) { pw = 380; ph = items.length * gap + 36; px = (W / 2) - pw / 2; py = 258 - Math.max(0, items.length - 4) * 46; y0 = py + 24; }
   else {
-    const extra = MENU.page === 'controls' ? 250 : MENU.page === 'credits' ? 200 : MENU.page === 'map' ? 330 : MENU.page === 'inv' ? 190 : 0;
+    const extra = MENU.page === 'controls' ? 250 : MENU.page === 'credits' ? 200 : MENU.page === 'map' ? 330 : MENU.page === 'inv' ? 190 : MENU.page === 'shop' ? 70 : 0;
     pw = MENU.page === 'options' ? 640 : MENU.page === 'map' ? 700 : 560; ph = 90 + items.length * gap + extra; px = (W / 2) - pw / 2; py = Math.max(24, 270 - ph / 2); y0 = py + 78 + extra;
     menuPanel(px, py, pw, ph);
     txt(heads[MENU.page] || '', (W / 2), py + 24, { size: 34, align: 'center', color: '#ffe14a', lw: 6 });
@@ -100,6 +113,8 @@ function drawMenu() {
     for (const e of S.ents) if (sd(e.x, e.y)) { if (e.type === 'dia') { ctx.fillStyle = '#7df3ff'; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } else if (e.type === 'key') { ctx.fillStyle = ['#e0a060', '#dfe6ff', '#ffd24a'][e.k]; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } }
     if (Math.floor(t * 3) % 2) { ctx.fillStyle = '#ff3b5c'; ctx.fillRect(mx + P.x / T * sc - 3, my + P.y / T * sc - 3, 7, 7); }
     txt('◆ diamante   ● llave   ■ tú (parpadea)   Explora para descubrir el mapa', (W / 2), my + mh + 12, { size: 13, align: 'center', color: '#bcd', outline: false });
+  } else if (MENU.page === 'shop') {
+    txt('Tus monedas: 🪙 ' + S.coins + '   ·   Restauración de Diamantia: ' + S.restored + '/7', W / 2, py + 72, { size: 17, align: 'center', color: '#ffe14a', outline: false });
   } else if (MENU.page === 'inv') {
     const sel = Math.min(MENU.idx, 2), w = WEAPONS[P.equip[sel]], dmg = Math.round(w.dmg * P.dmgMul * 20), tx0 = W / 2;
     txt('Elige tus 3 armas: pulsa una ranura para cambiarla por otra que tengas', tx0, py + 70, { size: 15, align: 'center', color: '#bcd', outline: false });

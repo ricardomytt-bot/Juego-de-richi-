@@ -577,6 +577,7 @@ function drawHUD() {
       else if (!q.trainStarted) lines.push('MISIÓN', 'Ve a la estación del tren');
     }
     if (lines.length) { const y = S.keys && S.ents.some(e => e.type === 'key') ? 112 : 64; ctx.font = 'bold 17px "Courier New"'; const w = Math.max(...lines.map(s => ctx.measureText(s).width)) + 36; panel(12, y, w, 20 + lines.length * 24); lines.forEach((s, i) => txt(s, 30, y + 11 + i * 24, { size: i ? 15 : 17, color: i ? '#fff' : '#ffe14a', outline: false })); } }
+  panel(W / 2 + 36, 12, 118, 38); txt('🪙 ' + S.coins, W / 2 + 95, 20, { size: 20, align: 'center', color: '#ffe14a' });
   panel(W - 126, 12, 114, 46); ctx.drawImage(DIA, W - 118, 20, 36, 32);
   txt(S.dia + '/' + L.diaNeed, W - 72, 22, { size: 24, color: S.dia >= L.diaNeed ? '#7df3ff' : '#fff' });
   // minimapa
@@ -590,7 +591,7 @@ function drawHUD() {
   const b = S.boss;
   if (b && S.bossStarted && b.state !== 'saved' && !S.dialog) {
     const bw = 480, bx = (W - bw) / 2, by = 70;
-    txt(S.boss && S.boss.kind === 'acenix' ? 'ACENIX  (corrupto)' : 'TIMBA  (corrupto)', W / 2, by - 28, { size: 18, align: 'center', color: '#ffb0b0' });
+    txt(((S.boss && BOSS_DATA[S.boss.kind] && BOSS_DATA[S.boss.kind].foe) || 'JEFE').toUpperCase() + (S.boss && S.boss.kind === 'exe' ? '' : '  (corrupto)'), W / 2, by - 28, { size: 18, align: 'center', color: '#ffb0b0' });
     ctx.fillStyle = '#1a1020'; ctx.fillRect(bx - 5, by - 5, bw + 10, 26); ctx.fillStyle = '#4a1020'; ctx.fillRect(bx, by, bw, 16);
     ctx.fillStyle = b.state === 'sleep' ? '#6ac8ff' : '#ff3b5c'; ctx.fillRect(bx, by, bw * b.hp / b.max, 16); ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(bx, by, bw * b.hp / b.max, 5);
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(bx - 4, by - 4, bw + 8, 24);

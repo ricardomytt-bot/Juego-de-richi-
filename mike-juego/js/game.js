@@ -18,10 +18,10 @@ const S = {
   fade: 0, fadeAnim: null, shake: 0, hitstop: 0, cam: { x: 0, y: 0 }, boss: null, bossLock: false,
   bossStarted: false, gateOpen: false, gotLetter: false, checkpoint: [0, 0], hint: '', hintT: 0, willy: null,
   leaving: false, nearNpc: null, bossDefeated: false, stepT: 0, keys: [0, 0, 0],
-  q: { gotLetters: false, delivered: {}, count: 0, total: 7, done: false, trainStarted: false }, fav: {}, flags: {}, wave: null, camShot: null, shots: []
+  q: { gotLetters: false, delivered: {}, count: 0, total: 7, done: false, trainStarted: false }, fav: {}, flags: {}, wave: null, camShot: null, shots: [], coins: 0, maps: {}, restored: 0, cpZone: 0
 };
 const P = {
-  x: 0, y: 0, hw: 10, hh: 12, vx: 0, vy: 0, dx: 0, dy: 1, face: 1, hp: 100, maxHp: 100, inv: 0, sel: 0, owned: ['dagger', 'hammer', 'bow'], equip: ['dagger', 'hammer', 'bow'], chocoCd: 0, dmgMul: 1, special: false, kills: 0, pend: 0, atkMax: .26,
+  x: 0, y: 0, hw: 10, hh: 12, vx: 0, vy: 0, dx: 0, dy: 1, face: 1, hp: 100, maxHp: 100, inv: 0, sel: 0, chocoHeal: .7, defMul: 1, speedMul: 1, up: { choco: 0, boots: 0, sharp: 0, scarf: 0, fast: 0 }, owned: ['dagger', 'hammer', 'bow'], equip: ['dagger', 'hammer', 'bow'], chocoCd: 0, dmgMul: 1, special: false, kills: 0, pend: 0, atkMax: .26,
   atk: 0, atkCd: 0, adx: 0, ady: 1, hitSet: new Set(), anim: 0, moving: false, dead: false, hitWall: false
 };
 const WEAPONS = {
@@ -32,12 +32,16 @@ const WEAPONS = {
   axe: { id: 'axe', name: 'Hacha', icon: '🪓', type: 'PESADA', dmg: 4.5, cd: 1.35, anim: .6, wind: .34, reach: 44, R: 72, heavy: true },
   crossbow: { id: 'crossbow', name: 'Ballesta', icon: '🎯', type: 'LARGA', dmg: 2.6, cd: 1.0, anim: .3, wind: .1, ranged: true, speed: 700, life: 1.2 },
   fire: { id: 'fire', name: 'Bastón de Fuego', icon: '🔥', type: 'ESPECIAL', dmg: .9, cd: .8, anim: .3, wind: .1, ranged: true, spread: 5, pierce: true, speed: 420, life: .9 },
+  katana: { id: 'katana', name: 'Katana', icon: '⚔️', type: 'CORTA', dmg: .9, cd: .22, anim: .15, wind: .04, reach: 34, R: 42 },
+  boom: { id: 'boom', name: 'Búmeran', icon: '🪃', type: 'LARGA', dmg: 1.3, cd: .65, anim: .25, wind: .08, ranged: true, pierce: true, speed: 520, life: .9 },
+  club: { id: 'club', name: 'Bate Gigante', icon: '🏏', type: 'PESADA', dmg: 3.6, cd: 1.1, anim: .5, wind: .26, reach: 46, R: 66, heavy: true },
   star: { id: 'star', name: 'Cetro Estelar', icon: '✨', type: 'ESPECIAL', dmg: 1.3, cd: .6, anim: .3, wind: .08, ranged: true, spread: 3, pierce: true, speed: 470, life: 1.3 }
 };
 const WSLOTS = () => P.equip;
 function grantWeapon(id) {
+  if (String(id).startsWith('coins:')) { const n = +id.slice(6); S.coins += n; sfx.dia(); floater(P.x - 50, P.y - 90, '+' + n + ' monedas', '#ffe14a'); return; }
   const w = WEAPONS[id]; if (!w) return;
-  if (P.owned.includes(id)) { floater(P.x - 50, P.y - 90, 'Ya tienes ' + w.name, '#fff'); return; }
+  if (P.owned.includes(id)) { S.coins += 25; floater(P.x - 50, P.y - 90, 'Ya tienes ' + w.name + ': +25 monedas', '#fff'); return; }
   P.owned.push(id); sfx.key(); S.shake = .12; spawnP(P.x, P.y - 30, 30, '#ffe14a', 280, 1); floater(P.x - 70, P.y - 90, '¡ARMA NUEVA: ' + w.icon + ' ' + w.name + '!', '#ffe14a');
   showHint('¡Conseguiste ' + w.name + '! Equípala en el INVENTARIO (tecla I o menú ☰)', 6);
 }
@@ -48,7 +52,7 @@ function selectW(i) { if (i < 0 || i >= WSLOTS().length || i === P.sel) return; 
 function useChoco() {
   if (P.chocoCd > 0 || P.dead || S.busy) return;
   if (P.hp >= P.maxHp) { floater(P.x - 40, P.y - 70, '¡Vida llena!', '#fff'); return; }
-  P.hp = P.maxHp; P.chocoCd = CHOCO_CD; sfx.heal(); spawnP(P.x, P.y - 30, 26, '#8a4a22', 200, 1); spawnP(P.x, P.y - 30, 14, '#ffd24a', 160, 1); floater(P.x - 50, P.y - 70, '¡Chocolate! 100%', '#ffb070');
+  P.hp = Math.min(P.maxHp, P.hp + P.chocoHeal * P.maxHp); P.chocoCd = CHOCO_CD; sfx.heal(); spawnP(P.x, P.y - 30, 26, '#8a4a22', 200, 1); spawnP(P.x, P.y - 30, 14, '#ffd24a', 160, 1); floater(P.x - 50, P.y - 70, '¡Chocolate! +' + Math.round(P.chocoHeal * 100) + '%', '#ffb070');
 }
 const pbody = () => ({ x: P.x, y: P.y - 22 });
 
@@ -165,7 +169,8 @@ function spawnEnts(L) {
       case 'dia': S.ents.push({ type: 'dia', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'key': S.ents.push({ type: 'key', k: d.k, x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'heart': S.ents.push({ type: 'heart', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
-      case 'npc': S.ents.push({ type: 'npc', id: d.id, x: cx, y: fy, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, corrupt: false }); break;
+      case 'npc': S.ents.push({ type: 'npc', id: d.id, x: cx, y: fy, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, corrupt: false, owner: d.owner, shop: d.shop, hideUntil: d.hideUntil, hideAfter: d.hideAfter }); break;
+      case 'bonfire': S.ents.push({ type: 'bonfire', x: cx, y: fy, t: rnd(0, 6) }); break;
       case 'citizen': S.ents.push({ type: 'citizen', id: 'citizen' + d.seed, seed: d.seed, x: cx, y: fy, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, wt: rnd(0, 3), hx: cx, hy: fy }); break;
       case 'dummy': S.ents.push({ type: 'dummy', x: cx, y: fy, hw: 10, hh: 10, bh: 24, rad: 20, hit: 0 }); break;
     }
@@ -174,7 +179,7 @@ function spawnEnts(L) {
 const ebody = e => ({ x: e.x, y: e.y - (e.bh || 20) });
 function hurtPlayer(n, fx, fy) {
   if (P.inv > 0 || P.dead || S.busy) return;
-  P.hp -= n * 14; P.inv = 1.15;
+  P.hp -= n * 14 * P.defMul; P.inv = 1.15;
   const a = Math.atan2(P.y - fy, P.x - fx); P.vx = Math.cos(a) * 300; P.vy = Math.sin(a) * 300;
   S.shake = .25; S.hitstop = .07; sfx.hurt();
   spawnP(P.x, P.y - 20, 12, '#ff4a5a', 220);
@@ -192,11 +197,13 @@ function hitEnt(e, dmg = 1) {
   if (e.hp <= 0) {
     e.dead = true; spawnP(c.x, c.y, 20, '#fff', 260); sfx.poof();
     if (Math.random() < .28) S.ents.push({ type: 'heart', x: e.x, y: e.y - 10, t: 0 });
+    if (Math.random() < .5 || e.mini) S.ents.push({ type: 'coin', x: e.x, y: e.y - 6, v: e.mini ? 15 : 1 + Math.floor(rnd(0, 3)), t: 0 });
     P.kills++; if (!P.owned.includes('star') && P.kills >= 10) grantWeapon('star'); if (e.drop) grantWeapon(e.drop);
   }
 }
 function updateEnt(e, dt) {
   const L = S.lvl, pb = pbody();
+  if (e.type === 'npc' && !S.busy) { if (e.owner) e.hidden = !!(S.flags.trainDone && !S.flags['back_' + e.owner]); else if (e.hideUntil || e.hideAfter) e.hidden = !!((e.hideUntil && !S.flags[e.hideUntil]) || (e.hideAfter && S.flags[e.hideAfter])); }
   if (e.flash > 0) e.flash -= dt;
   if (e.type === 'slime') {
     e.hop -= dt;
@@ -243,6 +250,15 @@ function updateEnt(e, dt) {
     if (dist(e.x, e.y, pb.x, pb.y) < 30) {
       e.dead = true; S.keys[e.k]++; sfx.key(); S.shake = .08; spawnP(e.x, e.y, 22, ['#e0a060', '#dfe6ff', '#ffe14a'][e.k], 280, .8);
       floater(e.x - 60, e.y - 40, '¡Llave de ' + KEYNAMES[e.k] + '!', ['#ffc080', '#dfe6ff', '#ffe14a'][e.k]); showHint('Conseguiste la llave de ' + KEYNAMES[e.k] + '. Busca su puerta.', 3.5);
+    }
+  } else if (e.type === 'coin') {
+    e.t += dt; const dd = dist(e.x, e.y, P.x, P.y - 10); if (dd < 90 && e.t > .35) { const a = Math.atan2(P.y - 10 - e.y, P.x - e.x); e.x += Math.cos(a) * 260 * dt; e.y += Math.sin(a) * 260 * dt; }
+    if (dd < 24 && e.t > .2) { e.dead = true; S.coins += e.v; sfx.pop(); floater(e.x - 10, e.y - 30, '+' + e.v, '#ffe14a'); }
+  } else if (e.type === 'bonfire') {
+    e.t += dt; e.near = !S.busy && dist(e.x, e.y, P.x, P.y) < 70;
+    if (e.near && wasPressed(K.act) && !S.dialog) {
+      P.hp = P.maxHp; P.chocoCd = 0; S.checkpoint = [e.x, e.y + 36]; S.cpZone = S.lvlId; sfx.heal(); spawnP(e.x, e.y - 20, 30, '#ffb04a', 220, 1.1); floater(e.x - 70, e.y - 90, '¡Descansas junto a la fogata!', '#ffb04a');
+      showHint('Punto de control guardado · vida y chocolate restaurados', 3); if (typeof saveGame === 'function') saveGame(true);
     }
   } else if (e.type === 'chest') {
     e.t += dt; if (!e.opened && dist(e.x, e.y, P.x, P.y) < 34) { e.opened = true; e.t = 0; spawnP(e.x, e.y - 20, 24, '#ffe14a', 260, 1); grantWeapon(e.w); }
@@ -317,7 +333,7 @@ function updatePlayer(dt) {
   const [ix, iy] = getMove(), il = Math.hypot(ix, iy);
   p.moving = il > 0.05 || !!p.forceMove;
   if (p.moving && p.atk <= 0) { const nx = ix / il, ny = iy / il; p.dx = nx; p.dy = ny; if (Math.abs(nx) > .3) p.face = sign(nx); }
-  const sp = (p.atk > .12 ? SPEED * .6 : SPEED) * (S.lvlId >= 10 ? .55 : 1), acc = 5200 * dt;
+  const sp = (p.atk > .12 ? SPEED * .6 : SPEED) * (S.lvlId >= 10 ? .55 : 1) * P.speedMul, acc = 5200 * dt;
   p.vx = approach(p.vx, ix * sp, acc); p.vy = approach(p.vy, iy * sp, acc);
   if (wasPressed(K.atk) && p.atkCd <= 0) {
     const w = curW(); p.atk = p.atkMax = w.anim; p.atkCd = w.cd; p.hitSet = new Set(); p.pend = w.wind; p.wcur = w; sfx.swing();
@@ -339,8 +355,9 @@ async function killPlayer() {
   if (P.dead) return; P.dead = true; S.deaths++; S.busy = true;
   spawnP(P.x, P.y - 24, 28, '#ffe14a', 300, 1);
   await wait(.9); await fadeTo(1, .45);
-  respawn();
-  await fadeTo(0, .45); S.busy = false;
+  if (S.cpZone != null && S.cpZone !== S.lvlId && typeof enterZone === 'function') { P.hp = P.maxHp; P.dead = false; P.chocoCd = 0; zoning = false; await enterZone(S.cpZone, [Math.floor(S.checkpoint[0] / T), Math.floor(S.checkpoint[1] / T)]); P.hp = P.maxHp; }
+  else { respawn(); await fadeTo(0, .45); }
+  S.busy = false;
   showHint('¡Aquela te dio ánimos! ¡Otra vez!', 2.5);
 }
 function respawn() {
@@ -374,8 +391,8 @@ function updateWilly(dt) {
 function makeBoss() {
   const A = S.lvl.arena;
   return {
-    x: A.spawn[0], y: A.spawn[1], hw: 26, hh: 18, vx: 0, vy: 0, hp: BOSS_HP, max: BOSS_HP, state: 'idle', t: 0,
-    kind: S.lvlId === 2 ? 'acenix' : 'timba', face: -1, flash: 0, phase: 1, count: 0, anim: 0, dead: false, fired: false, rain: 0, zzz: 0, lift: 0, ox: 0, oy: 0, tx: 0, ty: 0, hitWall: false
+    x: A.spawn[0], y: A.spawn[1], hw: 26, hh: 18, vx: 0, vy: 0, hp: BOSS_HP * (BOSS_MUL[LEVEL_BOSS[S.lvlId]] || [1])[0], max: BOSS_HP * (BOSS_MUL[LEVEL_BOSS[S.lvlId]] || [1])[0], state: 'idle', t: 0,
+    kind: LEVEL_BOSS[S.lvlId] || 'timba', spdMul: 1, face: -1, flash: 0, phase: 1, count: 0, anim: 0, dead: false, fired: false, rain: 0, zzz: 0, lift: 0, ox: 0, oy: 0, tx: 0, ty: 0, hitWall: false
   };
 }
 function hitBoss(dm = 1) {
@@ -390,11 +407,14 @@ function hitBoss(dm = 1) {
     floater(b.x - 80, b.y - 130, '¡YA NO TENGO SUEÑO!', '#ff4a5a'); S.shake = .3;
   }
 }
-const bt = (a, c) => (S.boss && S.boss.kind === 'acenix') ? c : a;
+const LEVEL_BOSS = [null, 'timba', 'acenix', 'rius', 'mayo', 'esparta', 'raptor', 'invictor', 'exe'];
+const BOSS_MUL = { timba: [1, 1], acenix: [1.1, 1.04], rius: [1.25, 1.08], mayo: [1.4, 1.12], esparta: [1.55, 1.16], raptor: [1.75, 1.22], invictor: [1.95, 1.28], exe: [2.8, 1.36] };
+const ATK_TXT = { timba: { sleep: '¡Me dio sueñito...!', rain: '¡CONTANDO OVEJAS!', throw: '¡ALMOHADAZO!', slam: '¡Siesta-azo!', wake: '¡¿Qué?!' }, acenix: { sleep: '¡Me dio hambre...!', rain: '¡LLUVIA DE MUFFINS!', throw: '¡MUFFINAZO!', slam: '¡Miau-azo!', wake: '¡¿Dónde está mi muffin?!' }, rius: { sleep: '¡A picotear maíz!', rain: '¡LLUVIA DE HUEVOS!', throw: '¡HUEVAZO!', slam: '¡Picotazo!', wake: '¡Cocoricó!' }, mayo: { sleep: 'Recalentando... beep', rain: '¡LLUVIA DE PIZZAS!', throw: '¡PIZZAZO!', slam: '¡Horno!', wake: 'Beep.' }, esparta: { sleep: 'Zzz... un ratito', rain: '¡NIEVE ESTELAR!', throw: '¡Bola de nieve!', slam: '¡Nubarrón!', wake: '¿Eh?' }, raptor: { sleep: '¡Leyendo spoilers!', rain: '¡LLUVIA DE KUNAIS!', throw: '¡Shuriken!', slam: '¡Salto ninja!', wake: '¡Shhh!' }, invictor: { sleep: '¡Bailando!', rain: '¡LLUVIA DE LANZAS!', throw: '¡Jabalina!', slam: '¡Salto romano!', wake: '¡Jajaja!' }, exe: { sleep: 'Reiniciando...', rain: '¡LLUVIA DE GLITCHES!', throw: '¡Bola de código!', slam: '¡ERROR CRÍTICO!', wake: 'SIGUE.EXE' } };
+const bT = k => (ATK_TXT[(S.boss && S.boss.kind) || 'timba'] || ATK_TXT.timba)[k];
 function defeatBoss() {
   const b = S.boss; b.state = 'saved'; b.vx = b.vy = 0; b.lift = 0; b.flash = 0; S.proj = []; S.warns = []; S.bossDefeated = true; (S.defeated = S.defeated || {})[S.lvlId] = true;
   S.shake = .4; sfx.boss(); spawnP(b.x, b.y - 50, 36, '#ff4a5a', 340, 1);
-  if (b.kind === 'acenix') csAcenixSaved(); else csTimbaSaved();
+  csBossSaved(b.kind);
 }
 function bossImpact(x, y, r) {
   sfx.slam(); S.shake = .35; spawnP(x, y, 22, '#d0c0ff', 300);
@@ -405,7 +425,7 @@ function updateBoss(dt) {
   const b = S.boss; if (!b || b.dead) return;
   const L = S.lvl, A = L.arena;
   b.anim += dt; b.flash = Math.max(0, b.flash - dt);
-  const dx = P.x - b.x, dy = P.y - b.y, d = Math.hypot(dx, dy) || 1, spd = b.phase === 2 ? 150 : 108;
+  const dx = P.x - b.x, dy = P.y - b.y, d = Math.hypot(dx, dy) || 1, spd = (b.phase === 2 ? 150 : 108) * (BOSS_MUL[b.kind] || [1, 1])[1];
   switch (b.state) {
     case 'idle': case 'saved': b.vx = b.vy = 0; break;
     case 'walk':
@@ -413,14 +433,14 @@ function updateBoss(dt) {
       if (d > 80) { b.vx = dx / d * spd; b.vy = dy / d * spd; } else { b.vx = b.vy = 0; }
       if (b.t <= 0) {
         b.vx = b.vy = 0; b.count++;
-        if (b.count % 4 === 0) { b.state = 'sleep'; b.t = 2.8; floater(b.x - 60, b.y - 130, bt('¡Me dio sueñito...!', '¡Me dio hambre...!'), '#9ad0ff'); }
+        if (b.count % 4 === 0) { b.state = 'sleep'; b.t = 2.8; floater(b.x - 60, b.y - 130, bT('sleep'), '#9ad0ff'); }
         else {
           const r = Math.random();
-          if (b.phase === 2 && r < .3) { b.state = 'rain'; b.t = 4; b.rain = 0; floater(b.x - 70, b.y - 130, bt('¡CONTANDO OVEJAS!', '¡LLUVIA DE MUFFINS!'), '#fff'); }
-          else if (r < .6) { b.state = 'throw'; b.t = .75; b.fired = false; floater(b.x - 50, b.y - 130, bt('¡ALMOHADAZO!', '¡MUFFINAZO!'), '#fff'); }
+          if (b.phase === 2 && r < .3) { b.state = 'rain'; b.t = 4; b.rain = 0; floater(b.x - 70, b.y - 130, bT('rain'), '#fff'); }
+          else if (r < .6) { b.state = 'throw'; b.t = .75; b.fired = false; floater(b.x - 50, b.y - 130, bT('throw'), '#fff'); }
           else {
             b.state = 'slam'; b.t = 1.1; b.ox = b.x; b.oy = b.y; b.tx = P.x; b.ty = P.y;
-            S.warns.push({ x: b.tx, y: b.ty, r: 70, t: 0, dur: 1.1, kind: 'slam' }); sfx.warn(); floater(b.x - 40, b.y - 130, bt('¡Siesta-azo!', '¡Miau-azo!'), '#fff');
+            S.warns.push({ x: b.tx, y: b.ty, r: 70, t: 0, dur: 1.1, kind: 'slam' }); sfx.warn(); floater(b.x - 40, b.y - 130, bT('slam'), '#fff');
           }
         }
       }
@@ -458,7 +478,7 @@ function updateBoss(dt) {
     case 'sleep':
       b.vx = b.vy = 0; b.t -= dt; b.zzz -= dt;
       if (b.zzz <= 0) { b.zzz = .6; floater(b.x + 20, b.y - 120, 'Z', '#9ad0ff'); }
-      if (b.t <= 0) { b.state = 'walk'; b.t = rnd(.8, 1.2); floater(b.x - 20, b.y - 130, bt('¡¿Qué?!', '¡¿Dónde está mi muffin?!'), '#fff'); }
+      if (b.t <= 0) { b.state = 'walk'; b.t = rnd(.8, 1.2); floater(b.x - 20, b.y - 130, bT('wake'), '#fff'); }
       break;
   }
   if (b.state !== 'slam') moveBody(L, b, dt);

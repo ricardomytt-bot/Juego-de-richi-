@@ -207,10 +207,11 @@ async function citizenTalk(e) {
 async function talkNpc(e) {
   S.busy = true; S.talking = true; S.skip = false; camTalk(e);
   try {
-    if (S.lvlId === 0 || S.lvlId >= 10) { if (e.type === 'citizen') await citizenTalk(e); else await (CITY[e.id] || (async () => { }))(e); }
+    if (e.shop) { await say('trolino', S.restored >= 7 ? '¡Mike! La tienda está a tope. ¡Todo con descuento de héroe!' : '¡Mike! Reabrí la tienda entre los escombros. Mapas, chocolate mejorado, botas... ¡lo que necesites! Eso sí: pago en monedas.'); setTimeout(() => openMenu('shop'), 50); }
+    else if (S.lvlId === 0 || S.lvlId >= 10) { if (e.type === 'citizen') await citizenTalk(e); else await (CITY[e.id] || (async () => { }))(e); }
     else if (e.id === 'aquela') {
       if (S.dia < 3) await say('aquela', 'La puerta del jefe necesita 3 diamantes. Hay puertas de colores y llaves escondidas en los laberintos. ¡Explora y mira el mapa en el menú!');
-      else await say('aquela', 'Ya tienes los 3 diamantes. Detrás de la puerta está ' + (S.lvlId === 2 ? 'Acenix. Recuerda: ¡cuando se pone a comer, golpéalo más fuerte!' : 'Timba. Recuerda: ¡cuando se duerme, golpéalo más fuerte!') + '');
+      else await say('aquela', 'Ya tienes los 3 diamantes. Detrás de la puerta está ' + ((BOSS_DATA[LEVEL_BOSS[S.lvlId]] || BOSS_DATA.timba).foe) + '. Recuerda: ' + (BOSS_DATA[LEVEL_BOSS[S.lvlId]] || BOSS_DATA.timba).tip);
     }
   } finally { camClear(); S.busy = false; S.talking = false; }
 }
@@ -357,62 +358,62 @@ async function goNext() {
 }
 
 // ---------- Jefe: Timba ----------
+const BOSS_DATA = {
+  timba: { who: 'timba', foe: 'Timba', intro: [['timba', '(roncando) Zzz... zzz... ¿Quién osa interrumpir mi siesta?'], ['mike', '¡Timba! ¡Soy yo, Mike! ¡Despierta! ¡Te entregué tu carta y todo!'], ['timba', 'Mike no existe: eres un sueño. Y yo soy el pesadillo. ¡Exe me prometió una cama más grande si te derroto!'], ['mike', '¡Pero si ya tienes una cama enorme!'], ['timba', '...Ah, es verdad. Bueno, igual me pagan en almohadas. ¡PREPÁRATE!']], tip: '¡cuando se duerma es tu oportunidad! ¡Golpéalo y le harás el doble de daño!', hint: '¡Esquiva los almohadazos! Si se duerme... ¡golpea fuerte!',
+    saved: [['timba', '(parpadea) ¿Eh? ¿Qué pasó? ¿Ya amaneció? ...¿Por qué hay tanta gente en mi cuarto?'], ['mike', '¡Timba! ¡Volviste! ¡Estabas bajo el control de Exe!'], ['timba', 'Solo recuerdo un sueño muy raro donde lanzaba almohadas... Gracias, Mike.'], ['aquela', 'Las estrellas oscuras te dominaron. Pero Mike restauró tu conciencia.'], ['timba', 'Toma: la Almohada de Estrella. Te hará más fuerte: ¡+25% de daño! Yo vuelvo a mi casa a dormir... y a ayudar a reconstruir Diamantia.']], reward: () => { P.dmgMul += .25; return 'ALMOHADA DE ESTRELLA  +25% de daño'; } },
+  acenix: { who: 'acenix', foe: 'Acenix', intro: [['acenix', 'Miau... Miau... ¿Quién pisa mi cocina? ¡Aquí solo entran clientes con hambre!'], ['mike', '¡Acenix! ¡Soy yo, Mike! ¡Te llevé tu carta!'], ['acenix', 'Los clientes no hablan. Los clientes COMEN. ¡Exe me prometió pasteles infinitos si te derroto!'], ['mike', '¡Acenix, tú ya tienes pasteles infinitos!'], ['acenix', '...Ah. Es verdad. Bueno, igual me da hambre. ¡MIAU!']], tip: '¡cuando se pone a comer, aprovecha! ¡Le harás el doble de daño!', hint: '¡Esquiva los muffins! Si se pone a comer... ¡golpea fuerte!',
+    saved: [['acenix', '(parpadea) Miau... ¿Qué pasó? ...¿Por qué hay muffins por todo el suelo?'], ['mike', '¡Acenix! ¡Volviste!'], ['acenix', 'Solo recuerdo que tenía MUCHA hambre... y que alguien me pidió una carta. Gracias, Mike.'], ['acenix', 'Toma: el Muffin Dorado. Recarga tu chocolate más rápido: ¡cada 20 segundos! Miau.']], reward: () => { CHOCO_CD = 20; return 'MUFFIN DORADO  chocolate cada 20 s'; } },
+  rius: { who: 'rius', foe: 'Rius', intro: [['rius', '¡COCORICÓ! ¡Este es MI gallinero! ¡Nadie pasa sin pagar con maíz!'], ['mike', '¡Rius! ¡Soy yo, Mike! ¡Tu amigo del chiste del banco!'], ['rius', 'Exe me prometió un huevo de oro... ¡y los huevos de oro no se comparten! ¡Cocoricó!']], tip: '¡cuando se pone a picotear maíz, golpéalo: recibe el doble!', hint: '¡Esquiva los huevazos! Cuando picotea, ¡ataca!',
+    saved: [['rius', '(sacude las plumas) ¿Cocoricó? ¿Qué pasó? ...Tengo plumas por todos lados.'], ['mike', '¡Rius! ¡Ya estás bien!'], ['rius', 'Perdóname, Mike. Toma mi Termo Caliente: el chocolate te curará 10% más. ¡Cocoricó!']], reward: () => { P.chocoHeal = Math.min(1, P.chocoHeal + .1); return 'TERMO CALIENTE  el chocolate cura +10%'; } },
+  mayo: { who: 'mayo', foe: 'Mayo', intro: [['mayo', 'Beep. Intruso detectado. Iniciando protocolo de pizza.'], ['mike', '¡Mayo! ¡Soy yo, Mike! ¡Tu cliente favorito!'], ['mayo', 'Cliente no encontrado. Solo hay presas... digo, pedidos. Beep boop.']], tip: '¡cuando se recalienta, es tu momento: daño doble!', hint: '¡Esquiva las pizzas! Cuando se recalienta, ¡ataca!',
+    saved: [['mayo', 'Beep... reinicio completo. ¿Por qué hay queso en mi circuito?'], ['mike', '¡Mayo! ¡Volviste!'], ['mayo', 'Gracias, Mike. Toma el Circuito Turbo: +12% de velocidad. Beep boop.']], reward: () => { P.speedMul += .12; return 'CIRCUITO TURBO  +12% de velocidad'; } },
+  esparta: { who: 'esparta', foe: 'Esparta', intro: [['esparta', 'Mmm... el juego ha cambiado, Mike. Ahora se juega... en serio.'], ['mike', '¡Esparta! ¡Tú no eres así!'], ['esparta', 'Exe dice que perder es feo. Pero yo odio perder con calma... así que mejor gano.']], tip: '¡cuando se duerme un ratito, aprovecha!', hint: '¡Esquiva la nieve estelar! Si se duerme, ¡ataca!',
+    saved: [['esparta', 'Oh... qué siesta tan rara. ¿Ya no hay nieve roja?'], ['mike', '¡Esparta! ¡Eres tú otra vez!'], ['esparta', 'Gracias, Mike. Toma mi Bufanda de Nubes: recibirás 15% menos daño. Con calma, siempre con calma.']], reward: () => { P.defMul *= .85; return 'BUFANDA DE NUBES  recibes 15% menos daño'; } },
+  raptor: { who: 'raptor', foe: 'Raptor', intro: [['raptor', 'Shhh... este es el capítulo final de mi manga: tú pierdes.'], ['mike', '¡Raptor! ¡Soy yo, Mike!'], ['raptor', 'Los protagonistas siempre dudan antes del final. ¡Yo no! ¡Dattebayo!']], tip: '¡cuando se pone a leer spoilers, golpéalo: daño doble!', hint: '¡Esquiva los shuriken! Cuando lee spoilers, ¡ataca!',
+    saved: [['raptor', 'No me hagas spoilers de mi propia derrota... ¿Qué pasó?'], ['mike', '¡Raptor! ¡Ya estás bien!'], ['raptor', 'Gracias, Mike. Toma mi Máscara Ninja: +15% de daño. ¡Y no cuentes el final!']], reward: () => { P.dmgMul += .15; return 'MÁSCARA NINJA  +15% de daño'; } },
+  invictor: { who: 'invictor', foe: 'Invictor', intro: [['invictor', '¡HOLA HOLA! ¡Mike! ¡Jajaja! ...Perdón, es que Exe dijo que debo ganar. ¡Es un juego, ¿no?!'], ['mike', '¡Invictor, no es un juego!'], ['invictor', '¡Todo es un juego si lo juegas feliz! ¡Jajaja! ¡Prepárate!']], tip: '¡cuando se pone a bailar, golpéalo: daño doble!', hint: '¡Esquiva las jabalinas! Cuando baila, ¡ataca!',
+    saved: [['invictor', '¡Jajaja! ¡Qué sueño más raro! ¡Me caí de la cama romana!'], ['mike', '¡Invictor! ¡Volviste!'], ['invictor', '¡Gracias, Mike! Toma mi Casco Romano: recibirás 15% menos daño. ¡Jajaja!']], reward: () => { P.defMul *= .85; return 'CASCO ROMANO  recibes 15% menos daño'; } },
+  exe: { who: 'exe', foe: 'Mike Maligno', intro: [['exe', 'Llegaste. Qué lindo. Yo soy tú, Mike: tu lado sin diversión, sin amigos... y sin chocolate.'], ['mike', '¡Exe! ¡Tú eres Minecraft.exe: el Mike Maligno que se llevó a mis amigos!'], ['exe', 'Me llevé lo que ellos querían dar. Y ahora me llevaré tu final. ¡MUAJAJAJÁ!'], ['aquela', 'Mike, es el último guardián. ¡Todo lo que aprendiste, úsalo ahora!']], tip: 'tiene tres fases y se recarga rápido. ¡Aprovecha cada pausa!', hint: '¡MIKE MALIGNO! Esquiva todo y ataca en sus pausas.', saved: [] }
+};
 async function startBoss() {
-  S.bossStarted = true; S.busy = true; S.skip = false;
+  S.bossStarted = true; S.busy = true; S.skip = false; S.cineAuto = false;
   const L = S.lvl; for (const [gx, gy] of L.gate.tiles) L.set(gx, gy, 'G'); sfx.door(); S.shake = .3;
-  S.bossLock = true; S.checkpoint = [L.arena.enter[0], L.arena.enter[1]];
+  S.bossLock = true; S.checkpoint = [L.arena.enter[0], L.arena.enter[1]]; S.cpZone = S.lvlId;
   S.boss = makeBoss(); S.boss.state = 'idle'; setMusic('dark');
   if (S.willy) { const fs = freeSpot(L, P.x - 50, P.y + 10, 9, 8); S.willy.x = fs[0]; S.willy.y = fs[1]; S.willy.vx = S.willy.vy = 0; }
   await wait(.6);
-  if (S.lvlId === 2) {
-    await say('acenix', 'Miau... Miau... ¿Quién pisa mi cocina? ¡Aquí solo entran clientes con hambre!', { red: true });
-    await M('¡Acenix! ¡Soy yo, Mike! ¡Te llevé tu carta!');
-    await say('acenix', 'Los clientes no hablan. Los clientes COMEN. ¡Exe me prometió pasteles infinitos si te derroto!', { red: true });
-    await M('¡Acenix, tú ya tienes pasteles infinitos!');
-    await say('acenix', '...Ah. Es verdad. Bueno, igual me da hambre. ¡MIAU!', { red: true });
-    await say('aquela', 'Mike, ¡cuando se pone a comer, aprovecha! ¡Le harás el doble de daño!');
-    S.boss.state = 'walk'; S.boss.t = 1.4; setMusic('boss'); showHint('¡Esquiva los muffins! Si se pone a comer... ¡golpea fuerte!', 4); S.busy = false; return;
-  }
-  await say('timba', '(roncando) Zzz... zzz... ¿Quién osa interrumpir mi siesta?', { red: true });
-  await M('¡Timba! ¡Soy yo, Mike! ¡Despierta! ¡Te entregué tu carta y todo!');
-  await say('timba', 'Mike no existe: eres un sueño. Y yo soy el pesadillo. ¡Exe me prometió una cama más grande si te derroto!', { red: true });
-  await M('¡Pero si ya tienes una cama enorme!');
-  await say('timba', '...Ah, es verdad. Bueno, igual me pagan en almohadas. ¡PREPÁRATE!', { red: true });
-  await say('aquela', 'Mike, ¡cuando se duerma es tu oportunidad! ¡Golpéalo y le harás el doble de daño!');
-  S.boss.state = 'walk'; S.boss.t = 1.4; setMusic('boss');
-  showHint('¡Esquiva los almohadazos! Si se duerme... ¡golpea fuerte!', 4);
-  S.busy = false;
+  const D = BOSS_DATA[S.boss.kind] || BOSS_DATA.timba;
+  for (const [who, txt] of D.intro) await say(who, txt, who === D.who ? { red: true } : undefined);
+  await say('aquela', 'Mike, ' + D.tip);
+  S.boss.state = 'walk'; S.boss.t = 1.4; setMusic('boss'); showHint(D.hint, 4); S.busy = false;
 }
-async function csTimbaSaved() {
-  S.busy = true; S.skip = false; setMusic('story');
-  await wait(.9);
-  await say('timba', '(parpadea) ¿Eh? ¿Qué pasó? ¿Ya amaneció? ...¿Por qué hay tanta gente en mi cuarto?');
-  await M('¡Timba! ¡Volviste! ¡Estabas bajo el control de Exe!');
-  await say('timba', S.q.delivered.timba ? '¿Yo? Solo recuerdo un sueño muy raro donde lanzaba almohadas... y tu carta. Esa sí la recuerdo. Gracias, Mike.' : '¿Yo? Solo recuerdo un sueño muy raro donde lanzaba almohadas... y fue lo más divertido que hice en años.');
-  await say('aquela', 'Las estrellas oscuras te dominaron. Pero Mike restauró tu conciencia.');
-  await say('timba', 'Gracias, Mike. Toma: la Almohada de Estrella. Te hará más fuerte: ¡+25% de daño! Es lo único que tengo... aparte de sueño.');
-  P.dmgMul += .25; P.hp = P.maxHp; P.chocoCd = 0; sfx.win(); S.shake = .1;
-  spawnP(P.x, P.y - 30, 34, '#9ad0ff', 300, 1);
-  showHint('¡ALMOHADA DE ESTRELLA!  +25% de daño', 5);
-  await say('timba', 'Yo los ayudo desde tu casa, Mike. Pero antes... ¿alguien tiene un colchón?');
-  await M('¡Gracias, Timba! ¡Vamos por los demás!');
-  if (window.BOSS_ONLY || window.VALLE_ONLY) { await fadeTo(1, .8); await csEnding(); return; }
+async function csBossSaved(kind) {
+  const D = BOSS_DATA[kind] || BOSS_DATA.timba;
+  if (window.BOSS_ONLY || window.VALLE_ONLY) { S.busy = true; setMusic('story'); await wait(.9); for (const [who, txt] of D.saved) await say(who, txt); await fadeTo(1, .8); S.bossLock = false; await csEnding(); return; }
+  S.busy = true; S.skip = false; setMusic('story'); S.cineAuto = false; await wait(.9);
+  if (kind === 'exe') { await csFinal(); return; }
+  for (const [who, txt] of D.saved) await say(who, txt);
+  const rtxt = D.reward(); sfx.win(); S.shake = .1; P.hp = P.maxHp; spawnP(P.x, P.y - 30, 34, '#9ad0ff', 300, 1); showHint('¡' + rtxt + '!', 5);
+  S.restored++; S.flags['back_' + kind] = true; S.coins += 30;
   S.bossLock = false; { const L = S.lvl; for (const [gx, gy] of L.gate.tiles) L.set(gx, gy, 'a'); } sfx.portal(); S.shake = .2;
-  await say('aquela', 'Mira, Mike: el portal del fondo de la arena se abrió. Exe se llevó a los demás a Pastelandia, un reino de dulces. Acenix está ahí. ¡Prepárate!');
-  showHint('Portal a Pastelandia abierto (fondo de la arena)  ·  Puedes volver a la ciudad por el portal del sur', 7); S.busy = false;
+  await say('aquela', S.restored >= 7 ? 'Todos los guardianes están a salvo, y Diamantia está casi restaurada. Solo falta el portal final...' : 'Diamantia se restaura un poco: ' + D.foe + ' vuelve a su casa. Restauración: ' + S.restored + '/7. El portal del fondo de la arena se abrió.');
+  showHint('Restauración de Diamantia ' + S.restored + '/7  ·  +30 monedas  ·  portal abierto al fondo de la arena', 7); S.busy = false;
 }
-async function csAcenixSaved() {
-  S.busy = true; S.skip = false; setMusic('story');
-  await wait(.9);
-  await say('acenix', '(parpadea) Miau... ¿Qué pasó? ...¿Por qué hay muffins por todo el suelo?');
-  await M('¡Acenix! ¡Volviste! ¡Estabas bajo el control de Exe!');
-  await say('acenix', 'Solo recuerdo que tenía MUCHA hambre... y que alguien me pidió una carta. Gracias por la entrega, Mike.');
-  await say('aquela', 'Las estrellas oscuras te dominaron, pero Mike restauró tu conciencia.');
-  await say('acenix', 'Toma: el Muffin Dorado. Está tan bueno que te recarga el chocolate más rápido. ¡Cada 20 segundos! Miau.');
-  CHOCO_CD = 20; P.chocoCd = 0; P.hp = P.maxHp; sfx.win(); S.shake = .1; spawnP(P.x, P.y - 30, 34, '#ffd24a', 300, 1);
-  showHint('¡MUFFIN DORADO!  El chocolate se recarga cada 20 s', 5);
-  await say('acenix', 'Yo me quedo a hornear. ¡Vayan por los demás!');
-  S.bossLock = false; await fadeTo(1, .8); await csEnding();
+async function csFinal() {
+  await say('exe', '(se tambalea) No... no puede ser... tantas estrellas... tantos amigos...', { red: true });
+  await M('¡Mike! ¡Soy yo! ¡Sé que estás ahí, en algún lugar del código!');
+  await say('exe', '(la voz cambia, más suave) ...Mike. Gracias por no rendirte. Las estrellas oscuras... eran mis propias dudas.');
+  await say('aquela', 'Mike restauró a todos... incluso a Exe.');
+  await fadeTo(1, 1);
+  S.stage = newStage({ dark: false }); setMusic('title'); const C = {};
+  [['willy', 220, 1], ['mike', 330, 1], ['timba', 430, -1], ['acenix', 520, -1], ['rius', 610, -1], ['mayo', 700, -1]].forEach(([id, x, f]) => { C[id] = addChar(id, x, 344, { face: f, scale: 2 }); });
+  await fadeTo(0, 1);
+  await say('narr', 'Diamantia brilla otra vez. Las luces de Navidad iluminan cada ventana, y nadie volverá a viajar solo.');
+  await say('trolino', '¡Mike! ¡Todos están en el tren! ¡Y yo traje chocolate caliente!');
+  await M('¡Entonces ahora sí: a celebrar la Navidad todos juntos!');
+  await say('narr', 'FIN  ·  Gracias por jugar Mikecrack y las Estrellas Oscuras');
+  S.skip = false; S.stage.end = { dia: S.dia, time: S.playTime, deaths: S.deaths, ready: false };
+  sfx.win(); await wait(1); S.stage.end.ready = true; S.busy = false;
 }
 async function csEnding() {
   S.skip = false; S.busy = true;

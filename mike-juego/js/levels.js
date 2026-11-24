@@ -135,7 +135,8 @@ function level0() {
   for (const x of [30, 40, 54, 66, 82]) house(x, 70, hi++);
   // personajes en las puertas
   const npcAt = (id, p, extra) => L.ent('npc', p[0], p[1], Object.assign({ id }, extra || {}));
-  npcAt('trolino', [mike[0] + 2, mike[1] - 1]);
+  npcAt('trolino', [mike[0] + 2, mike[1] - 1], { hideAfter: 'trainDone' }); L.ent('npc', 44, 24, { id: 'trolino', shop: true, hideUntil: 'trainDone' });
+  for (const [bx, by] of [[50, 34], [9, 64], [96, 44], [68, 36], [100, 66]]) L.ent('bonfire', bx, by);
   npcAt('aquela', [mike[0] - 2, mike[1] - 1]);
   // ciudadanos que pasean
   const cit = [[30, 65], [44, 66], [70, 65], [95, 66], [20, 40], [56, 40], [45, 28], [57, 24], [26, 30], [78, 50], [50, 18], [100, 18], [66, 30], [41, 52], [60, 66], [36, 40]];
@@ -248,27 +249,39 @@ function buildValley(theme, so, SG, EX) {
   L.ent('npc', 61, 72, { id: 'aquela' });
   // ---- zonas opcionales: oleadas + parkour (norte), guarida del mini jefe (oeste) y cofre en el pantano
   R(52, 8, 86, 21, '.'); frame(52, 8, 86, 21); R(52, 22, 54, 27, ','); R(52, 28, 54, 29, '.');
-  L.trials = [{ x: 60, y: 14, r: 150, n: 7, reward: 'spear' }]; L.ent('heart', 56, 10); L.ent('heart', 66, 19);
+  L.trials = [{ x: 60, y: 14, r: 150, n: 7, reward: EX.rw.trial }]; L.ent('heart', 56, 10); L.ent('heart', 66, 19);
   R(70, 9, 85, 20, '~'); R(84, 12, 86, 17, '.');
   const path = [[70, 14], [71, 14], [72, 14], [73, 14], [73, 13], [74, 13], [75, 13], [75, 12], [76, 12], [77, 12], [77, 13], [78, 13], [78, 14], [79, 14], [80, 14], [80, 15], [81, 15], [82, 15], [83, 15]], stones = [];
   for (const [x, y] of path) for (const yy of [y, y + 1]) { L.set(x, yy, 'v'); stones.push([x, yy]); }
-  L.park = { start: [69, 14], tiles: stones }; L.ent('chest', 85, 14, { w: 'fire' });
+  L.park = { start: [69, 14], tiles: stones }; L.ent('chest', 85, 14, { w: EX.rw.park });
   L.scatter(52, 8, 69, 21, 'f', 40, 41 + so, [], '.');
   L.sign(58, 20, 'Cámara de las Oleadas: pisa el círculo, sobrevive y gana un cofre'); L.sign(68, 16, 'PARKOUR: las baldosas se rompen. ¡No te detengas!');
   R(29, 32, 42, 46, '.'); frame(29, 32, 42, 46); R(42, 38, 52, 39, ',');
-  L.ent('mini', 35, 39, { name: 'Rey Slime', drop: 'axe' }); L.sign(30, 34, 'Guarida del Rey Slime  (jefe opcional: suelta un arma)'); L.ent('heart', 31, 44);
-  { const cdd = C.dead[3] || C.dead[C.dead.length - 1]; if (cdd) { L.ent('chest', cdd.tx, cdd.ty, { w: 'crossbow' }); L.mustReach(cdd.tx, cdd.ty); } }
+  L.ent('mini', 35, 39, { name: EX.rw.miniName || 'Rey Slime', drop: EX.rw.mini }); L.sign(30, 34, 'Guarida del Rey Slime  (jefe opcional: suelta un arma)'); L.ent('heart', 31, 44);
+  { const cdd = C.dead[3] || C.dead[C.dead.length - 1]; if (cdd) { L.ent('chest', cdd.tx, cdd.ty, { w: EX.rw.chest }); L.mustReach(cdd.tx, cdd.ty); } }
   for (const [x, y] of [[53, 22], [53, 27], [53, 29], [69, 14], [85, 14], [60, 14], [35, 39], [44, 38], [31, 44]]) L.mustReach(x, y);
+  for (const [x, y] of [[64, 73], [27, 23], [58, 10], [52, 31]]) L.ent('bonfire', x, y);
   // portales entre zonas
   R(58, 79, 62, 81, ','); L.prop('portal', 60, 80, { solid: false, to: EX.back[0] }); L.exits = [{ x0: 58, y0: 80, x1: 62, y1: 81, to: EX.back[0], spawn: EX.back[1], lock: null }];
+  if (EX.home) { R(64, 79, 66, 81, ','); L.prop('portal', 65, 80, { solid: false, to: 0, home: true }); L.exits.push({ x0: 64, y0: 80, x1: 66, y1: 81, to: 0, spawn: [99, 45], lock: null }); for (let x = 64; x <= 66; x++) for (let y = 79; y <= 81; y++) L.mustReach(x, y); }
   if (EX.next) { L.prop('portal', 8, 21, { solid: false, lock: 'boss', to: EX.next[0] }); L.exits.push({ x0: 7, y0: 20, x1: 8, y1: 22, to: EX.next[0], spawn: EX.next[1], lock: 'boss', msg: 'El portal está dormido... derrota al jefe para abrirlo' }); }
   for (let x = 58; x <= 62; x++) for (let y = 79; y <= 81; y++) L.mustReach(x, y);
+  { const sn = L.reachFrom(L.start[0], L.start[1], true); for (const e of L.ents) if (e.type === 'heart' && !sn[e.ty * L.w + e.tx]) { let best = null, bd = 1e9; for (let dy = -9; dy <= 9; dy++) for (let dx = -9; dx <= 9; dx++) { const x = e.tx + dx, y = e.ty + dy; if (x > 0 && y > 0 && x < L.w && y < L.h && sn[y * L.w + x] && !SOLID.includes(L.get(x, y)) && dx * dx + dy * dy < bd) { bd = dx * dx + dy * dy; best = [x, y]; } } if (best) { e.tx = best[0]; e.ty = best[1]; } } }
   // cartelitos
   SG.forEach((t, i) => { const P_ = [[60, 76], [53, 68], [67, 68], [56, 57], [34, 23], [80, C.entrance.ey + 3], [28, 24], [45, 18]][i]; L.sign(P_[0], P_[1], t); });
   return L;
 }
-const level1 = () => buildValley('dream', 0, ['VALLE DEL SUEÑO  —  un mundo enorme: ¡explóralo!', '← Ruinas del oeste  (laberinto de piedra)', 'Cámara de oro  →  (necesita la llave de oro)', '↑ Puerta de bronce al Bosque de Almohadas', 'Un escondite de rocas... ¡algo brilla adentro!', 'Puerta de plata  →  Pantano de setos', 'El jefe espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves'], { back: [0, [99, 45]], next: [2, [61, 76]] });
-const level2 = () => buildValley('sweet', 100, ['PASTELANDIA  —  un reino de dulces: ¡explóralo!', '← Ruinas de galleta  (laberinto)', 'Cámara de caramelo  →  (necesita la llave de oro)', '↑ Puerta de bronce al Bosque de Algodón', 'Un cercado de rocas de azúcar... ¡algo brilla!', 'Puerta de plata  →  Pantano de chocolate', 'Acenix espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves'], { back: [1, [9, 21]], next: null });
+const ZDEF = [null,
+  { theme: 'dream', so: 0, name: 'VALLE DEL SUEÑO', boss: 'Timba', rw: { mini: 'axe', trial: 'spear', park: 'fire', chest: 'crossbow', miniName: 'Rey Slime' } },
+  { theme: 'sweet', so: 100, name: 'PASTELANDIA', boss: 'Acenix', rw: { mini: 'katana', trial: 'boom', park: 'club', chest: 'coins:40', miniName: 'Gelatina Real' } },
+  { theme: 'farm', so: 270, name: 'GRANJA DEL AMANECER', boss: 'Rius', rw: { mini: 'coins:35', trial: 'coins:30', park: 'coins:45', chest: 'coins:25', miniName: 'Espantapájaros' } },
+  { theme: 'factory', so: 300, name: 'FÁBRICA DE PIZZA', boss: 'Mayo', rw: { mini: 'coins:40', trial: 'coins:35', park: 'coins:50', chest: 'coins:30', miniName: 'Horno Gigante' } },
+  { theme: 'cloud', so: 400, name: 'JARDÍN DE NUBES', boss: 'Esparta', rw: { mini: 'coins:45', trial: 'coins:40', park: 'coins:55', chest: 'coins:35', miniName: 'Nubarrón' } },
+  { theme: 'neon', so: 500, name: 'CIUDAD NEÓN', boss: 'Raptor', rw: { mini: 'coins:50', trial: 'coins:45', park: 'coins:60', chest: 'coins:40', miniName: 'Robot Otaku' } },
+  { theme: 'colosseum', so: 600, name: 'COLISEO ROMANO', boss: 'Invictor', rw: { mini: 'coins:55', trial: 'coins:50', park: 'coins:65', chest: 'coins:45', miniName: 'Gladiador Slime' } },
+  { theme: 'void', so: 700, name: 'CÓDIGO CORRUPTO', boss: 'Mike Maligno', rw: { mini: 'coins:60', trial: 'coins:55', park: 'coins:70', chest: 'coins:50', miniName: 'Bug Gigante' } }];
+const zoneLevel = n => () => { const d = ZDEF[n]; return buildValley(d.theme, d.so, [d.name + '  —  ¡explora sus zonas!', '← Ruinas del oeste  (laberinto)', 'Cámara del tesoro  →  (necesita la llave de oro)', '↑ Puerta de bronce al claro del bosque', 'Un cercado de rocas... ¡algo brilla!', 'Puerta de plata  →  Pantano de setos', d.boss + ' espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves'], { back: [n - 1, n === 1 ? [99, 45] : [9, 21]], next: n < 8 ? [n + 1, [61, 76]] : null, home: n > 1, rw: d.rw }); };
+const level1 = zoneLevel(1), level2 = zoneLevel(2), level3 = zoneLevel(3), level4 = zoneLevel(4), level5 = zoneLevel(5), level6 = zoneLevel(6), level7 = zoneLevel(7), level8 = zoneLevel(8);
 // comprueba que el nivel se puede completar aunque las puertas empiecen cerradas
 function verifyLevel(L) {
   const have = [false, false, false], opened = {}, missing = [];
@@ -294,7 +307,7 @@ function verifyLevel(L) {
   if (L.gate) { const g = L.gate.tiles[0]; if (!seen[g[1] * L.w + g[0] - 1]) missing.push('puerta-jefe'); }
   return { ok: missing.length === 0, missing };
 }
-const LEVELS = [level0, level1, level2];
+const LEVELS = [level0, level1, level2, level3, level4, level5, level6, level7, level8];
 function interiorLevel(z) {
   if (!INTERIOR_INFO[z]) level0();
   const inf = INTERIOR_INFO[z], L = new Level(15, 10, 'indoor'); L.start = [7, 7];
@@ -307,7 +320,7 @@ function interiorLevel(z) {
   if (inf.id === 'restaurant') { L.prop('tableR', 4, 6, {}); L.prop('tableR', 7, 3, {}); }
   L.sign(7, 7, inf.label ? inf.label : 'Una casa acogedora');
   const owner = inf.id === 'house' ? null : inf.id;
-  if (owner && owner !== 'mike') L.ent('npc', 7, 5, { id: owner });
+  if (owner && owner !== 'mike') L.ent('npc', 7, 5, { id: owner, owner });
   if (inf.id === 'house') L.ent('citizen', 7, 5, { seed: (inf.seed % 6) + 1 });
   L.exits = [{ x0: 6, y0: 8, x1: 8, y1: 8, to: 0, spawn: inf.out, lock: null }];
   for (const [x, y] of [[7, 7], [7, 8]]) L.mustReach(x, y);
