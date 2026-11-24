@@ -21,16 +21,27 @@ const S = {
   q: { gotLetters: false, delivered: {}, count: 0, total: 7, done: false, trainStarted: false }, fav: {}, flags: {}, wave: null, camShot: null, shots: []
 };
 const P = {
-  x: 0, y: 0, hw: 10, hh: 12, vx: 0, vy: 0, dx: 0, dy: 1, face: 1, hp: 100, maxHp: 100, inv: 0, sel: 0, chocoCd: 0, dmgMul: 1, special: false, kills: 0, pend: 0, atkMax: .26,
+  x: 0, y: 0, hw: 10, hh: 12, vx: 0, vy: 0, dx: 0, dy: 1, face: 1, hp: 100, maxHp: 100, inv: 0, sel: 0, owned: ['dagger', 'hammer', 'bow'], equip: ['dagger', 'hammer', 'bow'], chocoCd: 0, dmgMul: 1, special: false, kills: 0, pend: 0, atkMax: .26,
   atk: 0, atkCd: 0, adx: 0, ady: 1, hitSet: new Set(), anim: 0, moving: false, dead: false, hitWall: false
 };
 const WEAPONS = {
   dagger: { id: 'dagger', name: 'Dagas', icon: '🗡️', type: 'CORTA', dmg: .5, cd: .17, anim: .17, wind: .05, reach: 30, R: 40 },
   hammer: { id: 'hammer', name: 'Martillo', icon: '🔨', type: 'PESADA', dmg: 3, cd: 1.0, anim: .55, wind: .3, reach: 42, R: 64, heavy: true },
   bow: { id: 'bow', name: 'Arco', icon: '🏹', type: 'LARGA', dmg: 1, cd: .5, anim: .25, wind: .08, ranged: true, speed: 560, life: 1.1 },
+  spear: { id: 'spear', name: 'Lanza', icon: '🔱', type: 'MEDIA', dmg: 1.1, cd: .42, anim: .22, wind: .07, reach: 58, R: 34 },
+  axe: { id: 'axe', name: 'Hacha', icon: '🪓', type: 'PESADA', dmg: 4.5, cd: 1.35, anim: .6, wind: .34, reach: 44, R: 72, heavy: true },
+  crossbow: { id: 'crossbow', name: 'Ballesta', icon: '🎯', type: 'LARGA', dmg: 2.6, cd: 1.0, anim: .3, wind: .1, ranged: true, speed: 700, life: 1.2 },
+  fire: { id: 'fire', name: 'Bastón de Fuego', icon: '🔥', type: 'ESPECIAL', dmg: .9, cd: .8, anim: .3, wind: .1, ranged: true, spread: 5, pierce: true, speed: 420, life: .9 },
   star: { id: 'star', name: 'Cetro Estelar', icon: '✨', type: 'ESPECIAL', dmg: 1.3, cd: .6, anim: .3, wind: .08, ranged: true, spread: 3, pierce: true, speed: 470, life: 1.3 }
 };
-const WSLOTS = () => P.special ? ['dagger', 'hammer', 'bow', 'star'] : ['dagger', 'hammer', 'bow'];
+const WSLOTS = () => P.equip;
+function grantWeapon(id) {
+  const w = WEAPONS[id]; if (!w) return;
+  if (P.owned.includes(id)) { floater(P.x - 50, P.y - 90, 'Ya tienes ' + w.name, '#fff'); return; }
+  P.owned.push(id); sfx.key(); S.shake = .12; spawnP(P.x, P.y - 30, 30, '#ffe14a', 280, 1); floater(P.x - 70, P.y - 90, '¡ARMA NUEVA: ' + w.icon + ' ' + w.name + '!', '#ffe14a');
+  showHint('¡Conseguiste ' + w.name + '! Equípala en el INVENTARIO (tecla I o menú ☰)', 6);
+}
+function cycleSlot(i) { const ids = P.owned.filter(id => !P.equip.includes(id) || id === P.equip[i]); const k = ids.indexOf(P.equip[i]); P.equip[i] = ids[(k + 1) % ids.length]; sfx.select(); }
 const curW = () => WEAPONS[WSLOTS()[Math.min(P.sel, WSLOTS().length - 1)]];
 let CHOCO_CD = 30;
 function selectW(i) { if (i < 0 || i >= WSLOTS().length || i === P.sel) return; P.sel = i; sfx.select(); floater(P.x - 30, P.y - 80, curW().icon + ' ' + curW().name, '#ffe14a'); }
@@ -149,6 +160,8 @@ function spawnEnts(L) {
     switch (d.type) {
       case 'slime': S.ents.push({ type: 'slime', x: cx, y: fy, hw: 11, hh: 9, bh: 14, rad: 18, vx: 0, vy: 0, hp: 2, hop: rnd(.2, 1), hopT: 0, flash: 0 }); break;
       case 'flyer': S.ents.push({ type: 'flyer', x: cx, y: fy, hw: 9, hh: 7, bh: 30, rad: 15, vx: 0, vy: 0, hp: 1, t: rnd(0, 6), flash: 0, hx: cx, hy: fy, z: 30 }); break;
+      case 'chest': S.ents.push({ type: 'chest', x: cx, y: fy, w: d.w, opened: false, t: 0 }); break;
+      case 'mini': S.ents.push({ type: 'slime', mini: true, corrupt: true, sc: 2.2, name: d.name, drop: d.drop, x: cx, y: fy, hw: 20, hh: 15, bh: 30, rad: 34, vx: 0, vy: 0, hp: 18, max: 18, hop: rnd(.2, 1), hopT: 0, flash: 0 }); break;
       case 'dia': S.ents.push({ type: 'dia', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'key': S.ents.push({ type: 'key', k: d.k, x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'heart': S.ents.push({ type: 'heart', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
@@ -179,7 +192,7 @@ function hitEnt(e, dmg = 1) {
   if (e.hp <= 0) {
     e.dead = true; spawnP(c.x, c.y, 20, '#fff', 260); sfx.poof();
     if (Math.random() < .28) S.ents.push({ type: 'heart', x: e.x, y: e.y - 10, t: 0 });
-    P.kills++; if (!P.special && P.kills >= 5) { P.special = true; sfx.key(); S.shake = .12; spawnP(P.x, P.y - 30, 30, '#ffe14a', 280, 1); floater(P.x - 70, P.y - 90, '¡ARMA ESPECIAL: Cetro Estelar!', '#ffe14a'); showHint('¡Nueva arma especial! Cámbiala con ARMA (tecla Q o 4)', 5); }
+    P.kills++; if (!P.owned.includes('star') && P.kills >= 10) grantWeapon('star'); if (e.drop) grantWeapon(e.drop);
   }
 }
 function updateEnt(e, dt) {
@@ -197,7 +210,7 @@ function updateEnt(e, dt) {
     const f = Math.exp(-dt * (e.hopT > 0 ? 1.5 : 9)); e.vx *= f; e.vy *= f; e.hopT -= dt;
     moveBody(L, e, dt);
     const c = ebody(e);
-    if (!e.dead && dist(c.x, c.y, pb.x, pb.y) < 26) hurtPlayer(1, e.x, e.y);
+    if (!e.dead && dist(c.x, c.y, pb.x, pb.y) < (e.mini ? 40 : 26)) hurtPlayer(e.mini ? 2 : 1, e.x, e.y);
   } else if (e.type === 'flyer') {
     e.t += dt;
     const near = dist(P.x, P.y, e.x, e.y) < 300;
@@ -231,6 +244,9 @@ function updateEnt(e, dt) {
       e.dead = true; S.keys[e.k]++; sfx.key(); S.shake = .08; spawnP(e.x, e.y, 22, ['#e0a060', '#dfe6ff', '#ffe14a'][e.k], 280, .8);
       floater(e.x - 60, e.y - 40, '¡Llave de ' + KEYNAMES[e.k] + '!', ['#ffc080', '#dfe6ff', '#ffe14a'][e.k]); showHint('Conseguiste la llave de ' + KEYNAMES[e.k] + '. Busca su puerta.', 3.5);
     }
+  } else if (e.type === 'chest') {
+    e.t += dt; if (!e.opened && dist(e.x, e.y, P.x, P.y) < 34) { e.opened = true; e.t = 0; spawnP(e.x, e.y - 20, 24, '#ffe14a', 260, 1); grantWeapon(e.w); }
+    if (e.opened && e.t > 3) e.dead = true;
   } else if (e.type === 'dia' || e.type === 'heart') {
     e.t += dt;
     if (dist(e.x, e.y, pb.x, pb.y) < 30) {
@@ -296,6 +312,7 @@ function updatePlayer(dt) {
   p.inv = Math.max(0, p.inv - dt); p.atkCd = Math.max(0, p.atkCd - dt); p.chocoCd = Math.max(0, p.chocoCd - dt);
   if (wasPressed('KeyQ')) { const n = WSLOTS().length; selectW((P.sel + 1) % n); } for (let i = 0; i < 4; i++) if (wasPressed('Digit' + (i + 1))) selectW(i);
   if (wasPressed('KeyR', 'KeyH')) useChoco();
+  if (wasPressed('KeyI') && !S.busy && !MENU.open) { openMenu('pause'); gotoPage('inv'); }
   p.anim += dt; p.lowT = (p.lowT || 0) - dt; if (p.hp < 25 && p.lowT <= 0) { p.lowT = 1.4; sfx.low(); }
   const [ix, iy] = getMove(), il = Math.hypot(ix, iy);
   p.moving = il > 0.05 || !!p.forceMove;
@@ -533,6 +550,28 @@ function startWave(n) {
   S.wave = { n, total, spawned: 0, t: .5, done: false };
   showHint('¡Oleada ' + n + ' de 3!  Defiéndete de los slimes corrompidos', 4); sfx.boss();
 }
+function updateTrials() {
+  const L = S.lvl; if (!L.trials) return;
+  for (const tr of L.trials) {
+    if (tr.done) continue; const cx = (tr.x + .5) * T, cy = (tr.y + .5) * T;
+    if (!tr.started) {
+      if (dist(P.x, P.y, cx, cy) < tr.r * .5) {
+        tr.started = true; tr.ents = []; showHint('¡OLEADA! Derrota a todos los enemigos para ganar el cofre', 4); sfx.boss(); S.shake = .3;
+        for (let i = 0; i < tr.n; i++) { const a = i / tr.n * 6.283, fs = freeSpot(L, cx + Math.cos(a) * tr.r * .8, cy + Math.sin(a) * tr.r * .8, 10, 9);
+          const e = i % 3 === 2 ? { type: 'flyer', x: fs[0], y: fs[1], hw: 9, hh: 7, bh: 30, rad: 15, vx: 0, vy: 0, hp: 1, t: rnd(0, 6), flash: 0, hx: fs[0], hy: fs[1], z: 30 } : { type: 'slime', corrupt: true, born: .4, x: fs[0], y: fs[1], hw: 11, hh: 9, bh: 14, rad: 18, vx: 0, vy: 0, hp: 2, hop: rnd(.2, 1), hopT: 0, flash: 0 };
+          S.ents.push(e); tr.ents.push(e); spawnP(fs[0], fs[1] - 10, 8, '#c26aff', 160, .6); }
+      }
+    } else if (tr.ents.every(e => e.dead)) { tr.done = true; S.ents.push({ type: 'chest', x: cx, y: cy, w: tr.reward, opened: false, t: 0 }); showHint('¡Oleada superada! Abre el cofre', 4); sfx.win(); }
+  }
+}
+function updateParkour(dt) {
+  const L = S.lvl; if (!L.park) return; const pk = L.park; pk.tm = pk.tm || {};
+  const tx = Math.floor(P.x / T), ty = Math.floor((P.y - 4) / T);
+  if (L.get(tx, ty) === 'v' && pk.tm[tx + ',' + ty] == null) pk.tm[tx + ',' + ty] = 0;
+  let fall = false;
+  for (const k in pk.tm) { pk.tm[k] += dt; if (pk.tm[k] > .9 && L.get(...k.split(',').map(Number)) === 'v') { const [x, y] = k.split(',').map(Number); L.set(x, y, '~'); spawnP((x + .5) * T, (y + .5) * T, 8, '#9ad0ff', 120, .5); sfx.pop(); if (x === tx && y === ty) fall = true; } }
+  if (fall && !P.dead) { P.hp -= 12; S.shake = .2; sfx.hurt(); floater(P.x - 30, P.y - 70, '¡Splash!', '#9ad0ff'); P.x = (pk.start[0] + .5) * T; P.y = (pk.start[1] + 1) * T - 8; P.vx = P.vy = 0; for (const [x, y] of pk.tiles) L.set(x, y, 'v'); pk.tm = {}; if (P.hp <= 0) killPlayer(); }
+}
 function updateWave(dt) {
   const w = S.wave; if (!w || w.done || S.busy || S.dialog) return;
   const L = S.lvl, doors = L.trainDoors;
@@ -585,7 +624,7 @@ function update(dt) {
   updateWilly(dt);
   for (const e of S.ents) updateEnt(e, dt);
   S.ents = S.ents.filter(e => !e.dead);
-  updateBoss(dt); updateProj(dt); updateShots(dt); updateWave(dt); updateFx(dt);
+  updateBoss(dt); updateProj(dt); updateShots(dt); updateWave(dt); updateTrials(); updateParkour(dt); updateFx(dt);
   S.nearNpc = nearestNpc();
   if (S.nearNpc && wasPressed(K.talk)) talkNpc(S.nearNpc);
   checkTriggers();

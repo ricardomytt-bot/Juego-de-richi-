@@ -50,10 +50,10 @@ function saveGame(silent) {
   try {
     stashZone(); const zs = {};
     for (const id in ZONES) { const z = ZONES[id]; if (!z) continue; const fresh = LEVELS[id](), tiles = [];
-      for (let y = 0; y < z.L.h; y++) for (let x = 0; x < z.L.w; x++) if (z.L.g[y][x] !== fresh.g[y][x]) tiles.push([x, y, z.L.g[y][x]]);
+      for (let y = 0; y < z.L.h; y++) for (let x = 0; x < z.L.w; x++) if (z.L.g[y][x] !== fresh.g[y][x] && fresh.g[y][x] !== 'v') tiles.push([x, y, z.L.g[y][x]]);
       const alive = new Set(z.ents.filter(e => !e.dead && e._i != null).map(e => e._i)), dead = []; for (let i = 0; i < z.nSpawn; i++) if (!alive.has(i)) dead.push(i);
-      zs[id] = { tiles, hpTiles: z.L.hp, dead, seen: Array.from(z.L.seen).join(''), dia: z.dia, keys: z.keys, gateOpen: z.gateOpen, bossDefeated: z.bossDefeated, bossStarted: z.bossStarted }; }
-    localStorage.setItem(WSAVE, JSON.stringify({ v: 1, lvl: S.lvlId, px: P.x, py: P.y, P: { hp: P.hp, sel: P.sel, special: P.special, dmgMul: P.dmgMul, kills: P.kills, chocoCd: P.chocoCd }, choco: CHOCO_CD, q: S.q, fav: S.fav, flags: S.flags, defeated: S.defeated || {}, zs }));
+      zs[id] = { tiles, hpTiles: z.L.hp, dead, seen: Array.from(z.L.seen).join(''), dia: z.dia, keys: z.keys, gateOpen: z.gateOpen, bossDefeated: z.bossDefeated, bossStarted: z.bossStarted, trials: (z.L.trials || []).map(t => !!t.done), chests: z.ents.filter(e => e.type === 'chest' && !e.dead && e._i == null).map(e => [e.x, e.y, e.w]) }; }
+    localStorage.setItem(WSAVE, JSON.stringify({ v: 1, lvl: S.lvlId, px: P.x, py: P.y, P: { hp: P.hp, sel: P.sel, owned: P.owned, equip: P.equip, special: P.special, dmgMul: P.dmgMul, kills: P.kills, chocoCd: P.chocoCd }, choco: CHOCO_CD, q: S.q, fav: S.fav, flags: S.flags, defeated: S.defeated || {}, zs }));
     showHint('Partida guardada ✓', 1.8); return true;
   } catch (e) { if (!silent) showHint('No se pudo guardar', 2); return false; }
 }
@@ -61,10 +61,11 @@ function buildZone(id, d) {
   const L = LEVELS[id](); for (const [x, y, c] of d.tiles) L.set(x, y, c); Object.assign(L.hp, d.hpTiles || {});
   S.lvl = L; S.lvlId = id; spawnEnts(L); S.ents.forEach((e, i) => e._i = i); const n = S.ents.length, dd = new Set(d.dead);
   L.seen = new Uint8Array(L.w * L.h); for (let i = 0; i < d.seen.length && i < L.seen.length; i++) L.seen[i] = d.seen.charCodeAt(i) === 49 ? 1 : 0;
+  if (L.trials && d.trials) L.trials.forEach((t, i) => { t.done = !!d.trials[i]; });
   minimapReset();
-  ZONES[id] = { L, ents: S.ents.filter(e => !dd.has(e._i)), nSpawn: n, dia: d.dia, keys: d.keys, gateOpen: d.gateOpen, bossDefeated: d.bossDefeated, bossStarted: d.bossStarted, MM };
+  ZONES[id] = { L, ents: S.ents.filter(e => !dd.has(e._i)).concat((d.chests || []).map(([x, y, w]) => ({ type: 'chest', x, y, w, opened: false, t: 0 }))), nSpawn: n, dia: d.dia, keys: d.keys, gateOpen: d.gateOpen, bossDefeated: d.bossDefeated, bossStarted: d.bossStarted, MM };
 }
-function resetPlayerStats() { Object.assign(P, { hp: 100, sel: 0, special: false, dmgMul: 1, kills: 0, chocoCd: 0, dead: false }); CHOCO_CD = 30; }
+function resetPlayerStats() { Object.assign(P, { hp: 100, sel: 0, owned: ['dagger', 'hammer', 'bow'], equip: ['dagger', 'hammer', 'bow'], special: false, dmgMul: 1, kills: 0, chocoCd: 0, dead: false }); CHOCO_CD = 30; }
 function continueGame() {
   const d = JSON.parse(localStorage.getItem(WSAVE)); MENU.open = false; S.mode = 'play'; S.fade = 1; AUDIO.unlock(); sfx.start(); S.skip = false; S.camShot = null;
   for (const k in ZONES) delete ZONES[k];

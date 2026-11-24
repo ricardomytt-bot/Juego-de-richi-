@@ -74,9 +74,10 @@ function glBuildLevel(L) {
   glThemeMood(L); GL.blight.intensity = 0;
   // --- suelo (instanciado por tipo/variante)
   const floors = {}, add = (k, x, z) => (floors[k] || (floors[k] = [])).push({ x: x + .5, y: -.15, z: z + .5 });
-  const trees = [], rocks = [], bushes = [], blocks = { W: [], R: [] }, flowers = [], mushes = [], waters = [];
+  const stoneV = [], trees = [], rocks = [], bushes = [], blocks = { W: [], R: [] }, flowers = [], mushes = [], waters = [];
   for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
     const c0 = L.g[y][x], c = c0 === 'P' ? ((L.pu && L.pu[x + ',' + y]) || '.') : c0, h = hash2(x, y);
+    if (c === 'v') { waters.push({ x: x + .5, y: -.2, z: y + .5 }); stoneV.push([x, y]); continue; }
     if (c === '~') { waters.push({ x: x + .5, y: -.2, z: y + .5 }); continue; }
     if (L.theme === 'indoor') { add(c === 'W' ? 'dark0' : 'arena' + ((x + y) % 2), x, y); if (c === 'W') blocks.W.push([x, y, h]); continue; }
     if (c === ',') add('path' + (h % 2), x, y); else if (c === 'a') add('arena' + ((x + y) % 2), x, y);
@@ -102,6 +103,12 @@ function glBuildLevel(L) {
     if (c === 'C') { const m = mesh(geoBox(1, 1.5, 1), crackMat, x + .5, .75, y + .5, true, true); g.add(m); GL.dyn.push({ x, y, c, m }); }
     else if (c === 'G') { const m = mesh(geoBox(1, 1.5, 1), gateMat, x + .5, .75, y + .5, true, true); g.add(m); GL.dyn.push({ x, y, c, m, glow: true }); }
     else if (DOORKEY[c] !== undefined) { const m = mesh(geoBox(1, 1.5, 1), new THREE.MeshLambertMaterial({ map: doorTex[DOORKEY[c]] }), x + .5, .75, y + .5, true, true); g.add(m); GL.dyn.push({ x, y, c, m }); }
+  }
+  { const sm = new THREE.MeshLambertMaterial({ color: 0xb8c0cc }); for (const [x, y] of stoneV) { const m = mesh(geoBox(.94, .34, .94), sm, x + .5, -.08, y + .5, true, true); g.add(m); GL.dyn.push({ x, y, c: 'v', m, keep: true }); } }
+  // bosque y suelo más allá del borde del mapa (para que no se vea vacío)
+  if (L.theme !== 'indoor') {
+    const Bd = 26; for (let y = -Bd; y < L.h + Bd; y++) for (let x = -Bd; x < L.w + Bd; x++) { if (x >= 0 && x < L.w && y >= 0 && y < L.h) continue; const h = hash2(x + 500, y + 500); if (h % 100 < 40) trees.push([x, y, h]); }
+    const gc = L.theme === 'dream' ? 0x2c1c66 : L.theme === 'sweet' ? 0xe8a8d0 : 0x86a47c, og = new THREE.Mesh(new THREE.PlaneGeometry(L.w + Bd * 2 + 60, L.h + Bd * 2 + 60), new THREE.MeshLambertMaterial({ color: gc })); og.rotation.x = -Math.PI / 2; og.position.set(L.w / 2, -.17, L.h / 2); og.receiveShadow = true; g.add(og);
   }
   // árboles de bloques (tronco + 3 capas de hojas)
   const pal = dm ? [0x6a4ad8, 0xc64ea0, 0x3a78d8, 0x8a6af0] : sw ? [0xff9ac8, 0xff7ab8, 0xffb8d8, 0xc8a0ff] : [0x3aa04a, 0x2f8f3a, 0x4cb85a, 0x58c060];

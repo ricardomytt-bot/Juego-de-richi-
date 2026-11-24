@@ -234,7 +234,7 @@ function buildValley(theme, so, SG, EX) {
   R(40, 20, 48, 26, '~'); R(60, 28, 70, 35, '~'); R(44, 33, 50, 37, '~');
   L.scatter(44, 28, 78, 40, 'T', 40, 24 + so, keep); L.scatter(44, 28, 78, 40, 'R', 10, 25 + so, keep); L.scatter(28, 10, 50, 26, 'T', 22, 34 + so, keep); L.scatter(28, 10, 50, 26, 'R', 8, 35 + so, keep); L.scatter(28, 10, 50, 26, 'b', 14, 36 + so, keep); L.scatter(44, 28, 78, 40, 'b', 16, 26 + so, keep);
   L.scatter(44, 28, 78, 40, 'm', 60, 27 + so, [], '.'); L.scatter(28, 10, 50, 26, 'f', 90, 37 + so, [], '.'); L.scatter(48, 60, 72, 78, 'm', 40, 28 + so, [], '.');
-  for (const [x, y] of [[56, 70], [66, 70], [56, 64], [66, 64], [46, 30], [76, 30], [46, 38], [76, 38], [30, 12], [48, 12], [30, 24], [48, 24]]) L.set(x, y, 'k');
+  for (const [x, y] of [[56, 70], [66, 70], [56, 64], [66, 64], [46, 30], [76, 30], [46, 32], [76, 38], [30, 12], [48, 12], [30, 24], [48, 24]]) L.set(x, y, 'k');
   // ---- enemigos
   const openIn = (x0, y0, x1, y1, ch = '.') => { const a = []; for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (L.get(x, y) === ch) a.push([x, y]); return a; };
   const place = (arr, type, n, minD = 0) => { let k = 0, t = 0; while (k < n && t++ < n * 30) { const [x, y] = pick(arr, r); if (Math.hypot(x - 61, y - 75) < minD) continue; if (L.ents.some(e => Math.abs(e.tx - x) < 2 && Math.abs(e.ty - y) < 2)) continue; L.ent(type, x, y); k++; } };
@@ -246,6 +246,19 @@ function buildValley(theme, so, SG, EX) {
   for (const M of [A, C, D]) for (const c of M.dead.slice(0, 3)) if (c !== M.far[0]) L.ent('heart', c.tx, c.ty);
   L.ent('heart', 58, 72); L.ent('heart', 64, 72); L.ent('heart', 32, 22); L.ent('heart', 76, 36); L.ent('heart', 40, 12);
   L.ent('npc', 61, 72, { id: 'aquela' });
+  // ---- zonas opcionales: oleadas + parkour (norte), guarida del mini jefe (oeste) y cofre en el pantano
+  R(52, 8, 86, 21, '.'); frame(52, 8, 86, 21); R(52, 22, 54, 27, ','); R(52, 28, 54, 29, '.');
+  L.trials = [{ x: 60, y: 14, r: 150, n: 7, reward: 'spear' }]; L.ent('heart', 56, 10); L.ent('heart', 66, 19);
+  R(70, 9, 85, 20, '~'); R(84, 12, 86, 17, '.');
+  const path = [[70, 14], [71, 14], [72, 14], [73, 14], [73, 13], [74, 13], [75, 13], [75, 12], [76, 12], [77, 12], [77, 13], [78, 13], [78, 14], [79, 14], [80, 14], [80, 15], [81, 15], [82, 15], [83, 15]], stones = [];
+  for (const [x, y] of path) for (const yy of [y, y + 1]) { L.set(x, yy, 'v'); stones.push([x, yy]); }
+  L.park = { start: [69, 14], tiles: stones }; L.ent('chest', 85, 14, { w: 'fire' });
+  L.scatter(52, 8, 69, 21, 'f', 40, 41 + so, [], '.');
+  L.sign(58, 20, 'Cámara de las Oleadas: pisa el círculo, sobrevive y gana un cofre'); L.sign(68, 16, 'PARKOUR: las baldosas se rompen. ¡No te detengas!');
+  R(29, 32, 42, 46, '.'); frame(29, 32, 42, 46); R(42, 38, 52, 39, ',');
+  L.ent('mini', 35, 39, { name: 'Rey Slime', drop: 'axe' }); L.sign(30, 34, 'Guarida del Rey Slime  (jefe opcional: suelta un arma)'); L.ent('heart', 31, 44);
+  { const cdd = C.dead[3] || C.dead[C.dead.length - 1]; if (cdd) { L.ent('chest', cdd.tx, cdd.ty, { w: 'crossbow' }); L.mustReach(cdd.tx, cdd.ty); } }
+  for (const [x, y] of [[53, 22], [53, 27], [53, 29], [69, 14], [85, 14], [60, 14], [35, 39], [44, 38], [31, 44]]) L.mustReach(x, y);
   // portales entre zonas
   R(58, 79, 62, 81, ','); L.prop('portal', 60, 80, { solid: false, to: EX.back[0] }); L.exits = [{ x0: 58, y0: 80, x1: 62, y1: 81, to: EX.back[0], spawn: EX.back[1], lock: null }];
   if (EX.next) { L.prop('portal', 8, 21, { solid: false, lock: 'boss', to: EX.next[0] }); L.exits.push({ x0: 7, y0: 20, x1: 8, y1: 22, to: EX.next[0], spawn: EX.next[1], lock: 'boss', msg: 'El portal está dormido... derrota al jefe para abrirlo' }); }

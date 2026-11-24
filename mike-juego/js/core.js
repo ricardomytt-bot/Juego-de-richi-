@@ -97,28 +97,26 @@ const AUDIO = {
       try {
         this.c = new (window.AudioContext || window.webkitAudioContext)();
         const comp = this.c.createDynamicsCompressor(); comp.connect(this.c.destination);
-        const crush = this.c.createWaveShaper(), cv = new Float32Array(512); for (let i = 0; i < 512; i++) { const x = i / 255.5 - 1; cv[i] = Math.round(x * 24) / 24; } crush.curve = cv; crush.connect(comp);
-        this.pw = {}; for (const du of [.125, .25, .5]) { const re = new Float32Array(48), im = new Float32Array(48); for (let n = 1; n < 48; n++) re[n] = 2 * Math.sin(n * Math.PI * du) / (n * Math.PI); this.pw[du] = this.c.createPeriodicWave(re, im); }
-        this.master = this.c.createGain(); this.master.gain.value = .8; this.master.connect(crush);
+        const lp = this.c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200; lp.Q.value = .5; lp.connect(comp);
+        this.master = this.c.createGain(); this.master.gain.value = .7; this.master.connect(lp);
         this.mus = this.c.createGain(); this.mus.connect(this.master);
         const len = Math.floor(this.c.sampleRate * 2.4), imp = this.c.createBuffer(2, len, this.c.sampleRate);
         for (let ch = 0; ch < 2; ch++) { const d = imp.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
-        const cvb = this.c.createConvolver(); cvb.buffer = imp; this.revIn = this.c.createGain(); this.revIn.gain.value = .0; this.mus.connect(this.revIn); this.revIn.connect(cvb); cvb.connect(this.master);
+        const cvb = this.c.createConvolver(); cvb.buffer = imp; this.revIn = this.c.createGain(); this.revIn.gain.value = .34; this.mus.connect(this.revIn); this.revIn.connect(cvb); cvb.connect(this.master);
         this.sfxBus = this.c.createGain(); this.sfxBus.connect(this.master);
         const n = this.c.sampleRate, b = this.c.createBuffer(1, n, n), d = b.getChannelData(0);
-        for (let i = 0; i < n; i += 6) { const v = Math.random() * 2 - 1; for (let k = 0; k < 6 && i + k < n; k++) d[i + k] = v; }
+        for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
         this.noiseBuf = b; this.setVol();
       } catch (e) { this.c = null; }
     }
     if (this.c && this.c.state === 'suspended') this.c.resume();
   },
-  setVol() { if (!this.c) return; this.mus.gain.value = SETTINGS.music / 10 * .95; this.sfxBus.gain.value = SETTINGS.sfx / 10; },
+  setVol() { if (!this.c) return; this.mus.gain.value = SETTINGS.music / 10 * .95; this.sfxBus.gain.value = SETTINGS.sfx / 10 * .6; },
   get mute() { return SETTINGS.music === 0 && SETTINGS.sfx === 0; },
   toneAt(t, f, d, type = 'square', v = .05, slide = 0, bus) {
     if (!this.c) return;
     const o = this.c.createOscillator(), g = this.c.createGain();
-    if (type === 'square') o.setPeriodicWave(this.pw[.5]); else if (type === 'sawtooth') o.setPeriodicWave(this.pw[.25]); else o.type = 'triangle';
-    o.frequency.setValueAtTime(f, t);
+    o.type = type; o.frequency.setValueAtTime(f, t);
     if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, f + slide), t + d);
     g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + .008); g.gain.exponentialRampToValueAtTime(.0001, t + d);
     o.connect(g); g.connect(bus || this.sfxBus); o.start(t); o.stop(t + d + .03);
@@ -181,24 +179,27 @@ const sfx = {
 // --- Instrumentos sintetizados ---
 function ens() { return AUDIO.c; }
 const INST = {
-  pulse(t, f, d, v, bus, duty = .25, vib = 0, kind = 'hold') {
-    const c = ens(), o = c.createOscillator(), g = c.createGain(); o.setPeriodicWave(AUDIO.pw[duty]); o.frequency.setValueAtTime(f, t);
-    if (vib) { const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = 5.5; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * vib, t + Math.min(.25, d * .5)); l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t + d + .05); }
-    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + .006);
-    if (kind === 'pluck') g.gain.exponentialRampToValueAtTime(Math.max(.0002, v * .12), t + d); else { g.gain.setValueAtTime(v * .8, t + Math.max(.01, d * .55)); g.gain.linearRampToValueAtTime(.0001, t + d); }
-    o.connect(g); g.connect(bus); o.start(t); o.stop(t + d + .04);
+  pluck(t, f, d, v, bus) { const c = ens(), o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter(); o.type = 'triangle'; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.setValueAtTime(Math.min(f * 8, 9000), t); fl.frequency.exponentialRampToValueAtTime(Math.max(f * 1.4, 200), t + d); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(fl); fl.connect(g); g.connect(bus); o.start(t); o.stop(t + d + .05); },
+  flute(t, f, d, v, bus) {
+    const c = ens(), o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+    o.type = 'sine'; o.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f * 2; lfo.frequency.value = 5.2; lg.gain.value = f * .007; lfo.connect(lg); lg.connect(o.frequency);
+    const g2 = c.createGain(); g2.gain.value = .22; o2.connect(g2); g2.connect(g);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + Math.min(.07, d * .4)); g.gain.setValueAtTime(v * .85, t + d * .7); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(bus); [o, o2, lfo].forEach(x => { x.start(t); x.stop(t + d + .05); });
   },
-  pluck(t, f, d, v, bus) { INST.pulse(t, f, Math.min(d, .5), v * .9, bus, .25, 0, 'pluck'); },
-  flute(t, f, d, v, bus) { INST.pulse(t, f, d, v * .85, bus, .5, .006, 'hold'); },
-  bell(t, f, d, v, bus) { INST.pulse(t, f, Math.min(d, .45), v * .8, bus, .125, 0, 'pluck'); INST.pulse(t + .06, f * 2, .18, v * .35, bus, .125, 0, 'pluck'); },
-  pad(t, f, d, v, bus) { INST.pulse(t, f, d, v * .45, bus, .125, .003, 'hold'); },
-  strings(t, f, d, v, bus) { INST.pulse(t, f, d, v * .4, bus, .25, .004, 'hold'); },
-  bass(t, f, d, v, bus) { const c = ens(), o = c.createOscillator(), g = c.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v * 1.3, t + .008); g.gain.setValueAtTime(v * 1.2, t + d * .6); g.gain.linearRampToValueAtTime(.0001, t + d); o.connect(g); g.connect(bus); o.start(t); o.stop(t + d + .04); },
-  brass(t, f, d, v, bus) { INST.pulse(t, f, d, v * .8, bus, .5, .004, 'hold'); },
-  kick(t, v, bus) { AUDIO.toneAt(t, 160, .13, 'triangle', v * 1.5, -125, bus); },
-  snare(t, v, bus) { AUDIO.noiseAt(t, .11, v * 1.1, 2400, bus); AUDIO.toneAt(t, 230, .06, 'triangle', v * .5, -120, bus); },
-  hat(t, v, bus) { AUDIO.noiseAt(t, .025, v, 9000, bus); },
-  tom(t, f, v, bus) { AUDIO.toneAt(t, f, .16, 'triangle', v, -f * .6, bus); }
+  bell(t, f, d, v, bus) { const c = ens(); [[1, 1], [2.01, .38], [3.02, .16], [4.2, .07]].forEach(([m, a]) => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f * m; g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v * a, t + .004); g.gain.exponentialRampToValueAtTime(.0001, t + d * (1.4 - m * .1)); o.connect(g); g.connect(bus); o.start(t); o.stop(t + d * 1.5 + .05); }); },
+  pad(t, f, d, v, bus) {
+    const c = ens(), g = c.createGain(), fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = Math.min(f * 3.2, 2600);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + Math.min(.7, d * .35)); g.gain.setValueAtTime(v, t + d * .65); g.gain.linearRampToValueAtTime(.0001, t + d);
+    [-7, 7].forEach(det => { const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det; o.connect(fl); o.start(t); o.stop(t + d + .05); }); fl.connect(g); g.connect(bus);
+  },
+  strings(t, f, d, v, bus) { INST.pad(t, f, d, v * .9, bus); },
+  bass(t, f, d, v, bus) { const c = ens(), o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(); o.type = 'triangle'; o.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f / 2; g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g); o2.connect(g); g.connect(bus); o.start(t); o2.start(t); o.stop(t + d + .05); o2.stop(t + d + .05); },
+  brass(t, f, d, v, bus) { const c = ens(), o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.setValueAtTime(f * 1.6, t); fl.frequency.linearRampToValueAtTime(f * 5, t + .08); fl.frequency.exponentialRampToValueAtTime(f * 2.2, t + d); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + .03); g.gain.setValueAtTime(v * .8, t + d * .6); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(fl); fl.connect(g); g.connect(bus); o.start(t); o.stop(t + d + .05); },
+  kick(t, v, bus) { AUDIO.toneAt(t, 150, .16, 'sine', v, -110, bus); },
+  snare(t, v, bus) { AUDIO.noiseAt(t, .13, v, 1600, bus); AUDIO.toneAt(t, 200, .09, 'triangle', v * .5, -80, bus); },
+  hat(t, v, bus) { AUDIO.noiseAt(t, .03, v, 8000, bus); },
+  tom(t, f, v, bus) { AUDIO.toneAt(t, f, .2, 'sine', v, -f * .5, bus); }
 };
 const CHORDS = { M: [0, 4, 7], m: [0, 3, 7], M7: [0, 4, 7, 11], m7: [0, 3, 7, 10], '7': [0, 4, 7, 10] };
 const NOTE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -231,12 +232,12 @@ const SONGS = {
     melody: 'E6 - . C6 - . A5 . | F6 - . C6 - . A5 . | G6 - . E6 - . C6 . | D6 - . B5 - . G5 . | C6 - E6 - A6 - E6 C6 | A5 - C6 - F6 - C6 A5 | E6 - G6 - C7 - G6 E6 | D6 - B5 - G5 - B5 D6'
   },
   city: {
-    bpm: 126, lead: 'pluck', leadVol: .09, harm: 'flute', harmVol: .03, pad: 'strings', padVol: .016, bass: 'pluck', arp: 'bell', arpVol: .012, perc: 'folk',
+    bpm: 104, lead: 'pluck', leadVol: .09, harm: 'flute', harmVol: .03, pad: 'strings', padVol: .016, bass: 'pluck', arp: 'bell', arpVol: .012, perc: 'folk',
     chords: [[43, 'M'], [40, 'm'], [48, 'M'], [50, 'M'], [43, 'M'], [40, 'm'], [45, 'm'], [50, '7'], [48, 'M'], [43, 'M'], [45, 'm'], [50, 'M'], [48, 'M'], [50, 'M'], [43, 'M'], [43, 'M']],
     melody: 'G5 - B5 D6 - B5 G5 - | E5 - G5 B5 - G5 E5 - | C6 - B5 A5 G5 - E5 G5 | F#5 A5 D6 - C6 A5 F#5 - | G5 - B5 D6 - G6 D6 B5 | E6 - D6 B5 G5 - B5 D6 | C6 - E6 A5 - C6 E6 - | D6 - C6 B5 A5 - F#5 . | E6 - D6 C6 E6 - G6 - | D6 - B5 G5 B5 - D6 - | C6 - E6 - A6 - E6 C6 | D6 - F#6 - A6 - F#6 D6 | E6 G6 E6 C6 E6 G6 C7 - | D6 F#6 D6 A5 D6 F#6 A6 - | B5 - D6 G6 - F#6 E6 D6 | G6 - . . G5 B5 D6 .'
   },
   chase: {
-    bpm: 164, lead: 'brass', leadVol: .07, harm: 'pluck', harmVol: .03, pad: 'strings', padVol: .016, bass: 'rock', arp: 'pluck', arpVol: .02, perc: 'rock',
+    bpm: 138, lead: 'brass', leadVol: .07, harm: 'pluck', harmVol: .03, pad: 'strings', padVol: .016, bass: 'rock', arp: 'pluck', arpVol: .02, perc: 'rock',
     chords: [[45, 'm'], [41, 'M'], [48, 'M'], [43, 'M'], [45, 'm'], [41, 'M'], [43, 'M'], [40, '7']],
     melody: 'A5 - A5 C6 E6 - C6 A5 | F5 - A5 C6 F6 - C6 A5 | E5 - G5 C6 E6 - C6 G5 | D5 - G5 B5 D6 - B5 G5 | A5 C6 E6 A6 - E6 C6 A5 | A5 C6 F6 A6 - F6 C6 A5 | B5 D6 G6 B6 - G6 D6 B5 | G#5 B5 E6 - G#6 - E6 .'
   },

@@ -57,7 +57,7 @@ function glSync(dt) {
       case 'slime': {
         const o = glGet(e, () => wrapOuter(makeSlime(e.corrupt)));
         const hop = e.hopT > 0 ? Math.sin(clamp(e.hopT / .35, 0, 1) * Math.PI) : 0, born = e.born > 0 ? (e.born -= dt, 1 - e.born / .4) : 1;
-        o.outer.position.set(e.x / T, hop * .7, e.y / T); o.outer.scale.set(born * (1 - hop * .14), born * (1 + hop * .22), born * (1 - hop * .14)); o.body.scale.y = 1;
+        o.outer.position.set(e.x / T, hop * .7, e.y / T); const sc0 = e.sc || 1; o.outer.scale.set(sc0 * born * (1 - hop * .14), sc0 * born * (1 + hop * .22), sc0 * born * (1 - hop * .14)); o.body.scale.y = 1;
         o.outer.rotation.y = yawTo(o.outer.rotation.y, Math.atan2(P.x - e.x, P.y - e.y), .1); setFlash(o, e.flash > 0);
         if (e.corrupt) o.body.material[0].emissiveIntensity = .5 + Math.sin(t * 12) * .3; break;
       }
@@ -67,6 +67,7 @@ function glSync(dt) {
         const w = Math.sin(t * 22 + e.x) * .8; o.wl.rotation.z = w; o.wr.rotation.z = -w; setFlash(o, e.flash > 0); break;
       }
       case 'dummy': { const o = glGet(e, () => wrapOuter(makeDummy())); o.outer.position.set(e.x / T, 0, e.y / T); o.outer.rotation.z = e.hit > 0 ? Math.sin(e.hit * 60) * .15 : 0; setFlash(o, e.hit > 0); break; }
+      case 'chest': { const o = glGet(e, () => { const g = new THREE.Group(), lid = new THREE.Group(); lid.position.set(0, .6, -.35); g.add(mesh(geoBox(1.1, .6, .8), lam(0x8a5a2a), 0, .3, 0), mesh(geoBox(1.14, .14, .84), lam(0xffd24a), 0, .56, 0, false)); lid.add(mesh(geoBox(1.1, .3, .8), lam(0x9a6a32), 0, .15, .35), mesh(geoBox(.16, .22, .1), lam(0xffd24a), 0, .1, .78, false)); g.add(lid); const gl = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), new THREE.MeshBasicMaterial({ map: glowTex('#ffe14a'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: .6 })); gl.position.y = 1; gl.userData.billboard = true; g.add(gl); return { group: g, lid, gl }; }); gp(o, e.x, e.opened ? 0 : Math.sin(t * 3) * .05, e.y); o.lid.rotation.x = e.opened ? -1.3 : 0; o.gl.visible = !e.opened || e.t < 1; break; }
       case 'dia': { const o = glGet(e, makeDiamond); gp(o, e.x, .8 + Math.sin(t * 3 + e.t) * .12, e.y); o.spin.rotation.y = t * 2; break; }
       case 'heart': { const o = glGet(e, makeHeart); gp(o, e.x, .8 + Math.sin(t * 3 + e.t) * .1, e.y); o.spin.rotation.y = t * 2.4; break; }
       case 'key': { const o = glGet(e, () => makeKey(e.k)); gp(o, e.x, .85 + Math.sin(t * 3 + e.t) * .12, e.y); o.spin.rotation.y = t * 2.2; break; }
@@ -122,7 +123,7 @@ function glSync(dt) {
   } else { pl.outer.visible = false; pl.slash.visible = false; }
   for (const [key, o] of GL.objs) if (!o.seen && key !== 'player') { GL.root.remove(o.group || o.outer); GL.objs.delete(key); }
   // ---- tiles dinámicos (puertas abiertas, grietas rotas)
-  for (let i = GL.dyn.length - 1; i >= 0; i--) { const d = GL.dyn[i]; if (L.get(d.x, d.y) !== d.c) { GL.lvlGroup.remove(d.m); GL.dyn.splice(i, 1); } else if (d.glow) d.m.material.emissiveIntensity = .35 + .25 * Math.sin(t * 4) + (S.dia >= L.diaNeed ? .4 : 0); }
+  for (let i = GL.dyn.length - 1; i >= 0; i--) { const d = GL.dyn[i]; if (d.keep) d.m.visible = L.get(d.x, d.y) === d.c; else if (L.get(d.x, d.y) !== d.c) { GL.lvlGroup.remove(d.m); GL.dyn.splice(i, 1); } else if (d.glow) d.m.material.emissiveIntensity = .35 + .25 * Math.sin(t * 4) + (S.dia >= L.diaNeed ? .4 : 0); }
   glParticles();
 }
 // ---------- partículas ----------
@@ -183,6 +184,7 @@ function drawOverlay3D() {
     if (near) { txt(NAMES[e.id] || 'Vecino', sp.x, sp.y - 30, { size: 17, align: 'center', color: '#ffe14a' }); ctx.fillStyle = '#fff'; rrect(sp.x - 13, sp.y - 8, 26, 26, 6); ctx.fill(); ctx.fillStyle = '#1a1020'; rrect(sp.x - 11, sp.y - 6, 22, 22, 5); ctx.fill(); txt('E', sp.x, sp.y - 4, { size: 17, align: 'center', outline: false }); }
     else if (S.lvlId === 0 && npcNeedsLetter(e)) { const by = Math.sin(t * 4) * 4; txt('!', sp.x, sp.y - 18 + by, { size: 28, align: 'center', color: '#ffe14a', lw: 5 }); }
   }
+  for (const e of S.ents) if (e.mini && !e.dead && !e.hidden) { const sp = toScreen(e.x / T, 3.4, e.y / T); if (!sp.vis) continue; txt(e.name || 'Mini jefe', sp.x, sp.y - 30, { size: 15, align: 'center', color: '#ffb0ff' }); ctx.fillStyle = '#1a1020'; ctx.fillRect(sp.x - 42, sp.y - 8, 84, 10); ctx.fillStyle = '#c26aff'; ctx.fillRect(sp.x - 40, sp.y - 6, 80 * Math.max(0, e.hp / e.max), 6); }
   // carteles cercanos
   let ns = null, bd = 4; for (const s of L.signs) { const d = dist(P.x / T, P.y / T, s.x / T, s.y / T); if (d < bd) { bd = d; ns = s; } }
   if (ns) { const sp = toScreen(ns.x / T, 1.9, ns.y / T); ctx.font = 'bold 17px "Courier New"'; const tw = ctx.measureText(ns.text).width + 28; ctx.fillStyle = 'rgba(10,8,30,.9)'; rrect(sp.x - tw / 2, sp.y - 34, tw, 38, 8); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; rrect(sp.x - tw / 2, sp.y - 34, tw, 38, 8); ctx.stroke(); txt(ns.text, sp.x, sp.y - 24, { size: 17, align: 'center', outline: false }); }

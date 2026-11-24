@@ -4,7 +4,7 @@ const MENU = { open: true, page: 'main', prev: 'main', idx: 0, t: 0, rects: [] }
 function openMenu(page) { MENU.open = true; MENU.page = page; MENU.prev = page; MENU.idx = 0; sfx.select(); }
 function closeMenu() { MENU.open = false; sfx.back(); }
 function gotoPage(p) { if (MENU.page === 'main' || MENU.page === 'pause') MENU.prev = MENU.page; MENU.page = p; MENU.idx = 0; sfx.select(); }
-function backPage() { if (MENU.page === 'options' || MENU.page === 'controls' || MENU.page === 'credits' || MENU.page === 'map') { MENU.page = MENU.prev; MENU.idx = 0; sfx.back(); } else if (MENU.page === 'pause') closeMenu(); }
+function backPage() { if (MENU.page === 'options' || MENU.page === 'inv' || MENU.page === 'controls' || MENU.page === 'credits' || MENU.page === 'map') { MENU.page = MENU.prev; MENU.idx = 0; sfx.back(); } else if (MENU.page === 'pause') closeMenu(); }
 function goFullscreen() { try { const el = document.documentElement; if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen(); } catch (e) { } }
 function menuItems() {
   switch (MENU.page) {
@@ -13,11 +13,12 @@ function menuItems() {
       { t: 'CONTROLES', go: () => gotoPage('controls') }, { t: 'CRÉDITOS', go: () => gotoPage('credits') }];
     case 'pause': {
       const a = [{ t: 'CONTINUAR', go: () => closeMenu() }];
-      if (S.lvl && !S.stage) a.push({ t: 'MAPA', go: () => gotoPage('map') });
+      if (S.lvl && !S.stage) a.push({ t: 'INVENTARIO', go: () => gotoPage('inv') }, { t: 'MAPA', go: () => gotoPage('map') });
       a.push({ t: 'OPCIONES', go: () => gotoPage('options') }, { t: 'CONTROLES', go: () => gotoPage('controls') });
       if (S.stage || S.dialog) a.push({ t: 'SALTAR ESCENA', go: () => { S.skip = true; MENU.open = false; } });
       a.push({ t: 'SALIR AL TÍTULO', go: () => location.reload() }); return a;
     }
+    case 'inv': return [...[0, 1, 2].map(i => { const w = WEAPONS[P.equip[i]]; return { t: (i + 1) + '   ' + w.icon + ' ' + w.name + '   (' + w.type + ')', go: () => cycleSlot(i), slot: i }; }), { t: 'VOLVER', go: backPage }];
     case 'options': return [
       { t: 'MÚSICA', slider: 'music' }, { t: 'EFECTOS', slider: 'sfx' },
       { t: 'BOTONES EN PANTALLA', toggle: 'touch' }, { t: 'PANTALLA COMPLETA', go: goFullscreen }, { t: 'VOLVER', go: backPage }];
@@ -74,11 +75,11 @@ function drawMenu() {
   const title = S.mode === 'title' && MENU.page === 'main', items = menuItems(), t = MENU.t;
   MENU.rects = [];
   if (!title) { ctx.fillStyle = 'rgba(4,2,16,.62)'; ctx.fillRect(0, 0, W, H); }
-  const heads = { pause: 'PAUSA', options: 'OPCIONES', controls: 'CONTROLES', credits: 'CRÉDITOS', map: 'MAPA' };
+  const heads = { inv: 'INVENTARIO', pause: 'PAUSA', options: 'OPCIONES', controls: 'CONTROLES', credits: 'CRÉDITOS', map: 'MAPA' };
   let px, py, pw, ph, y0, gap = 58;
   if (title) { pw = 380; ph = items.length * gap + 36; px = (W / 2) - pw / 2; py = 258 - Math.max(0, items.length - 4) * 46; y0 = py + 24; }
   else {
-    const extra = MENU.page === 'controls' ? 250 : MENU.page === 'credits' ? 200 : MENU.page === 'map' ? 330 : 0;
+    const extra = MENU.page === 'controls' ? 250 : MENU.page === 'credits' ? 200 : MENU.page === 'map' ? 330 : MENU.page === 'inv' ? 190 : 0;
     pw = MENU.page === 'options' ? 640 : MENU.page === 'map' ? 700 : 560; ph = 90 + items.length * gap + extra; px = (W / 2) - pw / 2; py = Math.max(24, 270 - ph / 2); y0 = py + 78 + extra;
     menuPanel(px, py, pw, ph);
     txt(heads[MENU.page] || '', (W / 2), py + 24, { size: 34, align: 'center', color: '#ffe14a', lw: 6 });
@@ -99,6 +100,14 @@ function drawMenu() {
     for (const e of S.ents) if (sd(e.x, e.y)) { if (e.type === 'dia') { ctx.fillStyle = '#7df3ff'; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } else if (e.type === 'key') { ctx.fillStyle = ['#e0a060', '#dfe6ff', '#ffd24a'][e.k]; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } }
     if (Math.floor(t * 3) % 2) { ctx.fillStyle = '#ff3b5c'; ctx.fillRect(mx + P.x / T * sc - 3, my + P.y / T * sc - 3, 7, 7); }
     txt('◆ diamante   ● llave   ■ tú (parpadea)   Explora para descubrir el mapa', (W / 2), my + mh + 12, { size: 13, align: 'center', color: '#bcd', outline: false });
+  } else if (MENU.page === 'inv') {
+    const sel = Math.min(MENU.idx, 2), w = WEAPONS[P.equip[sel]], dmg = Math.round(w.dmg * P.dmgMul * 20), tx0 = W / 2;
+    txt('Elige tus 3 armas: pulsa una ranura para cambiarla por otra que tengas', tx0, py + 70, { size: 15, align: 'center', color: '#bcd', outline: false });
+    txt(w.icon + ' ' + w.name + '  ·  ' + w.type, tx0, py + 98, { size: 22, align: 'center', color: '#ffe14a', outline: false });
+    txt('Daño ' + dmg + '%   ·   Recarga ' + w.cd.toFixed(2) + ' s   ·   ' + (w.ranged ? 'A distancia' + (w.spread ? ' (x' + w.spread + ')' : '') + (w.pierce ? ' · atraviesa' : '') : 'Cuerpo a cuerpo' + (w.heavy ? ' · golpe pesado' : '')), tx0, py + 130, { size: 16, align: 'center', outline: false });
+    const have = P.owned.map(id => (P.equip.includes(id) ? '[' + WEAPONS[id].name + ']' : WEAPONS[id].name)).join('  ·  ');
+    txt('Tus armas: ' + have, tx0, py + 160, { size: 14, align: 'center', color: '#9ad0ff', outline: false });
+    txt('Más armas: mini jefes, cofres, oleadas y parkour', tx0, py + 186, { size: 14, align: 'center', color: '#bcd', outline: false });
   } else if (MENU.page === 'credits') {
     const L = ['Mikecrack y las Estrellas Oscuras  ·  Piloto', 'Un juego de fans basado en', 'Las Perrerías de Mike, de Mikecrack.', 'Historia original, sprites y código', 'hechos con Claude Code.'];
     L.forEach((s, i) => txt(s, (W / 2), py + 78 + i * 28, { size: i === 0 ? 20 : 17, align: 'center', color: i === 0 ? '#ffe14a' : '#fff', outline: false }));
