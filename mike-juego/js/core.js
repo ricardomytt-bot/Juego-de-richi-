@@ -39,6 +39,7 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+cv.addEventListener('pointerdown', () => { window.focus(); AUDIO.unlock(); if (typeof S !== 'undefined' && S.mode === 'title') pressed['Enter'] = true; });
 document.querySelectorAll('#touch button').forEach(b => {
   const code = b.dataset.k;
   b.addEventListener('pointerdown', e => { e.preventDefault(); AUDIO.unlock(); keys[code] = true; pressed[code] = true; });
