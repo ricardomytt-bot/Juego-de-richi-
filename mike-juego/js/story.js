@@ -29,7 +29,7 @@ function bang(dark) { if (S.stage) { S.stage.flash = 1; S.stage.shake = .6; if (
 async function csIntro() {
   S.skip = false; S.busy = true; S.stage = newStage(); setMusic('title');
   const order = ['invictor', 'rius', 'mayo', 'esparta', 'raptor', 'mike', 'timba', 'trolino', 'acenix', 'aquela', 'willy'];
-  const C = {}; order.forEach((id, i) => { C[id] = addChar(id, 70 + i * 50, 226, { face: i < 5 ? 1 : -1 }); });
+  const C = {}; order.forEach((id, i) => { C[id] = addChar(id, 100 + i * 76, 346, { face: i < 5 ? 1 : -1 }); });
   C.mike.face = 1; C.willy.face = -1;
   await fadeTo(0, 1.2);
   await say('narr', 'Había una vez, en el mundo de bloques de Diamantia, siete estrellas que mantenían todo en orden... y también evitaban que Willy olvidara dónde enterró su hueso.');
@@ -44,7 +44,7 @@ async function csIntro() {
   await say('acenix', 'Miau. Yo solo quiero pastel.');
   await say('aquela', 'Mike... las estrellas parpadean muy raro. Algo no está bien.');
   bang(true); await wait(.9);
-  const ex = addChar('exe', 320, 170, { scale: 3, float: true, face: -1 });
+  const ex = addChar('exe', 480, 262, { scale: 4, float: true, face: -1 });
   await say('exe', '¡MUAJAJAJÁ! ¡Hola, Diamantia! ¿Me extrañaron? ¡Seguro que no, pero igual vine!');
   await say('mike', '¡Exe! ¿Pero qué haces con esa cara? ...Bueno, siempre tienes esa cara.');
   await say('exe', 'Las estrellas oscuras me dieron un poder INFINITO... y también unas ojeras que me quedan espectaculares.');
@@ -59,7 +59,7 @@ async function csIntro() {
   await say('raptor', 'Me prometió el final del anime sin spoilers.', { red: true });
   await say('trolino', 'Mi corona y yo trabajamos ahora para el jefe nuevo.', { red: true });
   await say('narr', 'Invictor asintió muy serio y se fue con los demás. Como siempre, sin decir ni una palabra.');
-  await Promise.all(friends.map(id => moveChar(C[id], C[id].x < 320 ? -90 : W + 90, 175)));
+  await Promise.all(friends.map(id => moveChar(C[id], C[id].x < 480 ? -120 : W + 120, 230)));
   await say('exe', '¡Intenta alcanzarlos, perrito! ¡Muajajá!');
   S.stage.flash = 1; sfx.boss(); removeChar(ex); await wait(.7);
   await say('mike', '¡Timba! ¡Raptor! ¡Chicos! ...No me escuchan. ¡Se fueron más rápido que la pizza de Mayo!');
@@ -126,10 +126,10 @@ async function goNext() {
 // ---------- Jefe: Timba ----------
 async function startBoss() {
   S.bossStarted = true; S.busy = true; S.skip = false;
-  const L = S.lvl; L.fill(76, 7, 76, 10, 'G'); sfx.door(); S.shake = .3;
-  S.bossLock = true; S.checkpoint = [78 * T + 4, 11 * T - P.h];
-  S.boss = makeBoss(); S.boss.state = 'idle';
-  if (S.willy) { S.willy.x = P.x - 40; S.willy.y = P.y; S.willy.vx = S.willy.vy = 0; }
+  const L = S.lvl; for (const [gx, gy] of L.gate.tiles) L.set(gx, gy, 'G'); sfx.door(); S.shake = .3;
+  S.bossLock = true; S.checkpoint = [74.5 * T, 10.5 * T];
+  S.boss = makeBoss(); S.boss.state = 'idle'; setMusic('dream');
+  if (S.willy) { const fs = freeSpot(L, P.x - 50, P.y + 10, 9, 8); S.willy.x = fs[0]; S.willy.y = fs[1]; S.willy.vx = S.willy.vy = 0; }
   await wait(.6);
   await say('timba', '(roncando) Zzz... zzz... ¿Quién osa interrumpir mi siesta?', { red: true });
   await say('mike', '¡Timba! ¡Soy yo, Mike! ¡Despierta!');
@@ -150,7 +150,7 @@ async function csTimbaSaved() {
   await say('aquela', 'Las estrellas oscuras te dominaron. Pero Mike restauró tu conciencia.');
   await say('timba', 'Gracias, Mike. Toma: la Almohada de Estrella. Te dará un esquive muy suave. Es lo único que tengo... aparte de sueño.');
   S.hasDash = true; sfx.win(); S.shake = .1;
-  spawnP(P.x + 11, P.y + 10, 30, '#9ad0ff', 260, 1);
+  spawnP(P.x, P.y - 30, 34, '#9ad0ff', 300, 1);
   showHint('¡NUEVO PODER: ESQUIVE ALMOHADA!  (SHIFT)', 5);
   await say('timba', 'Yo los ayudo desde tu casa, Mike. Pero antes... ¿alguien tiene un colchón?');
   await say('mike', '¡Gracias, Timba! ¡Vamos por los demás!');
@@ -161,11 +161,11 @@ async function csEnding() {
   S.skip = false; S.busy = true;
   S.stage = newStage({ dark: true }); setMusic('title');
   const C = {};
-  [['willy', 150, -1], ['mike', 215, 1], ['timba', 280, 1], ['aquela', 345, -1], ['acenix', 410, -1]].forEach(([id, x, f]) => { C[id] = addChar(id, x, 226, { face: f }); });
+  [['willy', 230, -1], ['mike', 330, 1], ['timba', 430, 1], ['aquela', 530, -1], ['acenix', 630, -1]].forEach(([id, x, f]) => { C[id] = addChar(id, x, 346, { face: f }); });
   C.willy.face = 1;
   await fadeTo(0, .8);
   await say('narr', 'Esa noche, en lo alto del cielo de Diamantia...');
-  bang(); const ex = addChar('exe', 480, 170, { scale: 3, float: true, face: -1 });
+  bang(); const ex = addChar('exe', 740, 262, { scale: 4, float: true, face: -1 });
   await say('exe', '¡Vaya, vaya! El perrito restauró a uno de mis empleados. ¡Eso sí que me dio sueño! ...No, espera, eso era de Timba.');
   await say('mike', '¡Exe, vamos a restaurar a todos tus empleados! ¡Y después te toca a ti!');
   await say('exe', 'Quedan SEIS guardianes y siete estrellas oscuras. Ven por mí... si te atreves. ¡Muajajá!');
@@ -187,13 +187,13 @@ function startGame() {
   setMusic('title');
   if (q.has('lvl') || q.has('boss') || q.has('end')) {
     S.mode = 'play'; S.fade = 0;
-    if (q.has('boss')) { loadLevel(1); S.dia = 3; S.gotLetter = true; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 77 * T; P.y = 11 * T - P.h; S.hasDash = q.get('dash') !== '0'; }
+    if (q.has('boss')) { loadLevel(1); S.dia = 3; S.gotLetter = true; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 71.5 * T; P.y = 10.5 * T; initWilly(); updateCamera(0, true); S.hasDash = q.get('dash') !== '0'; }
     else if (q.has('end')) { loadLevel(1); S.dia = 3; csEnding(); }
     else { S.gotLetter = true; loadLevel(parseInt(q.get('lvl')) || 0); }
   }
   let last = performance.now();
   function frame(now) {
-    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    const dt = clamp((now - last) / 1000, 0, .05); last = now;
     update(dt); drawFrame();
     for (const k in pressed) delete pressed[k];
     requestAnimationFrame(frame);
