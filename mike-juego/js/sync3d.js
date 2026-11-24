@@ -140,7 +140,7 @@ function glFrame(dt) {
   if (GL.lvlRef !== S.lvl) glBuildLevel(S.lvl);
   glSync(dt); glCamera(dt);
   // edificios que tapan a Mike se 'abren' (vista en corte)
-  if (GL.blds) for (const gr of GL.blds) { const b = gr.userData.b, px = P.x / T, pz = P.y / T, occ = px > b.x0 - 2.5 && px < b.x1 + 3.5 && pz < b.y1 + 1.2 && pz > b.y0 - 9; gr.scale.y = lerp(gr.scale.y, occ ? .16 : 1, 1 - Math.exp(-S.dtv * 8)); }
+  if (GL.blds) for (const gr of GL.blds) { const b = gr.userData.b, px = P.x / T, pz = P.y / T, occ = px > b.x0 - 2.5 && px < b.x1 + 3.5 && pz < b.y1 + 1.2 && pz > b.y0 - 9; gr.scale.y = lerp(gr.scale.y, occ ? .4 : 1, 1 - Math.exp(-S.dtv * 8)); const hide = occ || gr.scale.y < .95; for (const c of gr.children) if (c.position.y >= 2.5) c.visible = !hide; }
   // animaciones ambientales
   if (GL.waterFrames) { GL.waterMat.map = GL.waterFrames[Math.floor(Math.max(0, S.t) * 2.2) % 3]; }
   if (GL.clouds) { GL.clouds.children.forEach(c => { c.position.x += dt * .9; if (c.position.x > 140) c.position.x = -20; }); }

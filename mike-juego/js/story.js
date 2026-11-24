@@ -48,6 +48,40 @@ async function deliver(id) {
 }
 const needLetter = (id) => S.q.gotLetters && !S.q.delivered[id];
 
+// ---------- charlas libres (después de las cartas): el jugador elige de qué hablar ----------
+const TOPICS = {
+  timba: { hi: (d, f) => d ? (f >= 2 ? '(bostezo) Mike... mi persona favorita después de mi cama. Pregunta lo que quieras.' : '(bostezo) ...Hola. Zzz.') : '(bostezo) ...Vuelve cuando tengas algo para mí... zzz...',
+    t: [['¿Qué sueñas?', [['timba', 'Sueño que soy una almohada gigante y todos me abrazan.'], ['mike', '...Eso es tierno y raro.'], ['timba', 'Y a veces sueño que sueño. Es muy cansado.']]], ['¿Por qué duermes tanto?', [['timba', 'Es que despierto con hambre, como con sueño, y duermo con ganas. Es un ciclo perfecto.']]], ['Secreto de Timba', [['timba', 'Ven, te digo algo: cuando me duermo en pelea, ¡duele más que me pegues! No se lo digas a Exe.']], 2]] },
+  rius: { hi: (d) => d ? '¡Cocoricó! ¿Qué se cuenta, Mike?' : '¡Cocoricó! ¿Buscas algo, Mike? ¡Aquí hay mucho pasto!',
+    t: [['Cuéntame un chiste', [['rius', '¿Qué le dice un gallo a otro? ...¡Nada! ¡Los gallos no hablan, son gallos!'], ['mike', '(se ríe) Ese es malísimo.'], ['rius', '¡Cocoricó! ¡Gracias, gracias!']]], ['¿Y tu espada?', [['rius', 'Se llama Madrugadora. Brilla cuando amanece. Y cuando me aburro la uso para abrir sobres.']]], ['La libreta de chistes', [['rius', 'Tengo una libreta con 400 chistes. Solo 3 son buenos. ¡Pero esos 3 son MUY buenos!']], 2]] },
+  mayo: { hi: (d) => d ? 'Beep. Cliente Mike registrado. ¿Desea algo del menú?' : 'Beep, boop. Bienvenido a Pizzería Mayo.',
+    t: [['¿Qué tiene el menú?', [['mayo', 'Pizza. Pizza con queso. Pizza con más queso. Y la especial: pizza con pizza encima.'], ['mike', '¿Eso es legal?'], ['mayo', 'Aún no hay ley que lo prohíba. Beep.']]], ['¿Eres un robot?', [['mayo', 'Soy un cocinero con circuitos. Mis lágrimas son salsa de tomate. Beep.']]], ['Receta secreta', [['mayo', 'Ingrediente secreto: cariño al 100%. ...Y un poco de orégano. Beep boop.']], 2]] },
+  esparta: { hi: (d) => d ? '¡HOLA HOLA! ¡Qué felicidad verte otra vez! ¡Jajaja!' : '¡HOLA HOLA! ¿Vienes a jugar o a visitarme? ¡Las dos cosas están bien!',
+    t: [['¿A qué jugamos?', [['esparta', '¡A TODO! ¡Piedra, papel y tijera! ¡Escondite! ¡Carreras de pesas!'], ['mike', '¿Carreras de pesas?'], ['esparta', '¡Gana el que llegue último! ¡Jajaja!']]], ['Te ves muy contento', [['esparta', '¡Es que cada mañana descubro que sigo vivo! ¡Y eso es genial! ¡Jajaja!']]], ['Un deseo', [['esparta', 'Mi deseo es que todos sonrían al mismo tiempo. ¡Una vez! ¡Aunque sea medio segundo!']], 2]] },
+  raptor: { hi: (d) => d ? '¡Mike! Justo estaba dibujando una escena épica.' : '¡Shhh! Estoy viendo el final de un anime.',
+    t: [['¿Qué dibujas?', [['raptor', 'Un manga sobre un perrito amarillo con capa. Se llama "Mike Z: la saga del chocolate".'], ['mike', '¡Quiero un cameo!'], ['raptor', 'Ya eres el protagonista. Y también el villano. Es profundo.']]], ['Tu capucha roja', [['raptor', 'Me la dio mi abuela. Decía que protege del frío y de los spoilers.']]], ['Final del anime', [['raptor', 'Te lo cuento solo a ti: ...al final todos se abrazan. ¡Ya, ya, no se lo digas a nadie!']], 2]] },
+  invictor: { hi: (d) => d ? '¡Mike! ¡Un abrazo de oso! ...Bueno, de romano.' : '¡ESTO ES... LA VILLA ROMANA!',
+    t: [['¿Por qué ese casco?', [['invictor', 'El casco da +10 de valentía y +5 de peinado. Incluye cresta roja de serie.']]], ['¿Entrenamos?', [['invictor', '¡Cinco flexiones! ¡Uno! ¡Dos! ...Ya, ya, que me da cosquillas el suelo.'], ['mike', 'Qué entrenamiento tan raro.']]], ['La gloria romana', [['invictor', 'Un verdadero romano no cae jamás. ...Salvo si hay una cáscara de plátano. Entonces sí, cae.']], 2]] },
+  trolino: { hi: () => 'No te quedes parado, Mike. Correos queda al este. ¡Y la corona no se toca!',
+    t: [['¿Y esa corona?', [['trolino', 'Es de oro. De oro falso. Pero de falso muy bien hecho.'], ['mike', 'Se te ve genial.'], ['trolino', 'Lo sé. Siempre lo supe.']]], ['¿Qué lleva tu maleta?', [['trolino', 'Tres camisas, una corona de repuesto y un cojín en forma de dona.'], ['willy', '¡Guau! (Traducción: yo llevo el hueso.)']]], ['¿Estás nervioso?', [['trolino', '...Un poco. Hay algo raro en el aire desde anoche. Pero no digas nada.']], 2]] },
+  aquela: { hi: () => 'Hola de nuevo, Mike. Qué buena vibra tienes hoy.',
+    t: [['¿Cómo se juega esto?', [['aquela', 'Joystick para moverte. ACTUAR para hablar y ATACAR para la espada. ¡Solo dos botones!']]], ['Pistas de diamantes', [['aquela', 'Hay tres diamantes en la ciudad: al oeste, en el parque del norte y al sureste. ¡Willy los huele!']]], ['¿Quién eres tú?', [['aquela', 'Una gata que ve cosas que otros no ven. Y a veces ve pájaros. Eso me distrae.']], 1]] },
+  ambrosio: { hi: () => 'Todavía faltan cartas, ¡tú puedes, héroe!',
+    t: [['¿Por qué tantas cartas?', [['ambrosio', 'Porque todos se escriben entre todos y ninguno se lo dice a la cara. Es la magia del correo.']]], ['¿Tu bicicleta?', [['ambrosio', 'Hecha bolita. Está en el taller. El taller es mi cuarto. El mecánico soy yo.']]]] },
+  acenix: { hi: (d) => d ? 'Miau. Pasa, pasa. Hay pastel.' : 'Miau. Bienvenido al Café Gatuno.',
+    t: [['¿Qué pastel recomiendas?', [['acenix', 'El de chocolate. Es el único. Pero es muy bueno. Miau.']]], ['¿Eres un gato?', [['acenix', 'Soy un gato con estilo. Un gato gris, elegante y misterioso. Miau.'], ['mike', 'Y que reparte pasteles.'], ['acenix', 'Eso también. Es mi talento secreto.']]], ['Un secreto', [['acenix', 'A veces el pastel me mira... y yo lo miro... y nos entendemos sin hablar. Miau.']], 2]] }
+};
+async function talkAgain(id) {
+  const T0 = TOPICS[id], d = !!S.q.delivered[id], f = S.fav[id] || 0;
+  await say(id, T0.hi(d, f));
+  const list = T0.t.filter(t => !t[2] || f >= t[2]);
+  for (;;) {
+    const r = await ask(id, '¿De qué quieres hablar?', [...list.map(t => t[0]), 'Nada más, gracias']);
+    if (r >= list.length) { await say(id, d ? '¡Nos vemos en el tren!' : 'Aquí estaré.'); break; }
+    for (const [who, txt] of list[r][1]) await say(who, txt);
+    fav(id, 0);
+  }
+}
 // ---------- conversaciones de la ciudad ----------
 const CITY = {
   async trolino() {
@@ -61,9 +95,10 @@ const CITY = {
       await say('willy', '¡Guau! (Traducción: yo también voy y no me pueden dejar.)');
       await say('trolino', 'Antes de ir a la estación, pasa por Correos, al este. Ambrosio te anda buscando. Algo de cartas.');
       showHint('Objetivo: habla con Ambrosio en Correos (sigue la flecha)', 5);
-    } else await say('trolino', 'No te quedes parado, Mike. Correos queda al este. ¡Y la corona no se toca!');
+    } else await talkAgain('trolino');
   },
   async aquela() {
+    if (S.flags.aquela1) { await talkAgain('aquela'); return; } S.flags.aquela1 = true;
     await say('aquela', 'Hola, Mike. Me gusta pasear por tu calle: tiene buena vibra y buenos gatos.');
     const r = await ask('aquela', '¿Quieres un consejo?', ['¿Cómo se juega esto?', 'Sí, dime un secreto', 'No, gracias']);
     if (r === 0) { await say('aquela', 'Con el joystick te mueves. ACTUAR habla con la gente, y ATACAR usa tu espada. Solo dos botones. ¡Fácil!'); await M('Eso sí lo entiendo.'); }
@@ -83,11 +118,11 @@ const CITY = {
       await say('ambrosio', 'Cada compa vive en una calle distinta, así que explora la ciudad. Cuando termines, ¡corre a la estación!');
       showHint('Objetivo: entrega las 7 cartas  (arriba a la izquierda ves el progreso)', 6);
     } else if (!q.done) {
-      const left = q.total - q.count; await say('ambrosio', left === 1 ? '¡Solo falta una carta! Mira el mapa o sigue la flecha amarilla.' : 'Todavía faltan ' + left + ' cartas. ¡Tú puedes, héroe!');
+      const left = q.total - q.count; await say('ambrosio', left === 1 ? '¡Solo falta una carta! Mira el mapa o sigue la flecha amarilla.' : 'Todavía faltan ' + left + ' cartas. ¡Tú puedes, héroe!'); await talkAgain('ambrosio');
     } else await say('ambrosio', '¡Entregaste todas! Eres el mejor cartero sin sueldo que he visto. ¡Ve al tren!');
   },
   async timba() {
-    if (!needLetter('timba')) { await say('timba', S.q.delivered.timba ? '(bostezo) ...Zzz... Gracias por la carta... zzz...' : '(bostezo) ...Vuelve cuando tengas algo para mí... zzz...'); return; }
+    if (!needLetter('timba')) { await talkAgain('timba'); return; }
     await say('timba', '(bostezo) ...¿Quién es? ¿Ya es de mañana? ¿O todavía es ayer?');
     const r = await ask('timba', 'Ah, ¿una carta? Qué amable... Me da pereza abrir sobres. ¿Me la lees tú?', ['Te la leo con gusto', 'Ábrela tú, flojo', '¿Y si te leo un cuento mejor?']);
     if (r === 0) { await say('narr', '"Timba: no olvides despertar a tiempo para el tren. Atentamente, tu mejor amigo."'); await say('timba', 'Qué lindo, Mike. Eres mi persona favorita... después de mi cama.'); fav('timba', 2); }
@@ -96,7 +131,7 @@ const CITY = {
     await deliver('timba');
   },
   async rius() {
-    if (!needLetter('rius')) { await say('rius', S.q.delivered.rius ? '¡Cocoricó! La carta está en el nido. ¡O en el sombrero!' : '¡Cocoricó! ¿Buscas algo, Mike? ¡Aquí hay mucho pasto!'); return; }
+    if (!needLetter('rius')) { await talkAgain('rius'); return; }
     await say('rius', '¡COCORICÓ! ¡Buenos días, buenos días! Perdón, es costumbre.');
     const r = await ask('rius', '¡Adivina! ¿Qué hace un pollo cuando sale el sol?', ['¿Canta?', '¿Trabaja en un banco?', 'No sé... ¿cocorico?']);
     if (r === 0) { await say('rius', '¡Exacto! Cocorico. Ya veo que eres de los inteligentes.'); fav('rius', 1); }
@@ -106,7 +141,7 @@ const CITY = {
     await deliver('rius');
   },
   async mayo() {
-    if (!needLetter('mayo')) { await say('mayo', S.q.delivered.mayo ? 'Beep. La pizza de hoy está al 100% de cocción. Vuelve cuando quieras.' : 'Beep, boop. Bienvenido a Pizzería Mayo. Hoy hay oferta de 3x2... de queso.'); return; }
+    if (!needLetter('mayo')) { await talkAgain('mayo'); return; }
     await say('mayo', 'Beep, boop. Bienvenido a Pizzería Mayo. Analizando cliente... Mike detectado.');
     const r = await ask('mayo', 'Pregunta importante: ¿con qué quieres tu pizza?', ['Con piña', 'Solo queso', 'Con chocolate (¡estilo Mike!)']);
     if (r === 0) { await say('mayo', 'ERROR 404: buen gusto no encontrado... Es broma. Todos tenemos derecho a equivocarnos.'); fav('mayo', -1); }
@@ -116,17 +151,17 @@ const CITY = {
     await deliver('mayo');
   },
   async esparta() {
-    if (!needLetter('esparta')) { await say('esparta', S.q.delivered.esparta ? '¡Gracias por la carta! ¡Mi cabello se siente más fuerte que nunca!' : '¡ESTO ES... UN GIMNASIO! ¡Pasa, pasa!'); return; }
-    await say('esparta', '¡ESTO ES... UN GIMNASIO! ¡Bienvenido, Mike!');
-    const r = await ask('esparta', '¿Quieres entrenar conmigo antes de irnos?', ['¡Sí! ¡A sudar!', 'Mejor miro desde aquí', '¿Hay snacks?']);
-    if (r === 0) { await say('esparta', '¡Veinte sentadillas! ¡Uno! ¡Dos! ¡Tres! ...Ya, descansa, campeón.'); await M('(jadeando) Veinte... y media...'); fav('esparta', 2); }
-    else if (r === 1) { await say('esparta', 'La grada también es parte del entrenamiento. ¡Aplaudir quema calorías!'); fav('esparta', 1); }
-    else { await say('esparta', '¡Aquí solo hay proteína y rabia! ...Y unas galletas escondidas.'); }
-    await say('esparta', 'Una carta. ¡Gracias! La leeré mientras hago planchas.');
+    if (!needLetter('esparta')) { await talkAgain('esparta'); return; }
+    await say('esparta', '¡HOLA HOLA HOLA! ¡Mike! ¡Bienvenido al gimnasio más feliz de Diamantia!');
+    const r = await ask('esparta', '¡Vamos a jugar! ¿A qué quieres jugar?', ['Al escondite', 'A las espadas (con cuidado)', 'A adivinar qué dice la carta']);
+    if (r === 0) { await say('esparta', '¡Uno, dos, tres! ¡Ya voy!... ¿Mike? ¿Dónde te escondiste? ¡Estás parado frente a mí! ¡Jajaja!'); fav('esparta', 2); }
+    else if (r === 1) { await say('esparta', '¡Tac, tac, tac! ¡Gané! ...Ah, no, no estábamos jugando. ¡Jajaja! ¡Igual fue divertido!'); fav('esparta', 2); }
+    else { await say('esparta', 'Mmm... ¿una invitación a un banquete? ¿Mil monedas? ¿Un perrito? ¡O todo junto!'); fav('esparta', 2); }
+    await say('esparta', '¡Una carta para MÍ! ¡Nunca me escriben! ¡Qué felicidad! ¡Voy a bailar con las pesas!');
     await deliver('esparta');
   },
   async raptor() {
-    if (!needLetter('raptor')) { await say('raptor', S.q.delivered.raptor ? '¡Gracias, Mike! Voy a ver el final del anime. ¡Sin que nadie me haga spoiler!' : '¡Shhh! Estoy viendo el final de un anime. ¡No me hagas spoilers!'); return; }
+    if (!needLetter('raptor')) { await talkAgain('raptor'); return; }
     await say('raptor', '¡Mike! Mira este póster: edición limitada, firmado, ¡con el final SIN spoilers!');
     const r = await ask('raptor', 'Pregunta seria: ¿cuál es el mejor anime de la historia?', ['El de los diamantes y los perros', 'El de los ninjas, obvio', 'No veo anime, veo caricaturas']);
     if (r === 0) { await say('raptor', 'Ese no existe... todavía. ¡Pero ya me diste una idea para dibujar!'); fav('raptor', 2); }
@@ -136,17 +171,17 @@ const CITY = {
     await deliver('raptor');
   },
   async invictor() {
-    if (!needLetter('invictor')) { await say('invictor', S.q.delivered.invictor ? '¡Hola hola de nuevo! ¡Qué felicidad que me escribieran! ¡Jajaja!' : '¡HOLA HOLA! ¿Vienes a jugar o a visitarme? ¡Las dos cosas están bien!'); return; }
-    await say('invictor', '¡HOLA HOLA HOLA! ¡Mike! ¡Soy Invictor, el romano más feliz de toda Diamantia!');
-    const r = await ask('invictor', '¡Vamos a jugar! ¿A qué quieres jugar?', ['Al escondite', 'A las espadas (con cuidado)', 'A adivinar qué dice la carta']);
-    if (r === 0) { await say('invictor', '¡Uno, dos, tres! ¡Ya voy!... ¿Mike? ¿Dónde te escondiste? ¡Estás parado frente a mí! ¡Jajaja!'); fav('invictor', 2); }
-    else if (r === 1) { await say('invictor', '¡Tac, tac, tac! ¡Gané! ...Ah, no, no estábamos jugando. ¡Jajaja! ¡Igual fue divertido!'); fav('invictor', 2); }
-    else { await say('invictor', 'Mmm... ¿una invitación a un banquete? ¿Mil monedas? ¿Un perrito? ¡O todo junto!'); fav('invictor', 2); }
-    await say('invictor', '¡Una carta para MÍ! ¡Nunca me escriben! ¡Qué felicidad! ¡Voy a bailar!');
+    if (!needLetter('invictor')) { await talkAgain('invictor'); return; }
+    await say('invictor', '¡ESTO ES... LA VILLA ROMANA! ¡Bienvenido, Mike!');
+    const r = await ask('invictor', '¿Quieres entrenar conmigo antes de irnos?', ['¡Sí! ¡A sudar!', 'Mejor miro desde aquí', '¿Hay snacks?']);
+    if (r === 0) { await say('invictor', '¡Veinte sentadillas! ¡Uno! ¡Dos! ¡Tres! ...Ya, descansa, campeón.'); await M('(jadeando) Veinte... y media...'); fav('invictor', 2); }
+    else if (r === 1) { await say('invictor', 'La grada también es parte del entrenamiento. ¡Aplaudir quema calorías!'); fav('invictor', 1); }
+    else { await say('invictor', '¡Aquí solo hay proteína y rabia! ...Y unas galletas escondidas.'); }
+    await say('invictor', 'Una carta. ¡Gracias! La leeré mientras hago planchas.');
     await deliver('invictor');
   },
   async acenix() {
-    if (!needLetter('acenix')) { await say('acenix', S.q.delivered.acenix ? 'Miau. Gracias por la carta. Guardaré un pastel para ti.' : 'Miau. ...Perdón. Bienvenido al Café Gatuno. Hoy hay pastel.'); return; }
+    if (!needLetter('acenix')) { await talkAgain('acenix'); return; }
     await say('acenix', 'Miau. ...Perdón, se me escapó. Bienvenido al Café Gatuno.');
     const r = await ask('acenix', '¿Quieres pastel o prefieres jugar con el puntero láser?', ['Pastel, por favor', '¡El láser!', 'Los dos, por favor']);
     if (r === 0) { await say('acenix', 'Chocolate, como siempre. Eres de los míos.'); fav('acenix', 1); }
@@ -188,7 +223,7 @@ function startGame() {
   csOpening();
 }
 async function csOpening() {
-  S.skip = false; S.busy = true; loadLevel(0); setMusic('day'); setAmbient('day'); glMood(false);
+  S.skip = false; S.busy = true; loadLevel(0); setMusic('city'); setAmbient('day'); glMood(false);
   S.camShot = { x: P.x / T, z: P.y / T - 1.5, dist: 11 }; if (GL.ok) GL.camInit = false;
   await fadeTo(0, 1.2);
   await say('narr', 'Ciudad de Diamantia. Una mañana tranquila... demasiado tranquila. Hoy los compas se van de viaje en tren.');
@@ -209,9 +244,9 @@ async function csTrain() {
   await f('timba', '¡Mike! Tu carta me hizo el día. Zzz... digo, ¡qué alegría verte!', '(bostezo) Mike... llegaste. Zzz...');
   await f('rius', '¡Cocoricó, Mike! ¡Tu chiste del banco me tiene riendo desde la mañana!', '¡Cocoricó, Mike! ¡Qué bueno que viniste!');
   await f('mayo', 'Beep. Nivel de amistad con Mike: 100%. Pizza para el camino.', 'Beep. Mike detectado. Pizza para el camino, aunque no pidas piña.');
-  await f('esparta', '¡ESTO ES... UN VIAJE! ¡Campeón, vamos a entrenar en el tren!', '¡Esto es... un tren! ¡Qué grande!');
+  await f('esparta', '¡HOLA HOLA! ¡Mike! ¡Vamos a jugar en el tren! ¡Jajaja!', '¡Mike! ¡Qué felicidad que vengas! ¡Jajaja!');
   await f('raptor', '¡Mike! Ya vi el final del anime. ¡No te hago spoiler, lo juro!', 'Mike. Shhh. No hables: estoy leyendo el manga del viaje.');
-  await f('invictor', '¡HOLA HOLA! ¡Mike! ¡Vamos a jugar en el tren! ¡Jajaja!', '¡Mike! ¡Qué felicidad que vengas! ¡Jajaja!');
+  await f('invictor', '¡ESTO ES... UN VIAJE! ¡Campeón, vamos a entrenar en el tren!', '¡Esto es... un tren! ¡Qué grande!');
   await f('acenix', 'Miau. Te guardé pastel, Mike. De chocolate.', 'Miau. Hola, Mike. Hay pastel, si quieres.');
   await say('trolino', '¡Mike! ¡Todos a bordo! Y no te olvides de tu capa.');
   await M('¡Esta va a ser la mejor aventura de todas!');
@@ -226,7 +261,7 @@ async function csTrain() {
   for (const e of S.ents.filter(e => e.tag === 'crew')) e.corrupt = true;
   await say('timba', 'Exe dice que si lo ayudo me deja dormir tres días seguidos. ¡Trato hecho!', { red: true });
   await say('mayo', 'Beep. Exe ofrece pizza con doble queso. Me quedo. Beep.', { red: true });
-  await say('invictor', '¡Qué divertido! ¡Todos juntos! ...Aunque me duele un poco la cabeza. ¡Jajaja!', { red: true });
+  await say('esparta', '¡Qué divertido! ¡Todos juntos! ...Aunque me duele un poco la cabeza. ¡Jajaja!', { red: true });
   await say('acenix', 'Miau... Miau... MIAU.', { red: true });
   await say('trolino', 'Mi corona y yo trabajamos ahora para el jefe nuevo. Lo siento, Mike.', { red: true });
   // suben al tren
@@ -234,7 +269,7 @@ async function csTrain() {
   for (const e of S.ents.filter(e => e.tag === 'crew')) { const d = doors[k++ % doors.length]; e.goto = { x: d[0] + (k % 3 - 1) * 20, y: d[1] + 20, speed: 230, done: () => { e.hidden = true; spawnP(e.x, e.y - 20, 8, '#ff4a8a', 160, .5); sfx.pop(); } }; }
   for (let i = 0; i < 80 && S.ents.some(e => e.tag === 'crew' && !e.hidden); i++) await wait(.1);
   await say('exe', '¡Slimes corrompidos! ¡Ataquen al perrito de la capa! ¡Muajajá!');
-  S.ents = S.ents.filter(e => !(e.tag === 'crew')); S.camShot = null; setMusic('boss'); S.busy = false; startWave(1);
+  S.ents = S.ents.filter(e => !(e.tag === 'crew')); S.camShot = null; setMusic('chase'); S.busy = false; startWave(1);
 }
 async function csTrainEnd() {
   S.busy = true; S.skip = false; S.camShot = { x: 98, z: 40, dist: 17 }; sfx.win();

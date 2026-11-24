@@ -133,9 +133,9 @@ const AUDIO = {
 const VOICES = {
   mike: { f: 560, v: 90, type: 'triangle', len: .05, g: .05 }, willy: { f: 310, v: 40, type: 'square', len: .06, g: .04, gl: -90 },
   ambrosio: { f: 430, v: 130, type: 'square', len: .045, g: .035 }, trolino: { f: 150, v: 30, type: 'sawtooth', len: .06, g: .04 },
-  timba: { f: 240, v: 20, type: 'sine', len: .09, g: .07, gl: -50 }, rius: { f: 900, v: 220, type: 'square', len: .035, g: .03 },
-  mayo: { f: 700, v: 0, type: 'square', len: .05, g: .03, steps: [500, 700, 900, 620] }, esparta: { f: 190, v: 25, type: 'sawtooth', len: .07, g: .05 },
-  raptor: { f: 640, v: 150, type: 'triangle', len: .035, g: .05 }, invictor: { f: 760, v: 150, type: 'triangle', len: .04, g: .055, gl: 120 },
+  timba: { f: 300, v: 30, type: 'triangle', len: .1, g: .16, gl: -60 }, rius: { f: 900, v: 220, type: 'square', len: .035, g: .03 },
+  mayo: { f: 700, v: 0, type: 'square', len: .05, g: .03, steps: [500, 700, 900, 620] }, esparta: { f: 760, v: 150, type: 'triangle', len: .04, g: .075, gl: 120 },
+  raptor: { f: 640, v: 150, type: 'triangle', len: .035, g: .05 }, invictor: { f: 190, v: 25, type: 'sawtooth', len: .07, g: .06 },
   acenix: { f: 880, v: 40, type: 'sine', len: .09, g: .06, gl: 260 }, aquela: { f: 690, v: 60, type: 'sine', len: .06, g: .06 },
   exe: { f: 105, v: 15, type: 'sawtooth', len: .08, g: .05, det: 1.06 }, narr: null, default: { f: 400, v: 120, type: 'square', len: .04, g: .03 }
 };
@@ -229,6 +229,16 @@ const SONGS = {
     chords: [[45, 'm7'], [41, 'M7'], [48, 'M7'], [43, '7'], [45, 'm7'], [41, 'M7'], [48, 'M7'], [43, '7']],
     melody: 'E6 - . C6 - . A5 . | F6 - . C6 - . A5 . | G6 - . E6 - . C6 . | D6 - . B5 - . G5 . | C6 - E6 - A6 - E6 C6 | A5 - C6 - F6 - C6 A5 | E6 - G6 - C7 - G6 E6 | D6 - B5 - G5 - B5 D6'
   },
+  city: {
+    bpm: 126, lead: 'pluck', leadVol: .09, harm: 'flute', harmVol: .03, pad: 'strings', padVol: .016, bass: 'pluck', arp: 'bell', arpVol: .012, perc: 'folk',
+    chords: [[43, 'M'], [40, 'm'], [48, 'M'], [50, 'M'], [43, 'M'], [40, 'm'], [45, 'm'], [50, '7'], [48, 'M'], [43, 'M'], [45, 'm'], [50, 'M'], [48, 'M'], [50, 'M'], [43, 'M'], [43, 'M']],
+    melody: 'G5 - B5 D6 - B5 G5 - | E5 - G5 B5 - G5 E5 - | C6 - B5 A5 G5 - E5 G5 | F#5 A5 D6 - C6 A5 F#5 - | G5 - B5 D6 - G6 D6 B5 | E6 - D6 B5 G5 - B5 D6 | C6 - E6 A5 - C6 E6 - | D6 - C6 B5 A5 - F#5 . | E6 - D6 C6 E6 - G6 - | D6 - B5 G5 B5 - D6 - | C6 - E6 - A6 - E6 C6 | D6 - F#6 - A6 - F#6 D6 | E6 G6 E6 C6 E6 G6 C7 - | D6 F#6 D6 A5 D6 F#6 A6 - | B5 - D6 G6 - F#6 E6 D6 | G6 - . . G5 B5 D6 .'
+  },
+  chase: {
+    bpm: 164, lead: 'brass', leadVol: .07, harm: 'pluck', harmVol: .03, pad: 'strings', padVol: .016, bass: 'rock', arp: 'pluck', arpVol: .02, perc: 'rock',
+    chords: [[45, 'm'], [41, 'M'], [48, 'M'], [43, 'M'], [45, 'm'], [41, 'M'], [43, 'M'], [40, '7']],
+    melody: 'A5 - A5 C6 E6 - C6 A5 | F5 - A5 C6 F6 - C6 A5 | E5 - G5 C6 E6 - C6 G5 | D5 - G5 B5 D6 - B5 G5 | A5 C6 E6 A6 - E6 C6 A5 | A5 C6 F6 A6 - F6 C6 A5 | B5 D6 G6 B6 - G6 D6 B5 | G#5 B5 E6 - G#6 - E6 .'
+  },
   boss: {
     bpm: 150, lead: 'brass', leadVol: .075, pad: 'strings', padVol: .016, bass: 'rock', arp: null, perc: 'rock',
     chords: [[40, 'm'], [48, 'M'], [50, 'M'], [47, '7'], [40, 'm'], [48, 'M'], [50, 'M'], [47, '7']],
@@ -253,7 +263,7 @@ function playStep(sg, step, t) {
   else if (sg.bass === 'bass') { if (s === 0) INST.bass(t, mtof(root), sd * 12, .14, bus); if (s === 8) INST.bass(t, mtof(root + 7), sd * 6, .08, bus); }
   else if (sg.bass === 'rock') { if (s % 2 === 0) INST.bass(t, mtof(root + ((s % 8 === 6) ? 12 : 0)), sd * 1.8, .15, bus); }
   if (sg.arp && s % 2 === 0) INST[sg.arp](t, mtof(root + 24 + iv[(s / 2) % iv.length]), sd * 7, sg.arpVol, bus);
-  if (n) INST[sg.lead](t, mtof(n.m), sd * n.len * .96, sg.leadVol, bus);
+  if (n) { INST[sg.lead](t, mtof(n.m), sd * n.len * .96, sg.leadVol, bus); if (sg.harm) INST[sg.harm](t + .012, mtof(n.m - 12), sd * n.len * .9, sg.harmVol, bus); }
   switch (sg.perc) {
     case 'folk': if (s === 0 || s === 8) INST.kick(t, .18, bus); if (s === 4 || s === 12) A.noiseAt(t, .06, .05, 2600, bus); if (s % 2 === 0) INST.hat(t, .012, bus); break;
     case 'soft': if (s === 0) INST.kick(t, .1, bus); if (s === 8) A.noiseAt(t, .1, .02, 4000, bus); if (s % 4 === 2) INST.hat(t, .008, bus); break;

@@ -457,7 +457,7 @@ function loadLevel(id) {
   P.x = (L.start[0] + .5) * T; P.y = (L.start[1] + 1) * T - 8;
   P.vx = P.vy = 0; P.hp = P.maxHp; P.inv = 0; P.dead = false; P.dx = 0; P.dy = 1; P.face = 1; P.atk = 0;
   S.checkpoint = [P.x, P.y]; initWilly(); updateCamera(0, true);
-  setMusic(L.theme === 'dream' ? 'dream' : 'day'); setAmbient(L.theme === 'dream' ? 'dream' : 'day');
+  setMusic(L.theme === 'dream' ? 'dream' : 'city'); setAmbient(L.theme === 'dream' ? 'dream' : 'day');
 }
 function openDoorGroup(x, y, c) {
   const L = S.lvl, st = [[x, y]], seen = new Set();

@@ -40,7 +40,7 @@ function headBox(B, size, skin, face, y) {
   const sk = B.mt(skin), fm = B.tm(face), m = new THREE.Mesh(geoBox(size, size, size), [sk, sk, sk, sk, fm, sk]); m.position.set(0, y == null ? size / 2 : y, 0); m.castShadow = true; return m;
 }
 function hairBlock(B, head, type, col, s = 1) {
-  const m = B.mt(col), b = (w, h, d, x, y, z) => B.bx(head, w, h, d, m, x, y, z);
+  const m = B.mt(col), b = (w, h, d, x, y, z) => B.bx(head, w, h, d, m, x, y + .5, z);
   if (type === 'short') { b(1.06, .24, 1.06, 0, .56, 0); b(1.06, .6, .22, 0, .22, -.44); b(.12, .42, .72, .47, .32, -.06); b(.12, .42, .72, -.47, .32, -.06); b(1.0, .16, .16, 0, .5, .46); }
   else if (type === 'spiky') { b(1.06, .24, 1.06, 0, .56, 0); b(1.06, .7, .22, 0, .2, -.44); [[-.38, -.3], [0, -.35], [.38, -.3], [-.2, .15], [.2, .15], [-.4, .3], [.4, .3]].forEach(([x, z], i) => b(.3, .5 + (i % 2) * .22, .3, x, .88 + (i % 2) * .1, z)); b(.28, .3, .1, -.35, .38, .5); b(.28, .24, .1, .1, .4, .5); }
   else if (type === 'bangs') { b(1.1, .3, 1.1, 0, .58, 0); b(1.1, .8, .24, 0, .15, -.44); b(1.1, .26, .18, 0, .4, .48); b(.14, .6, .6, .52, .3, 0); b(.14, .6, .6, -.52, .3, 0); b(.26, .34, .12, -.38, .22, .5); b(.26, .26, .12, .4, .28, .5); }
@@ -123,7 +123,7 @@ const CHAR_DEF = {
     B.bx(B.g, .94, .42, .74, '#d82828', 0, .74, 0); B.bx(B.g, 1.0, 1.3, .08, '#c01c1c', 0, 1.0, -.32); for (const sx of [-1, 1]) B.bx(p['arm' + (sx < 0 ? 'L' : 'R')], .3, .16, .34, '#ffc030', 0, -.6, 0, false); for (const sx of [-1, 1]) B.bx(B.g, .12, .1, .1, '#ffc030', sx * .26, 1.48, .26, false);
   } }),
   aquela: () => catBiped({ fur: '#2ab8e0', paw: '#2ab8e0', chest: '#e8f8ff', earIn: '#1c3a9a', face: { skin: '#2ab8e0', eyes: 'big', iris: '#f4f4f4', mouth: 'cat', paint: R => { R(8, 18, 16, 12, '#e8f8ff'); R(6, 6, 4, 2, '#1c3a9a'); R(22, 6, 4, 2, '#1c3a9a'); } } }),
-  acenix: () => catBiped({ fur: '#f4f4f4', paw: '#f4f4f4', chest: '#fff', collar: '#d82020', earIn: '#f0a8b0', face: { skin: '#f4f4f4', eyes: 'cat', iris: '#d8e890', mouth: 'cat', blush: true }, extras: (B, p) => { B.bx(p.armR, .6, .05, .6, '#cccccc', 0, -.92, .3, false); B.bx(p.armR, .44, .3, .44, '#5a3018', 0, -.8, .3, false); const ch = new THREE.Mesh(new THREE.SphereGeometry(.1, 6, 5), B.mt('#d82020')); ch.position.set(0, -.58, .3); p.armR.add(ch); } }),
+  acenix: () => catBiped({ fur: '#a4a9b6', paw: '#e6e8ee', chest: '#e6e8ee', collar: '#d82020', earIn: '#f0a8b0', face: { skin: '#a4a9b6', eyes: 'big', iris: '#d8e890', ey: 13, ex: 8, mouth: 'cat', blush: true, paint: R => { R(7, 17, 18, 13, '#e6e8ee'); R(14, 3, 4, 5, '#8a8f9e'); R(9, 5, 3, 3, '#8a8f9e'); R(20, 5, 3, 3, '#8a8f9e'); } }, extras: (B, p) => { B.bx(p.armR, .56, .06, .56, '#f4f4f8', 0, -.92, .32, false); B.bx(p.armR, .46, .26, .46, '#5a3018', 0, -.76, .32, false); B.bx(p.armR, .5, .12, .5, '#c8a080', 0, -.66, .32, false); B.bx(p.armR, .4, .2, .4, '#7a4222', 0, -.52, .32, false); B.bx(p.armR, .3, .12, .3, '#f4f0e8', 0, -.4, .32, false); const ch = new THREE.Mesh(new THREE.SphereGeometry(.1, 6, 5), B.mt('#d82020')); ch.position.set(0, -.3, .32); p.armR.add(ch); } }),
 };
 function citizenSpec(seed) {
   const q = mkRng(seed * 977 + 13), P = a => a[Math.floor(q() * a.length)];

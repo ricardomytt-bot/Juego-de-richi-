@@ -3,7 +3,7 @@
 // Suelo: '.' pasto  ',' camino  'a' piso de piedra  'f' flores  'm' hongos
 // Sólidos: 'T' árbol 'R' roca 'W' muro 'C' muro agrietado 'G' puerta de diamantes '~' agua 'H' casa 'd' puerta de casa
 //          'b' arbusto/seto 'k' antorcha  'X' puerta de bronce  'Y' puerta de plata  'Z' puerta de oro
-const SOLID = 'TRWCG~HdbkXYZN';
+const SOLID = 'TRWCG~HdbkXYZNP';
 const DOORKEY = { X: 0, Y: 1, Z: 2 };
 const KEYNAMES = ['bronce', 'plata', 'oro'];
 const solidCh = c => SOLID.includes(c);
@@ -11,7 +11,7 @@ class Level {
   constructor(w, h, theme) {
     this.w = w; this.h = h; this.theme = theme;
     this.g = []; for (let y = 0; y < h; y++) this.g.push(new Array(w).fill('T'));
-    this.ents = []; this.signs = []; this.hp = {}; this.diaNeed = 0; this.must = []; this.buildings = []; this.train = null; this.station = null;
+    this.ents = []; this.signs = []; this.hp = {}; this.diaNeed = 0; this.must = []; this.buildings = []; this.deco = []; this.train = null; this.station = null;
     this.start = [3, 3]; this.exit = null; this.gate = null; this.arena = null; this.seen = null;
   }
   get(x, y) { if (x < 0 || y < 0 || x >= this.w || y >= this.h) return 'T'; return this.g[y][x]; }
@@ -19,6 +19,7 @@ class Level {
   fill(x0, y0, x1, y1, c) { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) this.set(x, y, c); }
   ent(type, tx, ty, extra) { this.ents.push(Object.assign({ type, tx, ty }, extra || {})); }
   sign(tx, ty, text) { this.signs.push({ x: (tx + .5) * T, y: (ty + 1) * T - 6, text }); }
+  prop(k, tx, ty, o) { this.pu = this.pu || {}; this.pu[tx + ',' + ty] = this.get(tx, ty); this.deco.push(Object.assign({ k, x: tx, y: ty }, o || {})); if (!o || o.solid !== false) this.set(tx, ty, 'P'); }
   mustReach(tx, ty) { this.must.push([tx, ty]); }
   // edificio sólido con puerta; face 'S' (puerta al sur) o 'N' (puerta al norte)
   building(x0, y0, x1, y1, o) {
@@ -105,11 +106,13 @@ function level0() {
   for (const x of [24, 48, 76]) R(x, 16, x + 3, 68, ',');
   // plaza central con fuente
   R(40, 22, 60, 35, 'a'); R(48, 26, 52, 30, '~');
+  // parque del norte-este
+  R(62, 21, 75, 35, 'f'); R(62, 28, 75, 28, 'a'); R(68, 21, 68, 35, 'a'); R(65, 25, 71, 31, 'a'); R(67, 27, 69, 29, '~');
   // estación
   R(88, 27, 106, 50, 'a'); R(88, 27, 88, 50, 'W'); R(88, 38, 88, 41, 'G'); R(91, 28, 105, 32, 'N');
   L.train = { x0: 91, y0: 28, x1: 105, y1: 32 }; L.trainDoors = [[94.5 * T, 33.2 * T], [98.5 * T, 33.2 * T], [102.5 * T, 33.2 * T]]; L.station = { x0: 89, y0: 34, x1: 106, y1: 49 };
   L.gate = { x: 88 * T, y: 38 * T, w: T, h: 4 * T, tiles: [[88, 38], [88, 39], [88, 40], [88, 41]], station: true };
-  // casas (puerta al sur salvo la de Mike)
+  // casas de los compas
   const mike = L.building(6, 69, 13, 75, { id: 'mike', color: '#e8c24a', roof: '#c0392b', label: 'CASA DE MIKE', face: 'N' });
   const post = L.building(14, 56, 21, 62, { id: 'ambrosio', color: '#f2d24a', roof: '#d35400', label: 'CORREOS' });
   const timba = L.building(30, 56, 37, 62, { id: 'timba', color: '#5b8de8', roof: '#2a3f8a', label: 'CASA DE TIMBA' });
@@ -119,23 +122,51 @@ function level0() {
   const esp = L.building(30, 9, 38, 15, { id: 'esparta', color: '#9ab8e8', roof: '#3a68b8', label: 'GIMNASIO ESPARTA' });
   const rap = L.building(56, 9, 63, 15, { id: 'raptor', color: '#e85a5a', roof: '#7a2a2a', label: 'TIENDA DE ANIME' });
   const inv = L.building(84, 9, 92, 15, { id: 'invictor', color: '#f4efe6', roof: '#b82a2a', label: 'VILLA ROMANA' });
+  // restaurante
+  const rest = L.building(37, 43, 46, 49, { id: 'restaurant', color: '#fff4e0', roof: '#2a8a5a', label: 'RESTAURANTE LA ESTRELLA' });
+  // casas blancas del vecindario
+  const roofs = ['#c0553a', '#3a6aa8', '#7a4a8a', '#3a8a5a', '#b8742a', '#a83a4a'], whites = [];
+  const house = (x0, y0, i) => { whites.push(L.building(x0, y0, x0 + 6, y0 + 5, { id: 'house', color: i % 5 === 3 ? '#f4efe0' : '#fbfbf8', roof: roofs[i % roofs.length], label: 'CASA ' + (10 + i * 3) })); };
+  let hi = 0;
+  for (const x of [5, 13, 29, 53, 61, 68, 80]) house(x, 44, hi++);
+  for (const x of [5, 29, 81, 88 > 0 ? 95 : 0]) { if (x < 88 || x > 93) house(x, 21, hi++); }
+  for (const x of [5, 14, 44, 76, 96]) house(x, 8, hi++);
+  for (const x of [30, 40, 54, 66, 82]) house(x, 70, hi++);
   // personajes en las puertas
   const npcAt = (id, p, extra) => L.ent('npc', p[0], p[1], Object.assign({ id }, extra || {}));
   npcAt('trolino', [mike[0] + 2, mike[1] - 1]); npcAt('ambrosio', post); npcAt('timba', timba); npcAt('rius', rius); npcAt('mayo', mayo);
   npcAt('acenix', ace); npcAt('esparta', esp); npcAt('raptor', rap); npcAt('invictor', inv);
   npcAt('aquela', [mike[0] - 2, mike[1] - 1]);
   // ciudadanos que pasean
-  const cit = [[30, 65], [44, 66], [70, 65], [95, 66], [20, 40], [56, 40], [45, 28], [57, 24], [26, 30], [78, 50], [50, 18], [100, 18]];
+  const cit = [[30, 65], [44, 66], [70, 65], [95, 66], [20, 40], [56, 40], [45, 28], [57, 24], [26, 30], [78, 50], [50, 18], [100, 18], [66, 30], [41, 52], [60, 66], [36, 40]];
   cit.forEach((p, i) => L.ent('citizen', p[0], p[1], { seed: i + 1 }));
   // diamantes escondidos y corazones
   L.ent('dia', 6, 52); L.ent('dia', 70, 11); L.ent('dia', 102, 60);
   for (const p of [[22, 66], [40, 40], [60, 18], [80, 65], [96, 40], [10, 40], [45, 24], [30, 18]]) L.ent('heart', p[0], p[1]);
-  for (const p of [mike, post, timba, rius, mayo, ace, esp, rap, inv]) L.mustReach(p[0], p[1]);
+  for (const p of [mike, post, timba, rius, mayo, ace, esp, rap, inv, rest, ...whites]) L.mustReach(p[0], p[1]);
   for (const [x, y] of [[9, 66], [6, 52], [70, 11], [102, 60], [87, 39], [89, 39], [96, 40], [50, 33], [45, 28]]) L.mustReach(x, y);
-  // decoración sin cortar caminos
+  // ----- decoración estructurada -----
+  // plaza: fuente con borde, bancas, puestos
+  for (let x = 47; x <= 53; x++) for (const y of [25, 31]) L.prop('rim', x, y, { solid: false });
+  for (let y = 26; y <= 30; y++) for (const x of [47, 53]) L.prop('rim', x, y, { solid: false });
+  L.deco.push({ k: 'statue', x: 50, y: 28 });
+  for (const [x, y, rot] of [[44, 28, 1], [56, 28, 3], [46, 33, 0], [54, 33, 0]]) L.prop('bench', x, y, { rot });
+  for (const [x, y, c] of [[42, 23, '#e84a4a'], [45, 23, '#4a8ae8'], [55, 23, '#e8c24a'], [58, 23, '#58b848']]) L.prop('stall', x, y, { c });
+  // parque: glorieta, bancas, farolas, pozo
+  L.prop('gazebo', 64, 23, { solid: true });
+  for (const [x, y, rot] of [[66, 28, 0], [70, 28, 0], [68, 24, 2], [68, 33, 0], [72, 25, 1], [72, 31, 3]]) L.prop('bench', x, y, { rot });
+  for (const [x, y] of [[65, 22], [72, 22], [65, 34], [73, 34], [63, 27], [74, 29]]) L.prop('tree2', x, y);
+  // restaurante: terraza con mesas y sombrillas
+  for (const [x, y, c] of [[38, 52, '#e84a4a'], [41, 52, '#ffd24a'], [44, 52, '#4a8ae8']]) L.prop('table', x, y, { c });
+  // vecindario: buzones, setos, barriles
+  for (const b of [...whites, mike, post, timba, rius, mayo, ace]) { /* flores junto a la puerta */ }
+  for (const bd of L.buildings) { if (bd.id === 'house') { const fy = bd.fy; for (const dx of [-2, 2]) { const x = bd.dx + dx, y = fy; if (L.get(x, y) === '.') L.set(x, y, 'f'); } L.prop('mail', bd.dx + 2, bd.fy - 0, { solid: false }); } }
+  // árboles en hilera junto a las avenidas
+  for (let x = 6; x <= 104; x += 6) for (const y of [62, 69]) if (L.get(x, y) === '.' ) L.set(x, y, 'T');
+  for (let x = 7; x <= 104; x += 6) for (const y of [37, 42]) if (L.get(x, y) === '.') L.set(x, y, 'T');
   const keep = [[9, 66, 3]];
-  L.scatter(3, 3, 106, 76, 'T', 170, 31, keep); L.scatter(3, 3, 106, 76, 'b', 70, 32, keep); L.scatter(3, 3, 106, 76, 'R', 24, 33, keep);
-  L.scatter(3, 3, 106, 76, 'f', 220, 34, [], '.');
+  L.scatter(3, 3, 106, 76, 'T', 60, 31, keep, '.'); L.scatter(3, 3, 106, 76, 'b', 80, 32, keep, '.'); L.scatter(3, 3, 106, 76, 'R', 12, 33, keep, '.');
+  L.scatter(3, 3, 106, 76, 'f', 520, 34, [], '.'); L.scatter(3, 3, 106, 76, 'm', 40, 35, [], '.');
   for (let x = 8; x <= 104; x += 8) for (const y of [63, 68, 38, 41, 16, 19]) { if (L.get(x, y) === ',') { L.set(x, y, 'k'); if (!L.allReachable()) L.set(x, y, ','); } }
   // letreros
   L.sign(9, 67, 'Calle de Mike  ·  Correos está al este →');
@@ -143,8 +174,10 @@ function level0() {
   L.sign(50, 36, 'Plaza de Diamantia');
   L.sign(86, 42, 'ESTACIÓN  →  (abre cuando entregues todas las cartas)');
   L.sign(6, 54, '¿Ese brillo es un diamante?');
-  L.sign(68, 12, 'Parque del Norte  ·  ¡algo brilla por aquí!');
+  L.sign(68, 20, 'Parque de las Estrellas');
+  L.sign(70, 12, '¡algo brilla por aquí!');
   L.sign(100, 62, 'Rincón del Sureste');
+  L.sign(41, 51, 'Restaurante La Estrella  ·  ¡Hoy hay pizza!');
   return L;
 }
 

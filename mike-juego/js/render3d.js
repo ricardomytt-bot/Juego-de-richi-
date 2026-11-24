@@ -6,7 +6,7 @@ function initGL() {
   try {
     if (!V3) return; const canvas = document.getElementById('gl'); if (!canvas) return;
     const r = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-    r.setPixelRatio(1); r.setSize(W, H, false); r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
+    r.setPixelRatio(1); r.setSize(Math.round(W * .6667), Math.round(H * .6667), false); r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
     GL.r = r; GL.scene = new THREE.Scene(); GL.cam = new THREE.PerspectiveCamera(38, W / H, .1, 220);
     GL.root = new THREE.Group(); GL.scene.add(GL.root);
     GL.amb = new THREE.AmbientLight(0xffffff, 1); GL.hemi = new THREE.HemisphereLight(0xbfe0ff, 0x4a6a3a, .5);
@@ -60,8 +60,8 @@ function glBuildLevel(L) {
   const floors = {}, add = (k, x, z) => (floors[k] || (floors[k] = [])).push({ x: x + .5, y: -.15, z: z + .5 });
   const trees = [], rocks = [], bushes = [], blocks = { W: [], R: [] }, flowers = [], mushes = [], waters = [];
   for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
-    const c = L.g[y][x], h = hash2(x, y);
-    if (c === '~') { waters.push({ x: x + .5, y: -.42, z: y + .5 }); add('dark0', x, y); continue; }
+    const c0 = L.g[y][x], c = c0 === 'P' ? ((L.pu && L.pu[x + ',' + y]) || '.') : c0, h = hash2(x, y);
+    if (c === '~') { waters.push({ x: x + .5, y: -.2, z: y + .5 }); continue; }
     if (c === ',') add('path' + (h % 2), x, y); else if (c === 'a') add('arena' + ((x + y) % 2), x, y);
     else if ('TWCGHdXYZN'.includes(c)) add('dark' + (h % 2), x, y); else add('grass' + (h % 3), x, y);
     if (c === 'T') trees.push([x, y, h]); else if (c === 'R') rocks.push([x, y, h]); else if (c === 'b') bushes.push([x, y, h]);
@@ -106,14 +106,15 @@ function glBuildLevel(L) {
   inst(g, geoBox(.14, .22, .14), new THREE.MeshLambertMaterial({ color: 0xffffff }), fl, false, false);
   const mu = []; mushes.forEach(([x, y, h]) => mu.push({ x: x + .3 + rnd3(h, 2) * .4, y: .22, z: y + .3 + rnd3(h, 6) * .4, sy: .8 + rnd3(h, 8), color: new THREE.Color([0x6ad8ff, 0xff6ad0][h % 2]) }));
   inst(g, geoBox(.3, .3, .3), new THREE.MeshBasicMaterial({ color: 0xffffff }), mu, false, false);
-  // pasto alto decorativo en el suelo de la ciudad
+  // matas de pasto y detalles del suelo
+  if (!dm) { const tf = [], q = mkRng(91); for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) { const c = L.g[y][x]; if ((c === '.' || c === 'f') && q() < .5) { const hh = .16 + q() * .22; tf.push({ x: x + .1 + q() * .8, y: hh / 2, z: y + .1 + q() * .8, sy: hh / .2, color: new THREE.Color().setHSL(.27 + q() * .06, .6, .34 + q() * .12) }); } } inst(g, geoBox(.07, .2, .07), new THREE.MeshLambertMaterial({ color: 0xffffff }), tf, false, false); }
+  glDeco(g, L);
   // edificios, antorchas, farolas, letreros
   for (const b of L.buildings) glBuilding(g, b, L);
   for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) if (L.g[y][x] === 'k') glLamp(g, x, y, L);
   for (const s of L.signs) glSign(g, s);
   if (L.train) glTrain(g, L);
   if (L.station) glStation(g, L);
-  if (L.theme === 'city') glClouds(g);
   if (L.arena) { const a = L.arena; GL.arenaC = [(a.x0 + a.x1) / 2 / T, (a.y0 + a.y1) / 2 / T]; }
   GL.camInit = false;
 }
@@ -159,6 +160,9 @@ function glBuilding(g, b, L) {
   const sg = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, 6.4), Math.min(w, 6.4) * 40 / 256 * 1.0), new THREE.MeshBasicMaterial({ map: cTex(labelCanvas(b.label, '#2a1a30', '#ffe14a')), transparent: false }));
   sg.position.set(dxl, 2.05, fz * (d / 2 + .05)); if (fz < 0) sg.rotation.y = Math.PI; grp.add(sg);
   // detalles por casa
+  if (b.id !== 'mike') { const ch = mesh(geoBox(.5, 1.2, .5), lam(0x8a5a4a), w / 4, H + 1.3, -d / 5); grp.add(ch); grp.add(mesh(geoBox(.6, .1, .6), lam(0x4a3a3a), w / 4, H + 1.95, -d / 5, false)); }
+  for (const sx of [-1, 1]) { const wxp = sx * Math.max(1.4, w / 2 - 1.5); grp.add(mesh(geoBox(.95, .22, .28), lam(0x7a4a2a), wxp, 1.1, fz * (d / 2 + .1), false)); for (let i = 0; i < 4; i++) grp.add(mesh(geoBox(.14, .16, .14), lam([0xff6a8a, 0xffe14a, 0xffffff, 0xff9a3a][i]), wxp - .33 + i * .22, 1.28, fz * (d / 2 + .1), false)); }
+  if (b.id === 'restaurant') { for (let i = 0; i < 8; i++) grp.add(mesh(geoBox(w / 8 - .02, .1, 1.3), lam(i % 2 ? 0xffffff : 0x2a8a5a), -w / 2 + (i + .5) * w / 8, 2.7, fz * (d / 2 + .6), false)); for (const sx of [-1, 1]) grp.add(mesh(geoBox(.1, 2.6, .1), lam(0x5a3a1a), sx * (w / 2 - .3), 1.3, fz * (d / 2 + 1.2), false)); }
   if (b.id === 'ambrosio') { grp.add(mesh(geoBox(.5, .7, .4), lam(0x2a6ad8), dxl + 1.4, .35, fz * (d / 2 + .5))); }
   if (b.id === 'rius') { for (const [hx, hz] of [[-w / 2 - 1, 0], [-w / 2 - 1, 1.1]]) grp.add(mesh(geoBox(.9, .7, .9), lam(0xe8c24a), hx, .35, hz + d / 2 - 1)); }
   if (b.id === 'mayo') grp.add(mesh(new THREE.CylinderGeometry(.7, .7, .16, 12), lam(0xffc04a), dxl, 3.7, fz * (d / 2 - .4)));
@@ -191,7 +195,24 @@ function glTrain(g, L) {
 }
 function glStation(g, L) {
   const s = L.station, cx = (s.x0 + s.x1 + 1) / 2, cz = s.y0 + 4;
-  for (const sx of [-6, 0, 6]) g.add(mesh(geoBox(.3, 3.4, .3), lam(0x4a3a2a), cx + sx, 1.7, cz)); g.add(mesh(geoBox(15, .3, 4.5), lam(0xc0392b), cx, 3.5, cz));
-  const clock = mesh(new THREE.CylinderGeometry(.6, .6, .15, 14), lam(0xf4f0e8), cx, 4.4, cz); clock.rotation.x = Math.PI / 2; g.add(clock);
+  for (const sx of [-7, 7]) { g.add(mesh(geoBox(.3, 3.4, .3), lam(0x4a3a2a), cx + sx, 1.7, s.y0 + .6)); g.add(mesh(geoBox(1.6, .8, .08), lam(0xc0392b), cx + sx, 3.0, s.y0 + .6, false)); }
+  const clock = mesh(new THREE.CylinderGeometry(.6, .6, .15, 14), lam(0xf4f0e8), cx, 4.4, s.y0 + .6); clock.rotation.x = Math.PI / 2; g.add(clock);
   for (const bx of [-5, 5]) g.add(mesh(geoBox(1.8, .4, .6), lam(0x8a5a30), cx + bx, .45, s.y1 - 2), mesh(geoBox(1.8, .8, .12), lam(0x8a5a30), cx + bx, .9, s.y1 - 2.3));
+}
+
+// ---------- decoración de la ciudad ----------
+function glDeco(g, L) {
+  const wood = lam(0x8a5a30), dwood = lam(0x5a3a1a), stone = lam(0xb8b8c4), grp = [];
+  for (const d of L.deco) {
+    const m = new THREE.Group(); m.position.set(d.x + .5, 0, d.y + .5); const rot = (d.rot || 0) * Math.PI / 2; m.rotation.y = rot;
+    if (d.k === 'bench') m.add(mesh(geoBox(1.1, .12, .42), wood, 0, .5, 0), mesh(geoBox(1.1, .4, .08), wood, 0, .8, -.2), mesh(geoBox(.1, .5, .4), dwood, -.45, .25, 0), mesh(geoBox(.1, .5, .4), dwood, .45, .25, 0));
+    else if (d.k === 'rim') m.add(mesh(geoBox(1, .5, 1), stone, 0, .25, 0, true, true));
+    else if (d.k === 'statue') { m.add(mesh(geoBox(.9, .6, .9), stone, 0, .3, 0), mesh(geoBox(.5, 1.3, .5), lam(0xe8e8ee), 0, 1.25, 0), mesh(geoBox(.62, .62, .62), lam(0xf4f4fa), 0, 2.2, 0), mesh(geoBox(.7, .2, .7), lam(0xffd24a), 0, 2.6, 0)); }
+    else if (d.k === 'stall') { const c = d.c || '#e84a4a'; m.add(mesh(geoBox(1.9, .9, .9), wood, 0, .45, .2), mesh(geoBox(.1, 2, .1), dwood, -.9, 1, -.35), mesh(geoBox(.1, 2, .1), dwood, .9, 1, -.35), mesh(geoBox(2.2, .14, 1.5), lam(c), 0, 2.05, .05)); for (let i = 0; i < 4; i++) m.add(mesh(geoBox(.3, .06, 1.5), lam(0xffffff), -.75 + i * .5, 2.13, .05, false)); for (let i = 0; i < 4; i++) m.add(mesh(geoBox(.22, .22, .22), lam([0xff4a4a, 0xffd24a, 0x58c058, 0xff9a3a][i]), -.6 + i * .4, 1.0, .2, false)); }
+    else if (d.k === 'table') { const c = d.c || '#e84a4a'; m.add(mesh(geoBox(.12, 1.1, .12), dwood, 0, .55, 0), mesh(geoBox(1.0, .1, 1.0), lam(0xfff4dc), 0, 1.0, 0), mesh(new THREE.ConeGeometry(.85, .5, 8), lam(c), 0, 2.1, 0), mesh(geoBox(.08, 1.2, .08), lam(0xdddddd), 0, 1.6, 0, false)); for (const sx of [-1, 1]) m.add(mesh(geoBox(.34, .4, .34), wood, sx * .8, .2, 0)); }
+    else if (d.k === 'gazebo') { for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) m.add(mesh(geoBox(.2, 2.2, .2), lam(0xf4f0e8), sx * .8, 1.1, sz * .8)); m.add(mesh(new THREE.ConeGeometry(1.5, 1.0, 4), lam(0x3a8a5a), 0, 2.7, 0), mesh(geoBox(1.9, .14, 1.9), lam(0xf4f0e8), 0, 2.2, 0)); m.children[m.children.length - 1].castShadow = true; m.children[m.children.length - 2].rotation.y = Math.PI / 4; }
+    else if (d.k === 'mail') m.add(mesh(geoBox(.1, .7, .1), dwood, 0, .35, 0), mesh(geoBox(.4, .3, .3), lam(0x2a6ad8), 0, .8, 0));
+    else if (d.k === 'tree2') { const cols = [0xff8ab0, 0xffb0c8, 0xffa0d0]; m.add(mesh(geoBox(.34, 1.3, .34), lam(0x6b4424), 0, .65, 0)); for (const [x, y, z, w] of [[0, 1.6, 0, 1.4], [-.4, 1.4, .2, 1.0], [.4, 1.5, -.2, 1.0], [0, 2.1, 0, .9]]) m.add(mesh(geoBox(w, .7, w), lam(cols[(d.x + d.y) % 3]), x, y, z)); }
+    g.add(m);
+  }
 }
