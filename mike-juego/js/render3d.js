@@ -14,7 +14,7 @@ function initGL() {
     const sc = GL.sun.shadow.camera; sc.left = -24; sc.right = 24; sc.top = 24; sc.bottom = -24; sc.near = 1; sc.far = 90; GL.sun.shadow.bias = -.0007; GL.sun.shadow.normalBias = .05;
     GL.plight = new THREE.PointLight(0xffe0b0, 0, 14, 1.6); GL.blight = new THREE.PointLight(0xff3060, 0, 30, 1.4);
     GL.scene.add(GL.amb, GL.hemi, GL.sun, GL.sun.target, GL.plight, GL.blight);
-    GL.ok = true;
+    GL.ok = true; fit();
   } catch (e) { console.warn('3D no disponible, uso el modo 2D', e); GL.ok = false; }
 }
 

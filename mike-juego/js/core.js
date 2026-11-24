@@ -1,18 +1,19 @@
 'use strict';
 // ===== Núcleo: canvas, utilidades, entrada (joystick + 2 botones), sonido y música =====
-const W = 960, H = 540, T = 48;
+let W = 960; const H = 540, T = 48;
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 cv.width = W; cv.height = H;
 ctx.imageSmoothingEnabled = false;
 function fit() {
-  let s = Math.min(innerWidth / W, innerHeight / H);
-  if (s >= 2) s = Math.floor(s);
+  const asp = innerWidth / innerHeight, nw = Math.max(720, Math.min(1300, Math.round(H * asp / 2) * 2));
+  if (nw !== W) { W = nw; cv.width = W; try { if (GL.ok) { GL.r.setSize(Math.round(W * .6667), Math.round(H * .6667), false); GL.cam.aspect = W / H; GL.cam.updateProjectionMatrix(); } } catch (e) { } }
+  const s = Math.min(innerWidth / W, innerHeight / H);
   const w = Math.round(W * s) + 'px', h = Math.round(H * s) + 'px', wr = document.getElementById('wrap'), gl = document.getElementById('gl');
   cv.style.width = w; cv.style.height = h;
   if (gl) { gl.style.width = w; gl.style.height = h; }
   if (wr) { wr.style.width = w; wr.style.height = h; }
 }
-addEventListener('resize', fit); fit();
+addEventListener('resize', fit); addEventListener('orientationchange', () => setTimeout(fit, 200)); fit();
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;

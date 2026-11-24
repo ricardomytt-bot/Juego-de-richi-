@@ -1,7 +1,7 @@
 'use strict';
 // ===== Lógica (vista desde arriba): estado, movimiento, combate, enemigos, jefe =====
 const SPEED = 330;
-const BOSS_HP = 18;
+const BOSS_HP = 110;
 const CH = {
   mike: '01_mike', exe: '02_mike_malvado', willy: '03_perro_negro', ambrosio: '04_cartero', aquela: '05_gata_azul',
   rius: '06_gallo_espada', mayo: '07_robot_pizza', acenix: '08_gato_blanco_pastel', esparta: '09_chico_capucha_azul',
@@ -386,7 +386,7 @@ function updateBoss(dt) {
   const b = S.boss; if (!b || b.dead) return;
   const L = S.lvl, A = L.arena;
   b.anim += dt; b.flash = Math.max(0, b.flash - dt);
-  const dx = P.x - b.x, dy = P.y - b.y, d = Math.hypot(dx, dy) || 1, spd = b.phase === 2 ? 125 : 86;
+  const dx = P.x - b.x, dy = P.y - b.y, d = Math.hypot(dx, dy) || 1, spd = b.phase === 2 ? 150 : 108;
   switch (b.state) {
     case 'idle': case 'saved': b.vx = b.vy = 0; break;
     case 'walk':
@@ -394,7 +394,7 @@ function updateBoss(dt) {
       if (d > 80) { b.vx = dx / d * spd; b.vy = dy / d * spd; } else { b.vx = b.vy = 0; }
       if (b.t <= 0) {
         b.vx = b.vy = 0; b.count++;
-        if (b.count % 3 === 0) { b.state = 'sleep'; b.t = 3.4; floater(b.x - 60, b.y - 130, '¡Me dio sueñito...!', '#9ad0ff'); }
+        if (b.count % 4 === 0) { b.state = 'sleep'; b.t = 2.8; floater(b.x - 60, b.y - 130, '¡Me dio sueñito...!', '#9ad0ff'); }
         else {
           const r = Math.random();
           if (b.phase === 2 && r < .3) { b.state = 'rain'; b.t = 4; b.rain = 0; floater(b.x - 70, b.y - 130, '¡CONTANDO OVEJAS!', '#fff'); }
@@ -409,11 +409,11 @@ function updateBoss(dt) {
     case 'throw':
       b.vx = b.vy = 0; b.t -= dt; b.face = sign(dx) || b.face;
       if (b.t <= .3 && !b.fired) {
-        b.fired = true; const n = b.phase === 2 ? 3 : 1, a0 = Math.atan2(dy, dx);
-        for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * .32; S.proj.push({ type: 'pillow', x: b.x, y: b.y, z: 50, vx: Math.cos(a) * 270, vy: Math.sin(a) * 270, rot: 0, life: 3 }); }
+        b.fired = true; const n = b.phase === 2 ? 5 : 2, a0 = Math.atan2(dy, dx);
+        for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * .32; S.proj.push({ type: 'pillow', x: b.x, y: b.y, z: 50, vx: Math.cos(a) * 340, vy: Math.sin(a) * 340, rot: 0, life: 3 }); }
         sfx.whoosh();
       }
-      if (b.t <= -.4) { b.state = 'walk'; b.t = rnd(1.1, 1.8); }
+      if (b.t <= -.4) { b.state = 'walk'; b.t = rnd(.7, 1.2); }
       break;
     case 'slam': {
       b.vx = b.vy = 0; b.t -= dt;
@@ -426,20 +426,20 @@ function updateBoss(dt) {
       }
       break;
     }
-    case 'recover': b.vx = b.vy = 0; b.t -= dt; if (b.t <= 0) { b.state = 'walk'; b.t = rnd(1.0, 1.6); } break;
+    case 'recover': b.vx = b.vy = 0; b.t -= dt; if (b.t <= 0) { b.state = 'walk'; b.t = rnd(.6, 1.0); } break;
     case 'rain':
       b.vx = b.vy = 0; b.t -= dt; b.rain -= dt;
       if (b.rain <= 0) {
-        b.rain = b.phase === 2 ? .5 : .75;
+        b.rain = b.phase === 2 ? .32 : .55;
         const near = Math.random() < .55, x = near ? P.x + rnd(-60, 60) : rnd(A.x0 + 60, A.x1 - 60), y = near ? P.y + rnd(-60, 60) : rnd(A.y0 + 60, A.y1 - 40);
         S.warns.push({ x, y, r: 48, t: 0, dur: .95, kind: 'sheep' }); sfx.warn();
       }
-      if (b.t <= 0) { b.state = 'walk'; b.t = rnd(1, 1.6); }
+      if (b.t <= 0) { b.state = 'walk'; b.t = rnd(.6, 1); }
       break;
     case 'sleep':
       b.vx = b.vy = 0; b.t -= dt; b.zzz -= dt;
       if (b.zzz <= 0) { b.zzz = .6; floater(b.x + 20, b.y - 120, 'Z', '#9ad0ff'); }
-      if (b.t <= 0) { b.state = 'walk'; b.t = rnd(1.2, 1.8); floater(b.x - 20, b.y - 130, '¡¿Qué?!', '#fff'); }
+      if (b.t <= 0) { b.state = 'walk'; b.t = rnd(.8, 1.2); floater(b.x - 20, b.y - 130, '¡¿Qué?!', '#fff'); }
       break;
   }
   if (b.state !== 'slam') moveBody(L, b, dt);

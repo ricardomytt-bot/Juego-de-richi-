@@ -493,7 +493,7 @@ function drawWorld() {
   if (ns) { ctx.font = 'bold 17px "Courier New"'; const tw = ctx.measureText(ns.text).width + 28; ctx.fillStyle = 'rgba(10,8,30,.88)'; ctx.fillRect(ns.x - tw / 2, ns.y - 120, tw, 40); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.strokeRect(ns.x - tw / 2 + 1, ns.y - 119, tw - 2, 38); txt(ns.text, ns.x, ns.y - 110, { size: 17, align: 'center', outline: false }); }
   for (const f of S.floaters) { ctx.globalAlpha = clamp(1.3 - f.t, 0, 1); txt(f.text, f.x, f.y, { size: 18, color: f.color }); }
   ctx.globalAlpha = 1; ctx.restore();
-  ctx.drawImage(VIG, 0, 0);
+  ctx.drawImage(VIG, 0, 0, W, H);
   drawHUD();
 }
 const LEAVES = []; for (let i = 0; i < 26; i++) LEAVES.push({ x: Math.random() * W, y: Math.random() * H, vx: 14 + Math.random() * 20, vy: 22 + Math.random() * 26, p: Math.random() * 6, c: i % 3 });
@@ -709,7 +709,7 @@ function drawStage() {
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   ctx.restore();
   // luz de cine: viñeta fuerte + barras negras
-  ctx.drawImage(VIG, 0, 0); ctx.drawImage(VIG, 0, 0);
+  ctx.drawImage(VIG, 0, 0, W, H); ctx.drawImage(VIG, 0, 0, W, H);
   const bar = Math.round(46 * Math.min(1, (st.barT = (st.barT || 0) + .02) / 1)); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, bar); ctx.fillRect(0, H - bar, W, bar);
   if (st.flash > 0) { ctx.fillStyle = `rgba(255,255,255,${st.flash})`; ctx.fillRect(0, 0, W, H); }
   if (st.card) { ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(0, 150, W, 140); txt(st.card, W / 2, 180, { size: 40, align: 'center', color: '#ffe14a' }); if (st.card2) txt(st.card2, W / 2, 240, { size: 22, align: 'center', color: '#fff' }); }
@@ -740,7 +740,7 @@ function drawTitle() {
   txt('Y LAS ESTRELLAS OSCURAS', W / 2, 160, { size: 38, align: 'center', color: '#fff', lw: 8 });
   txt('— PILOTO —', W / 2, 212, { size: 20, align: 'center', color: '#9ad0ff' });
   const sp = (t * .22) % 1; if (sp < .35) { const k = sp / .35, sx = 120 + k * 520, sy = 40 + k * 190; ctx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 12; i++) { ctx.globalAlpha = (1 - k) * (1 - i / 12) * .8; ctx.fillStyle = '#fff'; ctx.fillRect(sx - i * 7, sy - i * 3.6, 5, 5); } ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
-  ctx.drawImage(VIG, 0, 0);
+  ctx.drawImage(VIG, 0, 0, W, H);
 }
 function drawDialog() {
   const d = S.dialog; if (!d) return;
@@ -783,7 +783,7 @@ function drawFrame() {
   if (!use3d) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); }
   if (S.mode === 'title') drawTitle();
   else if (S.stage) drawStage();
-  else if (S.lvl) { if (use3d) { glFrame(S.dtv || 1 / 60); drawOverlay3D(); ctx.drawImage(VIG, 0, 0); drawHUD(); } else drawWorld(); }
+  else if (S.lvl) { if (use3d) { glFrame(S.dtv || 1 / 60); drawOverlay3D(); ctx.drawImage(VIG, 0, 0, W, H); drawHUD(); } else drawWorld(); }
   drawDialog();
   drawMenu();
   if (S.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${S.fade})`; ctx.fillRect(0, 0, W, H); }

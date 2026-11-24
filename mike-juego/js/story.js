@@ -358,7 +358,7 @@ async function csEnding() {
   if (window.BOSS_ONLY || q.has('lvl') || q.has('boss') || q.has('end') || q.has('train') || q.has('city')) {
     S.mode = 'play'; S.fade = 0; MENU.open = false;
     if (window.BOSS_ONLY) {
-      loadLevel(1); S.dia = 3; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 26.5 * T; P.y = 21.5 * T; P.special = true; P.kills = 5; initWilly(); updateCamera(0, true);
+      loadLevel(1); S.dia = 3; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = S.lvl.arena.enter[0]; P.y = S.lvl.arena.enter[1]; P.special = true; P.kills = 5; initWilly(); updateCamera(0, true);
       showHint('Toca la pantalla o pulsa una tecla para empezar la batalla', 60);
       const go = () => { removeEventListener('pointerdown', go); removeEventListener('keydown', go); AUDIO.unlock(); startBoss(); }; addEventListener('pointerdown', go); addEventListener('keydown', go);
     }
