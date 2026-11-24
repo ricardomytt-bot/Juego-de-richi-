@@ -135,7 +135,7 @@ function level0() {
   for (const x of [30, 40, 54, 66, 82]) house(x, 70, hi++);
   // personajes en las puertas
   const npcAt = (id, p, extra) => L.ent('npc', p[0], p[1], Object.assign({ id }, extra || {}));
-  npcAt('trolino', [mike[0] + 2, mike[1] - 1], { hideAfter: 'trainDone' }); L.ent('npc', 44, 24, { id: 'trolino', shop: true, hideUntil: 'trainDone' });
+  npcAt('trolino', [mike[0] + 2, mike[1] - 1], { hideAfter: 'trainDone' }); L.ent('npc', 44, 24, { id: 'ambrosio', job: 'perritos', shop: true }); L.ent('npc', 96, 36, { id: 'ambrosio', job: 'conductor' }); L.ent('npc', 42, 54, { id: 'ambrosio', job: 'mesero' }); L.ent('npc', 74, 60, { id: 'ambrosio', job: 'dj' });
   for (const [bx, by] of [[50, 34], [9, 64], [96, 44], [68, 36], [100, 66]]) L.ent('bonfire', bx, by);
   npcAt('aquela', [mike[0] - 2, mike[1] - 1]);
   // ciudadanos que pasean
@@ -320,7 +320,7 @@ function interiorLevel(z) {
   if (inf.id === 'restaurant') { L.prop('tableR', 4, 6, {}); L.prop('tableR', 7, 3, {}); }
   L.sign(7, 7, inf.label ? inf.label : 'Una casa acogedora');
   const owner = inf.id === 'house' ? null : inf.id;
-  if (owner && owner !== 'mike') L.ent('npc', 7, 5, { id: owner, owner });
+  if (owner && owner !== 'mike') L.ent('npc', 7, 5, owner === 'ambrosio' ? { id: owner, shop: true } : { id: owner, owner });
   if (inf.id === 'house') L.ent('citizen', 7, 5, { seed: (inf.seed % 6) + 1 });
   L.exits = [{ x0: 6, y0: 8, x1: 8, y1: 8, to: 0, spawn: inf.out, lock: null }];
   for (const [x, y] of [[7, 7], [7, 8]]) L.mustReach(x, y);

@@ -33,7 +33,7 @@ function applyTouchVisibility() { const t = document.getElementById('touch'); if
 // ----- Entrada: teclado, joystick y dos botones (ACTUAR / ATACAR) -----
 const keys = {}, pressed = {};
 const JOY = { x: 0, y: 0, active: false, dirs: {} };
-const PTR = { x: 0, y: 0, hit: false };
+const PTR = { x: 0, y: 0, hit: false, tap: false, down: false, drag: false, ly: 0, sy0: 0, mv: 0 };
 const K = {
   left: ['ArrowLeft', 'KeyA'], right: ['ArrowRight', 'KeyD'], up: ['ArrowUp', 'KeyW'], down: ['ArrowDown', 'KeyS'],
   atk: ['KeyJ', 'KeyX', 'Space'], act: ['KeyE', 'KeyK'],
@@ -58,8 +58,12 @@ addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; JOY.x = JOY.y = 0; JOY.active = false; });
 cv.addEventListener('pointerdown', e => {
   window.focus(); AUDIO.unlock();
-  const r = cv.getBoundingClientRect(); PTR.x = (e.clientX - r.left) * W / r.width; PTR.y = (e.clientY - r.top) * H / r.height; PTR.hit = true;
+  const r = cv.getBoundingClientRect(); PTR.x = (e.clientX - r.left) * W / r.width; PTR.y = (e.clientY - r.top) * H / r.height; PTR.hit = true; PTR.down = true; PTR.drag = false; PTR.ly = PTR.y; PTR.sy0 = PTR.y; PTR.mv = 0;
 });
+cv.addEventListener('pointermove', e => { if (!PTR.down) return; const r = cv.getBoundingClientRect(), y = (e.clientY - r.top) * H / r.height; PTR.mv += y - PTR.ly; PTR.ly = y; if (Math.abs(y - PTR.sy0) > 12) PTR.drag = true; });
+const ptrUp = e => { if (!PTR.down) return; PTR.down = false; const r = cv.getBoundingClientRect(); PTR.x = (e.clientX - r.left) * W / r.width; PTR.y = (e.clientY - r.top) * H / r.height; if (!PTR.drag) PTR.tap = true; };
+cv.addEventListener('pointerup', ptrUp); cv.addEventListener('pointercancel', () => { PTR.down = false; });
+cv.addEventListener('wheel', e => { if (typeof MENU !== 'undefined' && MENU.open) { MENU.scroll = (MENU.scroll || 0) + e.deltaY * .6; e.preventDefault(); } }, { passive: false });
 function navEdge() {
   const d = { ArrowLeft: JOY.x < -.6, ArrowRight: JOY.x > .6, ArrowUp: JOY.y < -.6, ArrowDown: JOY.y > .6 };
   for (const k in d) { if (d[k] && !JOY.dirs[k]) pressed[k] = true; JOY.dirs[k] = d[k]; }

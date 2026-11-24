@@ -106,6 +106,12 @@ const CITY = {
   },
   async ambrosio() {
     const q = S.q;
+    if (S.flags.trainDone) {
+      await say('ambrosio', S.restored >= 7 ? '¡Mike! Soy cartero, tendero, cocinero, mecánico y ahora alcalde provisional. ¡Todo con descuento de héroe!' : '¡Mike! No me llevó Exe porque estaba repartiendo cartas... y vendiendo perritos... y arreglando el semáforo. Tengo todos los trabajos, ¿recuerdas?');
+      const r = await ask('ambrosio', '¿Qué necesitas hoy?', ['Ver la tienda', 'Solo saludar']);
+      if (r === 0) setTimeout(() => openMenu('shop'), 50); else await say('ambrosio', '¡Pues aquí estaré! En Correos, en el puesto, en la estación... en todos lados. ¡Soy una persona muy ocupada!');
+      return;
+    }
     if (!q.gotLetters) {
       await say('ambrosio', '¡Mike! ¡Gracias al cielo! Se me juntaron TODAS las cartas del mes y mi bicicleta se hizo bolita.');
       const r = await ask('ambrosio', 'Necesito ayuda para repartir las cartas de tus amigos. ¿Me ayudas?', ['¡Claro, cuenta conmigo!', '¿Y por qué no las repartes tú?', '¿Me pagas?']);
@@ -204,10 +210,22 @@ async function citizenTalk(e) {
   const r = await ask(e.id, '¿Qué le respondes?', c[1], { name: 'Vecino', seed, portrait: false });
   await say(e.id, c[2][r], { name: 'Vecino', seed, portrait: false });
 }
+const JOBS = {
+  perritos: { name: 'Puesto de perritos', lines: ['¡Perritos calientes! ¡Calientes como el chocolate de Rius! ...Perdón, no vendo chocolate. Bueno, sí. También vendo chocolate.'], shop: true },
+  conductor: { name: 'Jefe de estación', lines: ['¡Atención, pasajeros! Soy el jefe de estación, el conductor, el que pone el sello, el que barre... y el que silba el tren.', '¿Que yo soy el cartero? Sí. ¿Y el conductor? Sí. ¿Y el que vende los boletos? También. Los lunes soy tres personas.'] },
+  mesero: { name: 'Mesero', lines: ['¡Bienvenido al Restaurante La Estrella! Soy el mesero, el cocinero, el que lava los platos y el que escribe el menú.', 'Hoy hay pizza. Y mañana también. Es que el cocinero soy yo y solo me sé una receta.'] },
+  dj: { name: 'DJ Ambrosio', lines: ['¡Dame un aplauso! Soy DJ Ambrosio, locutor de la radio y mecánico de bicicletas. ¡Todo al mismo tiempo!', 'Si escuchas la radio de Diamantia: sí, soy yo. El pronóstico, las noticias y la canción. ¡Y también soy la lluvia, a veces!'] }
+};
+async function jobTalk(e) {
+  const J = JOBS[e.job] || JOBS.perritos;
+  for (const l of J.lines) await say('ambrosio', l, { name: 'Ambrosio · ' + J.name });
+  if (e.shop && S.flags.trainDone) { const r = await ask('ambrosio', '¿Quieres ver la mercancía?', ['Ver la tienda', 'Más tarde'], { name: 'Ambrosio · ' + J.name }); if (r === 0) setTimeout(() => openMenu('shop'), 50); }
+  else if (e.shop) await say('ambrosio', 'Cuando termine el desastre del tren, abriré la tienda aquí también. ¡Eso sí: pago en monedas!', { name: 'Ambrosio · ' + J.name });
+}
 async function talkNpc(e) {
   S.busy = true; S.talking = true; S.skip = false; camTalk(e);
   try {
-    if (e.shop) { await say('trolino', S.restored >= 7 ? '¡Mike! La tienda está a tope. ¡Todo con descuento de héroe!' : '¡Mike! Reabrí la tienda entre los escombros. Mapas, chocolate mejorado, botas... ¡lo que necesites! Eso sí: pago en monedas.'); setTimeout(() => openMenu('shop'), 50); }
+    if (e.job) await jobTalk(e);
     else if (S.lvlId === 0 || S.lvlId >= 10) { if (e.type === 'citizen') await citizenTalk(e); else await (CITY[e.id] || (async () => { }))(e); }
     else if (e.id === 'aquela') {
       if (S.dia < 3) await say('aquela', 'La puerta del jefe necesita 3 diamantes. Hay puertas de colores y llaves escondidas en los laberintos. ¡Explora y mira el mapa en el menú!');
@@ -458,7 +476,7 @@ async function csEnding() {
     const dt = clamp((now - last) / 1000, 0, .05); last = now;
     S.dtv = dt; update(dt); drawFrame();
     for (const k in pressed) delete pressed[k];
-    PTR.hit = false;
+    PTR.hit = false; PTR.tap = false;
     requestAnimationFrame(frame);
   }
   if (document.readyState === 'complete') requestAnimationFrame(frame); else addEventListener('load', () => requestAnimationFrame(frame));

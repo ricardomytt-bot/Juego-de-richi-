@@ -31,7 +31,7 @@
 | 🥷 Máscara Ninja | +15% daño | Jefe Raptor |
 | 🪖 Casco Romano | -15% daño recibido | Jefe Invictor |
 
-## 🛒 Tienda de Trolino (Diamantia, tras la corrupción)
+## 🛒 Tienda de Ambrosio (Diamantia, tras la corrupción)
 | Producto | Precio | Efecto |
 |---|---|---|
 | 🗺️ Mapa de una zona | 28–84 🪙 | Revela toda la zona al entrar |
@@ -77,8 +77,8 @@
 | 🐶 Mike | Héroe (jugable) | Valiente, amante del chocolate | Capa verde azulada y espada |
 | 🐕 Willy Perro | Mascota | Leal, "traduce" sus ladridos | Te sigue siempre |
 | 😈 Exe / Mike Maligno | Villano final | Frío y sin diversión | Voz grave con eco |
-| 🧢 Trolino | Compañero de casa; tendero | Orgulloso, buen amigo | Corona dorada; vende en la tienda |
-| 📮 Ambrosio | Cartero | Siempre apurado | Te da las 7 cartas |
+| 🧢 Trolino | Compañero de casa (corrompido por Exe) | Orgulloso, buen amigo | Corona dorada |
+| 📮 Ambrosio | Cartero... y tendero, mesero, DJ, jefe de estación (como Larry de Gumball) | Siempre apurado, todos los trabajos | Te da las 7 cartas y atiende la tienda |
 | 🐱 Aquela | Guía | Tranquila, da pistas | Gata azul |
 | 😴 Timba | Jefe 1 | Dormilón | Voz grave, bosteza |
 | 🐱 Acenix | Jefe 2 | Gato gris hornero | "Miau", muffin en la mano |

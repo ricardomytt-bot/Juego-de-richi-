@@ -169,7 +169,7 @@ function spawnEnts(L) {
       case 'dia': S.ents.push({ type: 'dia', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'key': S.ents.push({ type: 'key', k: d.k, x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'heart': S.ents.push({ type: 'heart', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
-      case 'npc': S.ents.push({ type: 'npc', id: d.id, x: cx, y: fy, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, corrupt: false, owner: d.owner, shop: d.shop, hideUntil: d.hideUntil, hideAfter: d.hideAfter }); break;
+      case 'npc': S.ents.push({ type: 'npc', id: d.id, x: cx, y: fy, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, corrupt: false, owner: d.owner, job: d.job, shop: d.shop, hideUntil: d.hideUntil, hideAfter: d.hideAfter }); break;
       case 'bonfire': S.ents.push({ type: 'bonfire', x: cx, y: fy, t: rnd(0, 6) }); break;
       case 'citizen': S.ents.push({ type: 'citizen', id: 'citizen' + d.seed, seed: d.seed, x: cx, y: fy, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, wt: rnd(0, 3), hx: cx, hy: fy }); break;
       case 'dummy': S.ents.push({ type: 'dummy', x: cx, y: fy, hw: 10, hh: 10, bh: 24, rad: 20, hit: 0 }); break;
