@@ -126,7 +126,7 @@ function glBuildLevel(L) {
   // matas de pasto y detalles del suelo
   if (L.theme === 'city') { const spn = [], q2 = mkRng(55); for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) { const c = L.g[y][x]; if ((c === '.' || c === 'f') && q2() < .13) spn.push({ x: x + .5 + (q2() - .5) * .3, y: .04, z: y + .5 + (q2() - .5) * .3, sx: .5 + q2() * .5, sz: .5 + q2() * .5, sy: 1, color: new THREE.Color(0xf2f6ff) }); } inst(g, geoBox(.9, .08, .9), new THREE.MeshLambertMaterial({ color: 0xffffff }), spn, false, true); }
   if (L.theme !== 'indoor' && !dm) { const tf = [], q = mkRng(91); for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) { const c = L.g[y][x]; if ((c === '.' || c === 'f') && q() < .5) { const hh = .16 + q() * .22; tf.push({ x: x + .1 + q() * .8, y: hh / 2, z: y + .1 + q() * .8, sy: hh / .2, color: new THREE.Color().setHSL(.27 + q() * .06, .6, .34 + q() * .12) }); } } inst(g, geoBox(.07, .2, .07), new THREE.MeshLambertMaterial({ color: 0xffffff }), tf, false, false); }
-  glDeco(g, L);
+  glDeco(g, L); if (L.theme === 'indoor') glIndoor(g, L);
   // edificios, antorchas, farolas, letreros
   for (const b of L.buildings) glBuilding(g, b, L);
   for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) if (L.g[y][x] === 'k') glLamp(g, x, y, L);
@@ -161,35 +161,52 @@ function glClouds(g) {
 }
 function glBuilding(g, b, L) {
   const w = b.x1 - b.x0 + 1, d = b.y1 - b.y0 + 1, cx = (b.x0 + b.x1 + 1) / 2, cz = (b.y0 + b.y1 + 1) / 2, H = 2.6, grp = new THREE.Group(); grp.position.set(cx, 0, cz);
-  const wallC = mk(48, 48, c => { c.fillStyle = b.color; c.fillRect(0, 0, 48, 48); for (let y = 0; y < 48; y += 8) { c.fillStyle = 'rgba(0,0,0,.08)'; c.fillRect(0, y + 6, 48, 2); } });
+  const fz = b.face === 'N' ? -1 : 1, wood = lam(0x6a4426), dwood = lam(0x3a2410), snowM = new THREE.MeshLambertMaterial({ color: 0xf4f8ff });
+  const wallC = mk(48, 48, c => { c.fillStyle = b.color; c.fillRect(0, 0, 48, 48); for (let y = 0; y < 48; y += 6) { c.fillStyle = 'rgba(0,0,0,.09)'; c.fillRect(0, y + 5, 48, 1); c.fillStyle = 'rgba(255,255,255,.12)'; c.fillRect(0, y, 48, 1); } });
   const wm = new THREE.MeshLambertMaterial({ map: tx(wallC), color: 0xffffff });
-  grp.add(mesh(geoBox(w - .1, H, d - .1), wm, 0, H / 2, 0, true, true));
-  // techo en pirámide
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(.5, 1, 4), new THREE.MeshLambertMaterial({ color: b.roof, flatShading: true })); roof.rotation.y = Math.PI / 4;
-  roof.scale.set((w + .6) * 1.41, 1.8, (d + .6) * 1.41); roof.position.y = H + .9; roof.castShadow = true; grp.add(roof);
-  grp.add(mesh(geoBox(w + .5, .18, d + .5), lam(0x2a1a10), 0, H, 0));
-  { const hc = .75, sxc = roof.scale.x * (hc / 1.8) * 1.14, szc = roof.scale.z * (hc / 1.8) * 1.14, sn = new THREE.Mesh(new THREE.ConeGeometry(.5, 1, 4), new THREE.MeshLambertMaterial({ color: 0xf4f8ff, flatShading: true })); sn.rotation.y = Math.PI / 4; sn.scale.set(sxc, hc * 1.04, szc); sn.position.y = H + 1.8 - hc / 2 + .03; grp.add(sn);
-    const fz0 = b.face === 'N' ? -1 : 1; for (let i = 0; i < Math.floor(w * 1.6); i++) grp.add(mesh(geoBox(.12, .12, .12), new THREE.MeshBasicMaterial({ color: [0xff5a5a, 0xffd24a, 0x5acaff, 0x7aff8a][i % 4] }), -w / 2 + .3 + i * (w - .6) / Math.max(1, Math.floor(w * 1.6) - 1), H - .22, fz0 * (d / 2 + .12), false)); }
-  // ventanas
-  const fz = b.face === 'N' ? -1 : 1, win = new THREE.MeshLambertMaterial({ color: 0xffe2a0, emissive: 0xffa84a, emissiveIntensity: .85 });
-  for (const sx of [-1, 1]) { const wxp = sx * Math.max(1.4, w / 2 - 1.5); grp.add(mesh(geoBox(.9, .8, .12), lam(0x3a2410), wxp, 1.6, fz * (d / 2 - .05), false)); grp.add(mesh(geoBox(.74, .64, .14), win, wxp, 1.6, fz * (d / 2 - .03), false)); }
-  grp.add(mesh(geoBox(.12, .8, d - .6), lam(0x3a2410), w / 2 - .05, 1.6, 0, false)); grp.add(mesh(geoBox(.1, .6, d - .8), win, w / 2 - .04, 1.6, 0, false)); grp.add(mesh(geoBox(.12, .8, d - .6), lam(0x3a2410), -w / 2 + .05, 1.6, 0, false)); grp.add(mesh(geoBox(.1, .6, d - .8), win, -w / 2 + .04, 1.6, 0, false));
-  // puerta
-  const dxl = b.dx + .5 - cx, doorM = lam(0x7a4e26); grp.add(mesh(geoBox(1.0, 1.7, .16), lam(0x1a0f08), dxl, .85, fz * (d / 2), false), mesh(geoBox(.84, 1.58, .2), doorM, dxl, .85, fz * (d / 2 + .02), false), mesh(geoBox(.14, .14, .24), lam(0xffd24a), dxl + .26, .85, fz * (d / 2 + .02), false));
+  // cimiento de piedra, paredes y esquinas de madera
+  grp.add(mesh(geoBox(w + .12, .4, d + .12), lam(0x8a8a96), 0, .2, 0, true, true));
+  grp.add(mesh(geoBox(w - .1, H - .4, d - .1), wm, 0, .4 + (H - .4) / 2, 0, true, true));
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) grp.add(mesh(geoBox(.24, H, .24), wood, sx * (w / 2 - .02), H / 2, sz * (d / 2 - .02)));
+  grp.add(mesh(geoBox(w + .1, .16, d + .1), dwood, 0, H - .04, 0));
+  // tejado a dos aguas con nieve
+  const rise = Math.min(1.9, d * .42 + .3), ov = .5, run = w / 2 + ov, len = Math.hypot(run, rise), ang = Math.atan2(rise, run), roofM = new THREE.MeshLambertMaterial({ color: b.roof });
+  for (const sx of [-1, 1]) {
+    const r = mesh(geoBox(len, .24, d + .8), roofM, sx * run / 2, H + rise / 2 + .05, 0); r.rotation.z = -sx * ang; grp.add(r);
+    const sl = len * .5, off = len * .25, sn = mesh(geoBox(sl, .1, d + .72), snowM, sx * run / 2 - sx * Math.cos(ang) * off + sx * Math.sin(ang) * .16, H + rise / 2 + .05 + Math.sin(ang) * off + Math.cos(ang) * .16, 0, false); sn.rotation.z = -sx * ang; grp.add(sn);
+  }
+  grp.add(mesh(geoBox(.34, .2, d + .85), lam(0x4a3a30), 0, H + rise + .12, 0)); grp.add(mesh(geoBox(.3, .1, d + .7), snowM, 0, H + rise + .27, 0, false));
+  // frontones triangulares a los lados
+  { const sh = new THREE.Shape(); sh.moveTo(-d / 2 + .05, 0); sh.lineTo(d / 2 - .05, 0); sh.lineTo(0, rise - .02); sh.closePath(); const gg = new THREE.ExtrudeGeometry(sh, { depth: .2, bevelEnabled: false }); gg.rotateY(Math.PI / 2);
+    for (const sx of [-1, 1]) { const m = new THREE.Mesh(gg, wm); m.position.set(sx * (w / 2 - .12) - (sx > 0 ? .2 : 0) + (sx > 0 ? .2 : 0), H, 0); m.position.x = sx > 0 ? w / 2 - .22 : -w / 2 + .02; m.castShadow = true; grp.add(m); } }
+  // chimenea
+  grp.add(mesh(geoBox(.6, 1.5, .6), lam(0x9a5a4a), w / 4, H + rise * .6 + .3, -d / 5), mesh(geoBox(.74, .14, .74), snowM, w / 4, H + rise * .6 + 1.1, -d / 5, false));
+  // ventanas con marco, cruz, repisa y postigos
+  const win = new THREE.MeshLambertMaterial({ color: 0xffe2a0, emissive: 0xffa84a, emissiveIntensity: .85 });
+  const windowAt = (x, y, z, rotY) => { const gw = new THREE.Group(); gw.position.set(x, y, z); gw.rotation.y = rotY; gw.add(mesh(geoBox(1.1, 1.0, .14), wood, 0, 0, 0, false), mesh(geoBox(.86, .76, .16), win, 0, 0, .01, false), mesh(geoBox(.08, .76, .18), wood, 0, 0, .02, false), mesh(geoBox(.86, .08, .18), wood, 0, 0, .02, false), mesh(geoBox(1.3, .12, .3), lam(0x8a8a96), 0, -.58, .1, false), mesh(geoBox(.22, .9, .1), lam(0x3a6a8a), -.7, 0, .02, false), mesh(geoBox(.22, .9, .1), lam(0x3a6a8a), .7, 0, .02, false)); for (let i = 0; i < 4; i++) gw.add(mesh(geoBox(.14, .16, .14), lam([0xff6a8a, 0xffe14a, 0xffffff, 0xff9a3a][i]), -.33 + i * .22, -.44, .2, false)); grp.add(gw); };
+  for (const sx of [-1, 1]) windowAt(sx * Math.max(1.5, w / 2 - 1.5), 1.75, fz * (d / 2 - .02), fz < 0 ? Math.PI : 0);
+  for (const sz of [-1, 1]) { windowAt(w / 2 - .02, 1.75, sz * (d / 5), Math.PI / 2); windowAt(-w / 2 + .02, 1.75, sz * (d / 5), -Math.PI / 2); }
+  // puerta con marco, escalón, techito, farol y corona navideña
+  const dxl = b.dx + .5 - cx, dz0 = fz * (d / 2);
+  grp.add(mesh(geoBox(1.4, 1.9, .18), wood, dxl, 1.35, dz0 + fz * .02, false), mesh(geoBox(1.0, 1.7, .22), lam(0x7a4e26), dxl, 1.25, dz0 + fz * .04, false), mesh(geoBox(.12, .12, .26), lam(0xffd24a), dxl + .3, 1.2, dz0 + fz * .06, false));
+  grp.add(mesh(geoBox(1.9, .22, .9), lam(0x9a9aa6), dxl, .11, dz0 + fz * .55), mesh(geoBox(1.9, .08, .9), snowM, dxl, .26, dz0 + fz * .55, false));
+  grp.add(mesh(geoBox(1.9, .14, .9), roofM, dxl, 2.35, dz0 + fz * .45), mesh(geoBox(1.9, .08, .9), snowM, dxl, 2.46, dz0 + fz * .45, false));
+  for (const sx of [-1, 1]) grp.add(mesh(geoBox(.1, 1.1, .1), wood, dxl + sx * .88, 1.8, dz0 + fz * .85, false));
+  grp.add(mesh(geoBox(.16, .24, .16), new THREE.MeshBasicMaterial({ color: 0xffd890 }), dxl + 1.2, 1.9, dz0 + fz * .1, false));
+  const wr = new THREE.Mesh(new THREE.TorusGeometry(.2, .06, 6, 12), new THREE.MeshLambertMaterial({ color: 0x2f8f4a })); wr.position.set(dxl, 1.7, dz0 + fz * .16); wr.rotation.y = fz < 0 ? Math.PI : 0; grp.add(wr); grp.add(mesh(geoBox(.14, .12, .06), new THREE.MeshBasicMaterial({ color: 0xff3a3a }), dxl, 1.5, dz0 + fz * .18, false));
+  // luces de colores en el alero
+  for (let i = 0; i < Math.floor(w * 1.6); i++) grp.add(mesh(geoBox(.12, .12, .12), new THREE.MeshBasicMaterial({ color: [0xff5a5a, 0xffd24a, 0x5acaff, 0x7aff8a][i % 4] }), -w / 2 + .3 + i * (w - .6) / Math.max(1, Math.floor(w * 1.6) - 1), H - .2, fz * (d / 2 + .1), false));
   // cartel
-  const sg = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, 6.4), Math.min(w, 6.4) * 40 / 256 * 1.0), new THREE.MeshBasicMaterial({ map: cTex(labelCanvas(b.label, '#2a1a30', '#ffe14a')), transparent: false }));
-  sg.position.set(dxl, 2.05, fz * (d / 2 + .05)); if (fz < 0) sg.rotation.y = Math.PI; grp.add(sg);
+  const sg = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, 6.4), Math.min(w, 6.4) * 40 / 256), new THREE.MeshBasicMaterial({ map: cTex(labelCanvas(b.label, '#2a1a30', '#ffe14a')) }));
+  sg.position.set(dxl, 2.85, fz * (d / 2 + .06)); if (fz < 0) sg.rotation.y = Math.PI; sg.scale.setScalar(.8); grp.add(sg);
   // detalles por casa
-  if (b.id !== 'mike') { const ch = mesh(geoBox(.5, 1.2, .5), lam(0x8a5a4a), w / 4, H + 1.3, -d / 5); grp.add(ch); grp.add(mesh(geoBox(.6, .1, .6), lam(0x4a3a3a), w / 4, H + 1.95, -d / 5, false)); }
-  for (const sx of [-1, 1]) { const wxp = sx * Math.max(1.4, w / 2 - 1.5); grp.add(mesh(geoBox(.95, .22, .28), lam(0x7a4a2a), wxp, 1.1, fz * (d / 2 + .1), false)); for (let i = 0; i < 4; i++) grp.add(mesh(geoBox(.14, .16, .14), lam([0xff6a8a, 0xffe14a, 0xffffff, 0xff9a3a][i]), wxp - .33 + i * .22, 1.28, fz * (d / 2 + .1), false)); }
-  if (b.id === 'restaurant') { for (let i = 0; i < 8; i++) grp.add(mesh(geoBox(w / 8 - .02, .1, 1.3), lam(i % 2 ? 0xffffff : 0x2a8a5a), -w / 2 + (i + .5) * w / 8, 2.7, fz * (d / 2 + .6), false)); for (const sx of [-1, 1]) grp.add(mesh(geoBox(.1, 2.6, .1), lam(0x5a3a1a), sx * (w / 2 - .3), 1.3, fz * (d / 2 + 1.2), false)); }
-  if (b.id === 'ambrosio') { grp.add(mesh(geoBox(.5, .7, .4), lam(0x2a6ad8), dxl + 1.4, .35, fz * (d / 2 + .5))); }
+  if (b.id === 'ambrosio') { grp.add(mesh(geoBox(.5, .7, .4), lam(0x2a6ad8), dxl + 1.7, .35, fz * (d / 2 + .5))); }
   if (b.id === 'rius') { for (const [hx, hz] of [[-w / 2 - 1, 0], [-w / 2 - 1, 1.1]]) grp.add(mesh(geoBox(.9, .7, .9), lam(0xe8c24a), hx, .35, hz + d / 2 - 1)); }
-  if (b.id === 'mayo') grp.add(mesh(new THREE.CylinderGeometry(.7, .7, .16, 12), lam(0xffc04a), dxl, 3.7, fz * (d / 2 - .4)));
-  if (b.id === 'esparta' || b.id === 'invictor') for (const sx of [-1, 1]) grp.add(mesh(new THREE.CylinderGeometry(.22, .26, H, 8), lam(0xf4f0e8), dxl + sx * 1.4, H / 2, fz * (d / 2 + .3)));
-  if (b.id === 'invictor') grp.add(mesh(geoBox(.6, 1.6, .06), lam(0xc0282a), dxl - 2.4, 1.8, fz * (d / 2 + .1)));
-  if (b.id === 'raptor') grp.add(mesh(geoBox(1.4, .5, .12), new THREE.MeshBasicMaterial({ color: 0xff4a6a }), dxl + 1.6, 3.0, fz * (d / 2 + .1), false));
-  if (b.id === 'acenix') { grp.add(mesh(geoBox(w - .4, .22, 1.0), lam(0xff7ab0), 0, 2.3, fz * (d / 2 + .5), false)); }
+  if (b.id === 'mayo') grp.add(mesh(new THREE.CylinderGeometry(.7, .7, .16, 12), lam(0xffc04a), dxl, 3.9, fz * (d / 2 - .4)));
+  if (b.id === 'invictor') for (const sx of [-1, 1]) grp.add(mesh(new THREE.CylinderGeometry(.22, .26, H, 8), lam(0xf4f0e8), dxl + sx * 1.5, H / 2, fz * (d / 2 + .6)));
+  if (b.id === 'raptor') grp.add(mesh(geoBox(1.4, .5, .12), new THREE.MeshBasicMaterial({ color: 0xff4a6a }), dxl + 1.9, 3.2, fz * (d / 2 + .1), false));
+  if (b.id === 'acenix') { grp.add(mesh(geoBox(w - .4, .22, 1.0), lam(0xff7ab0), 0, 2.2, fz * (d / 2 + .6), false)); }
+  if (b.id === 'restaurant') { for (let i = 0; i < 8; i++) grp.add(mesh(geoBox(w / 8 - .02, .1, 1.3), lam(i % 2 ? 0xffffff : 0x2a8a5a), -w / 2 + (i + .5) * w / 8, 2.75, fz * (d / 2 + .7), false)); }
   if (b.id === 'mike') { grp.add(mesh(geoBox(1.1, .8, 1.1), lam(0x9a6a3a), -w / 2 - 1.2, .4, 0), mesh(geoBox(1.2, .16, 1.2), lam(0x7a2a1a), -w / 2 - 1.2, .88, 0)); }
   grp.userData.b = b; g.add(grp); (GL.blds = GL.blds || []).push(grp);
 }
@@ -248,4 +265,14 @@ function glDeco(g, L) {
     else if (d.k === 'tree2') { const cols = [0xff8ab0, 0xffb0c8, 0xffa0d0]; m.add(mesh(geoBox(.34, 1.3, .34), lam(0x6b4424), 0, .65, 0)); for (const [x, y, z, w] of [[0, 1.6, 0, 1.4], [-.4, 1.4, .2, 1.0], [.4, 1.5, -.2, 1.0], [0, 2.1, 0, .9]]) m.add(mesh(geoBox(w, .7, w), lam(cols[(d.x + d.y) % 3]), x, y, z)); }
     g.add(m);
   }
+}
+
+function glIndoor(g, L) {
+  const wood = lam(0x6a4426), dw = lam(0x3a2410), win = new THREE.MeshLambertMaterial({ color: 0xffe9b8, emissive: 0xffc070, emissiveIntensity: .9 });
+  g.add(mesh(geoBox(13, .28, .14), dw, 7.5, .5, .62, false));
+  for (const x of [4.5, 10.5]) { g.add(mesh(geoBox(1.7, 1.5, .16), wood, x, 1.6, .56, false), mesh(geoBox(1.4, 1.2, .18), win, x, 1.6, .58, false), mesh(geoBox(.1, 1.2, .2), wood, x, 1.6, .6, false), mesh(geoBox(1.4, .1, .2), wood, x, 1.6, .6, false)); for (const sx of [-1, 1]) g.add(mesh(geoBox(.3, 1.6, .12), lam(0xb83a3a), x + sx * 1.0, 1.6, .6, false)); }
+  g.add(mesh(geoBox(1.1, .8, .1), wood, 7.5, 1.8, .58, false), mesh(geoBox(.9, .6, .12), lam(0x6ab0d8), 7.5, 1.8, .6, false));
+  for (let i = 0; i < 26; i++) g.add(mesh(geoBox(.14, .14, .14), new THREE.MeshBasicMaterial({ color: [0xff5a5a, 0xffd24a, 0x5acaff, 0x7aff8a][i % 4] }), 1.6 + i * .5, 2.45 - Math.abs(Math.sin(i * .6)) * .18, .62, false));
+  for (const sx of [1.5, 13.5]) for (const sz of [1.5, 8.5]) if (sz === 8.5 && false) continue;
+  const tree = new THREE.Group(); tree.position.set(12.4, 0, 7.0); tree.scale.setScalar(.55); tree.add(mesh(geoBox(.5, .6, .5), lam(0x6b4424), 0, .3, 0)); for (let i = 0; i < 4; i++) tree.add(mesh(geoBox(2.6 - i * .6, .7, 2.6 - i * .6), lam(i % 2 ? 0x2f8f4a : 0x3aa05a), 0, 1.0 + i * .6, 0)); tree.add(mesh(geoBox(.34, .34, .34), new THREE.MeshBasicMaterial({ color: 0xffe14a }), 0, 3.6, 0, false)); for (let i = 0; i < 10; i++) { const a = i * 2.4, rr = 1.0 - (i % 4) * .22; tree.add(mesh(geoBox(.2, .2, .2), new THREE.MeshBasicMaterial({ color: [0xff4a4a, 0xffd24a, 0x4aaaff, 0xff8aff][i % 4] }), Math.cos(a) * rr, 1.0 + (i % 4) * .6, Math.sin(a) * rr, false)); } g.add(tree);
 }

@@ -226,38 +226,47 @@ async function walkP(tx, ty, sp = 150) {
   for (let i = 0; i < 900; i++) { const dx = tx - P.x, dy = ty - P.y, d = Math.hypot(dx, dy); if (d < 5 || S.skip) break; const k = Math.min(d, sp * (S.dtv || .016)); P.x += dx / d * k; P.y += dy / d * k; P.dx = dx / d; P.dy = dy / d; if (Math.abs(dx) > .3) P.face = sign(dx); P.anim += S.dtv || .016; await wait(.016); }
   P.forceMove = false;
 }
+async function gatherMove(list, timeout = 6) {
+  for (const [e, tx, ty] of list) { e._arr = false; e.goto = { x: tx * T, y: ty * T, speed: 150, done: () => { e._arr = true; } }; }
+  let t = 0; while (t < timeout && !S.skip && list.some(([e]) => !e._arr)) { await wait(.1); t += .1; }
+  for (const [e, tx, ty] of list) { if (!e._arr) { e.goto = null; e.vx = e.vy = 0; e.x = tx * T; e.y = ty * T; } }
+}
 async function csOpening() {
-  S.skip = false; S.busy = true; S.flags.zona0 = true;
+  S.skip = false; S.busy = true; S.flags.zona0 = true; S.cineAuto = true;
   loadLevel(10); S.q.gotLetters = false; setMusic('story'); setAmbient('day'); glMood(false);
   P.x = 4.5 * T; P.y = 3 * T + 20; P.dx = 0; P.dy = 1; initWilly(); S.willy.x = P.x + 50; S.willy.y = P.y + 20;
-  const tro = { type: 'npc', id: 'trolino', x: 8 * T, y: 5 * T, hw: 10, hh: 10, face: 3.1, vx: 0, vy: 0, tag: 'gather' }; S.ents.push(tro);
-  S.camShot = { x: 7.5, z: 4.6, dist: 9.5 }; if (GL.ok) GL.camInit = false;
+  const tro = { type: 'npc', id: 'trolino', x: 7.5 * T, y: 9.2 * T, hw: 10, hh: 10, face: Math.PI, vx: 0, vy: 0, tag: 'gather' }; S.ents.push(tro);
+  S.camShot = { x: 7.5, z: 4.6, dist: 10.5 }; if (GL.ok) GL.camInit = false;
   await fadeTo(0, 1.6);
   await say('narr', '24 de diciembre. Diamantia amanece fría, pero con una luz cálida en cada ventana.');
+  S.camShot = null;
   await say('willy', '¡Guau! ¡Guau, guau! (Traducción: ¡despierta, que hay viaje!)');
   await M('(bostezo) ...Cinco minutitos más... ¿Willy? ¿Por qué estás en mi cama?');
+  tro.goto = { x: 7.5 * T, y: 5.2 * T, speed: 130, done: () => { } };
+  await wait(1.4);
   await say('trolino', '¡Por fin despiertas! Hoy es el gran día: nos vamos de viaje todos juntos por Navidad.');
   const r = await ask('trolino', 'Quedamos con los compas en el parque dentro de un rato. ¿Vienes?', ['¡Voy volando!', 'Cinco minutitos más...', '¿Habrá chocolate caliente?']);
   if (r === 0) { await M('¡Ni me peino! ...Bueno, es que no tengo peine.'); await say('trolino', 'Así me gusta. Con ese ánimo hasta el tren se apura.'); fav('trolino', 1); }
   else if (r === 1) { await say('trolino', 'Mike. Tu cama se queda aquí. El viaje no. ¡Arriba, arriba!'); await M('Está bien, está bien...'); }
   else { await say('trolino', 'Hay chocolate caliente en la estación. Y en el tren. Y creo que Rius trajo un termo del tamaño de él.'); await M('¡Eso es una buena noticia!'); fav('trolino', 2); }
   await say('trolino', 'Yo me adelanto a juntar a todos. Nos vemos en el parque. ¡No tardes!');
-  tro.goto = { x: 7.5 * T, y: 9 * T, speed: 200, done: () => { tro.hidden = true; } };
-  await wait(1.6);
+  tro.goto = { x: 7.5 * T, y: 9.4 * T, speed: 210, done: () => { tro.hidden = true; } };
+  await wait(1.5);
   await M('Bueno, Willy... a abrigarnos. Hoy empieza una gran aventura.');
   await say('willy', '¡Guau! (Traducción: yo llevo el hueso. Tú lleva el chocolate.)');
-  S.camShot = null; await walkP(7.5 * T, 8.2 * T, 140);
-  S.busy = false; await enterZone(0, INTERIOR_INFO[10].out); S.busy = true; S.camShot = null;
-  // afuera: la casa de Mike
-  S.camShot = { x: P.x / T, z: P.y / T - 1, dist: 11 }; await wait(.6);
+  await walkP(7.5 * T, 8.2 * T, 110);
+  S.busy = false; await enterZone(0, INTERIOR_INFO[10].out); S.busy = true; S.camShot = null; S.cineAuto = true;
+  await wait(.4);
   await M('¡Brrr! Qué frío... pero qué bonito se ve todo con las luces y la nieve.');
   await say('narr', 'Más tarde, en el Parque de las Estrellas...');
   await fadeTo(1, .6);
   const gat = [['timba', 64, 29], ['rius', 66, 31], ['mayo', 70, 31], ['esparta', 72, 29], ['raptor', 70, 26], ['invictor', 66, 26], ['acenix', 67, 33], ['aquela', 63, 31], ['trolino', 69, 30]];
   for (const e of S.ents) if (e.type === 'npc' && (e.id === 'trolino' || e.id === 'aquela') && !e.tag) e.hidden = true;
-  for (const [id, x, y] of gat) S.ents.push({ type: 'npc', id, x: x * T, y: y * T, hw: 10, hh: 10, face: id === 'aquela' ? 1 : -1.5, vx: 0, vy: 0, tag: 'gather' });
-  P.x = 68.5 * T; P.y = 32 * T - 8; P.dx = 0; P.dy = -1; if (S.willy) { S.willy.x = P.x - 40; S.willy.y = P.y + 20; }
-  S.camShot = { x: 68, z: 29.5, dist: 12 }; if (GL.ok) GL.camInit = false; await fadeTo(0, .8);
+  const crowd = gat.map(([id, x, y], i) => { const e = { type: 'npc', id, x: 77.6 * T, y: (24 + i * 1.2) * T, hw: 10, hh: 10, face: -1.5, vx: 0, vy: 0, tag: 'gather' }; S.ents.push(e); return [e, x, y]; });
+  P.x = 77.5 * T; P.y = 31 * T - 8; P.dx = -1; P.dy = 0; if (S.willy) { S.willy.x = P.x + 30; S.willy.y = P.y; }
+  S.camShot = { x: 71, z: 29.5, dist: 14 }; if (GL.ok) GL.camInit = false; await fadeTo(0, .8);
+  gatherMove(crowd); await walkP(68.5 * T, 32 * T - 8, 120); await wait(.8);
+  S.camShot = null;
   await say('aquela', 'Llegó Mike. Ya estamos todos. Qué buena vibra tiene este grupo, incluso con este frío.');
   await say('rius', '¡Cocoricó! ¡Ya tengo mi termo de chocolate! Y mi bufanda. Y mi otra bufanda.');
   await say('mayo', 'Beep. Reporte: temperatura 2 grados. Probabilidad de nieve: 14%. Probabilidad de chocolate caliente: 100%. Beep.');
@@ -272,10 +281,11 @@ async function csOpening() {
   else { await say('acenix', 'Hay pastel para todos. Pero tú te llevas la porción grande. Miau.'); fav('acenix', 2); }
   await say('trolino', 'Hagamos así: cada uno va por su equipaje y nos vemos en la estación. Mike, pasa primero por Correos: Ambrosio te necesita.');
   await M('¡Entendido! ¡Nos vemos en el tren!');
-  for (const e of S.ents.filter(e => e.tag === 'gather')) { spawnP(e.x, e.y - 20, 8, '#ffffff', 140, .6); }
-  sfx.pop(); S.ents = S.ents.filter(e => e.tag !== 'gather');
+  const gone = S.ents.filter(e => e.tag === 'gather'); S.camShot = { x: 72, z: 29, dist: 14 };
+  await gatherMove(gone.map((e, i) => [e, 77.8, 24 + i * 1.2]), 5); sfx.pop();
+  S.ents = S.ents.filter(e => e.tag !== 'gather');
   for (const e of S.ents) if (e.type === 'npc' && (e.id === 'trolino' || e.id === 'aquela')) e.hidden = false;
-  S.flags.trolino1 = true; S.camShot = null; S.busy = false;
+  S.flags.trolino1 = true; S.camShot = null; S.cineAuto = false; S.busy = false;
   showHint('Entra a Correos por su puerta (camina hacia ↑ junto a ella) y habla con Ambrosio', 8);
 }
 
@@ -287,7 +297,7 @@ async function csTrain() {
   for (const [id, x] of crew) S.ents.push({ type: 'npc', id, x: x * T, y: 43.5 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, corrupt: false, tag: 'crew' });
   S.ents.push({ type: 'npc', id: 'trolino', x: 90 * T, y: 44 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, tag: 'crew' });
   for (const e of S.ents) if ((e.type === 'npc' && !e.tag && e.id !== 'aquela') || e.type === 'citizen') e.hidden = true;
-  S.camShot = { x: 98, z: 41, dist: 14 }; if (GL.ok) GL.camInit = false; setMusic('story'); await fadeTo(0, .6);
+  S.camShot = { x: 98, z: 41, dist: 14 }; if (GL.ok) GL.camInit = false; setMusic('story'); await fadeTo(0, .6); S.cineAuto = true; await wait(.8); S.camShot = null;
   const f = (id, a, b) => say(id, (S.fav[id] || 0) >= 2 ? a : b);
   await say('narr', 'En la estación todos esperaban el tren, con maletas, bocadillos y mucho sueño.');
   await f('timba', '¡Mike! Tu carta me hizo el día. Zzz... digo, ¡qué alegría verte!', '(bostezo) Mike... llegaste. Zzz...');
@@ -302,7 +312,7 @@ async function csTrain() {
   sfx.boss(); GL.trainShake = true; await wait(.8); GL.trainShake = false;
   // llega Exe
   setMusic('dark'); glMood(true); S.shake = .6; sfx.boss();
-  S.ents.push({ type: 'exe3d', id: 'exe', x: 98 * T, y: 38 * T, lift: 6.5 }); S.camShot = { x: 98, z: 39, dist: 20 };
+  S.ents.push({ type: 'exe3d', id: 'exe', x: 98 * T, y: 38 * T, lift: 6.5 }); S.camShot = { x: 98, z: 39, dist: 20 }; await wait(1.2); S.camShot = null;
   await say('exe', '¡MUAJAJAJÁ! ¡Qué reunión tan bonita! ¡Y qué tren tan bonito! ¡Y qué amigos tan... míos!');
   await M('¡Exe! ¿Qué haces aquí? ¡Y baja de ahí, que vas a romper el techo!');
   await say('exe', 'Con el poder de las estrellas oscuras, ¡tus amigos viajarán conmigo! ¡Tienen seguro de viaje y todo!');
@@ -319,7 +329,7 @@ async function csTrain() {
   for (const e of S.ents.filter(e => e.tag === 'crew')) { const d = doors[k++ % doors.length]; e.goto = { x: d[0] + (k % 3 - 1) * 20, y: d[1] + 20, speed: 230, done: () => { e.hidden = true; spawnP(e.x, e.y - 20, 8, '#ff4a8a', 160, .5); sfx.pop(); } }; }
   for (let i = 0; i < 80 && S.ents.some(e => e.tag === 'crew' && !e.hidden); i++) await wait(.1);
   await say('exe', '¡Slimes corrompidos! ¡Ataquen al perrito de la capa! ¡Muajajá!');
-  S.ents = S.ents.filter(e => !(e.tag === 'crew')); S.camShot = null; setMusic('chase'); S.busy = false; startWave(1);
+  S.ents = S.ents.filter(e => !(e.tag === 'crew')); S.camShot = null; S.cineAuto = false; setMusic('chase'); S.busy = false; startWave(1);
 }
 async function csTrainEnd() {
   S.busy = true; S.skip = false; S.camShot = { x: 98, z: 40, dist: 17 }; sfx.win();

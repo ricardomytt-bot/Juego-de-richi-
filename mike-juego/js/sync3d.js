@@ -74,7 +74,7 @@ function glSync(dt) {
         const id = e.type === 'exe3d' ? 'exe' : e.id, o = glGet(e, () => { const B = makeCharObj(id); if (e.type === 'exe3d') B.g.scale.multiplyScalar(2.6); return B; });
         const sp = Math.hypot(e.vx || 0, e.vy || 0) > 12 ? 1 : 0, ex = e.type === 'exe3d' ? (e.lift != null ? e.lift : 3) : 0;
         o.outer.position.set(e.x / T, ex + (e.type === 'exe3d' ? Math.sin(t * 1.5) * .25 : 0), e.y / T); o.outer.rotation.y = yawTo(o.outer.rotation.y, e.face || 0, .15);
-        const near = S.nearNpc === e && S.dialog; animChar(o, t + (e.seed || 0), sp, { talk: S.dialog && S.dialog.who === id, wave: e.wave });
+        const spk = S.dialog && S.dialog.who === id; if (S.cineAuto && S.dialog && !spk && e.tag) { const w = S.dialog.who, s0 = w === 'mike' ? P : S.ents.find(q => q.id === w); if (s0) e.face = Math.atan2(s0.x - e.x, s0.y - e.y); } if (spk && S.dialog.shown < S.dialog.text.length) o.outer.position.y += Math.abs(Math.sin(t * 11)) * .1; animChar(o, t + (e.seed || 0), sp, { talk: spk, wave: e.wave || (spk && Math.sin(t * 2.2) > .55) });
         setFlash(o, false, e.corrupt); if (e.corrupt) o.outer.position.x += (Math.random() - .5) * .05; break;
       }
     }
@@ -116,7 +116,8 @@ function glSync(dt) {
     pl.outer.visible = !(P.inv > 0 && Math.floor(P.inv * 18) % 2 === 0); pl.outer.position.set(P.x / T, 0, P.y / T);
     const aim = P.atk > 0 ? Math.atan2(P.adx, P.ady) : Math.atan2(P.dx, P.dy); pl.outer.rotation.y = yawTo(pl.outer.rotation.y, aim, P.atk > 0 ? .5 : .28);
     if (pl.parts.wm) { const wid = curW().id; for (const k2 in pl.parts.wm) pl.parts.wm[k2].visible = k2 === wid; pl.parts.wm.dagger.scale.setScalar(.6); }
-    const k = P.atk > 0 && !curW().ranged ? 1 - P.atk / (P.atkMax || .26) : null; animChar(pl, P.anim * 1.25, P.moving ? 1 : 0, { atk: k, talk: S.dialog && S.dialog.who === 'mike' });
+    const k = P.atk > 0 && !curW().ranged ? 1 - P.atk / (P.atkMax || .26) : null; if (S.cineAuto && S.dialog && S.dialog.who !== 'mike' && !P.moving) { const s0 = S.ents.find(q => q.id === S.dialog.who); if (s0) { P.dx = (s0.x - P.x) / 100; P.dy = (s0.y - P.y) / 100; } } if (S.dialog && S.dialog.who === 'mike' && S.dialog.shown < S.dialog.text.length) pl.outer.position.y += Math.abs(Math.sin(t * 11)) * .1;
+    animChar(pl, P.anim * 1.25, P.moving ? 1 : 0, { atk: k, talk: S.dialog && S.dialog.who === 'mike', wave: S.dialog && S.dialog.who === 'mike' && Math.sin(t * 2.2) > .6 });
     pl.slash.position.set(P.x / T, .9, P.y / T); pl.slash.rotation.z = Math.atan2(-P.ady, P.adx); pl.slash.material.opacity = k != null ? Math.sin(clamp(k, 0, 1) * Math.PI) * .75 : 0; pl.slash.visible = k != null;
   } else { pl.outer.visible = false; pl.slash.visible = false; }
   for (const [key, o] of GL.objs) if (!o.seen && key !== 'player') { GL.root.remove(o.group || o.outer); GL.objs.delete(key); }
@@ -139,6 +140,7 @@ function glParticles() {
 function glCamera(dt) {
   const L = S.lvl, c = GL.cam; let tx, tz, td = L.theme === 'indoor' ? 9.5 : 13.5;
   if (S.camShot) { tx = S.camShot.x; tz = S.camShot.z; td = S.camShot.dist || 14; }
+  else if (S.cineAuto && S.dialog && !S.camShot) { const w = S.dialog.who, sp = w === 'mike' ? P : S.ents.find(e => e.id === w && !e.hidden); if (sp) { tx = (sp.x * 2 + P.x) / 3 / T; tz = sp.y / T - 1.1; td = L.theme === 'indoor' ? 5.8 : 7.8; } else { tx = P.x / T; tz = P.y / T - .6; td = 9; } }
   else if (S.bossLock && GL.arenaC) { const bb = S.boss; tx = (P.x / T * 2 + (bb ? bb.x / T : GL.arenaC[0])) / 3; tz = (P.y / T * 2 + (bb ? bb.y / T : GL.arenaC[1])) / 3 - .3; td = 17; }
   else { tx = P.x / T + P.dx * 1.4; tz = P.y / T + P.dy * .9 - .5; }
   const k = 1 - Math.exp(-dt * (GL.camInit ? 4.5 : 100)); GL.camInit = true;

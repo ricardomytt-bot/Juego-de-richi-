@@ -300,7 +300,7 @@ function updatePlayer(dt) {
   const [ix, iy] = getMove(), il = Math.hypot(ix, iy);
   p.moving = il > 0.05 || !!p.forceMove;
   if (p.moving && p.atk <= 0) { const nx = ix / il, ny = iy / il; p.dx = nx; p.dy = ny; if (Math.abs(nx) > .3) p.face = sign(nx); }
-  const sp = (p.atk > .12 ? SPEED * .6 : SPEED), acc = 5200 * dt;
+  const sp = (p.atk > .12 ? SPEED * .6 : SPEED) * (S.lvlId >= 10 ? .55 : 1), acc = 5200 * dt;
   p.vx = approach(p.vx, ix * sp, acc); p.vy = approach(p.vy, iy * sp, acc);
   if (wasPressed(K.atk) && p.atkCd <= 0) {
     const w = curW(); p.atk = p.atkMax = w.anim; p.atkCd = w.cd; p.hitSet = new Set(); p.pend = w.wind; p.wcur = w; sfx.swing();
