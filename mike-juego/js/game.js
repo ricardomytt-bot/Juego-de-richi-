@@ -298,7 +298,7 @@ function updatePlayer(dt) {
   if (wasPressed('KeyR', 'KeyH')) useChoco();
   p.anim += dt; p.lowT = (p.lowT || 0) - dt; if (p.hp < 25 && p.lowT <= 0) { p.lowT = 1.4; sfx.low(); }
   const [ix, iy] = getMove(), il = Math.hypot(ix, iy);
-  p.moving = il > 0.05;
+  p.moving = il > 0.05 || !!p.forceMove;
   if (p.moving && p.atk <= 0) { const nx = ix / il, ny = iy / il; p.dx = nx; p.dy = ny; if (Math.abs(nx) > .3) p.face = sign(nx); }
   const sp = (p.atk > .12 ? SPEED * .6 : SPEED), acc = 5200 * dt;
   p.vx = approach(p.vx, ix * sp, acc); p.vy = approach(p.vy, iy * sp, acc);
@@ -473,12 +473,15 @@ function updateProj(dt) {
 }
 
 // ---------- Cámara / niveles / disparadores ----------
-function npcNeedsLetter(e) { return S.lvlId === 0 && S.q.gotLetters && e.type === 'npc' && !e.tag && LETTER_TO[e.id] && !S.q.delivered[e.id]; }
+function npcNeedsLetter(e) { return (S.lvlId === 0 || S.lvlId >= 10) && S.q.gotLetters && e.type === 'npc' && !e.tag && LETTER_TO[e.id] && !S.q.delivered[e.id]; }
 const LETTER_TO = { timba: 1, rius: 1, mayo: 1, esparta: 1, raptor: 1, invictor: 1, acenix: 1 };
+function doorOf(id) { const b = S.lvl.buildings.find(b => b.id === id); return b ? { x: (b.dx + .5) * T, y: (b.fy + .5) * T } : null; }
 function questTarget() {
-  if (S.lvlId !== 0) return null; const q = S.q;
-  if (!q.gotLetters) return S.ents.find(e => e.id === 'ambrosio') || null;
-  if (!q.done) { let best = null, bd = 1e9; for (const e of S.ents) if (npcNeedsLetter(e)) { const d = dist(e.x, e.y, P.x, P.y); if (d < bd) { bd = d; best = e; } } return best; }
+  const q = S.q;
+  if (S.lvlId >= 10) { if (q.done) return null; const e = S.ents.find(e => e.type === 'npc' && (npcNeedsLetter(e) || (!q.gotLetters && e.id === 'ambrosio'))); return e || { x: 7.5 * T, y: 8.4 * T }; }
+  if (S.lvlId !== 0) return null;
+  if (!q.gotLetters) return doorOf('ambrosio');
+  if (!q.done) { let best = null, bd = 1e9; for (const id in LETTER_TO) if (!q.delivered[id]) { const d0 = doorOf(id); if (!d0) continue; const d = dist(d0.x, d0.y, P.x, P.y); if (d < bd) { bd = d; best = d0; } } return best; }
   if (!q.trainStarted) { const s = S.lvl.station; return { x: (s.x0 + s.x1) / 2 * T, y: 40 * T }; }
   return null;
 }
@@ -498,7 +501,7 @@ function loadLevel(id) {
   P.x = (L.start[0] + .5) * T; P.y = (L.start[1] + 1) * T - 8;
   P.vx = P.vy = 0; P.hp = P.maxHp; P.inv = 0; P.dead = false; P.dx = 0; P.dy = 1; P.face = 1; P.atk = 0;
   S.checkpoint = [P.x, P.y]; initWilly(); updateCamera(0, true);
-  setMusic(L.theme === 'dream' ? 'dream' : L.theme === 'sweet' ? 'day' : 'city'); setAmbient(L.theme === 'dream' ? 'dream' : 'day');
+  setMusic(L.theme === 'dream' ? 'dream' : L.theme === 'sweet' ? 'day' : L.theme === 'indoor' ? 'story' : 'city'); setAmbient(L.theme === 'dream' ? 'dream' : 'day');
 }
 function openDoorGroup(x, y, c) {
   const L = S.lvl, st = [[x, y]], seen = new Set();

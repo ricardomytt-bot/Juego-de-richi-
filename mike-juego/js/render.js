@@ -570,7 +570,7 @@ function drawHUD() {
       ctx.globalAlpha = 1; if (has) txt('×' + S.keys[i], x + 20, 72, { size: 12, outline: false, color: '#fff' });
     });
   }
-  { const q = S.q, lines = []; if (S.lvlId === 0 && S.mode === 'play') {
+  { const q = S.q, lines = []; if ((S.lvlId === 0 || S.lvlId >= 10) && S.mode === 'play') {
       if (S.wave && !S.wave.done) { const left = S.ents.filter(e => e.corrupt && !e.dead).length + (S.wave.total - S.wave.spawned); lines.push('OLEADA ' + S.wave.n + ' / 3', 'Slimes: ' + left); }
       else if (!q.gotLetters) lines.push('MISIÓN', 'Habla con Ambrosio (Correos)');
       else if (!q.done) lines.push('REPARTE LAS CARTAS  ' + q.count + ' / ' + q.total, 'Sigue la flecha amarilla');

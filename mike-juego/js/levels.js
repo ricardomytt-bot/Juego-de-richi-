@@ -97,6 +97,7 @@ function carveMaze(L, x0, y0, cw, ch, seed, o) {
 const pick = (arr, r) => arr[Math.floor(r() * arr.length)];
 
 // ---- Nivel 0: la ciudad de Diamantia (calles, casas de los compas y estación de tren) ----
+const INTERIOR_INFO = {};
 function level0() {
   const L = new Level(110, 80, 'city'); L.diaNeed = 3; L.start = [9, 66];
   const R = (a, b, c, d, ch = '.') => L.fill(a, b, c, d, ch), r = mkRng(17);
@@ -119,7 +120,7 @@ function level0() {
   const rius = L.building(56, 56, 63, 62, { id: 'rius', color: '#f0e0b0', roof: '#c0392b', label: 'GRANJA DE RIUS' });
   const mayo = L.building(84, 56, 91, 62, { id: 'mayo', color: '#ecebf5', roof: '#cc2a2a', label: 'PIZZERÍA MAYO' });
   const ace = L.building(8, 31, 15, 37, { id: 'acenix', color: '#f6b6d2', roof: '#d6609a', label: 'CAFÉ GATUNO' });
-  const esp = L.building(30, 9, 38, 15, { id: 'esparta', color: '#9ab8e8', roof: '#3a68b8', label: 'GIMNASIO ESPARTA' });
+  const esp = L.building(30, 9, 38, 15, { id: 'esparta', color: '#9ab8e8', roof: '#3a68b8', label: 'CASA DE ESPARTA' });
   const rap = L.building(56, 9, 63, 15, { id: 'raptor', color: '#e85a5a', roof: '#7a2a2a', label: 'TIENDA DE ANIME' });
   const inv = L.building(84, 9, 92, 15, { id: 'invictor', color: '#f4efe6', roof: '#b82a2a', label: 'VILLA ROMANA' });
   // restaurante
@@ -134,8 +135,7 @@ function level0() {
   for (const x of [30, 40, 54, 66, 82]) house(x, 70, hi++);
   // personajes en las puertas
   const npcAt = (id, p, extra) => L.ent('npc', p[0], p[1], Object.assign({ id }, extra || {}));
-  npcAt('trolino', [mike[0] + 2, mike[1] - 1]); npcAt('ambrosio', post); npcAt('timba', timba); npcAt('rius', rius); npcAt('mayo', mayo);
-  npcAt('acenix', ace); npcAt('esparta', esp); npcAt('raptor', rap); npcAt('invictor', inv);
+  npcAt('trolino', [mike[0] + 2, mike[1] - 1]);
   npcAt('aquela', [mike[0] - 2, mike[1] - 1]);
   // ciudadanos que pasean
   const cit = [[30, 65], [44, 66], [70, 65], [95, 66], [20, 40], [56, 40], [45, 28], [57, 24], [26, 30], [78, 50], [50, 18], [100, 18], [66, 30], [41, 52], [60, 66], [36, 40]];
@@ -178,7 +178,12 @@ function level0() {
   L.sign(70, 12, '¡algo brilla por aquí!');
   L.sign(100, 62, 'Rincón del Sureste');
   L.sign(41, 51, 'Restaurante La Estrella  ·  ¡Hoy hay pizza!');
-  L.prop('portal', 99, 47, { solid: false, lock: 'train', to: 1 }); L.exits = [{ x0: 97, y0: 46, x1: 101, y1: 48, to: 1, spawn: [60, 77], lock: 'train', msg: 'El portal del Valle del Sueño aún no se abre... ¡sigue la historia!' }];
+  // puertas: cada edificio se puede visitar por dentro
+  const ZID = { mike: 10, ambrosio: 11, timba: 12, rius: 13, mayo: 14, acenix: 15, esparta: 16, raptor: 17, invictor: 18, restaurant: 19 }; let wk = 0; L.exits = [];
+  for (const b of L.buildings) { b.zone = ZID[b.id] || (20 + wk++); INTERIOR_INFO[b.zone] = { id: b.id, seed: b.zone, out: [b.dx, b.face === 'N' ? b.fy - 1 : b.fy], label: b.label };
+    L.exits.push({ door: true, key: b.face === 'N' ? 'down' : 'up', x0: b.dx, x1: b.dx, y0: b.fy, y1: b.fy, to: b.zone, spawn: [7, 7], lock: null }); }
+  L.prop('xtree', 50, 23);
+  L.prop('portal', 99, 47, { solid: false, lock: 'train', to: 1 }); L.exits.push({ x0: 97, y0: 46, x1: 101, y1: 48, to: 1, spawn: [60, 77], lock: 'train', msg: 'El portal del Valle del Sueño aún no se abre... ¡sigue la historia!' });
   return L;
 }
 
@@ -277,3 +282,22 @@ function verifyLevel(L) {
   return { ok: missing.length === 0, missing };
 }
 const LEVELS = [level0, level1, level2];
+function interiorLevel(z) {
+  if (!INTERIOR_INFO[z]) level0();
+  const inf = INTERIOR_INFO[z], L = new Level(15, 10, 'indoor'); L.start = [7, 7];
+  L.fill(0, 0, 14, 9, 'W'); L.fill(1, 1, 13, 8, 'a'); L.fill(0, 9, 14, 9, 'P');
+  const blk = (x, y) => L.set(x, y, 'P'), kitchen = ['mayo', 'acenix', 'restaurant', 'ambrosio'].includes(inf.id), cols = [0xe85a5a, 0x4a8ae8, 0x58b858, 0xe8c24a, 0xb06ad8];
+  L.prop('rug', 7, 5, { solid: false, w: 5, h: 3, c: [0xb84a5a, 0x3a6aa8, 0x3a8a5a][inf.seed % 3] }); L.prop('rug', 7, 8, { solid: false, w: 2.5, h: 1, c: 0x8a5a30 });
+  L.prop('bed', 2, 2, { c: cols[inf.seed % 5] }); blk(2, 3); blk(3, 2); blk(3, 3);
+  L.prop('shelf', 11, 1, {}); blk(12, 1); L.prop('plant', 13, 2, {}); L.prop('plant', 1, 7, {});
+  if (kitchen) { L.prop('stove', 9, 1, {}); L.prop('tableR', 11, 5, {}); blk(12, 5); blk(10, 5); } else L.prop('tableR', 11, 5, {});
+  if (inf.id === 'restaurant') { L.prop('tableR', 4, 6, {}); L.prop('tableR', 7, 3, {}); }
+  L.sign(7, 7, inf.label ? inf.label : 'Una casa acogedora');
+  const owner = inf.id === 'house' ? null : inf.id;
+  if (owner && owner !== 'mike') L.ent('npc', 7, 5, { id: owner });
+  if (inf.id === 'house') L.ent('citizen', 7, 5, { seed: (inf.seed % 6) + 1 });
+  L.exits = [{ x0: 6, y0: 8, x1: 8, y1: 8, to: 0, spawn: inf.out, lock: null }];
+  for (const [x, y] of [[7, 7], [7, 8]]) L.mustReach(x, y);
+  return L;
+}
+for (let z = 10; z <= 40; z++) LEVELS[z] = () => interiorLevel(z);

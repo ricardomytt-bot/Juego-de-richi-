@@ -20,7 +20,15 @@ function initGL() {
 
 // ---------- utilidades de materiales y geometrías ----------
 const GEO = {};
-const geoBox = (w, h, d) => { const k = 'b' + w + ',' + h + ',' + d; return GEO[k] || (GEO[k] = new THREE.BoxGeometry(w, h, d)); };
+function roundBox(w, h, d, r) {
+  const g = new THREE.BoxGeometry(w, h, d, 4, 4, 4), p = g.attributes.position, n = g.attributes.normal, hx = w / 2 - r, hy = h / 2 - r, hz = d / 2 - r, v = new THREE.Vector3(), c = new THREE.Vector3(), dr = new THREE.Vector3();
+  for (let i = 0; i < p.count; i++) {
+    v.set(p.getX(i), p.getY(i), p.getZ(i)); c.set(Math.max(-hx, Math.min(hx, v.x)), Math.max(-hy, Math.min(hy, v.y)), Math.max(-hz, Math.min(hz, v.z))); dr.copy(v).sub(c); const len = dr.length();
+    if (len > 1e-6) { dr.divideScalar(len); v.copy(c).addScaledVector(dr, r); n.setXYZ(i, dr.x, dr.y, dr.z); p.setXYZ(i, v.x, v.y, v.z); }
+  }
+  return g;
+}
+const geoBox = (w, h, d) => { const k = 'b' + w + ',' + h + ',' + d; if (!GEO[k]) { const r = Math.min(.1, Math.min(w, h, d) * .38); GEO[k] = r < .02 ? new THREE.BoxGeometry(w, h, d) : roundBox(w, h, d, r); } return GEO[k]; };
 const MATS = {};
 function lam(c, o) { const k = c + (o ? JSON.stringify(o) : ''); return MATS[k] || (MATS[k] = new THREE.MeshLambertMaterial(Object.assign({ color: c }, o || {}))); }
 function cTex(canvas, rep) {
@@ -47,6 +55,13 @@ function glClearLevel() {
   if (GL.lvlGroup) { GL.scene.remove(GL.lvlGroup); GL.lvlGroup.traverse(o => { if (o.isInstancedMesh) o.dispose(); }); }
   for (const [k, o] of GL.objs) GL.root.remove(o.group); GL.objs.clear(); GL.dyn = []; GL.shotObjs = []; GL.portals = []; GL.trainGrp = null; GL.trainBody = null; GL.clouds = null;
 }
+function glThemeMood(L) {
+  const sc = GL.scene, th = L.theme; GL.snow = false;
+  if (th === 'dream') { sc.background = new THREE.Color(0x1c1640); sc.fog = new THREE.Fog(0x2a2058, 16, 50); GL.amb.color.set(0x9a8ad8); GL.amb.intensity = 1.0; GL.hemi.color.set(0x9a9aff); GL.hemi.groundColor.set(0x2a1a60); GL.hemi.intensity = .45; GL.sun.color.set(0xc4ccff); GL.sun.intensity = 1.4; GL.plight.intensity = 22; GL.plight.color.set(0xffe2b0); }
+  else if (th === 'sweet') { sc.background = new THREE.Color(0xf4cfe4); sc.fog = new THREE.Fog(0xf6d8ea, 30, 90); GL.amb.color.set(0xfff0f8); GL.amb.intensity = 1.1; GL.hemi.color.set(0xffd8f0); GL.hemi.groundColor.set(0xc08ad0); GL.hemi.intensity = .5; GL.sun.color.set(0xfff0d0); GL.sun.intensity = 2.1; GL.plight.intensity = 0; }
+  else if (th === 'indoor') { sc.background = new THREE.Color(0x2a1e1c); sc.fog = new THREE.Fog(0x2a1e1c, 30, 60); GL.amb.color.set(0xffe2c0); GL.amb.intensity = 1.0; GL.hemi.color.set(0xffd9b0); GL.hemi.groundColor.set(0x6a4a32); GL.hemi.intensity = .7; GL.sun.color.set(0xffd9a0); GL.sun.intensity = 1.1; GL.plight.intensity = 28; GL.plight.color.set(0xffd9a0); }
+  else { sc.background = new THREE.Color(0xc9d9ee); sc.fog = new THREE.Fog(0xd3deef, 32, 95); GL.amb.color.set(0xe6edff); GL.amb.intensity = 1.0; GL.hemi.color.set(0xdce8ff); GL.hemi.groundColor.set(0x667a66); GL.hemi.intensity = .55; GL.sun.color.set(0xffe4b4); GL.sun.intensity = 2.1; GL.plight.intensity = 0; GL.snow = true; }
+}
 function glBuildLevel(L) {
   if (!GL.ok) return; glClearLevel(); GL.lvlRef = L; GL.trainX = 0; GL.exeShow = 0; GL.blds = [];
   const g = new THREE.Group(); GL.lvlGroup = g; GL.scene.add(g);
@@ -56,28 +71,29 @@ function glBuildLevel(L) {
   if (dm) { sc.background = new THREE.Color(0x140e36); sc.fog = new THREE.Fog(0x241a58, 14, 46); GL.amb.color.set(0x8a7ad0); GL.amb.intensity = 1.05; GL.hemi.color.set(0x8a8aff); GL.hemi.groundColor.set(0x2a1a60); GL.hemi.intensity = .45; GL.sun.color.set(0xb4bcff); GL.sun.intensity = 1.5; GL.plight.intensity = 26; GL.plight.color.set(0xffe2b0); }
   else { sc.background = new THREE.Color(0x8fd3ff); sc.fog = new THREE.Fog(0xb4e2ff, 34, 100); GL.amb.color.set(0xffffff); GL.amb.intensity = 1.15; GL.hemi.color.set(0xbfe0ff); GL.hemi.groundColor.set(0x5a7a3a); GL.hemi.intensity = .5; GL.sun.color.set(0xfff0d4); GL.sun.intensity = 2.5; GL.plight.intensity = 0; }
   const sw = L.theme === 'sweet'; if (sw) { sc.background = new THREE.Color(0xffc4e4); sc.fog = new THREE.Fog(0xffd6ee, 30, 90); GL.amb.color.set(0xfff0f8); GL.amb.intensity = 1.2; GL.hemi.color.set(0xffd0f0); GL.hemi.groundColor.set(0xc08ad0); GL.sun.color.set(0xfff4d0); GL.sun.intensity = 2.3; }
-  GL.blight.intensity = 0;
+  glThemeMood(L); GL.blight.intensity = 0;
   // --- suelo (instanciado por tipo/variante)
   const floors = {}, add = (k, x, z) => (floors[k] || (floors[k] = [])).push({ x: x + .5, y: -.15, z: z + .5 });
   const trees = [], rocks = [], bushes = [], blocks = { W: [], R: [] }, flowers = [], mushes = [], waters = [];
   for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) {
     const c0 = L.g[y][x], c = c0 === 'P' ? ((L.pu && L.pu[x + ',' + y]) || '.') : c0, h = hash2(x, y);
     if (c === '~') { waters.push({ x: x + .5, y: -.2, z: y + .5 }); continue; }
+    if (L.theme === 'indoor') { add(c === 'W' ? 'dark0' : 'arena' + ((x + y) % 2), x, y); if (c === 'W') blocks.W.push([x, y, h]); continue; }
     if (c === ',') add('path' + (h % 2), x, y); else if (c === 'a') add('arena' + ((x + y) % 2), x, y);
     else if ('TWCGHdXYZN'.includes(c)) add('dark' + (h % 2), x, y); else add('grass' + (h % 3), x, y);
     if (c === 'T') trees.push([x, y, h]); else if (c === 'R') rocks.push([x, y, h]); else if (c === 'b') bushes.push([x, y, h]);
     else if (c === 'f') flowers.push([x, y, h]); else if (c === 'm') mushes.push([x, y, h]);
     else if (c === 'W') blocks.W.push([x, y, h]);
   }
-  const fgeo = geoBox(1, .3, 1);
-  for (const k in floors) { const base = k.replace(/\d+$/, ''), v = parseInt(k.slice(base.length)); inst(g, fgeo, new THREE.MeshLambertMaterial({ map: tx(texs[base][v]), color: sw ? (base === 'path' ? 0xfff0d0 : base === 'arena' ? 0xffd8f0 : 0xffd0ec) : 0xffffff }), floors[k], false, true); }
+  const fgeo = new THREE.BoxGeometry(1, .3, 1);
+  for (const k in floors) { const base = k.replace(/\d+$/, ''), v = parseInt(k.slice(base.length)); inst(g, fgeo, new THREE.MeshLambertMaterial({ map: tx(texs[base][v]), color: L.theme === 'indoor' ? (base === 'arena' ? 0xe2b57e : 0x6a5a50) : sw ? (base === 'path' ? 0xfff0d0 : base === 'arena' ? 0xffd8f0 : 0xffd0ec) : 0xffffff }), floors[k], false, true); }
   // agua
   GL.waterTex = cTex(texs.water[0]); GL.waterTex.wrapS = GL.waterTex.wrapT = THREE.RepeatWrapping;
   const wm = new THREE.MeshLambertMaterial({ map: GL.waterTex, transparent: true, opacity: .9, color: sw ? 0xa86a44 : 0xffffff }); GL.waterMat = wm; GL.waterFrames = texs.water.map(c => cTex(c));
   inst(g, geoBox(1, .3, 1), wm, waters, false, true);
   // muros de piedra
-  const wallMat = new THREE.MeshLambertMaterial({ map: tx(texs.wall), color: sw ? 0xffe4f2 : 0xffffff });
-  inst(g, geoBox(1, 1.5, 1), wallMat, blocks.W.map(([x, y]) => ({ x: x + .5, y: .75, z: y + .5 })), true, true);
+  const ind = L.theme === 'indoor', wallMat = new THREE.MeshLambertMaterial({ map: tx(texs.wall), color: ind ? 0xf0dcc0 : sw ? 0xffe4f2 : 0xffffff });
+  inst(g, ind ? geoBox(1, 2.6, 1) : geoBox(1, 1.5, 1), wallMat, blocks.W.map(([x, y]) => ({ x: x + .5, y: ind ? 1.3 : .75, z: y + .5 })), true, true);
   // dinámicos: grietas, puertas, puerta de diamantes
   const crackMat = new THREE.MeshLambertMaterial({ map: tx(texs.crack) }), doorTex = DOORCANV.map(c => cTex(c));
   const gateMat = new THREE.MeshLambertMaterial({ map: tx(texs.gate), emissive: 0x2a8aff, emissiveIntensity: .35 });
@@ -94,7 +110,7 @@ function glBuildLevel(L) {
     const s = .85 + rnd3(h, 3) * .45, col = new THREE.Color(pal[h % pal.length]).multiplyScalar(.9 + rnd3(h, 11) * .2), jx = (rnd3(h, 5) - .5) * .25, jz = (rnd3(h, 9) - .5) * .25, ry = (h % 4) * Math.PI / 2;
     tr.push({ x: x + .5 + jx, y: .7 * s, z: y + .5 + jz, sy: s });
     l1.push({ x: x + .5 + jx, y: 1.55 * s, z: y + .5 + jz, sx: s, sy: s, sz: s, color: col, ry }); l2.push({ x: x + .5 + jx, y: 2.2 * s, z: y + .5 + jz, sx: s, sy: s, sz: s, color: col.clone().multiplyScalar(1.1), ry });
-    l3.push({ x: x + .5 + jx, y: 2.75 * s, z: y + .5 + jz, sx: s, sy: s, sz: s, color: col.clone().multiplyScalar(1.2), ry });
+    l3.push({ x: x + .5 + jx, y: 2.75 * s, z: y + .5 + jz, sx: s, sy: s, sz: s, color: L.theme === 'city' ? new THREE.Color(0xeef4ff) : col.clone().multiplyScalar(1.2), ry });
   }
   const bark = new THREE.MeshLambertMaterial({ map: cTex(noiseCanvas(16, 16, '#6b4424', ['#8f5e32', '#4a2c14', '#5a3820'], 5, .5)) }), leaf = new THREE.MeshLambertMaterial({ map: cTex(leafCanvas()) });
   inst(g, geoBox(.4, 1.4, .4), bark, tr, true, true); inst(g, geoBox(1.7, .7, 1.7), leaf, l1, true, true); inst(g, geoBox(1.3, .7, 1.3), leaf, l2, true, true); inst(g, geoBox(.8, .6, .8), leaf, l3, true, true);
@@ -108,7 +124,8 @@ function glBuildLevel(L) {
   const mu = []; mushes.forEach(([x, y, h]) => mu.push({ x: x + .3 + rnd3(h, 2) * .4, y: .22, z: y + .3 + rnd3(h, 6) * .4, sy: .8 + rnd3(h, 8), color: new THREE.Color([0x6ad8ff, 0xff6ad0][h % 2]) }));
   inst(g, geoBox(.3, .3, .3), new THREE.MeshBasicMaterial({ color: 0xffffff }), mu, false, false);
   // matas de pasto y detalles del suelo
-  if (!dm) { const tf = [], q = mkRng(91); for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) { const c = L.g[y][x]; if ((c === '.' || c === 'f') && q() < .5) { const hh = .16 + q() * .22; tf.push({ x: x + .1 + q() * .8, y: hh / 2, z: y + .1 + q() * .8, sy: hh / .2, color: new THREE.Color().setHSL(.27 + q() * .06, .6, .34 + q() * .12) }); } } inst(g, geoBox(.07, .2, .07), new THREE.MeshLambertMaterial({ color: 0xffffff }), tf, false, false); }
+  if (L.theme === 'city') { const spn = [], q2 = mkRng(55); for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) { const c = L.g[y][x]; if ((c === '.' || c === 'f') && q2() < .13) spn.push({ x: x + .5 + (q2() - .5) * .3, y: .04, z: y + .5 + (q2() - .5) * .3, sx: .5 + q2() * .5, sz: .5 + q2() * .5, sy: 1, color: new THREE.Color(0xf2f6ff) }); } inst(g, geoBox(.9, .08, .9), new THREE.MeshLambertMaterial({ color: 0xffffff }), spn, false, true); }
+  if (L.theme !== 'indoor' && !dm) { const tf = [], q = mkRng(91); for (let y = 0; y < L.h; y++) for (let x = 0; x < L.w; x++) { const c = L.g[y][x]; if ((c === '.' || c === 'f') && q() < .5) { const hh = .16 + q() * .22; tf.push({ x: x + .1 + q() * .8, y: hh / 2, z: y + .1 + q() * .8, sy: hh / .2, color: new THREE.Color().setHSL(.27 + q() * .06, .6, .34 + q() * .12) }); } } inst(g, geoBox(.07, .2, .07), new THREE.MeshLambertMaterial({ color: 0xffffff }), tf, false, false); }
   glDeco(g, L);
   // edificios, antorchas, farolas, letreros
   for (const b of L.buildings) glBuilding(g, b, L);
@@ -128,7 +145,7 @@ const DOORCANV = [0, 1, 2].map(k => mk(24, 24, g => {
 function glLamp(g, x, y, L) {
   const dm = L.theme === 'dream', m = new THREE.Group(); m.position.set(x + .5, 0, y + .5);
   m.add(mesh(geoBox(.18, 1.9, .18), lam(0x3a3a48), 0, .95, 0), mesh(geoBox(.5, .12, .5), lam(0x2a2a38), 0, 1.95, 0), mesh(geoBox(.34, .4, .34), new THREE.MeshBasicMaterial({ color: dm ? 0xffc060 : 0xfff0b0 }), 0, 2.15, 0, false), mesh(geoBox(.6, .1, .6), lam(0x2a2a38), 0, 2.42, 0));
-  const glow = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), new THREE.MeshBasicMaterial({ map: glowTex(dm ? '#ffb040' : '#fff0a0'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: dm ? .85 : .35 })); glow.position.set(0, 2.15, 0); glow.userData.billboard = true; m.add(glow);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), new THREE.MeshBasicMaterial({ map: glowTex(dm ? '#ffb040' : '#ffd890'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: dm ? .85 : .75 })); glow.position.set(0, 2.15, 0); glow.userData.billboard = true; m.add(glow);
   g.add(m); if (dm || L.theme === 'dream') GL.lamps = (GL.lamps || []).concat([m]);
 }
 const GLOWT = {};
@@ -151,8 +168,10 @@ function glBuilding(g, b, L) {
   const roof = new THREE.Mesh(new THREE.ConeGeometry(.5, 1, 4), new THREE.MeshLambertMaterial({ color: b.roof, flatShading: true })); roof.rotation.y = Math.PI / 4;
   roof.scale.set((w + .6) * 1.41, 1.8, (d + .6) * 1.41); roof.position.y = H + .9; roof.castShadow = true; grp.add(roof);
   grp.add(mesh(geoBox(w + .5, .18, d + .5), lam(0x2a1a10), 0, H, 0));
+  { const hc = .75, sxc = roof.scale.x * (hc / 1.8) * 1.14, szc = roof.scale.z * (hc / 1.8) * 1.14, sn = new THREE.Mesh(new THREE.ConeGeometry(.5, 1, 4), new THREE.MeshLambertMaterial({ color: 0xf4f8ff, flatShading: true })); sn.rotation.y = Math.PI / 4; sn.scale.set(sxc, hc * 1.04, szc); sn.position.y = H + 1.8 - hc / 2 + .03; grp.add(sn);
+    const fz0 = b.face === 'N' ? -1 : 1; for (let i = 0; i < Math.floor(w * 1.6); i++) grp.add(mesh(geoBox(.12, .12, .12), new THREE.MeshBasicMaterial({ color: [0xff5a5a, 0xffd24a, 0x5acaff, 0x7aff8a][i % 4] }), -w / 2 + .3 + i * (w - .6) / Math.max(1, Math.floor(w * 1.6) - 1), H - .22, fz0 * (d / 2 + .12), false)); }
   // ventanas
-  const fz = b.face === 'N' ? -1 : 1, win = new THREE.MeshLambertMaterial({ color: 0xbfe9ff, emissive: 0x3a5a7a, emissiveIntensity: .6 });
+  const fz = b.face === 'N' ? -1 : 1, win = new THREE.MeshLambertMaterial({ color: 0xffe2a0, emissive: 0xffa84a, emissiveIntensity: .85 });
   for (const sx of [-1, 1]) { const wxp = sx * Math.max(1.4, w / 2 - 1.5); grp.add(mesh(geoBox(.9, .8, .12), lam(0x3a2410), wxp, 1.6, fz * (d / 2 - .05), false)); grp.add(mesh(geoBox(.74, .64, .14), win, wxp, 1.6, fz * (d / 2 - .03), false)); }
   grp.add(mesh(geoBox(.12, .8, d - .6), lam(0x3a2410), w / 2 - .05, 1.6, 0, false)); grp.add(mesh(geoBox(.1, .6, d - .8), win, w / 2 - .04, 1.6, 0, false)); grp.add(mesh(geoBox(.12, .8, d - .6), lam(0x3a2410), -w / 2 + .05, 1.6, 0, false)); grp.add(mesh(geoBox(.1, .6, d - .8), win, -w / 2 + .04, 1.6, 0, false));
   // puerta
@@ -218,6 +237,13 @@ function glDeco(g, L) {
       const base = mesh(new THREE.CylinderGeometry(1.5, 1.7, .3, 14), lam(0x3a3a58), 0, .15, 0); const glow = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.MeshBasicMaterial({ map: glowTex(d.lock === 'boss' ? '#ff9ad0' : '#7df3ff'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: .6 })); glow.position.y = 1.6; glow.userData.billboard = true;
       m.add(base, ring, disc, glow); m.userData.portal = d; (GL.portals = GL.portals || []).push(m);
     }
+    else if (d.k === 'xtree') { m.add(mesh(geoBox(.5, .6, .5), lam(0x6b4424), 0, .3, 0)); for (let i = 0; i < 4; i++) m.add(mesh(geoBox(2.6 - i * .6, .7, 2.6 - i * .6), lam(i % 2 ? 0x2f8f4a : 0x3aa05a), 0, 1.0 + i * .6, 0)); m.add(mesh(geoBox(.34, .34, .34), new THREE.MeshBasicMaterial({ color: 0xffe14a }), 0, 3.6, 0, false)); for (let i = 0; i < 12; i++) { const a = i * 2.4, rr = 1.1 - (i % 4) * .22; m.add(mesh(geoBox(.18, .18, .18), new THREE.MeshBasicMaterial({ color: [0xff4a4a, 0xffd24a, 0x4aaaff, 0xff8aff][i % 4] }), Math.cos(a) * rr, 1.0 + (i % 4) * .6, Math.sin(a) * rr, false)); } }
+    else if (d.k === 'bed') { m.add(mesh(geoBox(1.5, .4, 2.2), lam(0x8a5a30), 0, .3, 0), mesh(geoBox(1.4, .3, 1.6), lam(d.c || 0xe85a5a), 0, .62, .25), mesh(geoBox(1.3, .22, .5), lam(0xfffaf0), 0, .72, -.8), mesh(geoBox(1.5, .9, .14), lam(0x6a4220), 0, .7, -1.1)); }
+    else if (d.k === 'shelf') { m.add(mesh(geoBox(1.8, 2.0, .5), lam(0x7a4a28), 0, 1.0, 0)); for (let i = 0; i < 3; i++) for (let j = 0; j < 4; j++) m.add(mesh(geoBox(.3, .4, .3), lam([0xe85a5a, 0x4a8ae8, 0xe8c24a, 0x58b858][(i + j) % 4]), -.6 + j * .4, .45 + i * .62, .1, false)); }
+    else if (d.k === 'rug') m.add(mesh(geoBox(d.w || 3, .04, d.h || 2), lam(d.c || 0xb84a5a), 0, .17, 0, false));
+    else if (d.k === 'tableR') { m.add(mesh(new THREE.CylinderGeometry(.9, .9, .12, 14), lam(0xc89a5a), 0, .95, 0), mesh(geoBox(.2, .95, .2), lam(0x6a4220), 0, .48, 0)); for (const sx of [-1.2, 1.2]) m.add(mesh(geoBox(.5, .5, .5), lam(0x8a5a30), sx, .25, 0)); }
+    else if (d.k === 'plant') m.add(mesh(geoBox(.5, .5, .5), lam(0xb85a3a), 0, .25, 0), mesh(geoBox(.7, .7, .7), lam(0x3a9a4a), 0, .85, 0));
+    else if (d.k === 'stove') m.add(mesh(geoBox(1.4, 1.1, .9), lam(0x4a4a58), 0, .55, 0), mesh(geoBox(1.0, .5, .1), new THREE.MeshBasicMaterial({ color: 0xff9a3a }), 0, .6, .46, false));
     else if (d.k === 'mail') m.add(mesh(geoBox(.1, .7, .1), dwood, 0, .35, 0), mesh(geoBox(.4, .3, .3), lam(0x2a6ad8), 0, .8, 0));
     else if (d.k === 'tree2') { const cols = [0xff8ab0, 0xffb0c8, 0xffa0d0]; m.add(mesh(geoBox(.34, 1.3, .34), lam(0x6b4424), 0, .65, 0)); for (const [x, y, z, w] of [[0, 1.6, 0, 1.4], [-.4, 1.4, .2, 1.0], [.4, 1.5, -.2, 1.0], [0, 2.1, 0, .9]]) m.add(mesh(geoBox(w, .7, w), lam(cols[(d.x + d.y) % 3]), x, y, z)); }
     g.add(m);

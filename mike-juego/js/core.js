@@ -135,8 +135,8 @@ const VOICES = {
   mike: { f: 560, v: 90, type: 'triangle', len: .05, g: .05 }, willy: { f: 310, v: 40, type: 'square', len: .06, g: .04, gl: -90 },
   ambrosio: { f: 430, v: 130, type: 'square', len: .045, g: .035 }, trolino: { f: 150, v: 30, type: 'sawtooth', len: .06, g: .04 },
   timba: { f: 300, v: 30, type: 'triangle', len: .1, g: .16, gl: -60 }, rius: { f: 900, v: 220, type: 'square', len: .035, g: .03 },
-  mayo: { f: 700, v: 0, type: 'square', len: .05, g: .03, steps: [500, 700, 900, 620] }, esparta: { f: 760, v: 150, type: 'triangle', len: .04, g: .075, gl: 120 },
-  raptor: { f: 640, v: 150, type: 'triangle', len: .035, g: .05 }, invictor: { f: 190, v: 25, type: 'sawtooth', len: .07, g: .06 },
+  mayo: { f: 700, v: 0, type: 'square', len: .05, g: .03, steps: [500, 700, 900, 620] }, esparta: { f: 470, v: 45, type: 'sine', len: .085, g: .09, gl: 30 },
+  raptor: { f: 640, v: 150, type: 'triangle', len: .035, g: .05 }, invictor: { f: 760, v: 150, type: 'triangle', len: .04, g: .075, gl: 120 },
   acenix: { f: 880, v: 40, type: 'sine', len: .09, g: .06, gl: 260 }, aquela: { f: 690, v: 60, type: 'sine', len: .06, g: .06 },
   exe: { f: 105, v: 15, type: 'sawtooth', len: .08, g: .05, det: 1.06 }, narr: null, default: { f: 400, v: 120, type: 'square', len: .04, g: .03 }
 };

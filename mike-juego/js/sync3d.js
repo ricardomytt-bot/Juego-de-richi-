@@ -35,6 +35,7 @@ function makeKey(k) {
 function wrapOuter(B) { const g = new THREE.Group(); g.add(B.g); B.outer = g; B.group = g; return B; }
 const OUTM = typeof THREE !== 'undefined' ? new THREE.MeshBasicMaterial({ color: 0x120a1e, side: THREE.BackSide }) : null;
 function addOutline(g) {
+  return;
   const list = []; g.traverse(m => { if (m.isMesh && m.geometry && m.geometry.type === 'BoxGeometry' && !m.userData.ol) list.push(m); });
   for (const m of list) { const p = m.geometry.parameters, o = new THREE.Mesh(m.geometry, OUTM); o.userData.ol = 1; o.scale.set(1 + .09 / p.width, 1 + .09 / p.height, 1 + .09 / p.depth); m.add(o); }
 }
@@ -136,7 +137,7 @@ function glParticles() {
 }
 // ---------- cámara, luces y dibujo ----------
 function glCamera(dt) {
-  const L = S.lvl, c = GL.cam; let tx, tz, td = 13.5;
+  const L = S.lvl, c = GL.cam; let tx, tz, td = L.theme === 'indoor' ? 9.5 : 13.5;
   if (S.camShot) { tx = S.camShot.x; tz = S.camShot.z; td = S.camShot.dist || 14; }
   else if (S.bossLock && GL.arenaC) { const bb = S.boss; tx = (P.x / T * 2 + (bb ? bb.x / T : GL.arenaC[0])) / 3; tz = (P.y / T * 2 + (bb ? bb.y / T : GL.arenaC[1])) / 3 - .3; td = 17; }
   else { tx = P.x / T + P.dx * 1.4; tz = P.y / T + P.dy * .9 - .5; }
@@ -155,6 +156,11 @@ function glFrame(dt) {
   // edificios que tapan a Mike se 'abren' (vista en corte)
   if (GL.blds) for (const gr of GL.blds) { const b = gr.userData.b, px = P.x / T, pz = P.y / T, occ = px > b.x0 - 2.5 && px < b.x1 + 3.5 && pz < b.y1 + 1.2 && pz > b.y0 - 9; gr.scale.y = lerp(gr.scale.y, occ ? .4 : 1, 1 - Math.exp(-S.dtv * 8)); const hide = occ || gr.scale.y < .95; for (const c of gr.children) if (c.position.y >= 2.5) c.visible = !hide; }
   if (GL.portals) for (const pm of GL.portals) { const d = pm.userData.portal; pm.visible = !d.lock || lockOK(d.lock); pm.children[1].rotation.z += dt * 1.5; pm.children[1].position.y = 1.5 + Math.sin(S.t * 2) * .08; }
+  if (GL.snow) {
+    if (!GL.snowPts) { const N = 240, geo = new THREE.BufferGeometry(), arr = new Float32Array(N * 3); for (let i = 0; i < N; i++) { arr[i * 3] = rnd(-16, 16); arr[i * 3 + 1] = rnd(0, 13); arr[i * 3 + 2] = rnd(-14, 14); } geo.setAttribute('position', new THREE.BufferAttribute(arr, 3)); GL.snowPts = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: .17, transparent: true, opacity: .85, depthWrite: false })); GL.snowPts.frustumCulled = false; GL.scene.add(GL.snowPts); }
+    const a = GL.snowPts.geometry.attributes.position.array; for (let i = 0; i < a.length / 3; i++) { a[i * 3 + 1] -= dt * (.9 + (i % 5) * .18); a[i * 3] += Math.sin(S.t * .8 + i) * dt * .35; if (a[i * 3 + 1] < 0) a[i * 3 + 1] = 13; }
+    GL.snowPts.geometry.attributes.position.needsUpdate = true; GL.snowPts.position.set(GL.cx, 0, GL.cz); GL.snowPts.visible = true;
+  } else if (GL.snowPts) GL.snowPts.visible = false;
   // animaciones ambientales
   if (GL.waterFrames) { GL.waterMat.map = GL.waterFrames[Math.floor(Math.max(0, S.t) * 2.2) % 3]; }
   if (GL.clouds) { GL.clouds.children.forEach(c => { c.position.x += dt * .9; if (c.position.x > 140) c.position.x = -20; }); }

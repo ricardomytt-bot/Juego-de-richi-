@@ -1,7 +1,7 @@
 'use strict';
 // ===== Mundo conectado: zonas unidas por portales, estado persistente por zona y guardado de partida =====
 const ZONES = {}, WSAVE = 'mike_world_save_v1', ZNAME = ['la Ciudad de Diamantia', 'el Valle del Sueño', 'Pastelandia'];
-const zoneMusic = L => L.theme === 'dream' ? 'dream' : L.theme === 'sweet' ? 'day' : 'city';
+const zoneMusic = L => L.theme === 'dream' ? 'dream' : L.theme === 'sweet' ? 'day' : L.theme === 'indoor' ? 'story' : 'city';
 function lockOK(k) { if (!k) return true; if (k === 'train') return !!(S.flags && S.flags.trainDone); if (k === 'boss') return !!(S.defeated && S.defeated[S.lvlId]); return true; }
 function stashZone() {
   if (!S.lvl) return;
@@ -13,7 +13,7 @@ function activateZone(id) {
   for (const e of S.ents) if (e.hidden) e.hidden = false;
   setMusic(zoneMusic(z.L)); setAmbient(z.L.theme === 'dream' ? 'dream' : 'day');
 }
-let zoning = false;
+let zoning = false, zoneT = -9;
 async function enterZone(id, spawn) {
   if (zoning) return; zoning = true; S.busy = true; S.skip = false; sfx.portal();
   await fadeTo(1, .4);
@@ -22,20 +22,24 @@ async function enterZone(id, spawn) {
   P.hp = hp; P.chocoCd = cd; P.x = (spawn[0] + .5) * T; P.y = (spawn[1] + 1) * T - 8; P.vx = P.vy = 0; P.dead = false;
   S.checkpoint = [P.x, P.y]; initWilly(); updateCamera(0, true); if (GL.ok) GL.camInit = false; glMood(false); S.camShot = null;
   await fadeTo(0, .5);
-  S.busy = false; zoning = false;
+  S.busy = false; zoning = false; zoneT = S.t;
   if (!S.flags['zona' + id]) {
     S.flags['zona' + id] = true; S.busy = true;
     if (id === 1) { await say('narr', 'El Valle del Sueño: un mundo de zonas conectadas con laberintos, llaves y puertas. Aquí todo flota, es suave y bonito... y probablemente peligroso.'); await say('willy', '¡Guau! (Traducción: huele a almohada con maldad.)'); showHint('Explora las zonas, busca llaves y consigue 3 diamantes', 6); }
     if (id === 2) { await say('narr', 'Pastelandia: todo es dulce, esponjoso y huele delicioso... y probablemente tiene trampa.'); await say('willy', '¡Guau! (Traducción: huele a muffin con maldad.)'); }
     S.busy = false;
-  } else showHint('Zona: ' + ZNAME[id], 2.5);
+  } else if (id < 10) showHint('Zona: ' + ZNAME[id], 2.5);
 }
 const _ct = checkTriggers;
 checkTriggers = function () {
   _ct();
   const L = S.lvl; if (!L || !L.exits || S.busy || zoning || S.wave || P.dead) return;
   const tx = P.x / T, ty = (P.y - 8) / T;
-  for (const ex of L.exits) if (tx >= ex.x0 && tx <= ex.x1 + 1 && ty >= ex.y0 && ty <= ex.y1 + 1) {
+  for (const ex of L.exits) if (ex.door) {
+    if (S.t - zoneT < 1.3) continue;
+    const px = Math.floor(P.x / T), py = Math.floor((P.y - 4) / T);
+    if (px === ex.x0 && py === ex.y0 && (ex.key === 'up' ? (isDown(K.up) || (JOY.active && JOY.y < -.4)) : (isDown(K.down) || (JOY.active && JOY.y > .4)))) { enterZone(ex.to, ex.spawn); return; }
+  } else if (tx >= ex.x0 && tx <= ex.x1 + 1 && ty >= ex.y0 && ty <= ex.y1 + 1) {
     if (lockOK(ex.lock)) { enterZone(ex.to, ex.spawn); return; } else showHint(ex.msg || 'Aún no puedes pasar', .4);
   }
 };
