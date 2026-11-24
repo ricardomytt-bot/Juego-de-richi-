@@ -25,7 +25,7 @@ function hash2(x, y) { let h = (x * 374761393 + y * 668265263) >>> 0; h = ((h ^ 
 const SETTINGS = { music: 7, sfx: 8, touch: true };
 try { const o = JSON.parse(localStorage.getItem('mike_ajustes') || '{}'); for (const k in SETTINGS) if (k in o) SETTINGS[k] = o[k]; } catch (e) { }
 function saveSettings() { try { localStorage.setItem('mike_ajustes', JSON.stringify(SETTINGS)); } catch (e) { } applyTouchVisibility(); AUDIO.setVol(); }
-function applyTouchVisibility() { const t = document.getElementById('touch'); if (t) t.style.display = SETTINGS.touch ? 'flex' : 'none'; }
+function applyTouchVisibility() { const t = document.getElementById('touch'); if (t) t.classList.toggle('off', !SETTINGS.touch); }
 
 // ----- Entrada: teclado, joystick y dos botones (ACTUAR / ATACAR) -----
 const keys = {}, pressed = {};
@@ -96,6 +96,9 @@ const AUDIO = {
         const comp = this.c.createDynamicsCompressor(); comp.connect(this.c.destination);
         this.master = this.c.createGain(); this.master.gain.value = .9; this.master.connect(comp);
         this.mus = this.c.createGain(); this.mus.connect(this.master);
+        const len = Math.floor(this.c.sampleRate * 2.4), imp = this.c.createBuffer(2, len, this.c.sampleRate);
+        for (let ch = 0; ch < 2; ch++) { const d = imp.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+        const cvb = this.c.createConvolver(); cvb.buffer = imp; this.revIn = this.c.createGain(); this.revIn.gain.value = .34; this.mus.connect(this.revIn); this.revIn.connect(cvb); cvb.connect(this.master);
         this.sfxBus = this.c.createGain(); this.sfxBus.connect(this.master);
         const n = this.c.sampleRate, b = this.c.createBuffer(1, n, n), d = b.getChannelData(0);
         for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
@@ -142,67 +145,104 @@ const sfx = {
   select() { AUDIO.tone(520, .07, 'square', .04); AUDIO.tone(780, .1, 'square', .04, 0, .06); },
   back() { AUDIO.tone(420, .08, 'square', .035, -120); },
   warn() { AUDIO.tone(880, .12, 'sine', .05, 120); },
+  key() { [784, 988, 1319, 1568].forEach((f, i) => AUDIO.tone(f, .13, 'triangle', .06, 0, i * .06)); AUDIO.tone(2637, .4, 'sine', .03, 0, .25); },
+  unlock() { AUDIO.tone(180, .08, 'square', .05); AUDIO.tone(140, .25, 'sawtooth', .05, -60, .08); AUDIO.noise(.3, .06, 400); },
+  squish() { AUDIO.tone(220, .09, 'sine', .05, -120); AUDIO.noise(.05, .025, 500); },
+  poof() { AUDIO.noise(.25, .09, 700); AUDIO.tone(300, .2, 'triangle', .05, -220); },
+  whoosh() { AUDIO.noise(.22, .06, 1800); AUDIO.tone(400, .2, 'sine', .03, 600); },
+  portal() { [262, 392, 523, 659, 784, 1046].forEach((f, i) => AUDIO.tone(f, .5, 'sine', .05, 0, i * .08)); AUDIO.noise(.6, .04, 3000); },
+  flap() { AUDIO.noise(.05, .02, 2500); },
+  low() { AUDIO.tone(330, .1, 'square', .04); AUDIO.tone(262, .14, 'square', .04, 0, .14); },
   start() { [392, 523, 659, 784, 1046].forEach((f, i) => AUDIO.tone(f, .2, 'triangle', .06, 0, i * .09)); }
 };
 
-// --- Secuenciador: bajo, arpegio, acordes largos, melodía y batería ---
+// --- Instrumentos sintetizados ---
+function ens() { return AUDIO.c; }
+const INST = {
+  pluck(t, f, d, v, bus) { const c = ens(), o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter(); o.type = 'triangle'; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.setValueAtTime(Math.min(f * 8, 9000), t); fl.frequency.exponentialRampToValueAtTime(Math.max(f * 1.4, 200), t + d); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + .006); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(fl); fl.connect(g); g.connect(bus); o.start(t); o.stop(t + d + .05); },
+  flute(t, f, d, v, bus) {
+    const c = ens(), o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+    o.type = 'sine'; o.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f * 2; lfo.frequency.value = 5.2; lg.gain.value = f * .007; lfo.connect(lg); lg.connect(o.frequency);
+    const g2 = c.createGain(); g2.gain.value = .22; o2.connect(g2); g2.connect(g);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + Math.min(.07, d * .4)); g.gain.setValueAtTime(v * .85, t + d * .7); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(bus); [o, o2, lfo].forEach(x => { x.start(t); x.stop(t + d + .05); });
+  },
+  bell(t, f, d, v, bus) { const c = ens(); [[1, 1], [2.01, .38], [3.02, .16], [4.2, .07]].forEach(([m, a]) => { const o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.value = f * m; g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v * a, t + .004); g.gain.exponentialRampToValueAtTime(.0001, t + d * (1.4 - m * .1)); o.connect(g); g.connect(bus); o.start(t); o.stop(t + d * 1.5 + .05); }); },
+  pad(t, f, d, v, bus) {
+    const c = ens(), g = c.createGain(), fl = c.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = Math.min(f * 3.2, 2600);
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + Math.min(.7, d * .35)); g.gain.setValueAtTime(v, t + d * .65); g.gain.linearRampToValueAtTime(.0001, t + d);
+    [-7, 7].forEach(det => { const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det; o.connect(fl); o.start(t); o.stop(t + d + .05); }); fl.connect(g); g.connect(bus);
+  },
+  strings(t, f, d, v, bus) { INST.pad(t, f, d, v * .9, bus); },
+  bass(t, f, d, v, bus) { const c = ens(), o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(); o.type = 'triangle'; o.frequency.value = f; o2.type = 'sine'; o2.frequency.value = f / 2; g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g); o2.connect(g); g.connect(bus); o.start(t); o2.start(t); o.stop(t + d + .05); o2.stop(t + d + .05); },
+  brass(t, f, d, v, bus) { const c = ens(), o = c.createOscillator(), g = c.createGain(), fl = c.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.setValueAtTime(f * 1.6, t); fl.frequency.linearRampToValueAtTime(f * 5, t + .08); fl.frequency.exponentialRampToValueAtTime(f * 2.2, t + d); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(v, t + .03); g.gain.setValueAtTime(v * .8, t + d * .6); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(fl); fl.connect(g); g.connect(bus); o.start(t); o.stop(t + d + .05); },
+  kick(t, v, bus) { AUDIO.toneAt(t, 150, .16, 'sine', v, -110, bus); },
+  snare(t, v, bus) { AUDIO.noiseAt(t, .13, v, 1600, bus); AUDIO.toneAt(t, 200, .09, 'triangle', v * .5, -80, bus); },
+  hat(t, v, bus) { AUDIO.noiseAt(t, .03, v, 8000, bus); },
+  tom(t, f, v, bus) { AUDIO.toneAt(t, f, .2, 'sine', v, -f * .5, bus); }
+};
+const CHORDS = { M: [0, 4, 7], m: [0, 3, 7], M7: [0, 4, 7, 11], m7: [0, 3, 7, 10], '7': [0, 4, 7, 10] };
+const NOTE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+function noteMidi(s) { const m = /^([A-G])([#b]?)(\d)$/.exec(s); if (!m) return null; return 12 * (parseInt(m[3]) + 1) + NOTE[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0); }
+function parseMelody(str, bars) {
+  const toks = str.replace(/\|/g, ' ').trim().split(/\s+/), steps = new Array(bars * 16).fill(null);
+  let last = -1;
+  toks.forEach((t, i) => { const s = i * 2; if (t === '-') { if (last >= 0) steps[last].len += 2; } else if (t === '.') { last = -1; } else { const m = noteMidi(t); if (m != null) { steps[s] = { m, len: 2 }; last = s; } } });
+  return steps;
+}
 const SONGS = {
   title: {
-    bpm: 78, lead: 'triangle', arp: 'sine', drums: 0, leadVol: .07, pad: true,
-    chords: [[43, [0, 4, 7]], [40, [0, 3, 7]], [36, [0, 4, 7]], [38, [0, 4, 7]]],
-    melody: [
-      74, null, null, null, 71, null, null, null, 67, null, null, null, 71, null, 74, null,
-      72, null, null, null, 71, null, null, null, 67, null, null, null, 64, null, null, null,
-      72, null, null, null, 76, null, null, null, 79, null, null, null, 76, null, 72, null,
-      74, null, null, null, 78, null, 74, null, 71, null, null, null, null, null, null, null]
+    bpm: 84, lead: 'flute', leadVol: .1, pad: 'strings', padVol: .03, bass: 'pluck', arp: 'pluck', arpVol: .02, perc: 'none',
+    chords: [[38, 'M'], [45, 'M'], [47, 'm'], [43, 'M'], [38, 'M'], [45, 'M'], [43, 'M'], [45, 'M']],
+    melody: 'D5 - F#5 - A5 - G5 F#5 | E5 - A5 - C#6 - B5 A5 | D5 - F#5 - B5 - A5 F#5 | G5 - B5 - D6 - B5 A5 | F#5 - A5 - D6 - C#6 B5 | A5 - E5 - C#5 - E5 A5 | B5 - D6 - G6 - F#6 D6 | C#6 - E6 - A5 - . .'
+  },
+  story: {
+    bpm: 72, lead: 'flute', leadVol: .085, pad: 'pad', padVol: .028, bass: 'bass', arp: 'pluck', arpVol: .022, perc: 'none',
+    chords: [[41, 'M'], [38, 'm'], [46, 'M'], [48, 'M'], [41, 'M'], [38, 'm'], [46, 'M'], [48, '7']],
+    melody: 'A5 - C6 - F6 - E6 C6 | D6 - F6 - A6 - G6 F6 | D6 - F6 - Bb5 - D6 F6 | C6 - E6 - G6 - E6 C6 | A5 - C6 - A5 - F5 . | A5 - D6 - F6 - D6 A5 | G5 - Bb5 - D6 - C6 Bb5 | A5 - G5 - E5 - . .'
   },
   day: {
-    bpm: 128, lead: 'square', arp: 'triangle', drums: 2, leadVol: .045, pad: false,
-    chords: [[48, [0, 4, 7]], [45, [0, 3, 7]], [41, [0, 4, 7]], [43, [0, 4, 7]]],
-    melody: [
-      72, null, 76, null, 79, null, 76, null, 72, null, 76, null, 79, 79, 76, null,
-      69, null, 72, null, 76, null, 72, null, 69, null, 72, null, 76, 76, 72, null,
-      65, null, 69, null, 72, null, 69, null, 65, null, 69, 72, 77, null, 72, null,
-      67, null, 71, null, 74, null, 71, null, 67, 71, 74, 77, 79, null, null, null]
+    bpm: 112, lead: 'pluck', leadVol: .085, pad: 'strings', padVol: .014, bass: 'pluck', arp: null, perc: 'folk',
+    chords: [[43, 'M'], [40, 'm'], [48, 'M'], [50, 'M'], [43, 'M'], [40, 'm'], [48, 'M'], [50, 'M']],
+    melody: 'G5 B5 D6 B5 G5 B5 D6 . | E5 G5 B5 G5 E5 G5 B5 . | C6 B5 A5 G5 E5 G5 C6 . | D6 C6 B5 A5 F#5 A5 D6 . | B5 - D6 - G6 - D6 B5 | G5 - B5 - E6 - D6 B5 | E6 - D6 - C6 - B5 G5 | A5 - F#5 - A5 D6 - -'
   },
   dream: {
-    bpm: 96, lead: 'triangle', arp: 'sine', drums: 1, leadVol: .06, pad: true,
-    chords: [[45, [0, 3, 7, 10]], [41, [0, 4, 7, 11]], [48, [0, 4, 7, 11]], [43, [0, 4, 7, 10]]],
-    melody: [
-      76, null, null, null, 72, null, null, null, 74, null, null, null, 76, null, null, null,
-      77, null, null, null, 76, null, 72, null, 69, null, null, null, null, null, null, null,
-      79, null, null, null, 76, null, 72, null, 76, null, null, null, 74, null, 72, null,
-      71, null, 74, null, 79, null, null, null, 76, null, null, null, null, null, null, null]
+    bpm: 88, lead: 'bell', leadVol: .09, pad: 'pad', padVol: .03, bass: 'bass', arp: 'bell', arpVol: .022, perc: 'soft',
+    chords: [[45, 'm7'], [41, 'M7'], [48, 'M7'], [43, '7'], [45, 'm7'], [41, 'M7'], [48, 'M7'], [43, '7']],
+    melody: 'E6 - . C6 - . A5 . | F6 - . C6 - . A5 . | G6 - . E6 - . C6 . | D6 - . B5 - . G5 . | C6 - E6 - A6 - E6 C6 | A5 - C6 - F6 - C6 A5 | E6 - G6 - C7 - G6 E6 | D6 - B5 - G5 - B5 D6'
   },
   boss: {
-    bpm: 150, lead: 'sawtooth', arp: 'square', drums: 3, leadVol: .04, pad: false,
-    chords: [[38, [0, 3, 7]], [34, [0, 4, 7]], [36, [0, 4, 7]], [33, [0, 4, 7]]],
-    melody: [
-      74, null, 74, 77, null, 74, null, 72, 74, null, 77, null, 81, null, 79, 77,
-      70, null, 70, 74, null, 70, null, 69, 70, null, 74, null, 77, null, 76, 74,
-      72, null, 72, 76, null, 72, null, 70, 72, null, 76, null, 79, null, 77, 76,
-      69, null, 73, null, 76, null, 81, null, 80, null, 76, null, 73, null, 69, null]
+    bpm: 150, lead: 'brass', leadVol: .075, pad: 'strings', padVol: .016, bass: 'rock', arp: null, perc: 'rock',
+    chords: [[40, 'm'], [48, 'M'], [50, 'M'], [47, '7'], [40, 'm'], [48, 'M'], [50, 'M'], [47, '7']],
+    melody: 'E5 E5 G5 E5 B5 E5 A5 G5 | C5 C5 E5 C5 G5 C5 F5 E5 | D5 D5 F#5 D5 A5 D5 G5 F#5 | B4 B4 D#5 B4 F#5 B4 A5 F#5 | B5 - A5 G5 E5 - G5 B5 | G5 - F5 E5 C5 - E5 G5 | A5 - G5 F#5 D5 - F#5 A5 | D#6 - B5 F#5 B5 - . .'
+  },
+  dark: {
+    bpm: 66, lead: 'bell', leadVol: .06, pad: 'pad', padVol: .036, bass: 'bass', arp: 'bell', arpVol: .014, perc: 'dark',
+    chords: [[36, 'm'], [44, 'M'], [41, 'm'], [43, '7'], [36, 'm'], [44, 'M'], [41, 'm'], [43, '7']],
+    melody: 'G5 - . . Eb5 - . . | Ab5 - . . C6 - . . | F5 - . . Ab5 - . . | B5 - . . D6 - Bb5 . | G5 - Eb5 - C5 - . . | Ab5 - C6 - Eb6 - . . | F5 - Ab5 - C6 - Ab5 . | B5 - D6 - G6 - . .'
   }
 };
+for (const k in SONGS) { const s = SONGS[k]; s.bars = s.chords.length; s.notes = parseMelody(s.melody, s.bars); }
 const SEQ = { name: 'none', song: null, step: 0, next: 0 };
 const AMB = { mode: null, next: 0 };
 function setMusic(n) { if (n === SEQ.name) return; SEQ.name = n; SEQ.song = SONGS[n] || null; SEQ.step = 0; SEQ.next = 0; }
 function setAmbient(m) { AMB.mode = m; AMB.next = 0; }
 function playStep(sg, step, t) {
-  const A = AUDIO, bar = Math.floor(step / 16) % 4, s = step % 16, ch = sg.chords[bar], root = ch[0], iv = ch[1];
-  const bus = A.mus, sd = 60 / sg.bpm / 4;
-  if (sg.pad && s === 0) iv.forEach(n => A.toneAt(t, mtof(root + 12 + n), sd * 15, 'sine', .024, 0, bus));
-  if (sg.drums >= 2) { if (s % 4 === 0 || s === 6 || s === 14) A.toneAt(t, mtof(root - 12 + (s === 6 || s === 14 ? 12 : 0)), sd * 3, 'triangle', .13, 0, bus); }
-  else if (s % 8 === 0) A.toneAt(t, mtof(root - 12), sd * 7, 'triangle', .12, 0, bus);
-  const arpStep = sg.drums >= 2 ? 1 : 2;
-  if (s % arpStep === 0) { const n = iv[(s / arpStep) % iv.length]; A.toneAt(t, mtof(root + 12 + n), sd * 1.6, sg.arp, .03, 0, bus); }
-  const m = sg.melody[step % 64];
-  if (m != null) { A.toneAt(t, mtof(m), sd * 2.6, sg.lead, sg.leadVol, 0, bus); A.toneAt(t, mtof(m + .12), sd * 2.6, 'sine', sg.leadVol * .5, 0, bus); }
-  if (sg.drums >= 1) {
-    if (s === 0 || (sg.drums >= 2 && s === 8) || (sg.drums >= 3 && (s === 6 || s === 14))) A.toneAt(t, 140, .13, 'sine', .22, -100, bus);
-    if (sg.drums >= 2 && (s === 4 || s === 12)) { A.noiseAt(t, .12, .09, 1500, bus); A.toneAt(t, 190, .08, 'triangle', .05, -60, bus); }
-    if (sg.drums === 1 && s === 8) A.noiseAt(t, .09, .035, 3000, bus);
-    if ((sg.drums >= 2 && s % 2 === 0) || (sg.drums === 3 && s % 2 === 1) || (sg.drums === 1 && s % 4 === 2)) A.noiseAt(t, .03, sg.drums === 3 ? .03 : .022, 8000, bus);
+  const A = AUDIO, bus = A.mus, sd = 60 / sg.bpm / 4, bar = Math.floor(step / 16) % sg.bars, s = step % 16, ch = sg.chords[bar], root = ch[0], iv = CHORDS[ch[1]];
+  const n = sg.notes[step % (sg.bars * 16)];
+  if (sg.pad && s === 0) iv.forEach(x => INST[sg.pad](t, mtof(root + 12 + x), sd * 15.6, sg.padVol, bus));
+  if (sg.bass === 'pluck') { if (s === 0 || s === 8) INST.pluck(t, mtof(root + (s === 8 ? 7 : 0)), sd * 6, .12, bus); else if (s === 12) INST.pluck(t, mtof(root + 12), sd * 3, .06, bus); }
+  else if (sg.bass === 'bass') { if (s === 0) INST.bass(t, mtof(root), sd * 12, .14, bus); if (s === 8) INST.bass(t, mtof(root + 7), sd * 6, .08, bus); }
+  else if (sg.bass === 'rock') { if (s % 2 === 0) INST.bass(t, mtof(root + ((s % 8 === 6) ? 12 : 0)), sd * 1.8, .15, bus); }
+  if (sg.arp && s % 2 === 0) INST[sg.arp](t, mtof(root + 24 + iv[(s / 2) % iv.length]), sd * 7, sg.arpVol, bus);
+  if (n) INST[sg.lead](t, mtof(n.m), sd * n.len * .96, sg.leadVol, bus);
+  switch (sg.perc) {
+    case 'folk': if (s === 0 || s === 8) INST.kick(t, .18, bus); if (s === 4 || s === 12) A.noiseAt(t, .06, .05, 2600, bus); if (s % 2 === 0) INST.hat(t, .012, bus); break;
+    case 'soft': if (s === 0) INST.kick(t, .1, bus); if (s === 8) A.noiseAt(t, .1, .02, 4000, bus); if (s % 4 === 2) INST.hat(t, .008, bus); break;
+    case 'rock':
+      if (s === 0 || s === 6 || s === 8 || s === 14) INST.kick(t, .24, bus); if (s === 4 || s === 12) INST.snare(t, .1, bus);
+      if (s % 2 === 0) INST.hat(t, .025, bus); if (bar % 4 === 3 && s >= 12) INST.tom(t, 150 - (s - 12) * 20, .1, bus); break;
+    case 'dark': if (s === 0 || s === 3) INST.kick(t, .22, bus); if (s === 8) A.noiseAt(t, .5, .012, 600, bus); break;
   }
 }
 function ambientTick() {
@@ -217,7 +257,7 @@ function musicTick() {
   if (!SEQ.song) return;
   if (SEQ.next < c.currentTime) SEQ.next = c.currentTime + .06;
   const sd = 60 / SEQ.song.bpm / 4;
-  while (SEQ.next < c.currentTime + .18) { playStep(SEQ.song, SEQ.step, SEQ.next); SEQ.next += sd; SEQ.step++; }
+  while (SEQ.next < c.currentTime + .2) { playStep(SEQ.song, SEQ.step, SEQ.next); SEQ.next += sd; SEQ.step++; }
 }
 setInterval(musicTick, 40);
 

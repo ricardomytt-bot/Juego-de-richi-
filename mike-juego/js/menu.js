@@ -4,7 +4,7 @@ const MENU = { open: true, page: 'main', prev: 'main', idx: 0, t: 0, rects: [] }
 function openMenu(page) { MENU.open = true; MENU.page = page; MENU.prev = page; MENU.idx = 0; sfx.select(); }
 function closeMenu() { MENU.open = false; sfx.back(); }
 function gotoPage(p) { if (MENU.page === 'main' || MENU.page === 'pause') MENU.prev = MENU.page; MENU.page = p; MENU.idx = 0; sfx.select(); }
-function backPage() { if (MENU.page === 'options' || MENU.page === 'controls' || MENU.page === 'credits') { MENU.page = MENU.prev; MENU.idx = 0; sfx.back(); } else if (MENU.page === 'pause') closeMenu(); }
+function backPage() { if (MENU.page === 'options' || MENU.page === 'controls' || MENU.page === 'credits' || MENU.page === 'map') { MENU.page = MENU.prev; MENU.idx = 0; sfx.back(); } else if (MENU.page === 'pause') closeMenu(); }
 function goFullscreen() { try { const el = document.documentElement; if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen(); } catch (e) { } }
 function menuItems() {
   switch (MENU.page) {
@@ -12,7 +12,9 @@ function menuItems() {
       { t: 'JUGAR', go: () => startGame() }, { t: 'OPCIONES', go: () => gotoPage('options') },
       { t: 'CONTROLES', go: () => gotoPage('controls') }, { t: 'CRÉDITOS', go: () => gotoPage('credits') }];
     case 'pause': {
-      const a = [{ t: 'CONTINUAR', go: () => closeMenu() }, { t: 'OPCIONES', go: () => gotoPage('options') }, { t: 'CONTROLES', go: () => gotoPage('controls') }];
+      const a = [{ t: 'CONTINUAR', go: () => closeMenu() }];
+      if (S.lvl && !S.stage) a.push({ t: 'MAPA', go: () => gotoPage('map') });
+      a.push({ t: 'OPCIONES', go: () => gotoPage('options') }, { t: 'CONTROLES', go: () => gotoPage('controls') });
       if (S.stage || S.dialog) a.push({ t: 'SALTAR ESCENA', go: () => { S.skip = true; MENU.open = false; } });
       a.push({ t: 'SALIR AL TÍTULO', go: () => location.reload() }); return a;
     }
@@ -72,12 +74,12 @@ function drawMenu() {
   const title = S.mode === 'title' && MENU.page === 'main', items = menuItems(), t = MENU.t;
   MENU.rects = [];
   if (!title) { ctx.fillStyle = 'rgba(4,2,16,.62)'; ctx.fillRect(0, 0, W, H); }
-  const heads = { pause: 'PAUSA', options: 'OPCIONES', controls: 'CONTROLES', credits: 'CRÉDITOS' };
+  const heads = { pause: 'PAUSA', options: 'OPCIONES', controls: 'CONTROLES', credits: 'CRÉDITOS', map: 'MAPA' };
   let px, py, pw, ph, y0, gap = 58;
   if (title) { pw = 380; ph = items.length * gap + 36; px = 480 - pw / 2; py = 258; y0 = py + 24; }
   else {
-    const extra = MENU.page === 'controls' ? 250 : MENU.page === 'credits' ? 200 : 0;
-    pw = MENU.page === 'options' ? 640 : 560; ph = 90 + items.length * gap + extra; px = 480 - pw / 2; py = Math.max(24, 270 - ph / 2); y0 = py + 78 + extra;
+    const extra = MENU.page === 'controls' ? 250 : MENU.page === 'credits' ? 200 : MENU.page === 'map' ? 330 : 0;
+    pw = MENU.page === 'options' ? 640 : MENU.page === 'map' ? 700 : 560; ph = 90 + items.length * gap + extra; px = 480 - pw / 2; py = Math.max(24, 270 - ph / 2); y0 = py + 78 + extra;
     menuPanel(px, py, pw, ph);
     txt(heads[MENU.page] || '', 480, py + 24, { size: 34, align: 'center', color: '#ffe14a', lw: 6 });
   }
@@ -90,6 +92,13 @@ function drawMenu() {
     txt('Flechas o WASD también te mueven', 480, py + 214, { size: 16, align: 'center', outline: false });
     txt('ACTUAR: hablar con los personajes y avanzar los diálogos', 480, py + 238, { size: 16, align: 'center', outline: false });
     txt('ATACAR: usa tu espada hacia donde miras', 480, py + 262, { size: 16, align: 'center', outline: false });
+  } else if (MENU.page === 'map' && MM && S.lvl) {
+    const L = S.lvl, sc = Math.max(2, Math.floor(Math.min(640 / L.w, 300 / L.h))), mw = L.w * sc, mh = L.h * sc, mx = 480 - mw / 2, my = py + 70;
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(mx - 4, my - 4, mw + 8, mh + 8); ctx.drawImage(MM.c, mx, my, mw, mh);
+    const sd = (x, y) => L.seen && L.seen[Math.floor(y / T) * L.w + Math.floor(x / T)];
+    for (const e of S.ents) if (sd(e.x, e.y)) { if (e.type === 'dia') { ctx.fillStyle = '#7df3ff'; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } else if (e.type === 'key') { ctx.fillStyle = ['#e0a060', '#dfe6ff', '#ffd24a'][e.k]; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } }
+    if (Math.floor(t * 3) % 2) { ctx.fillStyle = '#ff3b5c'; ctx.fillRect(mx + P.x / T * sc - 3, my + P.y / T * sc - 3, 7, 7); }
+    txt('◆ diamante   ● llave   ■ tú (parpadea)   Explora para descubrir el mapa', 480, my + mh + 12, { size: 13, align: 'center', color: '#bcd', outline: false });
   } else if (MENU.page === 'credits') {
     const L = ['Mike y las Estrellas Oscuras  ·  Piloto', 'Un juego de fans basado en', 'Las Perrerías de Mike, de Mikecrack.', 'Historia original, sprites y código', 'hechos con Claude Code.'];
     L.forEach((s, i) => txt(s, 480, py + 78 + i * 28, { size: i === 0 ? 20 : 17, align: 'center', color: i === 0 ? '#ffe14a' : '#fff', outline: false }));

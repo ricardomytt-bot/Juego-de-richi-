@@ -16,6 +16,8 @@ function moveChar(c, tx, speed = 140) {
 function updateStage(dt) {
   const st = S.stage;
   st.flash = Math.max(0, st.flash - dt * 1.3); st.shake = Math.max(0, st.shake - dt);
+  st.zoom = Math.min(.08, (st.zoom || 0) + dt * (S.dialog ? .0035 : .001));
+  const spk = S.dialog && st.chars.find(c => c.id === S.dialog.who), tgt = spk ? (spk.x - W / 2) * .3 : 0; st.panx = lerp(st.panx || 0, tgt, 1 - Math.exp(-dt * 2.2));
   for (let i = st.movers.length - 1; i >= 0; i--) {
     const m = st.movers[i], d = m.tx - m.c.x, step = m.speed * dt;
     if (Math.abs(d) <= step || S.skip) { m.c.x = m.tx; m.c.anim = 'idle'; st.movers.splice(i, 1); m.res(); }
@@ -23,13 +25,13 @@ function updateStage(dt) {
   }
   if (st.end && st.end.ready && wasPressed(K.ok)) location.reload();
 }
-function bang(dark) { if (S.stage) { S.stage.flash = 1; S.stage.shake = .6; if (dark != null) S.stage.dark = dark; } sfx.boss(); }
+function bang(dark) { if (S.stage) { S.stage.flash = 1; S.stage.shake = .6; S.stage.zoom = 0; if (dark != null) S.stage.dark = dark; } sfx.boss(); }
 
 // ---------- Cinemática 1: la noche en que todo cambió ----------
 async function csIntro() {
-  S.skip = false; S.busy = true; S.stage = newStage(); setMusic('title');
+  S.skip = false; S.busy = true; S.stage = newStage(); setMusic('story');
   const order = ['invictor', 'rius', 'mayo', 'esparta', 'raptor', 'mike', 'timba', 'trolino', 'aquela', 'willy'];
-  const C = {}; order.forEach((id, i) => { C[id] = addChar(id, 100 + i * 76, 346, { face: i < 5 ? 1 : -1 }); });
+  const C = {}; order.forEach((id, i) => { C[id] = addChar(id, 116 + i * 80, 344, { face: i < 5 ? 1 : -1, scale: 2 }); });
   C.mike.face = 1; C.willy.face = -1;
   await fadeTo(0, 1.2);
   await say('narr', 'Había una vez, en el mundo de bloques de Diamantia, siete estrellas que mantenían todo en orden... y también evitaban que Willy olvidara dónde enterró su hueso.');
@@ -42,8 +44,8 @@ async function csIntro() {
   await say('trolino', 'Nadie toca mi corona. Nadie. Ni siquiera el viento.');
   await say('invictor', '... (asiente muy serio, con cara de héroe)');
   await say('aquela', 'Mike... las estrellas parpadean muy raro. Algo no está bien.');
-  bang(true); await wait(.9);
-  const ex = addChar('exe', 480, 262, { scale: 4, float: true, face: -1 });
+  bang(true); setMusic('dark'); await wait(.9);
+  const ex = addChar('exe', 480, 215, { scale: 3, float: true, face: -1 });
   await say('exe', '¡MUAJAJAJÁ! ¡Hola, Diamantia! ¿Me extrañaron? ¡Seguro que no, pero igual vine!');
   await say('mike', '¡Exe! ¿Pero qué haces con esa cara? ...Bueno, siempre tienes esa cara.');
   await say('exe', 'Las estrellas oscuras me dieron un poder INFINITO... y también unas ojeras que me quedan espectaculares.');
@@ -58,7 +60,7 @@ async function csIntro() {
   await say('raptor', 'Me prometió el final del anime sin spoilers.', { red: true });
   await say('trolino', 'Mi corona y yo trabajamos ahora para el jefe nuevo.', { red: true });
   await say('narr', 'Invictor asintió muy serio y se fue con los demás. Como siempre, sin decir ni una palabra.');
-  await Promise.all(friends.map(id => moveChar(C[id], C[id].x < 480 ? -120 : W + 120, 230)));
+  await Promise.all(friends.map(id => moveChar(C[id], C[id].x < 480 ? -160 : W + 160, 230)));
   await say('exe', '¡Intenta alcanzarlos, perrito! ¡Muajajá!');
   S.stage.flash = 1; sfx.boss(); removeChar(ex); await wait(.7);
   await say('mike', '¡Timba! ¡Raptor! ¡Chicos! ...No me escuchan. ¡Se fueron más rápido que la pizza de Mayo!');
@@ -105,7 +107,7 @@ async function talkNpc(e) {
 
 // ---------- Cambio de nivel ----------
 async function goNext() {
-  S.busy = true; S.skip = false; sfx.door();
+  S.busy = true; S.skip = false; sfx.portal();
   await fadeTo(1, .6);
   loadLevel(S.lvlId + 1); S.leaving = false;
   await fadeTo(0, .6);
@@ -118,8 +120,8 @@ async function goNext() {
 async function startBoss() {
   S.bossStarted = true; S.busy = true; S.skip = false;
   const L = S.lvl; for (const [gx, gy] of L.gate.tiles) L.set(gx, gy, 'G'); sfx.door(); S.shake = .3;
-  S.bossLock = true; S.checkpoint = [74.5 * T, 10.5 * T];
-  S.boss = makeBoss(); S.boss.state = 'idle'; setMusic('dream');
+  S.bossLock = true; S.checkpoint = [L.arena.enter[0], L.arena.enter[1]];
+  S.boss = makeBoss(); S.boss.state = 'idle'; setMusic('dark');
   if (S.willy) { const fs = freeSpot(L, P.x - 50, P.y + 10, 9, 8); S.willy.x = fs[0]; S.willy.y = fs[1]; S.willy.vx = S.willy.vy = 0; }
   await wait(.6);
   await say('timba', '(roncando) Zzz... zzz... ¿Quién osa interrumpir mi siesta?', { red: true });
@@ -133,7 +135,7 @@ async function startBoss() {
   S.busy = false;
 }
 async function csTimbaSaved() {
-  S.busy = true; S.skip = false; setMusic('dream');
+  S.busy = true; S.skip = false; setMusic('story');
   await wait(.9);
   await say('timba', '(parpadea) ¿Eh? ¿Qué pasó? ¿Ya amaneció? ...¿Por qué hay tanta gente en mi cuarto?');
   await say('mike', '¡Timba! ¡Volviste! ¡Estabas bajo el control de Exe!');
@@ -150,13 +152,13 @@ async function csTimbaSaved() {
 }
 async function csEnding() {
   S.skip = false; S.busy = true;
-  S.stage = newStage({ dark: true }); setMusic('title');
+  S.stage = newStage({ dark: true }); setMusic('dark');
   const C = {};
-  [['willy', 230, -1], ['mike', 330, 1], ['timba', 430, 1], ['aquela', 530, -1]].forEach(([id, x, f]) => { C[id] = addChar(id, x, 346, { face: f }); });
+  [['willy', 240, -1], ['mike', 350, 1], ['timba', 470, 1], ['aquela', 590, -1]].forEach(([id, x, f]) => { C[id] = addChar(id, x, 344, { face: f, scale: 2 }); });
   C.willy.face = 1;
   await fadeTo(0, .8);
   await say('narr', 'Esa noche, en lo alto del cielo de Diamantia...');
-  bang(); const ex = addChar('exe', 740, 262, { scale: 4, float: true, face: -1 });
+  bang(); const ex = addChar('exe', 760, 215, { scale: 3, float: true, face: -1 });
   await say('exe', '¡Vaya, vaya! El perrito restauró a uno de mis empleados. ¡Eso sí que me dio sueño! ...No, espera, eso era de Timba.');
   await say('mike', '¡Exe, vamos a restaurar a todos tus empleados! ¡Y después te toca a ti!');
   await say('exe', 'Quedan SEIS guardianes y siete estrellas oscuras. Ven por mí... si te atreves. ¡Muajajá!');
@@ -165,7 +167,7 @@ async function csEnding() {
   S.stage.flash = 1; sfx.boss(); removeChar(ex); await wait(.8);
   S.skip = false;
   S.stage.end = { dia: S.dia, time: S.playTime, deaths: S.deaths, ready: false };
-  sfx.win(); await wait(1); S.stage.end.ready = true;
+  sfx.win(); setMusic('title'); await wait(1); S.stage.end.ready = true;
   S.busy = false;
 }
 
@@ -178,7 +180,7 @@ function startGame() {
   setMusic('title'); setAmbient('dream');
   if (q.has('lvl') || q.has('boss') || q.has('end')) {
     S.mode = 'play'; S.fade = 0; MENU.open = false;
-    if (q.has('boss')) { loadLevel(1); S.dia = 3; S.gotLetter = true; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 71.5 * T; P.y = 10.5 * T; initWilly(); updateCamera(0, true) }
+    if (q.has('boss')) { loadLevel(1); S.dia = 3; S.gotLetter = true; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 26.5 * T; P.y = 21.5 * T; initWilly(); updateCamera(0, true); }
     else if (q.has('end')) { loadLevel(1); S.dia = 3; csEnding(); }
     else { S.gotLetter = true; loadLevel(parseInt(q.get('lvl')) || 0); }
   }

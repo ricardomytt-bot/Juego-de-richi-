@@ -1,6 +1,6 @@
 # Mike y las Estrellas Oscuras — Piloto
 
-Juego 2D **visto desde arriba** (estilo Zelda) con combate en tiempo real, jefes, cinemáticas y sprites cuadrados.
+Juego 2D **visto desde arriba** (estilo Zelda) con exploración, laberintos, llaves, combate en tiempo real, jefes y cinemáticas con retratos.
 
 ## Cómo jugar
 Abre `mike-juego/index.html` en el navegador (Chrome, Edge o Firefox). No necesita instalar nada.
@@ -17,14 +17,19 @@ Solo hay **un joystick y dos botones**:
 En el menú puedes ajustar la música y los efectos, ocultar los botones en pantalla, poner pantalla completa y saltar las cinemáticas.
 
 ## Qué incluye el piloto
-1. **Cinemática de apertura**: las siete estrellas, Exe con el poder de las estrellas oscuras y los amigos corrompidos.
-2. **Tutorial en la casa de Mike**: aprende a moverte y a atacar, con un muñeco de práctica, Willy Perro, Aquela y Ambrosio con la carta de Timba. Entra al portal para continuar.
-3. **Nivel 1: Valle del Sueño**: un bosque de noche con estanque, hongos que brillan y enemigos. Recolecta **3 diamantes** para abrir la puerta del jefe. Uno está al aire libre, otro en el claro del norte y otro escondido tras unos muros agrietados que hay que romper a golpes.
-4. **Jefe: Timba corrupto**: lanza almohadas, salta y aplasta (avisa con un círculo rojo en el suelo) y hace llover ovejas. Cuando se duerme, recibe el doble de daño.
-5. **Cinemática de rescate** con recompensa (la Almohada de Estrella, +2 corazones) y **final con gancho**.
+1. **Cinemática de apertura** con retratos grandes pixelados de cada personaje, cámara que se acerca, aurora, las siete estrellas y Exe con el poder de las estrellas oscuras. Los personajes corruptos se ven con efecto glitch rojo.
+2. **Tutorial en la casa de Mike** con un **jardín-laberinto** donde está la **llave de bronce**, una puerta de bronce y el portal al Valle del Sueño.
+3. **Nivel 1: Valle del Sueño**, un mapa enorme de 120 x 84 casillas con:
+   - **Tres laberintos** (ruinas del oeste, pantano de setos y cámara de oro) y un bosque abierto muy grande.
+   - **Tres puertas con llave** (bronce, plata y oro) y **tres diamantes** que abren la puerta del jefe.
+   - Corazones escondidos en los callejones sin salida, antorchas, enemigos y un **mapa completo** en el menú de pausa que se va descubriendo.
+4. **Jefe: Timba corrupto** con ataques avisados en el suelo, fase 2 y siestas en las que recibe el doble de daño.
+5. **Cinemática de rescate**, recompensa (la Almohada de Estrella, +2 corazones) y **final con gancho**.
+
+Cada nivel se **verifica automáticamente**: el juego comprueba que se pueda llegar a todas las llaves, puertas, diamantes y al jefe.
 
 ## Gráficos y sonido
-Texturas de pasto, caminos y agua animada, árboles y rocas con sombra, la casa de Mike, iluminación nocturna con luz alrededor de Mike y de los diamantes, luciérnagas, viñeta, minimapa que se va descubriendo y música con bajo, arpegios, acordes largos, melodía y batería distinta para cada zona y para el jefe, y sonido ambiente (pájaros de día, grillos de noche).
+Texturas pintadas con píxeles de 2 px (pasto, caminos, muros de ladrillo y agua animada), árboles y rocas con sombra, la casa de Mike, iluminación nocturna con luz alrededor de Mike y de los diamantes, luciérnagas, viñeta, minimapa que se va descubriendo y música con flauta, guitarra, campanas, cuerdas y batería con reverberación, una pieza distinta para el título, las cinemáticas tranquilas y oscuras, el tutorial, el Valle del Sueño y el jefe, además de sonido ambiente y muchos efectos.
 
 ## Archivos
 - `js/core.js`: entrada, sonido y música.

@@ -17,7 +17,7 @@ const S = {
   timers: [], busy: false, skip: false, t: 0, dia: 0, deaths: 0, playTime: 0,
   fade: 0, fadeAnim: null, shake: 0, hitstop: 0, cam: { x: 0, y: 0 }, boss: null, bossLock: false,
   bossStarted: false, gateOpen: false, gotLetter: false, checkpoint: [0, 0], hint: '', hintT: 0, willy: null,
-  leaving: false, nearNpc: null, bossDefeated: false, stepT: 0
+  leaving: false, nearNpc: null, bossDefeated: false, stepT: 0, keys: [0, 0, 0]
 };
 const P = {
   x: 0, y: 0, hw: 10, hh: 12, vx: 0, vy: 0, dx: 0, dy: 1, face: 1, hp: 5, maxHp: 5, inv: 0,
@@ -118,6 +118,7 @@ function spawnEnts(L) {
       case 'slime': S.ents.push({ type: 'slime', x: cx, y: fy, hw: 11, hh: 9, bh: 14, rad: 18, vx: 0, vy: 0, hp: 2, hop: rnd(.2, 1), hopT: 0, flash: 0 }); break;
       case 'flyer': S.ents.push({ type: 'flyer', x: cx, y: fy, hw: 9, hh: 7, bh: 30, rad: 15, vx: 0, vy: 0, hp: 1, t: rnd(0, 6), flash: 0, hx: cx, hy: fy, z: 30 }); break;
       case 'dia': S.ents.push({ type: 'dia', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
+      case 'key': S.ents.push({ type: 'key', k: d.k, x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'heart': S.ents.push({ type: 'heart', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'npc': S.ents.push({ type: 'npc', id: d.id, x: cx, y: fy, hw: 10, hh: 10 }); break;
       case 'dummy': S.ents.push({ type: 'dummy', x: cx, y: fy, hw: 10, hh: 10, bh: 24, rad: 20, hit: 0 }); break;
@@ -143,7 +144,7 @@ function hitEnt(e) {
   const c = ebody(e);
   spawnP(c.x, c.y, 10, e.type === 'slime' ? '#7dff8a' : '#c26aff', 200);
   if (e.hp <= 0) {
-    e.dead = true; spawnP(c.x, c.y, 20, '#fff', 260);
+    e.dead = true; spawnP(c.x, c.y, 20, '#fff', 260); sfx.poof();
     if (Math.random() < .28) S.ents.push({ type: 'heart', x: e.x, y: e.y - 10, t: 0 });
   }
 }
@@ -157,7 +158,7 @@ function updateEnt(e, dt) {
       e.hop = rnd(.6, 1.1);
       if (d < 340) { const a = Math.atan2(P.y - e.y, P.x - e.x); e.vx = Math.cos(a) * 190; e.vy = Math.sin(a) * 190; }
       else { const a = rnd(0, 6.28); e.vx = Math.cos(a) * 110; e.vy = Math.sin(a) * 110; }
-      e.hopT = .35;
+      e.hopT = .35; if (d < 420) sfx.squish();
     }
     const f = Math.exp(-dt * (e.hopT > 0 ? 1.5 : 9)); e.vx *= f; e.vy *= f; e.hopT -= dt;
     moveBody(L, e, dt);
@@ -172,6 +173,12 @@ function updateEnt(e, dt) {
     moveBody(L, e, dt);
     const c = { x: e.x, y: e.y - e.z - Math.sin(e.t * 5) * 3 };
     if (dist(c.x, c.y, pb.x, pb.y) < 24) hurtPlayer(1, e.x, e.y);
+  } else if (e.type === 'key') {
+    e.t += dt;
+    if (dist(e.x, e.y, pb.x, pb.y) < 30) {
+      e.dead = true; S.keys[e.k]++; sfx.key(); S.shake = .08; spawnP(e.x, e.y, 22, ['#e0a060', '#dfe6ff', '#ffe14a'][e.k], 280, .8);
+      floater(e.x - 60, e.y - 40, '¡Llave de ' + KEYNAMES[e.k] + '!', ['#ffc080', '#dfe6ff', '#ffe14a'][e.k]); showHint('Conseguiste la llave de ' + KEYNAMES[e.k] + '. Busca su puerta.', 3.5);
+    }
   } else if (e.type === 'dia' || e.type === 'heart') {
     e.t += dt;
     if (dist(e.x, e.y, pb.x, pb.y) < 30) {
@@ -215,7 +222,7 @@ function updatePlayer(dt) {
   const p = P, L = S.lvl;
   if (p.dead) return;
   p.inv = Math.max(0, p.inv - dt); p.atkCd = Math.max(0, p.atkCd - dt);
-  p.anim += dt;
+  p.anim += dt; p.lowT = (p.lowT || 0) - dt; if (p.hp === 1 && p.lowT <= 0) { p.lowT = 1.4; sfx.low(); }
   const [ix, iy] = getMove(), il = Math.hypot(ix, iy);
   p.moving = il > 0.05;
   if (p.moving && p.atk <= 0) { const nx = ix / il, ny = iy / il; p.dx = nx; p.dy = ny; if (Math.abs(nx) > .3) p.face = sign(nx); }
@@ -275,7 +282,7 @@ function updateWilly(dt) {
 function makeBoss() {
   const A = S.lvl.arena;
   return {
-    x: A.x1 - 6 * T, y: (A.y0 + A.y1) / 2, hw: 26, hh: 18, vx: 0, vy: 0, hp: BOSS_HP, max: BOSS_HP, state: 'idle', t: 0,
+    x: A.spawn[0], y: A.spawn[1], hw: 26, hh: 18, vx: 0, vy: 0, hp: BOSS_HP, max: BOSS_HP, state: 'idle', t: 0,
     face: -1, flash: 0, phase: 1, count: 0, anim: 0, dead: false, fired: false, rain: 0, zzz: 0, lift: 0, ox: 0, oy: 0, tx: 0, ty: 0, hitWall: false
   };
 }
@@ -320,7 +327,7 @@ function updateBoss(dt) {
           else if (r < .6) { b.state = 'throw'; b.t = .75; b.fired = false; floater(b.x - 50, b.y - 130, '¡ALMOHADAZO!', '#fff'); }
           else {
             b.state = 'slam'; b.t = 1.1; b.ox = b.x; b.oy = b.y; b.tx = P.x; b.ty = P.y;
-            S.warns.push({ x: b.tx, y: b.ty, r: 70, t: 0, dur: 1.1, kind: 'slam' }); floater(b.x - 40, b.y - 130, '¡Siesta-azo!', '#fff');
+            S.warns.push({ x: b.tx, y: b.ty, r: 70, t: 0, dur: 1.1, kind: 'slam' }); sfx.warn(); floater(b.x - 40, b.y - 130, '¡Siesta-azo!', '#fff');
           }
         }
       }
@@ -330,7 +337,7 @@ function updateBoss(dt) {
       if (b.t <= .3 && !b.fired) {
         b.fired = true; const n = b.phase === 2 ? 3 : 1, a0 = Math.atan2(dy, dx);
         for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * .32; S.proj.push({ type: 'pillow', x: b.x, y: b.y, z: 50, vx: Math.cos(a) * 270, vy: Math.sin(a) * 270, rot: 0, life: 3 }); }
-        sfx.swing();
+        sfx.whoosh();
       }
       if (b.t <= -.4) { b.state = 'walk'; b.t = rnd(1.1, 1.8); }
       break;
@@ -351,7 +358,7 @@ function updateBoss(dt) {
       if (b.rain <= 0) {
         b.rain = b.phase === 2 ? .5 : .75;
         const near = Math.random() < .55, x = near ? P.x + rnd(-60, 60) : rnd(A.x0 + 60, A.x1 - 60), y = near ? P.y + rnd(-60, 60) : rnd(A.y0 + 60, A.y1 - 40);
-        S.warns.push({ x, y, r: 48, t: 0, dur: .95, kind: 'sheep' });
+        S.warns.push({ x, y, r: 48, t: 0, dur: .95, kind: 'sheep' }); sfx.warn();
       }
       if (b.t <= 0) { b.state = 'walk'; b.t = rnd(1, 1.6); }
       break;
@@ -400,13 +407,28 @@ function updateCamera(dt, snap) {
   else { S.cam.x = lerp(S.cam.x, tx, 1 - Math.exp(-dt * 6)); S.cam.y = lerp(S.cam.y, ty, 1 - Math.exp(-dt * 6)); }
 }
 function loadLevel(id) {
-  S.lvlId = id; const L = S.lvl = LEVELS[id]();
+  S.lvlId = id; const L = S.lvl = LEVELS[id](); { const v = verifyLevel(L); if (!v.ok) console.warn('Nivel imposible:', v.missing.join(' ')); }
   spawnEnts(L); S.proj = []; S.warns = []; S.particles = []; S.floaters = []; L.seen = new Uint8Array(L.w * L.h); minimapReset();
-  S.dia = 0; S.boss = null; S.bossLock = false; S.bossStarted = false; S.gateOpen = false; S.hint = ''; S.hintT = 0; S.bossDefeated = false;
+  S.keys = [0, 0, 0]; S.dia = 0; S.boss = null; S.bossLock = false; S.bossStarted = false; S.gateOpen = false; S.hint = ''; S.hintT = 0; S.bossDefeated = false;
   P.x = (L.start[0] + .5) * T; P.y = (L.start[1] + 1) * T - 8;
   P.vx = P.vy = 0; P.hp = P.maxHp; P.inv = 0; P.dead = false; P.dx = 0; P.dy = 1; P.face = 1; P.atk = 0;
   S.checkpoint = [P.x, P.y]; initWilly(); updateCamera(0, true);
   setMusic(L.theme === 'dream' ? 'dream' : 'day'); setAmbient(L.theme === 'dream' ? 'dream' : 'day');
+}
+function openDoorGroup(x, y, c) {
+  const L = S.lvl, st = [[x, y]], seen = new Set();
+  while (st.length) { const [a, b] = st.pop(), k = a + ',' + b; if (seen.has(k) || L.get(a, b) !== c) continue; seen.add(k); L.set(a, b, ','); spawnP((a + .5) * T, (b + .5) * T, 14, '#ffe14a', 240, .8); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) st.push([a + dx, b + dy]); }
+  sfx.unlock(); S.shake = .2;
+}
+function tryDoors() {
+  const L = S.lvl, tx = Math.floor(P.x / T), ty = Math.floor((P.y - 8) / T);
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    const x = tx + dx, y = ty + dy, c = L.get(x, y), k = DOORKEY[c]; if (k === undefined) continue;
+    if (dist(P.x, P.y - 12, (x + .5) * T, (y + .5) * T) > T * 1.15) continue;
+    if (S.keys[k] > 0) { S.keys[k]--; openDoorGroup(x, y, c); showHint('¡Abriste la puerta de ' + KEYNAMES[k] + '!', 2.5); }
+    else showHint('Puerta de ' + KEYNAMES[k] + ': necesitas la llave de ' + KEYNAMES[k], 1.2);
+    return;
+  }
 }
 function openGate() {
   const L = S.lvl, g = L.gate; S.gateOpen = true;
@@ -421,9 +443,10 @@ function checkTriggers() {
     else if (!S.leaving) { S.leaving = true; goNext(); }
   }
   if (L.gate && !S.gateOpen && dist(P.x, P.y, L.gate.x + T / 2, L.gate.y + 1.5 * T) < 130) {
-    if (S.dia >= L.diaNeed) openGate(); else showHint('La puerta necesita 3 diamantes  (' + S.dia + '/3)', .3);
+    if (S.dia >= L.diaNeed) openGate(); else showHint('La puerta del jefe necesita 3 diamantes  (' + S.dia + '/3)', .3);
   }
-  if (L.arena && S.gateOpen && !S.bossStarted && P.x > L.arena.trigger) startBoss();
+  tryDoors();
+  if (L.arena && S.gateOpen && !S.bossStarted && (L.arena.dir < 0 ? P.x < L.arena.trigger : P.x > L.arena.trigger)) startBoss();
 }
 function nearestNpc() {
   let best = null, bd = 78;
@@ -432,12 +455,19 @@ function nearestNpc() {
 }
 
 // ---------- Actualización general ----------
+let touchShown = null, menuBtnShown = null;
+function updateTouchUI() {
+  const show = S.mode === 'play' && !S.stage && !MENU.open && !S.dialog, mb = S.mode === 'play' && !MENU.open;
+  if (show !== touchShown) { touchShown = show; const t = document.getElementById('touch'); if (t) t.classList.toggle('hide', !show); }
+  if (mb !== menuBtnShown) { menuBtnShown = mb; const b = document.getElementById('btnMenu'); if (b) b.classList.toggle('hide', !mb); }
+}
 function update(dt) {
+  updateTouchUI();
   if (MENU.open) { S.t += dt; } else { S.t += dt; updateTimers(dt); updateFade(dt); }
   S.shake = Math.max(0, S.shake - dt); S.hintT = Math.max(0, S.hintT - dt);
   if (S.skip && !S.busy && !S.stage && !S.dialog) S.skip = false;
   if (S.mode === 'title') { updateMenu(dt); return; }
-  if (!MENU.open && wasPressed('Escape', 'KeyP') && !(S.stage && S.stage.end)) { openMenu('pause'); }
+  if (!MENU.open && wasPressed('Escape', 'KeyP') && !(S.stage && S.stage.end)) { openMenu('pause'); delete pressed['Escape']; delete pressed['KeyP']; }
   if (MENU.open) { updateMenu(dt); return; }
   if (PTR.hit && S.dialog) { pressed['Enter'] = true; PTR.hit = false; }
   const had = !!S.dialog;
