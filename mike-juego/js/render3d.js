@@ -5,8 +5,8 @@ const V3 = typeof THREE !== 'undefined';
 function initGL() {
   try {
     if (!V3) return; const canvas = document.getElementById('gl'); if (!canvas) return;
-    const r = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-    r.setPixelRatio(1); r.setSize(Math.round(W * (window.STYLE_DP ? .42 : .6667)), Math.round(H * (window.STYLE_DP ? .42 : .6667)), false); r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = .92; r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
+    const r = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    r.setPixelRatio(1); r.setSize(Math.round(W * (window.STYLE_DP ? .42 : .85)), Math.round(H * (window.STYLE_DP ? .42 : .85)), false); r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = .92; r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
     GL.r = r; GL.scene = new THREE.Scene(); GL.cam = new THREE.PerspectiveCamera(38, W / H, .1, 220);
     GL.root = new THREE.Group(); GL.scene.add(GL.root);
     GL.amb = new THREE.AmbientLight(0xffffff, 1); GL.hemi = new THREE.HemisphereLight(0xbfe0ff, 0x4a6a3a, .5);

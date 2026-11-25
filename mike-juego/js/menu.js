@@ -128,7 +128,7 @@ function drawMenu() {
     const sd = (x, y) => L.seen && L.seen[Math.floor(y / T) * L.w + Math.floor(x / T)];
     for (const e of S.ents) if (sd(e.x, e.y)) { if (e.type === 'dia') { ctx.fillStyle = '#7df3ff'; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } else if (e.type === 'key') { ctx.fillStyle = ['#e0a060', '#dfe6ff', '#ffd24a'][e.k]; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } }
     if (Math.floor(t * 3) % 2) { ctx.fillStyle = '#ff3b5c'; ctx.fillRect(mx + P.x / T * sc - 3, my + P.y / T * sc - 3, 7, 7); }
-    txt('◆ diamante   ● llave   ■ tú (parpadea)   Explora para descubrir el mapa', (W / 2), my + mh + 12, { size: 13, align: 'center', color: '#bcd', outline: false });
+    txt('◆ diamante   ● llave   ● amarillo: tú   Explora para descubrir el mapa', (W / 2), my + mh + 12, { size: 13, align: 'center', color: '#bcd', outline: false });
   } else if (MENU.page === 'shop') {
     txt('Tus monedas: 🪙 ' + S.coins + '   ·   Restauración de Diamantia: ' + S.restored + '/7', W / 2, py + 72, { size: 17, align: 'center', color: '#ffe14a', outline: false });
   } else if (MENU.page === 'inv') {
@@ -212,8 +212,8 @@ function menuExtra(w) {
     const mx = x + (w - mw) / 2, my = y; ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(mx - 4, my - 4, mw + 8, mh + 8); ctx.drawImage(MM.c, mx, my, mw, mh);
     const sd = (ex, ey) => L.seen && L.seen[Math.floor(ey / T) * L.w + Math.floor(ex / T)];
     for (const e of S.ents) if (sd(e.x, e.y)) { if (e.type === 'dia') { ctx.fillStyle = '#7df3ff'; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } else if (e.type === 'key') { ctx.fillStyle = ['#e0a060', '#dfe6ff', '#ffd24a'][e.k]; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } else if (e.type === 'bonfire') { ctx.fillStyle = '#ff9a2a'; ctx.fillRect(mx + e.x / T * sc - 3, my + e.y / T * sc - 3, 7, 7); } }
-    if (Math.floor(MENU.t * 3) % 2) { ctx.fillStyle = '#ff3b5c'; ctx.fillRect(mx + P.x / T * sc - 3, my + P.y / T * sc - 3, 7, 7); }
-    txt('◆ diamante   ● llave   ■ fogata   ■ tú (parpadea)', x + w / 2, my + mh + 12, { size: 13, align: 'center', color: '#bcd', outline: false }); } }; }
+    { ctx.fillStyle = '#1a1020'; ctx.fillRect(mx + P.x / T * sc - 5, my + P.y / T * sc - 5, 11, 11); ctx.fillStyle = '#ffe14a'; ctx.fillRect(mx + P.x / T * sc - 4, my + P.y / T * sc - 4, 9, 9); }
+    txt('◆ diamante   ● llave   ■ fogata   ● amarillo: tú', x + w / 2, my + mh + 12, { size: 13, align: 'center', color: '#bcd', outline: false }); } }; }
   if (page === 'controls') return { h: 280, draw: (x, y) => { const cx = x + w / 2;
     drawPad(cx - 250, y + 54, 'ACTUAR', 'E · K', '#7df3ff'); drawPad(cx + 250, y + 54, 'ATACAR', 'J · ESPACIO', '#ff8a9a');
     ctx.fillStyle = 'rgba(255,255,255,.2)'; ctx.beginPath(); ctx.arc(cx, y + 56, 46, 0, 6.3); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx + Math.sin(MENU.t * 2) * 14, y + 56 + Math.cos(MENU.t * 2) * 10, 22, 0, 6.3); ctx.fill();

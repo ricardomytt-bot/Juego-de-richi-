@@ -196,9 +196,11 @@ const HOUSE = mk(7 * T + 40, 5 * T + 24, g => {
 let MM = null;
 function minimapReset() { const L = S.lvl; MM = { c: mk(L.w, L.h, () => { }), drawn: new Uint8Array(L.w * L.h) }; }
 function minimapUpdate() {
+  if (S.lvl && S.lvl.seen && !S.lvl.allSeen) { S.lvl.seen.fill(1); S.lvl.allSeen = 1; if (MM) MM.drawn.fill(0); }
   const L = S.lvl; if (!MM || !L.seen) return; const g = MM.c.getContext('2d'), dm = L.theme === 'dream';
   const cx = Math.floor(P.x / T), cy = Math.floor(P.y / T);
-  for (let y = Math.max(0, cy - 10); y <= Math.min(L.h - 1, cy + 10); y++) for (let x = Math.max(0, cx - 10); x <= Math.min(L.w - 1, cx + 10); x++) {
+  const R0 = L.allSeen && !MM.full ? 999 : 10; if (R0 === 999) MM.full = true;
+  for (let y = Math.max(0, cy - R0); y <= Math.min(L.h - 1, cy + R0); y++) for (let x = Math.max(0, cx - R0); x <= Math.min(L.w - 1, cx + R0); x++) {
     const i = y * L.w + x; if (!L.seen[i] || MM.drawn[i]) continue; MM.drawn[i] = 1;
     const c = L.g[y][x]; let col;
     if (c === 'T') col = dm ? '#3a2c7a' : '#2a6a30'; else if (c === 'b') col = dm ? '#5a48b8' : '#3a8a40'; else if (c === '~') col = '#4a6aff'; else if (c === 'W' || c === 'C' || c === 'H' || c === 'd') col = '#aaa'; else if (c === 'G') col = '#7df3ff'; else if (c === 'X') col = '#e0a060'; else if (c === 'Y') col = '#dfe6ff'; else if (c === 'Z') col = '#ffd24a'; else if (c === 'R') col = '#778';
@@ -587,7 +589,7 @@ function drawHUD() {
     ctx.fillStyle = 'rgba(10,8,30,.96)'; ctx.fillRect(mx - 6, my - 6, mw + 12, mh + 12); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(mx - 5, my - 5, mw + 10, mh + 10);
     ctx.drawImage(MM.c, mx, my, mw, mh);
     for (const e of S.ents) if (e.type === 'dia' && L.seen[Math.floor(e.y / T) * L.w + Math.floor(e.x / T)]) { ctx.fillStyle = '#7df3ff'; ctx.fillRect(mx + Math.floor(e.x / T) * sc - 1, my + Math.floor(e.y / T) * sc - 1, 5, 5); }
-    if (Math.floor(S.t * 3) % 2) { ctx.fillStyle = '#ff3b5c'; ctx.fillRect(mx + Math.floor(P.x / T) * sc - 1, my + Math.floor(P.y / T) * sc - 1, 5, 5); }
+    { ctx.fillStyle = '#1a1020'; ctx.fillRect(mx + Math.floor(P.x / T) * sc - 3, my + Math.floor(P.y / T) * sc - 3, 8, 8); ctx.fillStyle = '#ffe14a'; ctx.fillRect(mx + Math.floor(P.x / T) * sc - 2, my + Math.floor(P.y / T) * sc - 1, 5, 5); }
   }
   const b = S.boss;
   if (b && S.bossStarted && b.state !== 'saved' && !S.dialog) {

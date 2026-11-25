@@ -100,92 +100,63 @@ const pick = (arr, r) => arr[Math.floor(r() * arr.length)];
 const INTERIOR_INFO = {};
 let _CITY = null; const fullCity = () => _CITY || (_CITY = fullCityBuild());
 function fullCityBuild() {
-  const L = new Level(110, 80, 'city'); L.diaNeed = 3; L.start = [9, 66];
-  const R = (a, b, c, d, ch = '.') => L.fill(a, b, c, d, ch), r = mkRng(17);
-  R(3, 3, 106, 76);
-  // avenidas y calles
-  R(3, 63, 106, 68, ','); R(3, 38, 87, 41, ','); R(3, 16, 106, 19, ',');
-  for (const x of [24, 48, 76]) R(x, 16, x + 3, 68, ',');
-  // plaza central con fuente
-  R(40, 22, 60, 35, 'a'); R(48, 26, 52, 30, '~');
-  // parque del norte-este
-  R(62, 21, 75, 35, 'f'); R(62, 28, 75, 28, 'a'); R(68, 21, 68, 35, 'a'); R(65, 25, 71, 31, 'a'); R(67, 27, 69, 29, '~');
+  const L = new Level(80, 58, 'city'); L.diaNeed = 3; L.start = [39, 54];
+  const R = (a, b, c, d, ch = '.') => L.fill(a, b, c, d, ch);
+  R(0, 0, 79, 57, 'T'); R(3, 3, 76, 54);
+  // calles
+  R(38, 11, 41, 57, ','); R(3, 44, 62, 46, ','); R(3, 11, 62, 13, ','); R(42, 29, 65, 32, ',');
+  // parque central (comunal) con fuente
+  R(28, 15, 51, 33, 'a'); R(37, 21, 42, 26, '~'); R(30, 17, 49, 17, 'f'); R(30, 31, 49, 31, 'f');
   // estación
-  R(88, 27, 106, 50, 'a'); R(88, 27, 88, 50, 'W'); R(88, 38, 88, 41, 'G'); R(91, 28, 105, 32, 'N');
-  L.train = { x0: 91, y0: 28, x1: 105, y1: 32 }; L.trainDoors = [[94.5 * T, 33.2 * T], [98.5 * T, 33.2 * T], [102.5 * T, 33.2 * T]]; L.station = { x0: 89, y0: 34, x1: 106, y1: 49 };
-  L.gate = { x: 88 * T, y: 38 * T, w: T, h: 4 * T, tiles: [[88, 38], [88, 39], [88, 40], [88, 41]], station: true };
-  // casas de los compas
-  const mike = L.building(6, 69, 13, 75, { id: 'mike', color: '#e8c24a', roof: '#c0392b', label: 'CASA DE MIKE', face: 'N' });
-  const post = L.building(14, 56, 21, 62, { id: 'ambrosio', color: '#f2d24a', roof: '#d35400', label: 'CORREOS' });
-  const timba = L.building(30, 56, 37, 62, { id: 'timba', color: '#5b8de8', roof: '#2a3f8a', label: 'CASA DE TIMBA' });
-  const rius = L.building(56, 56, 63, 62, { id: 'rius', color: '#f0e0b0', roof: '#c0392b', label: 'GRANJA DE RIUS' });
-  const mayo = L.building(89, 56, 96, 62, { id: 'mayo', color: '#ecebf5', roof: '#cc2a2a', label: 'PIZZERÍA MAYO' });
-  const ace = L.building(8, 31, 15, 37, { id: 'acenix', color: '#f6b6d2', roof: '#d6609a', label: 'CAFÉ GATUNO' });
-  const esp = L.building(30, 9, 38, 15, { id: 'esparta', color: '#9ab8e8', roof: '#3a68b8', label: 'CASA DE ESPARTA' });
-  const rap = L.building(56, 9, 63, 15, { id: 'raptor', color: '#e85a5a', roof: '#7a2a2a', label: 'TIENDA DE ANIME' });
-  const inv = L.building(89, 9, 96, 15, { id: 'invictor', color: '#f4efe6', roof: '#b82a2a', label: 'VILLA ROMANA' });
-  // restaurante
-  const rest = L.building(37, 43, 46, 49, { id: 'restaurant', color: '#fff4e0', roof: '#2a8a5a', label: 'RESTAURANTE LA ESTRELLA' });
-  // casas blancas del vecindario
-  const roofs = ['#c0553a', '#3a6aa8', '#7a4a8a', '#3a8a5a', '#b8742a', '#a83a4a'], whites = [];
-  const house = (x0, y0, i) => { whites.push(L.building(x0, y0, x0 + 6, y0 + 5, { id: 'house', color: ['#fbfbf8', '#f4efe0', '#eef4ff', '#fff0f0', '#f0fff0', '#fff6e0'][i % 6], roof: roofs[(i * 5 + 1) % roofs.length], label: 'CASA ' + (10 + i * 3) })); };
-  let hi = 0;
-  for (const x of [5, 13, 29, 53, 61, 68, 80]) house(x, 44, hi++);
-  for (const x of [5, 29, 81, 88 > 0 ? 95 : 0]) { if (x < 88 || x > 93) house(x, 21, hi++); }
-  for (const x of [5, 14, 44, 76, 99]) house(x, 8, hi++);
-  for (const x of [30, 40, 54, 66, 79]) house(x, 70, hi++);
-  // personajes en las puertas
+  R(66, 20, 78, 42, 'a'); R(66, 20, 66, 42, 'W'); R(66, 29, 66, 32, 'G'); R(69, 21, 77, 25, 'N');
+  L.train = { x0: 69, y0: 21, x1: 77, y1: 25 }; L.trainDoors = [[71.5 * T, 26.2 * T], [73.5 * T, 26.2 * T], [75.5 * T, 26.2 * T]]; L.station = { x0: 67, y0: 27, x1: 78, y1: 41 };
+  L.gate = { x: 66 * T, y: 29 * T, w: T, h: 4 * T, tiles: [[66, 29], [66, 30], [66, 31], [66, 32]], station: true };
+  // casas
+  const mike = L.building(4, 49, 11, 55, { id: 'mike', color: '#e8c24a', roof: '#c0392b', label: 'CASA DE MIKE', face: 'N' });
+  const rest = L.building(46, 49, 55, 55, { id: 'restaurant', color: '#fff4e0', roof: '#2a8a5a', label: 'RESTAURANTE LA ESTRELLA', face: 'N' });
+  const post = L.building(5, 36, 12, 42, { id: 'ambrosio', color: '#f2d24a', roof: '#d35400', label: 'CORREOS' });
+  const timba = L.building(15, 36, 22, 42, { id: 'timba', color: '#5b8de8', roof: '#2a3f8a', label: 'CASA DE TIMBA' });
+  const rius = L.building(25, 36, 32, 42, { id: 'rius', color: '#f0e0b0', roof: '#c0392b', label: 'GRANJA DE RIUS' });
+  const mayo = L.building(46, 36, 53, 42, { id: 'mayo', color: '#ecebf5', roof: '#cc2a2a', label: 'PIZZERÍA MAYO' });
+  const esp = L.building(5, 4, 12, 10, { id: 'esparta', color: '#9ab8e8', roof: '#3a68b8', label: 'CASA DE ESPARTA' });
+  const rap = L.building(15, 4, 22, 10, { id: 'raptor', color: '#e85a5a', roof: '#7a2a2a', label: 'TIENDA DE ANIME' });
+  const ace = L.building(25, 4, 32, 10, { id: 'acenix', color: '#f6b6d2', roof: '#d6609a', label: 'CAFÉ GATUNO' });
+  const inv = L.building(46, 4, 53, 10, { id: 'invictor', color: '#f4efe6', roof: '#b82a2a', label: 'VILLA ROMANA' });
+  const wh1 = L.building(56, 4, 62, 9, { id: 'house', color: '#fbfbf8', roof: '#3a6aa8', label: 'CASA 10' });
+  const wh2 = L.building(56, 37, 62, 42, { id: 'house', color: '#fff6e0', roof: '#7a4a8a', label: 'CASA 13' });
+  const whites = [wh1, wh2];
   const npcAt = (id, p, extra) => L.ent('npc', p[0], p[1], Object.assign({ id }, extra || {}));
-  npcAt('trolino', [mike[0] + 2, mike[1] - 1], { hideAfter: 'trainDone' }); L.ent('npc', 44, 24, { id: 'ambrosio', job: 'perritos', shop: true }); L.ent('npc', 96, 36, { id: 'ambrosio', job: 'conductor' }); L.ent('npc', 42, 54, { id: 'ambrosio', job: 'mesero' }); L.ent('npc', 74, 60, { id: 'ambrosio', job: 'dj' });
-  for (const [bx, by] of [[50, 34], [9, 64], [96, 44], [68, 36], [100, 66]]) L.ent('bonfire', bx, by);
+  npcAt('trolino', [mike[0] + 2, mike[1] - 1], { hideAfter: 'trainDone' });
+  L.ent('npc', 36, 34, { id: 'ambrosio', job: 'perritos', shop: true }); L.ent('npc', 70, 38, { id: 'ambrosio', job: 'conductor' }); L.ent('npc', 50, 48, { id: 'ambrosio', job: 'mesero' }); L.ent('npc', 44, 14, { id: 'ambrosio', job: 'dj' });
   npcAt('aquela', [mike[0] - 2, mike[1] - 1]);
-  // ciudadanos que pasean
-  const cit = [[30, 65], [44, 66], [70, 65], [95, 66], [20, 40], [56, 40], [45, 28], [57, 24], [26, 30], [78, 50], [50, 18], [100, 18], [66, 30], [41, 52], [60, 66], [36, 40]];
+  for (const [bx, by] of [[39, 50], [34, 45], [72, 36], [30, 12], [57, 45]]) L.ent('bonfire', bx, by);
+  const cit = [[20, 45], [30, 45], [55, 45], [36, 14], [45, 28], [33, 22], [47, 22], [58, 31], [20, 12], [50, 12], [40, 40], [60, 12]];
   cit.forEach((p, i) => L.ent('citizen', p[0], p[1], { seed: i + 1 }));
-  // diamantes escondidos y corazones
-  L.ent('dia', 6, 52); L.ent('dia', 70, 11); L.ent('dia', 102, 60);
-  for (const p of [[22, 66], [40, 40], [60, 18], [80, 65], [96, 40], [10, 40], [45, 24], [30, 18]]) L.ent('heart', p[0], p[1]);
-  for (const p of [mike, post, timba, rius, mayo, ace, esp, rap, inv, rest, ...whites]) L.mustReach(p[0], p[1]);
-  for (const [x, y] of [[9, 66], [6, 52], [70, 11], [102, 60], [87, 39], [89, 39], [96, 40], [50, 33], [45, 28]]) L.mustReach(x, y);
-  // ----- decoración estructurada -----
-  // plaza: fuente con borde, bancas, puestos
-  for (let x = 47; x <= 53; x++) for (const y of [25, 31]) L.prop('rim', x, y, { solid: false });
-  for (let y = 26; y <= 30; y++) for (const x of [47, 53]) L.prop('rim', x, y, { solid: false });
-  L.deco.push({ k: 'statue', x: 50, y: 28 });
-  for (const [x, y, rot] of [[44, 28, 1], [56, 28, 3], [46, 33, 0], [54, 33, 0]]) L.prop('bench', x, y, { rot });
-  for (const [x, y, c] of [[42, 23, '#e84a4a'], [45, 23, '#4a8ae8'], [55, 23, '#e8c24a'], [58, 23, '#58b848']]) L.prop('stall', x, y, { c });
-  // parque: glorieta, bancas, farolas, pozo
-  L.prop('gazebo', 64, 23, { solid: true });
-  for (const [x, y, rot] of [[66, 28, 0], [70, 28, 0], [68, 24, 2], [68, 33, 0], [72, 25, 1], [72, 31, 3]]) L.prop('bench', x, y, { rot });
-  for (const [x, y] of [[65, 22], [72, 22], [65, 34], [73, 34], [63, 27], [74, 29]]) L.prop('tree2', x, y);
-  // restaurante: terraza con mesas y sombrillas
-  for (const [x, y, c] of [[38, 52, '#e84a4a'], [41, 52, '#ffd24a'], [44, 52, '#4a8ae8']]) L.prop('table', x, y, { c });
-  // vecindario: buzones, setos, barriles
-  for (const b of [...whites, mike, post, timba, rius, mayo, ace]) { /* flores junto a la puerta */ }
-  for (const bd of L.buildings) { if (bd.id === 'house') { const fy = bd.fy; for (const dx of [-2, 2]) { const x = bd.dx + dx, y = fy; if (L.get(x, y) === '.') L.set(x, y, 'f'); } L.prop('mail', bd.dx + 2, bd.fy - 0, { solid: false }); } }
-  // árboles en hilera junto a las avenidas
-  for (let x = 6; x <= 104; x += 6) for (const y of [62, 69]) if (L.get(x, y) === '.' ) L.set(x, y, 'T');
-  for (let x = 7; x <= 104; x += 6) for (const y of [37, 42]) if (L.get(x, y) === '.') L.set(x, y, 'T');
-  const keep = [[9, 66, 3]];
-  L.scatter(3, 3, 106, 76, 'T', 60, 31, keep, '.'); L.scatter(3, 3, 106, 76, 'b', 80, 32, keep, '.'); 
-  L.scatter(3, 3, 106, 76, 'f', 520, 34, [], '.'); L.scatter(3, 3, 106, 76, 'm', 40, 35, [], '.');
-  for (let x = 8; x <= 104; x += 8) for (const y of [63, 68, 38, 41, 16, 19]) { if (L.get(x, y) === ',') { L.set(x, y, 'k'); if (!L.allReachable()) L.set(x, y, ','); } }
-  // letreros
-  L.sign(9, 67, 'Calle de Mike  ·  Correos está al este →');
-  L.sign(18, 64, 'CORREOS: ¡Ambrosio necesita ayuda!');
-  L.sign(50, 36, 'Plaza de Diamantia');
-  L.sign(86, 42, 'ESTACIÓN  →  (abre cuando entregues todas las cartas)');
-  L.sign(6, 54, '¿Ese brillo es un diamante?');
-  L.sign(68, 20, 'Parque de las Estrellas');
-  L.sign(70, 12, '¡algo brilla por aquí!');
-  L.sign(100, 62, 'Rincón del Sureste');
-  L.sign(41, 51, 'Restaurante La Estrella  ·  ¡Hoy hay pizza!');
-  // puertas: cada edificio se puede visitar por dentro
+  L.ent('dia', 3, 30); L.ent('dia', 58, 16); L.ent('dia', 62, 52);
+  for (const p of [[18, 47], [58, 47], [34, 28], [46, 28], [18, 13], [58, 13]]) L.ent('heart', p[0], p[1]);
+  for (const p of [mike, post, timba, rius, mayo, ace, esp, rap, inv, rest, wh1, wh2]) L.mustReach(p[0], p[1]);
+  for (const [x, y] of [[39, 54], [3, 30], [58, 16], [62, 52], [64, 30], [67, 30], [72, 38], [40, 28]]) L.mustReach(x, y);
+  // decoración
+  for (let x = 31; x <= 48; x += 1) for (const y of [20, 27]) if (x < 37 || x > 42) L.set(x, y, 'a');
+  L.deco.push({ k: 'statue', x: 40, y: 23 });
+  for (const [x, y, rot] of [[34, 19, 0], [45, 19, 0], [34, 29, 0], [45, 29, 0], [30, 24, 1], [49, 24, 3]]) L.prop('bench', x, y, { rot });
+  for (const [x, y, c] of [[31, 16, '#e84a4a'], [47, 16, '#4a8ae8']]) L.prop('stall', x, y, { c });
+  L.prop('xtree', 40, 17);
+  for (const [x, y] of [[29, 22], [50, 22], [29, 28], [50, 28]]) L.prop('tree2', x, y);
+  for (const [x, y, c] of [[48, 47, '#e84a4a'], [51, 47, '#4a8ae8']]) L.prop('table', x, y, { c });
+  for (const bd of L.buildings) if (bd.id === 'house') L.prop('mail', bd.dx + 2, bd.fy, { solid: false });
+  const keep = [[39, 54, 3]];
+  L.scatter(3, 3, 76, 54, 'T', 30, 31, keep, '.'); L.scatter(3, 3, 76, 54, 'b', 40, 32, keep, '.');
+  L.scatter(3, 3, 76, 54, 'f', 300, 34, [], '.'); L.scatter(3, 3, 76, 54, 'm', 25, 35, [], '.');
+  for (let x = 6; x <= 60; x += 6) for (const y of [44, 46, 11, 13]) { if (L.get(x, y) === ',') { L.set(x, y, 'k'); if (!L.allReachable()) L.set(x, y, ','); } }
+  L.sign(40, 53, 'Diamantia  ·  el Parque de las Estrellas está al norte ↑');
+  L.sign(34, 31, 'Parque de las Estrellas');
+  L.sign(64, 34, 'ESTACIÓN  →  (abre cuando entregues todas las cartas)');
+  L.sign(3, 33, '¿Ese brillo es un diamante?');
   const ZID = { mike: 10, ambrosio: 11, timba: 12, rius: 13, mayo: 14, acenix: 15, esparta: 16, raptor: 17, invictor: 18, restaurant: 19 }; let wk = 0; L.exits = [];
   for (const b of L.buildings) { b.zone = ZID[b.id] || (20 + wk++); INTERIOR_INFO[b.zone] = { id: b.id, seed: b.zone, out: [b.dx, b.face === 'N' ? b.fy - 1 : b.fy], label: b.label };
     L.exits.push({ door: true, key: b.face === 'N' ? 'down' : 'up', x0: b.dx, x1: b.dx, y0: b.fy, y1: b.fy, to: b.zone, spawn: [7, 7], lock: null }); }
-  L.prop('xtree', 50, 23);
-  L.prop('portal', 99, 47, { solid: false, lock: 'train', to: 1 }); L.exits.push({ x0: 97, y0: 46, x1: 101, y1: 48, to: 1, spawn: [60, 77], lock: 'train', msg: 'El portal del Valle del Sueño aún no se abre... ¡sigue la historia!' });
+  L.prop('portal', 73, 38, { solid: false, lock: 'train', to: 1 }); L.exits.push({ x0: 71, y0: 37, x1: 75, y1: 39, to: 1, spawn: [60, 77], lock: 'train', msg: 'El portal del Valle del Sueño aún no se abre... ¡sigue la historia!' });
   return L;
 }
 
@@ -264,7 +235,7 @@ function buildValley(theme, so, SG, EX) {
   for (const [x, y] of [[64, 73], [27, 23], [58, 10], [52, 31]]) L.ent('bonfire', x, y);
   // portales entre zonas
   R(58, 79, 62, 81, ','); L.prop('portal', 60, 80, { solid: false, to: EX.back[0] }); L.exits = [{ x0: 58, y0: 80, x1: 62, y1: 81, to: EX.back[0], spawn: EX.back[1], lock: null }];
-  if (EX.home) { R(64, 79, 66, 81, ','); L.prop('portal', 65, 80, { solid: false, to: 53, home: true }); L.exits.push({ x0: 64, y0: 80, x1: 66, y1: 81, to: 53, spawn: [11, 44], lock: null }); for (let x = 64; x <= 66; x++) for (let y = 79; y <= 81; y++) L.mustReach(x, y); }
+  if (EX.home) { R(64, 79, 66, 81, ','); L.prop('portal', 65, 80, { solid: false, to: 0, home: true }); L.exits.push({ x0: 64, y0: 80, x1: 66, y1: 81, to: 0, spawn: [72, 40], lock: null }); for (let x = 64; x <= 66; x++) for (let y = 79; y <= 81; y++) L.mustReach(x, y); }
   if (EX.next) { L.prop('portal', 8, 21, { solid: false, lock: 'boss', to: EX.next[0] }); L.exits.push({ x0: 7, y0: 20, x1: 8, y1: 22, to: EX.next[0], spawn: EX.next[1], lock: 'boss', msg: 'El portal está dormido... derrota al jefe para abrirlo' }); }
   for (let x = 58; x <= 62; x++) for (let y = 79; y <= 81; y++) L.mustReach(x, y);
   { const sn = L.reachFrom(L.start[0], L.start[1], true); for (const e of L.ents) if (e.type === 'heart' && !sn[e.ty * L.w + e.tx]) { let best = null, bd = 1e9; for (let dy = -9; dy <= 9; dy++) for (let dx = -9; dx <= 9; dx++) { const x = e.tx + dx, y = e.ty + dy; if (x > 0 && y > 0 && x < L.w && y < L.h && sn[y * L.w + x] && !SOLID.includes(L.get(x, y)) && dx * dx + dy * dy < bd) { bd = dx * dx + dy * dy; best = [x, y]; } } if (best) { e.tx = best[0]; e.ty = best[1]; } } }
@@ -281,7 +252,7 @@ const ZDEF = [null,
   { theme: 'neon', so: 500, name: 'CIUDAD NEÓN', boss: 'Raptor', rw: { mini: 'armor:samurai', trial: 'coins:45', park: 'coins:60', chest: 'coins:40', miniName: 'Robot Otaku' } },
   { theme: 'colosseum', so: 600, name: 'COLISEO ROMANO', boss: 'Invictor', rw: { mini: 'diamondsword', trial: 'mace', park: 'kame', chest: 'coins:45', miniName: 'Gladiador Slime' } },
   { theme: 'void', so: 700, name: 'CÓDIGO CORRUPTO', boss: 'Mike Maligno', rw: { mini: 'coins:60', trial: 'coins:55', park: 'coins:70', chest: 'coins:50', miniName: 'Bug Gigante' } }];
-const zoneLevel = n => () => { const d = ZDEF[n]; return buildValley(d.theme, d.so, [d.name + '  —  ¡explora sus zonas!', '← Ruinas del oeste  (laberinto)', 'Cámara del tesoro  →  (necesita la llave de oro)', '↑ Puerta de bronce al claro del bosque', 'Un cercado de rocas... ¡algo brilla!', 'Puerta de plata  →  Pantano de setos', d.boss + ' espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves'], { back: [n === 1 ? 53 : n - 1, n === 1 ? [11, 44] : [9, 21]], next: n < 8 ? [n + 1, [61, 76]] : null, home: n > 1, rw: d.rw, z: n }); };
+const zoneLevel = n => () => { const d = ZDEF[n]; return buildValley(d.theme, d.so, [d.name + '  —  ¡explora sus zonas!', '← Ruinas del oeste  (laberinto)', 'Cámara del tesoro  →  (necesita la llave de oro)', '↑ Puerta de bronce al claro del bosque', 'Un cercado de rocas... ¡algo brilla!', 'Puerta de plata  →  Pantano de setos', d.boss + ' espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves'], { back: [n - 1, n === 1 ? [72, 40] : [9, 21]], next: n < 8 ? [n + 1, [61, 76]] : null, home: n > 1, rw: d.rw, z: n }); };
 const level1 = zoneLevel(1), level2 = zoneLevel(2), level3 = zoneLevel(3), level4 = zoneLevel(4), level5 = zoneLevel(5), level6 = zoneLevel(6), level7 = zoneLevel(7), level8 = zoneLevel(8);
 // comprueba que el nivel se puede completar aunque las puertas empiecen cerradas
 function verifyLevel(L) {
@@ -308,8 +279,8 @@ function verifyLevel(L) {
   if (L.gate) { const g = L.gate.tiles[0]; if (!seen[g[1] * L.w + g[0] - 1]) missing.push('puerta-jefe'); }
   return { ok: missing.length === 0, missing };
 }
-const DISTRICTS = { 0: { name: 'Barrio de Mike', x0: 1, x1: 25, y0: 1, y1: 78 }, 51: { name: 'Plaza y Parque', x0: 26, x1: 87, y0: 1, y1: 39 }, 52: { name: 'Calles del Sur', x0: 26, x1: 87, y0: 40, y1: 78 }, 53: { name: 'Estación y Este', x0: 88, x1: 109, y0: 1, y1: 78 } };
-const isCityZone = id => id === 0 || id === 51 || id === 52 || id === 53;
+const DISTRICTS = { 0: { name: 'Diamantia', x0: 0, x1: 79, y0: 0, y1: 57 } };
+const isCityZone = id => id === 0;
 const _distCache = {};
 function districtNeighbors(id) {
   const A = DISTRICTS[id], out = [];
@@ -338,7 +309,7 @@ function districtLevel(id) {
   L.start = id === 0 ? [F.start[0] - D.x0, F.start[1] - D.y0] : [Math.floor(w / 2), Math.floor(h / 2)]; { let best = null, bd = 1e9; for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) if (!SOLID.includes(L.g[y][x])) { const dd = Math.hypot(x - L.start[0], y - L.start[1]); if (dd < bd) { bd = dd; best = [x, y]; } } if (best) L.start = best; }
   { const gates = []; for (const nb of districtNeighbors(id)) { const B = DISTRICTS[nb.to], gc = Math.floor((nb.lo + nb.hi) / 2); gates.push({ nb, B, gc }); }
     const inGate = (x, y) => gates.some(({ nb, gc }) => nb.axis === 'x' ? ((nb.side === 'R' ? x >= w - 6 : x <= 5) && Math.abs(y + D.y0 - gc) <= 1) : ((nb.side === 'B' ? y >= h - 6 : y <= 5) && Math.abs(x + D.x0 - gc) <= 1));
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const ring = x < 2 || y < 2 || x >= w - 2 || y >= h - 2; if (inGate(x, y)) { const c = L.g[y][x]; if (c !== ',' && c !== 'a') L.set(x, y, ','); } else if (ring) L.set(x, y, 'W'); }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const ring = x < 2 || y < 2 || x >= w - 2 || y >= h - 2; if (inGate(x, y)) { const c = L.g[y][x]; if (c !== ',' && c !== 'a') L.set(x, y, ','); } else if (ring) L.set(x, y, 'T'); }
     for (const e of L.ents) { e.tx = clamp(e.tx, 3, w - 4); e.ty = clamp(e.ty, 3, h - 4); }
     L.must = L.must.filter(([x, y]) => x > 1 && y > 1 && x < w - 2 && y < h - 2);
     { const rs = L.reachFrom(L.start[0], L.start[1], true); L.ents = L.ents.filter(e => !(e.type === 'heart' || e.type === 'dia') || rs[e.ty * w + e.tx] || e.type === 'dia'); }
@@ -398,5 +369,5 @@ function interiorLevel(z) {
   for (const [x, y] of [[7, 7], [7, 8]]) L.mustReach(x, y);
   return L;
 }
-for (let z = 10; z <= 40; z++) LEVELS[z] = () => interiorLevel(z);
-LEVELS[51] = level51; LEVELS[52] = level52; LEVELS[53] = level53;
+for (let z = 10; z <= 21; z++) LEVELS[z] = () => interiorLevel(z);
+

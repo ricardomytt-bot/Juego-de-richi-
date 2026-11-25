@@ -45,6 +45,7 @@ checkTriggers = function () {
     enterZone(ex.to, [ex.sx != null ? ex.sx : ptx + (ex.ox || 0), ex.sy != null ? ex.sy : pty + (ex.oy || 0)]); return;
   } else if (ex.door) {
     if (S.t - zoneT < 1.3) continue;
+    if (S.flags.trainDone && S.restored < 7 && S.lvlId === 0 && !(INTERIOR_INFO[ex.to] && INTERIOR_INFO[ex.to].id === 'ambrosio')) { const px0 = Math.floor(P.x / T), py0 = Math.floor((P.y - 4) / T); if (px0 === ex.x0 && py0 === ex.y0) showHint('🔒 La puerta está bloqueada por la corrupción de Exe', .5); continue; }
     const px = Math.floor(P.x / T), py = Math.floor((P.y - 4) / T);
     if (px === ex.x0 && py === ex.y0 && (ex.key === 'up' ? (isDown(K.up) || (JOY.active && JOY.y < -.4)) : (isDown(K.down) || (JOY.active && JOY.y > .4)))) { enterZone(ex.to, ex.spawn); return; }
   } else if (tx >= ex.x0 && tx <= ex.x1 + 1 && ty >= ex.y0 && ty <= ex.y1 + 1) {

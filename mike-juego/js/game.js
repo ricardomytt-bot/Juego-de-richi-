@@ -536,19 +536,12 @@ function updateProj(dt) {
 function npcNeedsLetter(e) { return (isCityZone(S.lvlId) || (S.lvlId >= 10 && S.lvlId < 50)) && S.q.gotLetters && e.type === 'npc' && !e.tag && LETTER_TO[e.id] && !S.q.delivered[e.id]; }
 const LETTER_TO = { timba: 1, rius: 1, mayo: 1, esparta: 1, raptor: 1, invictor: 1, acenix: 1 };
 function doorOf(id) { const b = S.lvl.buildings && S.lvl.buildings.find(b => b.id === id); return b ? { x: (b.dx + .5) * T, y: (b.fy + .5) * T } : null; }
-function distOfBuilding(id) { ensureCityInfo(); for (const z in INTERIOR_INFO) if (INTERIOR_INFO[z].id === id && INTERIOR_INFO[z].dist != null) return INTERIOR_INFO[z].dist; return 0; }
-function exitToward(dest) {
-  const from = S.lvlId; if (from === dest) return null; const seen = { [from]: null }, q = [from];
-  while (q.length) { const c = q.shift(); if (c === dest) break; for (const nb of districtNeighbors(c)) if (!(nb.to in seen)) { seen[nb.to] = c; q.push(nb.to); } }
-  if (!(dest in seen)) return null; let hop = dest; while (seen[hop] !== from && seen[hop] != null) hop = seen[hop];
-  const ex = S.lvl.exits.find(e => e.edge && e.to === hop); if (!ex) return null; return ex.axis === 'x' ? { x: ((ex.x0 + ex.x1 + 1) / 2) * T, y: P.y } : { x: P.x, y: ((ex.y0 + ex.y1 + 1) / 2) * T };
-}
 function questTarget() {
   const q = S.q;
   if (S.lvlId >= 10 && S.lvlId < 50) { if (q.done) return null; const e = S.ents.find(e => e.type === 'npc' && npcNeedsLetter(e)); return e || { x: 7.5 * T, y: 8.4 * T }; }
   if (!isCityZone(S.lvlId) || !q.gotLetters) return null;
-  if (!q.done) { let best = null, bd = 1e9; for (const id in LETTER_TO) if (!q.delivered[id]) { const dd = distOfBuilding(id); let t = dd === S.lvlId ? doorOf(id) : exitToward(dd); if (!t) continue; const d = dist(t.x, t.y, P.x, P.y); if (d < bd) { bd = d; best = t; } } return best; }
-  if (!q.trainStarted) { if (S.lvlId === 53) { const s = S.lvl.station; return { x: (s.x0 + s.x1) / 2 * T, y: ((s.y0 + s.y1) / 2) * T }; } return exitToward(53); }
+  if (!q.done) { let best = null, bd = 1e9; for (const id in LETTER_TO) if (!q.delivered[id]) { const t = doorOf(id); if (!t) continue; const d = dist(t.x, t.y, P.x, P.y); if (d < bd) { bd = d; best = t; } } return best; }
+  if (!q.trainStarted) { const s = S.lvl.station; return { x: (s.x0 + s.x1) / 2 * T, y: ((s.y0 + s.y1) / 2) * T }; }
   return null;
 }
 function updateCamera(dt, snap) {

@@ -38,8 +38,8 @@ function glMood(dark) {
   else if (L) { glThemeMood(L); if (typeof dpFlatLight === 'function') dpFlatLight(); }
 }
 function openStationGate() {
-  S.flags.gateOpen = true; const L = S.lvlId === 53 ? S.lvl : (ZONES[53] && ZONES[53].L);
-  if (L && L.gate) { for (const [x, y] of L.gate.tiles) L.set(x, y, 'a'); if (S.lvlId === 53) { S.gateOpen = true; sfx.door(); S.shake = .25; spawnP(L.gate.x + 24, L.gate.y + 96, 40, '#ffe14a', 320, 1); } }
+  S.flags.gateOpen = true; const L = S.lvlId === 0 ? S.lvl : (ZONES[0] && ZONES[0].L);
+  if (L && L.gate) { for (const [x, y] of L.gate.tiles) L.set(x, y, 'a'); if (S.lvlId === 0) { S.gateOpen = true; sfx.door(); S.shake = .25; spawnP(L.gate.x + 24, L.gate.y + 96, 40, '#ffe14a', 320, 1); } }
 }
 async function deliver(id) {
   S.q.delivered[id] = true; S.q.count++; sfx.key(); floater(P.x - 50, P.y - 80, '¡Carta entregada!', '#ffe14a'); spawnP(P.x, P.y - 30, 16, '#ffe14a', 220, .8);
@@ -233,8 +233,8 @@ function startGame() {
 }
 async function walkP(tx, ty, sp = 150) {
   P.forceMove = true;
-  for (let i = 0; i < 900; i++) { const dx = tx - P.x, dy = ty - P.y, d = Math.hypot(dx, dy); if (d < 5 || S.skip) break; const k = Math.min(d, sp * (S.dtv || .016)); P.x += dx / d * k; P.y += dy / d * k; P.dx = dx / d; P.dy = dy / d; if (Math.abs(dx) > .3) P.face = sign(dx); P.anim += S.dtv || .016; await wait(.016); }
-  P.forceMove = false;
+  for (let i = 0; i < 900; i++) { const dx = tx - P.x, dy = ty - P.y, d = Math.hypot(dx, dy); if (d < 5 || S.skip) break; const k = Math.min(d, sp * (S.dtv || .016)); P.x += dx / d * k; P.y += dy / d * k; P.dx = dx / d; P.dy = dy / d; P.moving = true; if (Math.abs(dx) > .3) P.face = sign(dx); P.anim += S.dtv || .016; await wait(.016); }
+  P.forceMove = false; P.moving = false;
 }
 async function gatherMove(list, timeout = 6) {
   for (const [e, tx, ty] of list) { e._arr = false; e.goto = { x: tx * T, y: ty * T, speed: 150, done: () => { e._arr = true; } }; }
@@ -338,12 +338,12 @@ async function csOpening() {
 // ---------- el tren ----------
 async function csTrain() {
   S.busy = true; S.skip = false; const L = S.lvl;
-  await fadeTo(1, .4); P.x = 9.5 * T; P.y = 45.5 * T; P.vx = P.vy = 0; P.dx = 0; P.dy = -1; if (S.willy) { S.willy.x = P.x - 40; S.willy.y = P.y + 10; }
-  const crew = [['timba', 92], ['rius', 94.2], ['mayo', 96.4], ['esparta', 98.6], ['raptor', 100.8], ['invictor', 103], ['acenix', 105]];
-  for (const [id, x] of crew) S.ents.push({ type: 'npc', id, x: (x - 88) * T, y: 42.5 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, corrupt: false, tag: 'crew' });
-  S.ents.push({ type: 'npc', id: 'trolino', x: 2 * T, y: 43 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, tag: 'crew' });
+  await fadeTo(1, .4); P.x = 72.5 * T; P.y = 38.5 * T; P.vx = P.vy = 0; P.dx = 0; P.dy = -1; if (S.willy) { S.willy.x = P.x - 40; S.willy.y = P.y + 10; }
+  const crew = [['timba', 68.5], ['rius', 70], ['mayo', 71.5], ['esparta', 73], ['raptor', 74.5], ['invictor', 76], ['acenix', 77.5]];
+  for (const [id, x] of crew) S.ents.push({ type: 'npc', id, x: x * T, y: 35.5 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, corrupt: false, tag: 'crew' });
+  S.ents.push({ type: 'npc', id: 'trolino', x: 67.5 * T, y: 36 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, tag: 'crew' });
   for (const e of S.ents) if ((e.type === 'npc' && !e.tag && e.id !== 'aquela') || e.type === 'citizen') e.hidden = true;
-  S.camShot = { x: 10, z: 40, dist: 14 }; if (GL.ok) GL.camInit = false; setMusic('story'); await fadeTo(0, .6); S.cineAuto = true; await wait(.8); S.camShot = null;
+  S.camShot = { x: 72, z: 34, dist: 14 }; if (GL.ok) GL.camInit = false; setMusic('story'); await fadeTo(0, .6); S.cineAuto = true; await wait(.8); S.camShot = null;
   const f = (id, a, b) => say(id, (S.fav[id] || 0) >= 2 ? a : b);
   await say('narr', 'En la estación todos esperaban el tren, con maletas, bocadillos y mucho sueño.');
   await f('timba', '¡Mike! Tu carta me hizo el día. Zzz... digo, ¡qué alegría verte!', '(bostezo) Mike... llegaste. Zzz...');
@@ -358,7 +358,7 @@ async function csTrain() {
   sfx.boss(); GL.trainShake = true; await wait(.8); GL.trainShake = false;
   // llega Exe
   setMusic('dark'); glMood(true); S.shake = .6; sfx.boss();
-  S.ents.push({ type: 'exe3d', id: 'exe', x: 10 * T, y: 37 * T, lift: 6.5 }); S.camShot = { x: 10, z: 38, dist: 20 }; await wait(1.2); S.camShot = null;
+  S.ents.push({ type: 'exe3d', id: 'exe', x: 72 * T, y: 30 * T, lift: 6.5 }); S.camShot = { x: 72, z: 31, dist: 20 }; await wait(1.2); S.camShot = null;
   await say('exe', '¡MUAJAJAJÁ! ¡Qué reunión tan bonita! ¡Y qué tren tan bonito! ¡Y qué amigos tan... míos!');
   await M('¡Exe! ¿Qué haces aquí? ¡Y baja de ahí, que vas a romper el techo!');
   await say('exe', 'Con el poder de las estrellas oscuras, ¡tus amigos viajarán conmigo! ¡Tienen seguro de viaje y todo!');
@@ -378,13 +378,13 @@ async function csTrain() {
   S.ents = S.ents.filter(e => !(e.tag === 'crew')); S.camShot = null; S.cineAuto = false; setMusic('chase'); S.busy = false; startWave(1);
 }
 async function csTrainEnd() {
-  S.busy = true; S.skip = false; S.camShot = { x: 10, z: 39, dist: 17 }; sfx.win();
+  S.busy = true; S.skip = false; S.camShot = { x: 72, z: 32, dist: 17 }; sfx.win();
   await say('exe', '¡Ja! No está mal, perrito. Tus amigos y yo nos vamos de viaje. ¡Alcánzanos si puedes!');
   await M('¡Exe! ¡Devuélvelos! ¡Te voy a restaurar a ti también!');
   await say('exe', 'Los espero en el Valle del Sueño. Ahí empieza lo bueno. ¡Muajajá!');
   GL.trainShake = true; sfx.boss(); const t0 = S.t; while (S.t - t0 < 3.2 && !S.skip) { GL.trainX += 11 * (S.dtv || .016) * (1 + (S.t - t0) * 1.4); await wait(.016); } GL.trainShake = false;
-  S.ents = S.ents.filter(e => e.type !== 'exe3d'); glMood(false); setMusic('story'); S.camShot = { x: 10, z: 41, dist: 13 };
-  let aq = S.ents.find(e => e.id === 'aquela'); if (!aq) { aq = { type: 'npc', id: 'aquela', x: 6 * T, y: 45 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, tag: 'tmp' }; S.ents.push(aq); } aq.hidden = false; aq.x = 6 * T; aq.y = 45 * T; aq.face = 0;
+  S.ents = S.ents.filter(e => e.type !== 'exe3d'); glMood(false); setMusic('story'); S.camShot = { x: 72, z: 35, dist: 13 };
+  let aq = S.ents.find(e => e.id === 'aquela'); if (!aq) { aq = { type: 'npc', id: 'aquela', x: 69 * T, y: 38 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, tag: 'tmp' }; S.ents.push(aq); } aq.hidden = false; aq.x = 69 * T; aq.y = 38 * T; aq.face = 0;
   await say('aquela', 'Mike, el tren se fue... pero conozco un atajo: el portal del Valle del Sueño. Ahí es donde Exe llevó a los compas.');
   await M('¡Vamos! ¡Willy, a trabajar!'); await say('willy', '¡Guau! (Traducción: ¡por fin hago algo!)');
   S.camShot = null; S.flags.trainDone = true; await enterZone(1, [60, 77]);
@@ -495,7 +495,7 @@ async function csEnding() {
     }
     else if (q.has('boss')) { loadLevel(parseInt(q.get('boss')) || 1); S.dia = 3; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 26.5 * T; P.y = 21.5 * T; initWilly(); updateCamera(0, true); }
     else if (q.has('end')) { loadLevel(1); S.dia = 3; csEnding(); }
-    else if (q.has('train')) { loadLevel(53); S.q.gotLetters = true; S.q.done = true; openStationGate(); P.x = 3 * T; P.y = 39.5 * T; initWilly(); }
+    else if (q.has('train')) { loadLevel(0); S.q.gotLetters = true; S.q.done = true; openStationGate(); P.x = 62 * T; P.y = 30.5 * T; initWilly(); }
     else loadLevel(parseInt(q.get('lvl')) || 0);
   }
   let last = performance.now();
