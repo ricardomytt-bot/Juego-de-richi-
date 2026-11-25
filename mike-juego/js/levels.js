@@ -167,7 +167,7 @@ function fullCityBuild() {
   for (let x = 6; x <= 104; x += 6) for (const y of [62, 69]) if (L.get(x, y) === '.' ) L.set(x, y, 'T');
   for (let x = 7; x <= 104; x += 6) for (const y of [37, 42]) if (L.get(x, y) === '.') L.set(x, y, 'T');
   const keep = [[9, 66, 3]];
-  L.scatter(3, 3, 106, 76, 'T', 60, 31, keep, '.'); L.scatter(3, 3, 106, 76, 'b', 80, 32, keep, '.'); L.scatter(3, 3, 106, 76, 'R', 12, 33, keep, '.');
+  L.scatter(3, 3, 106, 76, 'T', 60, 31, keep, '.'); L.scatter(3, 3, 106, 76, 'b', 80, 32, keep, '.'); 
   L.scatter(3, 3, 106, 76, 'f', 520, 34, [], '.'); L.scatter(3, 3, 106, 76, 'm', 40, 35, [], '.');
   for (let x = 8; x <= 104; x += 8) for (const y of [63, 68, 38, 41, 16, 19]) { if (L.get(x, y) === ',') { L.set(x, y, 'k'); if (!L.allReachable()) L.set(x, y, ','); } }
   // letreros
@@ -213,12 +213,12 @@ function buildValley(theme, so, SG, EX) {
   // ---- arena del jefe y puerta de diamantes (al oeste del bosque)
   R(6, 16, 23, 26, 'a'); R(5, 15, 24, 15, 'W'); R(5, 27, 24, 27, 'W'); R(5, 15, 5, 27, 'W'); R(24, 15, 24, 27, 'W');
   R(24, 20, 24, 22, 'G'); R(25, 20, 29, 22, ',');
-  for (const [x, y] of [[10, 19], [10, 23], [19, 19], [19, 23]]) L.set(x, y, 'R');
+  
   for (const [x, y] of [[7, 17], [7, 25], [22, 17], [22, 25], [23, 19], [23, 23]]) L.set(x, y, 'k');
   L.gate = { x: 24 * T, y: 20 * T, w: T, h: 3 * T, tiles: [[24, 20], [24, 21], [24, 22]] };
   L.arena = { x0: 6 * T, y0: 16 * T, x1: 24 * T, y1: 27 * T, trigger: 21 * T, dir: -1, spawn: [10 * T, 21.5 * T], enter: [22.5 * T, 21.5 * T] };
   // ---- diamante 1 en un escondite del bosque (cercado de rocas con una sola entrada)
-  for (let x = 33; x <= 39; x++) for (let y = 14; y <= 20; y++) if (x === 33 || x === 39 || y === 14 || y === 20) L.set(x, y, 'R');
+  for (let x = 33; x <= 39; x++) for (let y = 14; y <= 20; y++) if (x === 33 || x === 39 || y === 14 || y === 20) L.set(x, y, 'b');
   L.set(36, 20, '.');
   // ---- puntos clave
   const kA = A.far[0], dC = C.far[0], kC = C.far.find(c => Math.abs(c.i - dC.i) + Math.abs(c.j - dC.j) > 5), dD = D.far[0];
@@ -232,9 +232,9 @@ function buildValley(theme, so, SG, EX) {
   for (let x = 25; x <= 30; x++) L.mustReach(x, 21);
   // ---- decoración sin cortar caminos
   const keep = [[61, 75, 4], [36, 17, 2], [74, 31, 3], [47, 27, 2]];
-  L.scatter(48, 60, 72, 78, 'T', 14, 21 + so, keep); L.scatter(48, 60, 72, 78, 'R', 6, 22 + so, keep); L.scatter(48, 60, 72, 78, 'b', 16, 23 + so, keep);
+  L.scatter(48, 60, 72, 78, 'T', 14, 21 + so, keep);  L.scatter(48, 60, 72, 78, 'b', 16, 23 + so, keep);
   R(40, 20, 48, 26, '~'); R(60, 28, 70, 35, '~'); R(44, 33, 50, 37, '~');
-  L.scatter(44, 28, 78, 40, 'T', 40, 24 + so, keep); L.scatter(44, 28, 78, 40, 'R', 10, 25 + so, keep); L.scatter(28, 10, 50, 26, 'T', 22, 34 + so, keep); L.scatter(28, 10, 50, 26, 'R', 8, 35 + so, keep); L.scatter(28, 10, 50, 26, 'b', 14, 36 + so, keep); L.scatter(44, 28, 78, 40, 'b', 16, 26 + so, keep);
+  L.scatter(44, 28, 78, 40, 'T', 40, 24 + so, keep);  L.scatter(28, 10, 50, 26, 'T', 22, 34 + so, keep);  L.scatter(28, 10, 50, 26, 'b', 14, 36 + so, keep); L.scatter(44, 28, 78, 40, 'b', 16, 26 + so, keep);
   L.scatter(44, 28, 78, 40, 'm', 60, 27 + so, [], '.'); L.scatter(28, 10, 50, 26, 'f', 90, 37 + so, [], '.'); L.scatter(48, 60, 72, 78, 'm', 40, 28 + so, [], '.');
   for (const [x, y] of [[56, 70], [66, 70], [56, 64], [66, 64], [46, 30], [76, 30], [46, 32], [76, 38], [30, 12], [48, 12], [30, 24], [48, 24]]) L.set(x, y, 'k');
   // ---- enemigos
@@ -336,10 +336,16 @@ function districtLevel(id) {
   if (F.station && inside(F.station.x0, F.station.y0)) { L.train = { x0: F.train.x0 - D.x0, y0: F.train.y0 - D.y0, x1: F.train.x1 - D.x0, y1: F.train.y1 - D.y0 }; L.trainDoors = F.trainDoors.map(([a, b]) => [a - D.x0 * T, b - D.y0 * T]); L.station = { x0: F.station.x0 - D.x0, y0: F.station.y0 - D.y0, x1: F.station.x1 - D.x0, y1: F.station.y1 - D.y0 }; L.gate = { x: F.gate.x - D.x0 * T, y: F.gate.y - D.y0 * T, w: T, h: 4 * T, tiles: F.gate.tiles.map(([a, b]) => [a - D.x0, b - D.y0]), station: true }; if (typeof S !== 'undefined' && S.flags && S.flags.gateOpen) for (const [a, b] of L.gate.tiles) L.set(a, b, 'a'); }
   L.must = F.must.filter(([x, y]) => inside(x, y)).map(([x, y]) => [x - D.x0, y - D.y0]);
   L.start = id === 0 ? [F.start[0] - D.x0, F.start[1] - D.y0] : [Math.floor(w / 2), Math.floor(h / 2)]; { let best = null, bd = 1e9; for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) if (!SOLID.includes(L.g[y][x])) { const dd = Math.hypot(x - L.start[0], y - L.start[1]); if (dd < bd) { bd = dd; best = [x, y]; } } if (best) L.start = best; }
-  for (const nb of districtNeighbors(id)) {
-    const B = DISTRICTS[nb.to];
-    if (nb.axis === 'x') { const x0 = nb.side === 'R' ? w - 2 : 0, x1 = nb.side === 'R' ? w - 1 : 1, y0 = nb.lo - D.y0, y1 = nb.hi - D.y0; L.exits.push({ edge: true, axis: 'x', bpos: nb.side === 'R' ? w - 1 : 0, x0, x1, y0, y1, to: nb.to, sx: nb.side === 'R' ? 2 : (B.x1 - B.x0 + 1) - 3, sy: null, oy: D.y0 - B.y0, ox: 0, lock: null }); }
-    else { const y0 = nb.side === 'B' ? h - 2 : 0, y1 = nb.side === 'B' ? h - 1 : 1, x0 = nb.lo - D.x0, x1 = nb.hi - D.x0; L.exits.push({ edge: true, axis: 'y', bpos: nb.side === 'B' ? h - 1 : 0, x0, x1, y0, y1, to: nb.to, sy: nb.side === 'B' ? 2 : (B.y1 - B.y0 + 1) - 3, sx: null, ox: D.x0 - B.x0, oy: 0, lock: null }); }
+  { const gates = []; for (const nb of districtNeighbors(id)) { const B = DISTRICTS[nb.to], gc = Math.floor((nb.lo + nb.hi) / 2); gates.push({ nb, B, gc }); }
+    const inGate = (x, y) => gates.some(({ nb, gc }) => nb.axis === 'x' ? ((nb.side === 'R' ? x >= w - 6 : x <= 5) && Math.abs(y + D.y0 - gc) <= 1) : ((nb.side === 'B' ? y >= h - 6 : y <= 5) && Math.abs(x + D.x0 - gc) <= 1));
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const ring = x < 2 || y < 2 || x >= w - 2 || y >= h - 2; if (inGate(x, y)) { const c = L.g[y][x]; if (c !== ',' && c !== 'a') L.set(x, y, ','); } else if (ring) L.set(x, y, 'W'); }
+    for (const e of L.ents) { e.tx = clamp(e.tx, 3, w - 4); e.ty = clamp(e.ty, 3, h - 4); }
+    L.must = L.must.filter(([x, y]) => x > 1 && y > 1 && x < w - 2 && y < h - 2);
+    { const rs = L.reachFrom(L.start[0], L.start[1], true); L.ents = L.ents.filter(e => !(e.type === 'heart' || e.type === 'dia') || rs[e.ty * w + e.tx] || e.type === 'dia'); }
+    for (const { nb, B, gc } of gates) {
+      if (nb.axis === 'x') { const x0 = nb.side === 'R' ? w - 2 : 0, x1 = nb.side === 'R' ? w - 1 : 1; L.exits.push({ edge: true, axis: 'x', bpos: nb.side === 'R' ? w - 1 : 0, x0, x1, y0: gc - 1 - D.y0, y1: gc + 1 - D.y0, to: nb.to, sx: nb.side === 'R' ? 3 : (B.x1 - B.x0 + 1) - 4, sy: null, oy: D.y0 - B.y0, ox: 0, lock: null }); }
+      else { const y0 = nb.side === 'B' ? h - 2 : 0, y1 = nb.side === 'B' ? h - 1 : 1; L.exits.push({ edge: true, axis: 'y', bpos: nb.side === 'B' ? h - 1 : 0, x0: gc - 1 - D.x0, x1: gc + 1 - D.x0, y0, y1, to: nb.to, sy: nb.side === 'B' ? 3 : (B.y1 - B.y0 + 1) - 4, sx: null, ox: D.x0 - B.x0, oy: 0, lock: null }); }
+    }
   }
   return L;
 }
