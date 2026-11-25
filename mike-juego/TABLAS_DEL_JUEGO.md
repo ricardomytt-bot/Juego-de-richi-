@@ -9,11 +9,24 @@
 | 🔱 Lanza | Media | 22% | 0,42 s | Alcance largo cuerpo a cuerpo | Cámara de Oleadas (Valle del Sueño) |
 | 🪓 Hacha | Pesada | 90% | 1,35 s | Golpe enorme en área | Rey Slime (mini jefe, Valle) |
 | 🎯 Ballesta | Larga | 52% | 1,0 s | Disparo potente y rápido | Cofre oculto en el pantano (Valle) |
-| 🔥 Bastón de Fuego | Especial | 18% x5 | 0,8 s | 5 bolas que atraviesan | Parkour (isla, Valle) |
 | ⚔️ Katana | Corta | 18% | 0,22 s | Muy rápida | Gelatina Real (Pastelandia) |
 | 🪃 Búmeran | Larga | 26% | 0,65 s | Atraviesa enemigos | Cámara de Oleadas (Pastelandia) |
 | 🏏 Bate Gigante | Pesada | 72% | 1,1 s | Golpe pesado | Parkour (Pastelandia) |
-| ✨ Cetro Estelar | Especial | 26% x3 | 0,6 s | 3 rayos que atraviesan | Derrotar 10 enemigos |
+
+## ★ Armas legendarias (Coliseo Romano, zona 7)
+| Arma | Tipo | Daño | Recarga | Función | Dónde |
+|---|---|---|---|---|---|
+| 💎 Espada de Diamante | Liviana | 44% | 0,13 s | La más rápida; el doble de daño que la mejor liviana | Gladiador Slime (mini jefe) |
+| 🔨 Mazo Devastador | Pesada | 280% | 2,6 s | Lentísimo, daño enorme en área | Cámara de Oleadas |
+| 🌀 Rayo Kamekame | Larga | 240% | 30 s | Rayo azul cargado que atraviesa todo | Parkour del Coliseo |
+
+## 🛡️ Armaduras (cuerpo completo; una equipada a la vez)
+| Armadura | Rareza | Efecto | Dónde |
+|---|---|---|---|
+| 🧥 Cuero | Común | -10% daño recibido | Parkour, Valle del Sueño |
+| 🔗 Cota de malla | Común | -20% daño recibido | Cofre, Pastelandia |
+| ⛓️ Hierro | Rara | -32% daño recibido | Oleadas, Fábrica de Pizza |
+| 🥷 Kit de Samurái | ★ Legendaria | -55% daño recibido, +12% daño, +8% velocidad | Robot Otaku (mini jefe), Ciudad Neón |
 
 ## 🎒 Objetos y mejoras
 | Objeto | Efecto | Dónde |

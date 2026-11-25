@@ -32,7 +32,7 @@ function menuItems() {
       return list;
     }
     case 'guide': return [{ t: 'VOLVER', go: backPage }];
-    case 'inv': return [...[0, 1, 2].map(i => { const w = WEAPONS[P.equip[i]]; return { t: (i + 1) + '   ' + w.icon + ' ' + w.name + '   (' + w.type + ')', go: () => cycleSlot(i), slot: i }; }), { t: 'VOLVER', go: backPage }];
+    case 'inv': return [...[0, 1, 2].map(i => { const w = WEAPONS[P.equip[i]]; return { t: (i + 1) + '   ' + w.icon + ' ' + w.name + '   (' + w.type + ')', go: () => cycleSlot(i), slot: i }; }), { t: '🛡️ ARMADURA   ' + (P.armor ? ARMORS[P.armor].icon + ' ' + ARMORS[P.armor].name : 'Ninguna'), go: cycleArmor, armorSlot: true }, { t: 'VOLVER', go: backPage }];
     case 'options': return [
       { t: 'MÚSICA', slider: 'music' }, { t: 'EFECTOS', slider: 'sfx' },
       { t: 'BOTONES EN PANTALLA', toggle: 'touch' }, { t: 'PANTALLA COMPLETA', go: goFullscreen }, { t: 'VOLVER', go: backPage }];
@@ -178,7 +178,9 @@ function guideSections() {
   const zr = [['🏙️', 'Diamantia', 'Ciudad base · tienda · fogatas', '—']]; for (let i = 1; i <= 8; i++) { const d = ZDEF[i]; zr.push([String(i), d.name, 'Laberintos · oleadas · parkour', d.boss]); }
   const br = Object.keys(BOSS_DATA).map(k => { const D = BOSS_DATA[k], m = BOSS_MUL[k] || [1, 1]; return [D.foe, 'x' + m[0] + ' vida', 'vel x' + m[1], D.tip.replace(/^¡?cuando /, 'Cuando ').slice(0, 60)]; });
   return [
-    { title: '⚔️ ARMAS (3 equipadas a la vez)', cols: ['Arma', 'Tipo', 'Daño', 'Recarga', 'Función'], w: [.24, .13, .1, .12, .41], rows: wr },
+    { title: '⚔️ ARMAS (3 equipadas a la vez) · ★ legendarias en dorado', cols: ['Arma', 'Tipo', 'Daño', 'Recarga', 'Función'], w: [.24, .13, .1, .12, .41], rows: wr },
+    { title: '★ LEGENDARIAS (Coliseo Romano)', cols: ['Arma', 'Daño', 'Recarga', 'Dónde'], w: [.3, .14, .16, .4], rows: [['💎 Espada de Diamante', '44%', '0,13 s', 'Gladiador Slime (mini jefe)'], ['🔨 Mazo Devastador', '280%', '2,6 s', 'Cámara de Oleadas'], ['🌀 Rayo Kamekame', '240%', '30 s', 'Parkour del Coliseo']] },
+    { title: '🛡️ ARMADURAS (cuerpo completo)', cols: ['Armadura', 'Efecto', 'Dónde'], w: [.3, .42, .28], rows: [['🧥 Cuero', '-10% daño recibido', 'Parkour, Valle del Sueño'], ['🔗 Cota de malla', '-20% daño recibido', 'Cofre, Pastelandia'], ['⛓️ Hierro', '-32% daño recibido', 'Oleadas, Fábrica de Pizza'], ['🥷 Kit de Samurái ★', '-55% daño · +12% daño · +8% vel.', 'Robot Otaku, Ciudad Neón']] },
     { title: '🗺️ ZONAS', cols: ['#', 'Zona', 'Qué hay', 'Jefe'], w: [.07, .3, .38, .25], rows: zr },
     { title: '👑 JEFES', cols: ['Jefe', 'Vida', 'Velocidad', 'Punto débil'], w: [.2, .16, .16, .48], rows: br },
     { title: '🎒 OBJETOS Y MEJORAS', cols: ['Objeto', 'Efecto', 'Dónde'], w: [.28, .4, .32], rows: [['🍫 Chocolate', 'Cura ' + Math.round(P.chocoHeal * 100) + '%, recarga ' + CHOCO_CD + ' s', 'Siempre (tecla R)'], ['💎 Diamantes', 'Abren la puerta del jefe', '3 por zona'], ['🗝️ Llaves', 'Abren puertas de colores', 'Laberintos'], ['💖 Corazones', '+20% de vida', 'Suelo y enemigos'], ['🪙 Monedas', 'Se gastan en la tienda', 'Enemigos y cofres'], ['🛌 Almohada', '+25% daño', 'Jefe Timba'], ['🧁 Muffin Dorado', 'Chocolate más rápido', 'Jefe Acenix'], ['🌡️ Termo', 'Chocolate +10%', 'Jefe Rius'], ['⚡ Circuito', '+12% velocidad', 'Jefe Mayo'], ['☁️ Bufanda', '-15% daño recibido', 'Jefe Esparta'], ['🥷 Máscara', '+15% daño', 'Jefe Raptor'], ['🪖 Casco', '-15% daño recibido', 'Jefe Invictor']] },
@@ -199,6 +201,7 @@ function menuExtra(w) {
   if (page === 'pause') return { h: 46, draw: (x, y) => { txt('🪙 ' + S.coins + '    ·    Restauración de Diamantia: ' + S.restored + '/7    ·    ' + (S.lvl ? ['Diamantia', 'Valle del Sueño', 'Pastelandia', 'Granja', 'Fábrica', 'Nubes', 'Neón', 'Coliseo', 'Código'][S.lvlId] || 'Interior' : ''), x + w / 2, y + 8, { size: 16, align: 'center', color: '#ffe14a', outline: false }); } };
   if (page === 'shop') return { h: 60, draw: (x, y) => { txt('Tus monedas: 🪙 ' + S.coins, x + w / 2, y + 6, { size: 20, align: 'center', color: '#ffe14a', outline: false }); txt('Ambrosio: "¡Tengo todos los trabajos... y todas las mercancías!"', x + w / 2, y + 34, { size: 14, align: 'center', color: '#bcd', outline: false }); } };
   if (page === 'inv') return { h: 200, draw: (x, y) => {
+    if (MENU.idx === 3) { const A = P.armor ? ARMORS[P.armor] : null, cx0 = x + w / 2; txt('Pulsa para cambiar de armadura (cuerpo completo)', cx0, y + 2, { size: 15, align: 'center', color: '#bcd', outline: false }); txt(A ? A.icon + ' ' + A.name : 'Sin armadura', cx0, y + 38, { size: 24, align: 'center', color: A && A.legend ? '#ff9a4a' : '#ffe14a', outline: false }); txt(A ? A.note : 'Consigue armaduras en cofres, oleadas y mini jefes', cx0, y + 78, { size: 16, align: 'center', outline: false }); txt('Armaduras: ' + (P.armors.length ? P.armors.map(id => ARMORS[id].name).join('  ·  ') : 'ninguna todavía'), cx0, y + 118, { size: 14, align: 'center', color: '#9ad0ff', outline: false }); return; }
     const sel = Math.min(MENU.idx, 2), wp = WEAPONS[P.equip[sel]], dmg = Math.round(wp.dmg * P.dmgMul * 20), cx = x + w / 2;
     txt('Pulsa una ranura para cambiarla por otra arma que tengas', cx, y + 2, { size: 15, align: 'center', color: '#bcd', outline: false });
     txt(wp.icon + ' ' + wp.name + '  ·  ' + wp.type, cx, y + 32, { size: 24, align: 'center', color: '#ffe14a', outline: false });

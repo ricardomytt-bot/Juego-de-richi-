@@ -97,7 +97,7 @@ function glSync(dt) {
   GL.shotObjs = GL.shotObjs || []; let si = 0;
   for (const q of S.shots) {
     let o = GL.shotObjs[si]; if (!o) { o = new THREE.Group(); o.add(mesh(geoBox(.12, .12, .8), new THREE.MeshBasicMaterial({ color: 0xfff0b0 }), 0, 0, 0, false), mesh(geoBox(.3, .3, .3), new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 0, .5, false)); GL.lvlGroup.add(o); GL.shotObjs.push(o); }
-    o.visible = true; o.position.set(q.x / T, q.z / T, q.y / T); o.rotation.y = Math.atan2(q.vx, q.vy); o.children[0].material.color.set(q.star ? 0xffe14a : 0xfff0b0); o.rotation.z = q.star ? t * 12 : 0; si++;
+    o.visible = true; o.scale.setScalar(q.beam ? 4.5 : 1); o.position.set(q.x / T, q.z / T, q.y / T); o.rotation.y = Math.atan2(q.vx, q.vy); o.children[0].material.color.set(q.beam ? 0x4ab8ff : q.star ? 0xffe14a : 0xfff0b0); o.children[1].material.color.set(q.beam ? 0xffffff : 0xffffff); o.rotation.z = q.star ? t * 12 : 0; si++;
   }
   for (; si < GL.shotObjs.length; si++) GL.shotObjs[si].visible = false;
   // ---- proyectiles y avisos
@@ -118,7 +118,8 @@ function glSync(dt) {
   if (!P.dead) {
     pl.outer.visible = !(P.inv > 0 && Math.floor(P.inv * 18) % 2 === 0); pl.outer.position.set(P.x / T, 0, P.y / T);
     const aim = P.atk > 0 ? Math.atan2(P.adx, P.ady) : Math.atan2(P.dx, P.dy); pl.outer.rotation.y = yawTo(pl.outer.rotation.y, aim, P.atk > 0 ? .5 : .28);
-    if (pl.parts.wm) { const wid = curW().id; for (const k2 in pl.parts.wm) pl.parts.wm[k2].visible = k2 === wid; pl.parts.wm.dagger.scale.setScalar(.6); }
+    if (pl.parts.wm) { const cw = curW(), mk2 = cw.model || (cw.ranged ? 'bow' : cw.heavy ? 'hammer' : 'dagger'); for (const k2 in pl.parts.wm) pl.parts.wm[k2].visible = k2 === mk2; pl.parts.wm.dagger.scale.setScalar(cw.msc || .6); pl.parts.wm.hammer.scale.setScalar(cw.msc || 1); if (cw.id === 'diamondsword') pl.parts.wm.dagger.children.forEach(c => { if (c.material && c.material.emissive) c.material.color.set(0x7df3ff); }); }
+    if (!pl.armorKits) pl.armorKits = buildArmorKits(pl.parts); for (const id in pl.armorKits) pl.armorKits[id].visible = P.armor === id;
     const k = P.atk > 0 && !curW().ranged ? 1 - P.atk / (P.atkMax || .26) : null; if (S.cineAuto && S.dialog && S.dialog.who !== 'mike' && !P.moving) { const s0 = S.ents.find(q => q.id === S.dialog.who); if (s0) { P.dx = (s0.x - P.x) / 100; P.dy = (s0.y - P.y) / 100; } } if (S.dialog && S.dialog.who === 'mike' && S.dialog.shown < S.dialog.text.length) pl.outer.position.y += Math.abs(Math.sin(t * 11)) * .1;
     animChar(pl, P.anim * 1.25, P.moving ? 1 : 0, { atk: k, talk: S.dialog && S.dialog.who === 'mike', wave: S.dialog && S.dialog.who === 'mike' && Math.sin(t * 2.2) > .6 });
     pl.slash.position.set(P.x / T, .9, P.y / T); pl.slash.rotation.z = Math.atan2(-P.ady, P.adx); pl.slash.material.opacity = k != null ? Math.sin(clamp(k, 0, 1) * Math.PI) * .75 : 0; pl.slash.visible = k != null;
@@ -153,6 +154,22 @@ function glCamera(dt) {
   const sx = GL.cx, sz = GL.cz; GL.sun.position.set(sx + 14, 26, sz + 10); GL.sun.target.position.set(sx, 0, sz); GL.sun.target.updateMatrixWorld();
   GL.plight.position.set(P.x / T, 2.4, P.y / T);
   if (S.bossLock && GL.arenaC) { GL.blight.position.set(GL.arenaC[0], 5, GL.arenaC[1]); GL.blight.intensity = 0; } else GL.blight.intensity = 0;
+}
+function buildArmorKits(p) {
+  const kits = {}, mk = (c, em) => new THREE.MeshLambertMaterial({ color: c, emissive: em || 0x000000, emissiveIntensity: em ? .4 : 0 }), add = (par, g, w, h, d, c, x, y, z, em) => { const m = new THREE.Mesh(geoBox(w, h, d), mk(c, em)); m.position.set(x, y, z); m.castShadow = true; g.add(m); par.add(g); return m; };
+  const cfg = { leather: [0x8a5a2a, 0x6a4220, 0], chain: [0xa8b0bc, 0x7a8290, 0], iron: [0xd0d4de, 0x8a90a0, 0], samurai: [0x20202a, 0xc0282a, 0xffc030] };
+  for (const id in cfg) {
+    const [c1, c2, c3] = cfg[id], root = new THREE.Group(); root.visible = false; const gs = [];
+    const part = (par, w, h, d, c, x, y, z, em) => { const g = new THREE.Group(); add(par, g, w, h, d, c, x, y, z, em); gs.push(g); };
+    part(p.body, .96, .72, .64, c1, 0, 0, 0); part(p.body, .98, .12, .66, c2, 0, -.22, 0);
+    for (const L2 of [p.legL, p.legR]) { part(L2, .44, .3, .46, c1, 0, -.12, 0); part(L2, .46, .16, .5, c2, 0, -.42, .03); }
+    for (const A of [p.armL, p.armR]) { part(A, .46, .28, .46, c1, 0, -.04, 0); part(A, .4, .22, .4, c2, 0, -.5, 0); }
+    part(p.head, 1.2, .46, 1.2, c1, 0, 1.02, 0); part(p.head, 1.22, .1, 1.22, c2, 0, .82, 0);
+    if (id === 'iron' || id === 'chain') part(p.head, .3, .5, .12, c2, 0, .5, .62);
+    if (id === 'samurai') { part(p.head, .16, .56, .16, c3, -.4, 1.5, 0); part(p.head, .16, .56, .16, c3, .4, 1.5, 0); part(p.head, .5, .16, .3, c2, 0, 1.3, .35, c2); for (const sx of [-.45, 0, .45]) part(p.body, .3, .46, .66, c2, sx, -.5, 0); part(p.body, .5, .3, .1, c3, 0, .1, .35, c3); part(p.head, .9, .3, .14, c1, 0, .12, .6); }
+    for (const g of gs) root.add(g); kits[id] = { _gs: gs, set visible(v) { for (const g of gs) g.visible = v; } };
+  }
+  return kits;
 }
 function glFrame(dt) {
   if (!GL.ok || !S.lvl) return;

@@ -257,7 +257,7 @@ function buildValley(theme, so, SG, EX) {
   L.scatter(52, 8, 69, 21, 'f', 40, 41 + so, [], '.');
   L.sign(58, 20, 'Cámara de las Oleadas: pisa el círculo, sobrevive y gana un cofre'); L.sign(68, 16, 'PARKOUR: las baldosas se rompen. ¡No te detengas!');
   R(29, 32, 42, 46, '.'); frame(29, 32, 42, 46); R(42, 38, 52, 39, ',');
-  L.ent('mini', 35, 39, { name: EX.rw.miniName || 'Rey Slime', drop: EX.rw.mini }); L.sign(30, 34, 'Guarida del Rey Slime  (jefe opcional: suelta un arma)'); L.ent('heart', 31, 44);
+  L.ent('mini', 35, 39, { name: EX.rw.miniName || 'Rey Slime', drop: EX.rw.mini, z: EX.z || 1 }); L.sign(30, 34, 'Guarida del Rey Slime  (jefe opcional: suelta un arma)'); L.ent('heart', 31, 44);
   { const cdd = C.dead[3] || C.dead[C.dead.length - 1]; if (cdd) { L.ent('chest', cdd.tx, cdd.ty, { w: EX.rw.chest }); L.mustReach(cdd.tx, cdd.ty); } }
   for (const [x, y] of [[53, 22], [53, 27], [53, 29], [69, 14], [85, 14], [60, 14], [35, 39], [44, 38], [31, 44]]) L.mustReach(x, y);
   for (const [x, y] of [[64, 73], [27, 23], [58, 10], [52, 31]]) L.ent('bonfire', x, y);
@@ -272,15 +272,15 @@ function buildValley(theme, so, SG, EX) {
   return L;
 }
 const ZDEF = [null,
-  { theme: 'dream', so: 0, name: 'VALLE DEL SUEÑO', boss: 'Timba', rw: { mini: 'axe', trial: 'spear', park: 'fire', chest: 'crossbow', miniName: 'Rey Slime' } },
-  { theme: 'sweet', so: 100, name: 'PASTELANDIA', boss: 'Acenix', rw: { mini: 'katana', trial: 'boom', park: 'club', chest: 'coins:40', miniName: 'Gelatina Real' } },
+  { theme: 'dream', so: 0, name: 'VALLE DEL SUEÑO', boss: 'Timba', rw: { mini: 'axe', trial: 'spear', park: 'armor:leather', chest: 'crossbow', miniName: 'Rey Slime' } },
+  { theme: 'sweet', so: 100, name: 'PASTELANDIA', boss: 'Acenix', rw: { mini: 'katana', trial: 'boom', park: 'club', chest: 'armor:chain', miniName: 'Gelatina Real' } },
   { theme: 'farm', so: 270, name: 'GRANJA DEL AMANECER', boss: 'Rius', rw: { mini: 'coins:35', trial: 'coins:30', park: 'coins:45', chest: 'coins:25', miniName: 'Espantapájaros' } },
-  { theme: 'factory', so: 300, name: 'FÁBRICA DE PIZZA', boss: 'Mayo', rw: { mini: 'coins:40', trial: 'coins:35', park: 'coins:50', chest: 'coins:30', miniName: 'Horno Gigante' } },
+  { theme: 'factory', so: 300, name: 'FÁBRICA DE PIZZA', boss: 'Mayo', rw: { mini: 'coins:40', trial: 'armor:iron', park: 'coins:50', chest: 'coins:30', miniName: 'Horno Gigante' } },
   { theme: 'cloud', so: 400, name: 'JARDÍN DE NUBES', boss: 'Esparta', rw: { mini: 'coins:45', trial: 'coins:40', park: 'coins:55', chest: 'coins:35', miniName: 'Nubarrón' } },
-  { theme: 'neon', so: 500, name: 'CIUDAD NEÓN', boss: 'Raptor', rw: { mini: 'coins:50', trial: 'coins:45', park: 'coins:60', chest: 'coins:40', miniName: 'Robot Otaku' } },
-  { theme: 'colosseum', so: 600, name: 'COLISEO ROMANO', boss: 'Invictor', rw: { mini: 'coins:55', trial: 'coins:50', park: 'coins:65', chest: 'coins:45', miniName: 'Gladiador Slime' } },
+  { theme: 'neon', so: 500, name: 'CIUDAD NEÓN', boss: 'Raptor', rw: { mini: 'armor:samurai', trial: 'coins:45', park: 'coins:60', chest: 'coins:40', miniName: 'Robot Otaku' } },
+  { theme: 'colosseum', so: 600, name: 'COLISEO ROMANO', boss: 'Invictor', rw: { mini: 'diamondsword', trial: 'mace', park: 'kame', chest: 'coins:45', miniName: 'Gladiador Slime' } },
   { theme: 'void', so: 700, name: 'CÓDIGO CORRUPTO', boss: 'Mike Maligno', rw: { mini: 'coins:60', trial: 'coins:55', park: 'coins:70', chest: 'coins:50', miniName: 'Bug Gigante' } }];
-const zoneLevel = n => () => { const d = ZDEF[n]; return buildValley(d.theme, d.so, [d.name + '  —  ¡explora sus zonas!', '← Ruinas del oeste  (laberinto)', 'Cámara del tesoro  →  (necesita la llave de oro)', '↑ Puerta de bronce al claro del bosque', 'Un cercado de rocas... ¡algo brilla!', 'Puerta de plata  →  Pantano de setos', d.boss + ' espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves'], { back: [n - 1, n === 1 ? [99, 45] : [9, 21]], next: n < 8 ? [n + 1, [61, 76]] : null, home: n > 1, rw: d.rw }); };
+const zoneLevel = n => () => { const d = ZDEF[n]; return buildValley(d.theme, d.so, [d.name + '  —  ¡explora sus zonas!', '← Ruinas del oeste  (laberinto)', 'Cámara del tesoro  →  (necesita la llave de oro)', '↑ Puerta de bronce al claro del bosque', 'Un cercado de rocas... ¡algo brilla!', 'Puerta de plata  →  Pantano de setos', d.boss + ' espera al oeste.  3 diamantes abren la puerta', 'Hay puertas de colores: busca sus llaves'], { back: [n - 1, n === 1 ? [99, 45] : [9, 21]], next: n < 8 ? [n + 1, [61, 76]] : null, home: n > 1, rw: d.rw, z: n }); };
 const level1 = zoneLevel(1), level2 = zoneLevel(2), level3 = zoneLevel(3), level4 = zoneLevel(4), level5 = zoneLevel(5), level6 = zoneLevel(6), level7 = zoneLevel(7), level8 = zoneLevel(8);
 // comprueba que el nivel se puede completar aunque las puertas empiecen cerradas
 function verifyLevel(L) {

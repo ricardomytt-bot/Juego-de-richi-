@@ -21,7 +21,7 @@ const S = {
   q: { gotLetters: false, delivered: {}, count: 0, total: 7, done: false, trainStarted: false }, fav: {}, flags: {}, wave: null, camShot: null, shots: [], coins: 0, maps: {}, restored: 0, cpZone: 0
 };
 const P = {
-  x: 0, y: 0, hw: 10, hh: 12, vx: 0, vy: 0, dx: 0, dy: 1, face: 1, hp: 100, maxHp: 100, inv: 0, sel: 0, chocoHeal: .7, defMul: 1, speedMul: 1, up: { choco: 0, boots: 0, sharp: 0, scarf: 0, fast: 0 }, owned: ['dagger', 'hammer', 'bow'], equip: ['dagger', 'hammer', 'bow'], chocoCd: 0, dmgMul: 1, special: false, kills: 0, pend: 0, atkMax: .26,
+  x: 0, y: 0, hw: 10, hh: 12, vx: 0, vy: 0, dx: 0, dy: 1, face: 1, hp: 100, maxHp: 100, inv: 0, sel: 0, chocoHeal: .7, defMul: 1, speedMul: 1, up: { choco: 0, boots: 0, sharp: 0, scarf: 0, fast: 0 }, owned: ['dagger', 'hammer', 'bow'], equip: ['dagger', 'hammer', 'bow'], armors: [], armor: null, cds: {}, chocoCd: 0, dmgMul: 1, special: false, kills: 0, pend: 0, atkMax: .26,
   atk: 0, atkCd: 0, adx: 0, ady: 1, hitSet: new Set(), anim: 0, moving: false, dead: false, hitWall: false
 };
 const WEAPONS = {
@@ -31,14 +31,33 @@ const WEAPONS = {
   spear: { id: 'spear', name: 'Lanza', icon: '🔱', type: 'MEDIA', dmg: 1.1, cd: .42, anim: .22, wind: .07, reach: 58, R: 34 },
   axe: { id: 'axe', name: 'Hacha', icon: '🪓', type: 'PESADA', dmg: 4.5, cd: 1.35, anim: .6, wind: .34, reach: 44, R: 72, heavy: true },
   crossbow: { id: 'crossbow', name: 'Ballesta', icon: '🎯', type: 'LARGA', dmg: 2.6, cd: 1.0, anim: .3, wind: .1, ranged: true, speed: 700, life: 1.2 },
-  fire: { id: 'fire', name: 'Bastón de Fuego', icon: '🔥', type: 'ESPECIAL', dmg: .9, cd: .8, anim: .3, wind: .1, ranged: true, spread: 5, pierce: true, speed: 420, life: .9 },
   katana: { id: 'katana', name: 'Katana', icon: '⚔️', type: 'CORTA', dmg: .9, cd: .22, anim: .15, wind: .04, reach: 34, R: 42 },
   boom: { id: 'boom', name: 'Búmeran', icon: '🪃', type: 'LARGA', dmg: 1.3, cd: .65, anim: .25, wind: .08, ranged: true, pierce: true, speed: 520, life: .9 },
   club: { id: 'club', name: 'Bate Gigante', icon: '🏏', type: 'PESADA', dmg: 3.6, cd: 1.1, anim: .5, wind: .26, reach: 46, R: 66, heavy: true },
-  star: { id: 'star', name: 'Cetro Estelar', icon: '✨', type: 'ESPECIAL', dmg: 1.3, cd: .6, anim: .3, wind: .08, ranged: true, spread: 3, pierce: true, speed: 470, life: 1.3 }
+  diamondsword: { id: 'diamondsword', name: 'Espada de Diamante', icon: '💎', type: 'LEGENDARIA', legend: true, dmg: 2.2, cd: .13, anim: .12, wind: .03, reach: 40, R: 50, model: 'dagger', msc: 1.2 },
+  mace: { id: 'mace', name: 'Mazo Devastador', icon: '🔨', type: 'LEGENDARIA', legend: true, dmg: 14, cd: 2.6, anim: .8, wind: .5, reach: 52, R: 92, heavy: true, model: 'hammer', msc: 1.6 },
+  kame: { id: 'kame', name: 'Rayo Kamekame', icon: '🌀', type: 'LEGENDARIA', legend: true, dmg: 12, cd: 30, anim: .7, wind: .7, ranged: true, beam: true, pierce: true, speed: 900, life: .55, model: 'star' },
 };
+const ARMORS = {
+  leather: { id: 'leather', name: 'Armadura de Cuero', icon: '🧥', def: .9, note: '-10% daño recibido' },
+  chain: { id: 'chain', name: 'Cota de Malla', icon: '🔗', def: .8, note: '-20% daño recibido' },
+  iron: { id: 'iron', name: 'Armadura de Hierro', icon: '⛓️', def: .68, note: '-32% daño recibido' },
+  samurai: { id: 'samurai', name: 'Kit de Samurái', icon: '🥷', def: .45, dmg: 1.12, spd: 1.08, legend: true, note: '-55% daño recibido · +12% daño · +8% velocidad (LEGENDARIA)' }
+};
+const armorDef = () => (P.armor && ARMORS[P.armor] ? ARMORS[P.armor].def : 1);
+const armorDmg = () => (P.armor && ARMORS[P.armor] && ARMORS[P.armor].dmg) || 1;
+const armorSpd = () => (P.armor && ARMORS[P.armor] && ARMORS[P.armor].spd) || 1;
+function cycleArmor() { const ids = [null, ...P.armors], k = ids.indexOf(P.armor || null); P.armor = ids[(k + 1) % ids.length]; sfx.select(); }
+function sanitizeGear() { P.owned = P.owned.filter(id => WEAPONS[id]); for (const b of ['dagger', 'hammer', 'bow']) if (!P.owned.includes(b)) P.owned.push(b); P.equip = P.equip.map(id => WEAPONS[id] ? id : 'dagger'); P.armors = (P.armors || []).filter(id => ARMORS[id]); if (P.armor && !ARMORS[P.armor]) P.armor = null; }
 const WSLOTS = () => P.equip;
+function grantArmor(id) {
+  const a = ARMORS[id]; if (!a) return;
+  if (P.armors.includes(id)) { S.coins += 40; floater(P.x - 50, P.y - 90, 'Ya tienes ' + a.name + ': +40 monedas', '#fff'); return; }
+  P.armors.push(id); if (!P.armor || (ARMORS[P.armor].def > a.def)) P.armor = id; sfx.win(); S.shake = .15; spawnP(P.x, P.y - 30, 40, a.legend ? '#ff4a5a' : '#cfd4de', 300, 1.1);
+  floater(P.x - 80, P.y - 100, '¡ARMADURA: ' + a.icon + ' ' + a.name + '!', a.legend ? '#ff9a4a' : '#ffe14a'); showHint('¡' + a.name + '! ' + a.note + ' · Equípala en el INVENTARIO', 7);
+}
 function grantWeapon(id) {
+  if (String(id).startsWith('armor:')) { grantArmor(id.slice(6)); return; }
   if (String(id).startsWith('coins:')) { const n = +id.slice(6); S.coins += n; sfx.dia(); floater(P.x - 50, P.y - 90, '+' + n + ' monedas', '#ffe14a'); return; }
   const w = WEAPONS[id]; if (!w) return;
   if (P.owned.includes(id)) { S.coins += 25; floater(P.x - 50, P.y - 90, 'Ya tienes ' + w.name + ': +25 monedas', '#fff'); return; }
@@ -165,7 +184,7 @@ function spawnEnts(L) {
       case 'slime': S.ents.push({ type: 'slime', x: cx, y: fy, hw: 11, hh: 9, bh: 14, rad: 18, vx: 0, vy: 0, hp: 2, hop: rnd(.2, 1), hopT: 0, flash: 0 }); break;
       case 'flyer': S.ents.push({ type: 'flyer', x: cx, y: fy, hw: 9, hh: 7, bh: 30, rad: 15, vx: 0, vy: 0, hp: 1, t: rnd(0, 6), flash: 0, hx: cx, hy: fy, z: 30 }); break;
       case 'chest': S.ents.push({ type: 'chest', x: cx, y: fy, w: d.w, opened: false, t: 0 }); break;
-      case 'mini': S.ents.push({ type: 'slime', mini: true, corrupt: true, sc: 2.2, name: d.name, drop: d.drop, x: cx, y: fy, hw: 20, hh: 15, bh: 30, rad: 34, vx: 0, vy: 0, hp: 18, max: 18, hop: rnd(.2, 1), hopT: 0, flash: 0 }); break;
+      case 'mini': S.ents.push({ type: 'slime', mini: true, corrupt: true, sc: 2.2, name: d.name, drop: d.drop, x: cx, y: fy, hw: 20, hh: 15, bh: 30, rad: 34, vx: 0, vy: 0, hp: 18 + (d.z || 1) * 6, max: 18 + (d.z || 1) * 6, hop: rnd(.2, 1), hopT: 0, flash: 0 }); break;
       case 'dia': S.ents.push({ type: 'dia', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'key': S.ents.push({ type: 'key', k: d.k, x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
       case 'heart': S.ents.push({ type: 'heart', x: cx, y: (d.ty + .5) * T, t: rnd(0, 6) }); break;
@@ -179,7 +198,7 @@ function spawnEnts(L) {
 const ebody = e => ({ x: e.x, y: e.y - (e.bh || 20) });
 function hurtPlayer(n, fx, fy) {
   if (P.inv > 0 || P.dead || S.busy) return;
-  P.hp -= n * 14 * P.defMul; P.inv = 1.15;
+  P.hp -= n * 14 * P.defMul * armorDef(); P.inv = 1.15;
   const a = Math.atan2(P.y - fy, P.x - fx); P.vx = Math.cos(a) * 300; P.vy = Math.sin(a) * 300;
   S.shake = .25; S.hitstop = .07; sfx.hurt();
   spawnP(P.x, P.y - 20, 12, '#ff4a5a', 220);
@@ -190,7 +209,7 @@ function healPlayer() { P.hp = P.maxHp; sfx.heal(); spawnP(P.x, P.y - 30, 18, '#
 function hitEnt(e, dmg = 1) {
   sfx.hit();
   if (e.type === 'dummy') { e.hit = .3; floater(e.x - 20, e.y - 70, ['¡Auch!', '¡Oye!', '¡Pum!', '¿Por qué?'][Math.floor(rnd(0, 4))], '#ffe14a'); spawnP(e.x, e.y - 24, 8, '#c9a15a'); return; }
-  e.hp -= dmg * P.dmgMul; e.flash = .14;
+  e.hp -= dmg * P.dmgMul * armorDmg(); e.flash = .14;
   const a = Math.atan2(e.y - P.y, e.x - P.x); e.vx = Math.cos(a) * 300; e.vy = Math.sin(a) * 300;
   const c = ebody(e);
   spawnP(c.x, c.y, 10, e.type === 'slime' ? '#7dff8a' : '#c26aff', 200);
@@ -198,7 +217,7 @@ function hitEnt(e, dmg = 1) {
     e.dead = true; spawnP(c.x, c.y, 20, '#fff', 260); sfx.poof();
     if (Math.random() < .28) S.ents.push({ type: 'heart', x: e.x, y: e.y - 10, t: 0 });
     if (Math.random() < .5 || e.mini) S.ents.push({ type: 'coin', x: e.x, y: e.y - 6, v: e.mini ? 15 : 1 + Math.floor(rnd(0, 3)), t: 0 });
-    P.kills++; if (!P.owned.includes('star') && P.kills >= 10) grantWeapon('star'); if (e.drop) grantWeapon(e.drop);
+    P.kills++; if (e.drop) grantWeapon(e.drop);
   }
 }
 function updateEnt(e, dt) {
@@ -304,7 +323,8 @@ function doAttack(w) {
 }
 function fireShot(w) {
   const p = P, n = w.spread || 1, a0 = Math.atan2(p.ady, p.adx); sfx.whoosh();
-  for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * .3; S.shots.push({ x: p.x + Math.cos(a) * 18, y: p.y + Math.sin(a) * 18, z: 24, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed, dmg: w.dmg, pierce: !!w.pierce, life: w.life, star: w.id === 'star', hit: new Set() }); }
+  for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * .3; S.shots.push({ x: p.x + Math.cos(a) * 18, y: p.y + Math.sin(a) * 18, z: 24, vx: Math.cos(a) * w.speed, vy: Math.sin(a) * w.speed, dmg: w.dmg, pierce: !!w.pierce, life: w.life, star: w.id === 'star', hit: new Set(), beam: !!w.beam, rad: w.beam ? 70 : 18 }); }
+  if (w.beam) { S.shake = .4; sfx.boss(); spawnP(p.x + p.adx * 30, p.y - 24, 20, '#6ad0ff', 260, .8); }
 }
 function updateShots(dt) {
   const L = S.lvl;
@@ -315,10 +335,10 @@ function updateShots(dt) {
     if (!gone) for (const e of S.ents) {
       if (e.dead || !(e.type === 'slime' || e.type === 'flyer' || e.type === 'dummy') || q.hit.has(e)) continue;
       const c = e.type === 'flyer' ? { x: e.x, y: e.y - e.z } : ebody(e);
-      if (dist(bx, by, c.x, c.y) < 18 + e.rad) { q.hit.add(e); hitEnt(e, q.dmg); if (!q.pierce) { gone = true; break; } }
+      if (dist(bx, by, c.x, c.y) < (q.rad || 18) + e.rad) { q.hit.add(e); hitEnt(e, q.dmg); if (!q.pierce) { gone = true; break; } }
     }
     const b = S.boss;
-    if (!gone && b && !b.dead && b.state !== 'saved' && b.state !== 'idle' && !q.hit.has(b) && dist(bx, by, b.x, b.y - 36) < 18 + 38) { q.hit.add(b); hitBoss(q.dmg); if (!q.pierce) gone = true; }
+    if (!gone && b && !b.dead && b.state !== 'saved' && b.state !== 'idle' && !q.hit.has(b) && dist(bx, by, b.x, b.y - 36) < (q.rad || 18) + 38) { q.hit.add(b); hitBoss(q.dmg); if (!q.pierce) gone = true; }
     if (gone) S.shots.splice(i, 1);
   }
 }
@@ -333,10 +353,13 @@ function updatePlayer(dt) {
   const [ix, iy] = getMove(), il = Math.hypot(ix, iy);
   p.moving = il > 0.05 || !!p.forceMove;
   if (p.moving && p.atk <= 0) { const nx = ix / il, ny = iy / il; p.dx = nx; p.dy = ny; if (Math.abs(nx) > .3) p.face = sign(nx); }
-  const sp = (p.atk > .12 ? SPEED * .6 : SPEED) * (S.lvlId >= 10 ? .55 : 1) * P.speedMul, acc = 5200 * dt;
+  const sp = (p.atk > .12 ? SPEED * .6 : SPEED) * (S.lvlId >= 10 ? .55 : 1) * P.speedMul * armorSpd(), acc = 5200 * dt;
   p.vx = approach(p.vx, ix * sp, acc); p.vy = approach(p.vy, iy * sp, acc);
-  if (wasPressed(K.atk) && p.atkCd <= 0) {
-    const w = curW(); p.atk = p.atkMax = w.anim; p.atkCd = w.cd; p.hitSet = new Set(); p.pend = w.wind; p.wcur = w; sfx.swing();
+  for (const k in p.cds) p.cds[k] = Math.max(0, p.cds[k] - dt);
+  if (wasPressed(K.atk) && p.atkCd <= 0 && (p.cds[curW().id] || 0) > 0) { if (!p.cdMsg || p.cdMsg <= 0) { floater(p.x - 50, p.y - 70, 'Recargando ' + Math.ceil(p.cds[curW().id]) + ' s', '#9ad0ff'); p.cdMsg = .8; } }
+  p.cdMsg = (p.cdMsg || 0) - dt;
+  if (wasPressed(K.atk) && p.atkCd <= 0 && !((p.cds[curW().id] || 0) > 0)) {
+    const w = curW(); p.atk = p.atkMax = w.anim; p.atkCd = Math.min(w.cd, 1.4); if (w.cd > 1.5) p.cds[w.id] = w.cd; p.hitSet = new Set(); p.pend = w.wind; p.wcur = w; sfx.swing();
     p.adx = p.dx; p.ady = p.dy; if (p.adx === 0 && p.ady === 0) p.ady = 1;
     if (Math.abs(p.adx) > .3) p.face = sign(p.adx);
   }
@@ -397,7 +420,7 @@ function makeBoss() {
 }
 function hitBoss(dm = 1) {
   const b = S.boss; if (!b || b.dead) return;
-  let d = dm * P.dmgMul; const sleeping = b.state === 'sleep';
+  let d = dm * P.dmgMul * armorDmg(); const sleeping = b.state === 'sleep';
   if (sleeping) { d *= 2; floater(b.x - 10, b.y - 120, '¡x2!', '#7df3ff'); }
   b.hp -= d; b.flash = .14; sfx.hit(); S.shake = .1;
   spawnP(b.x, b.y - 50, 12, '#fff', 260);
