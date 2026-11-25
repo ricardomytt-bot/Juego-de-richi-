@@ -244,29 +244,47 @@ async function gatherMove(list, timeout = 6) {
 async function seriesCard(t1, t2, secs = 2.6) {
   S.stage.card = t1; S.stage.card2 = t2 || null; await wait(secs); S.stage.card = null; S.stage.card2 = null; await wait(.4);
 }
+async function camTo(x, z, dist, secs, pitch) {
+  const c0 = S.camShot || { x, z, dist }, p0 = S.camPitch || 1.06, n = Math.max(1, Math.round(secs / .033));
+  for (let i = 1; i <= n && !S.skip; i++) { const k = i / n, e = k * k * (3 - 2 * k); S.camShot = { x: lerp(c0.x, x, e), z: lerp(c0.z, z, e), dist: lerp(c0.dist, dist, e) }; if (pitch) S.camPitch = lerp(p0, pitch, e); await wait(.033); }
+}
+async function introCard(t1, t2, secs = 2.8) { S.intro3d.card = t1; S.intro3d.card2 = t2 || null; await wait(secs); S.intro3d.card = null; await wait(.5); }
 async function csSeriesIntro() {
-  S.skip = false; S.busy = true; S.stage = newStage({ dark: false }); S.stage.snow = true; setMusic('title'); S.fade = 1;
-  const st = S.stage; st.barT = 0;
-  await wait(.8); await fadeTo(0, 2);
-  await seriesCard('MIKECRACK', 'Y LAS ESTRELLAS OSCURAS', 3.4);
-  await say('narr', 'Hace mucho, siete estrellas brillaban sobre la ciudad de Diamantia y cuidaban los sueños de todos...');
-  const mk = addChar('mike', -80, 344, { scale: 2, face: 1, anim: 'walk' }), wl = addChar('willy', -200, 344, { scale: 2, face: 1, anim: 'walk' });
-  await seriesCard('EPISODIO 1', 'Un viaje de Navidad', 2.6);
-  setMusic('story');
+  S.skip = false; S.busy = true; S.cineAuto = false; S.fade = 1; setMusic('title');
+  loadLevel(51); S.intro3d = { bt: 0 }; S.flags.zona0 = true; S.stage = null;
+  if (GL.ok) { if (GL.lvlRef !== S.lvl) glBuildLevel(S.lvl); const sc = GL.scene; sc.background = new THREE.Color(0x0a1030); sc.fog = new THREE.Fog(0x141c48, 18, 64); GL.amb.color.set(0x6a7ac8); GL.amb.intensity = .8; GL.hemi.color.set(0x7a8ae0); GL.hemi.intensity = .5; GL.sun.color.set(0xa8b8ff); GL.sun.intensity = 1.1; GL.plight.intensity = 0; GL.snow = true; GL.camInit = false; }
+  S.ents = S.ents.filter(e => e.type !== 'citizen' && e.type !== 'npc'); S.willy = null;
+  P.x = 12 * T; P.y = 33 * T; P.dx = 1; P.dy = 0; initWilly(); S.willy.x = P.x - 40; S.willy.y = P.y + 8;
+  S.camPitch = .55; S.camShot = { x: 24, z: 30, dist: 26 }; if (GL.ok) { GL.camInit = false; }
+  await wait(.8); await fadeTo(0, 2.2);
+  await introCard('MIKECRACK', 'Y LAS ESTRELLAS OSCURAS', 3.6);
+  await say('narr', 'Hace mucho, siete estrellas brillaban sobre Diamantia y cuidaban los sueños de todos...');
+  await camTo(24, 24, 20, 3.5, .9);
+  await introCard('EPISODIO 1', 'Un viaje de Navidad', 2.6); setMusic('story');
   await say('narr', 'Víspera de Navidad. La nieve cae despacio, y una luz cálida se asoma en cada ventana.');
-  moveChar(wl, 330, 90); await moveChar(mk, 450, 90); await wait(.3); mk.anim = 'idle'; wl.anim = 'idle';
+  await camTo(14, 33, 9, 2.2, 1.0);
+  const tro = { type: 'npc', id: 'trolino', x: 38 * T, y: 33 * T, hw: 10, hh: 10, face: -1.57, vx: 0, vy: 0, tag: 'intro' }; S.ents.push(tro);
+  S.cineAuto = true; S.camShot = null;
+  await walkP(21 * T, 33 * T, 90); P.dx = 1; P.dy = 0;
   await say('mike', 'Qué noche tan bonita, Willy. Mañana viajamos todos juntos en tren. ¡Va a ser la mejor Navidad!');
   await say('willy', '¡Guau! (Traducción: ¡y yo llevo el hueso!)');
-  const tr = addChar('trolino', W + 80, 344, { scale: 2, face: -1, anim: 'walk' }); await moveChar(tr, 640, 130); tr.anim = 'idle';
+  S.cineAuto = false; S.camShot = { x: 26, z: 32, dist: 12 };
+  tro.goto = { x: 26 * T, y: 33 * T, speed: 130, done: () => { } }; await wait(2.6);
+  S.cineAuto = true; S.camShot = null;
   await say('trolino', 'Mike, no se te olvide: mañana temprano, todos en la estación. ¡Duerme bien!');
   await say('mike', '¡Dormiré como Timba! ...Bueno, casi.');
-  st.dark = true; bang(true); sfx.boss(); st.snow = false; setMusic('dark');
-  const ex = addChar('exe', 760, 190, { scale: 3, float: true, face: -1, glitch: true });
-  await say('exe', 'Siete estrellas... y una sola noche. Mañana, nadie viajará solo... porque todos viajarán conmigo.', { red: true });
+  S.cineAuto = false; setMusic('dark'); S.shake = .5; sfx.boss();
+  await camTo(24, 22, 16, 1.2, .7);
+  const ex = { type: 'exe3d', id: 'exe', x: 24 * T, y: 17 * T, lift: 9 }; S.ents.push(ex);
+  if (GL.ok) { GL.scene.background.set(0x2a0a1a); GL.scene.fog.color.set(0x4a1228); GL.amb.color.set(0xff6a8a); GL.snow = false; }
+  await camTo(24, 20, 20, 2.4, .5);
+  S.cineAuto = false; await say('exe', 'Siete estrellas... y una sola noche. Mañana, nadie viajará solo... porque todos viajarán conmigo.', { red: true });
   await say('narr', 'Pero en lo alto del cielo, alguien los observaba.');
-  st.flash = 1; removeChar(ex); await wait(.5); st.dark = false; await fadeTo(1, 1.2);
-  await seriesCard('A LA MAÑANA SIGUIENTE...', null, 2.2);
-  S.stage = null; S.busy = false;
+  S.shake = .6; sfx.boss(); await wait(.6); await fadeTo(1, 1.2);
+  S.ents = S.ents.filter(e => e.tag !== 'intro' && e.type !== 'exe3d');
+  S.camShot = null; S.camPitch = null; S.cineAuto = false;
+  await introCard('A LA MAÑANA SIGUIENTE...', null, 2.2);
+  S.intro3d = null; S.busy = false;
 }
 async function csOpening() {
   if (!window.NO_SERIES_INTRO) { await csSeriesIntro(); }

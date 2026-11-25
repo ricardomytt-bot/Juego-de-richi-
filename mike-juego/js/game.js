@@ -650,7 +650,7 @@ function nearestNpc() {
 // ---------- Actualización general ----------
 let touchShown = null, menuBtnShown = null;
 function updateTouchUI() {
-  const show = S.mode === 'play' && !S.stage && !MENU.open && !S.dialog, mb = S.mode === 'play' && !MENU.open;
+  const show = S.mode === 'play' && !S.stage && !MENU.open && !S.dialog && !S.intro3d, mb = S.mode === 'play' && !MENU.open && !S.intro3d;
   if (show !== touchShown) { touchShown = show; const t = document.getElementById('touch'); if (t) t.classList.toggle('hide', !show); }
   if (mb !== menuBtnShown) { menuBtnShown = mb; const b = document.getElementById('btnMenu'); if (b) b.classList.toggle('hide', !mb); }
 }

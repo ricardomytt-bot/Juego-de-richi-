@@ -789,8 +789,13 @@ function drawFrame() {
   if (!use3d) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); }
   if (S.mode === 'title') drawTitle();
   else if (S.stage) drawStage();
-  else if (S.lvl) { if (use3d) { glFrame(S.dtv || 1 / 60); drawOverlay3D(); ctx.drawImage(VIG, 0, 0, W, H); drawHUD(); } else drawWorld(); }
+  else if (S.lvl) { if (use3d) { glFrame(S.dtv || 1 / 60); drawOverlay3D(); ctx.drawImage(VIG, 0, 0, W, H); if (S.intro3d) drawIntro3D(); else drawHUD(); } else drawWorld(); }
   drawDialog();
   drawMenu();
   if (S.fade > 0) { ctx.fillStyle = `rgba(0,0,0,${S.fade})`; ctx.fillRect(0, 0, W, H); }
+}
+
+function drawIntro3D() {
+  const I = S.intro3d, bar = Math.round(46 * Math.min(1, (I.bt = (I.bt || 0) + .03))); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, bar); ctx.fillRect(0, H - bar, W, bar);
+  if (I.card) { const a = Math.min(1, I.cardT = (I.cardT || 0) + .04); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(0, H / 2 - 70, W, 140); txt(I.card, W / 2, H / 2 - 48, { size: 54, align: 'center', color: '#ffe14a', lw: 9 }); if (I.card2) txt(I.card2, W / 2, H / 2 + 22, { size: 24, align: 'center', color: '#fff' }); ctx.globalAlpha = 1; } else I.cardT = 0;
 }

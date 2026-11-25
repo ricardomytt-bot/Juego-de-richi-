@@ -151,7 +151,7 @@ function glCamera(dt) {
   else { tx = P.x / T + P.dx * 1.4; tz = P.y / T + P.dy * .9 - .5; }
   const k = 1 - Math.exp(-dt * (GL.camInit ? 4.5 : 100)); GL.camInit = true;
   GL.cx = lerp(GL.cx, tx, k); GL.cz = lerp(GL.cz, tz, k); GL.dist = lerp(GL.dist, td, 1 - Math.exp(-dt * 2));
-  const pitch = window.STYLE_DP ? 1.3 : 1.06, sh = S.shake > 0 ? S.shake * .22 : 0;
+  const pitch = S.camPitch || (window.STYLE_DP ? 1.3 : 1.06), sh = S.shake > 0 ? S.shake * .22 : 0;
   c.position.set(GL.cx + (sh ? rnd(-sh, sh) : 0), GL.dist * Math.sin(pitch), GL.cz + GL.dist * Math.cos(pitch) + (sh ? rnd(-sh, sh) : 0)); c.lookAt(GL.cx, 0, GL.cz);
   const sx = GL.cx, sz = GL.cz; GL.sun.position.set(sx + 14, 26, sz + 10); GL.sun.target.position.set(sx, 0, sz); GL.sun.target.updateMatrixWorld();
   GL.plight.position.set(P.x / T, 2.4, P.y / T);
