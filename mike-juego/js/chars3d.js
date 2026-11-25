@@ -149,8 +149,7 @@ function setFlash(B, on, red) {
 function animChar(B, t, sp, o = {}) {
   if (B.sprite) {
     const moving = sp > .05, yaw = B.outer ? B.outer.rotation.y : 0, s2 = Math.sin(yaw); B.g.rotation.y = -yaw;
-    if (B.slimeSheet || B.flyerSheet) B.tex.offset.x = (Math.floor(t * (B.flyerSheet ? 12 : 4)) % 2) * .5; else B.tex.offset.x = (moving ? Math.floor(t * 9) % 4 : 0) * .25;
-    if (Math.abs(s2) > .35) B.flipX = s2 > 0 ? 1 : -1; B.plane.scale.x = B.flipX;
+    if (B.slimeSheet || B.flyerSheet) B.tex.offset.x = (Math.floor(t * (B.flyerSheet ? 12 : 4)) % 2) * .5; else { const cs = Math.cos(yaw), row = Math.abs(s2) > Math.abs(cs) ? (s2 > 0 ? 3 : 2) : (cs > 0 ? 0 : 1); B.tex.offset.x = (moving ? Math.floor(t * 9) % 4 : 0) * .25; B.tex.offset.y = 1 - (row + 1) * .25; }
     B.g.position.y = (o.lift || 0) + (moving ? Math.abs(Math.sin(t * 11)) * .07 : Math.sin(t * 2.2) * .015) + (o.talk ? Math.abs(Math.sin(t * 14)) * .05 : 0); return;
   }
   const p = B.parts, s = Math.sin(t * 11) * sp * .9;
@@ -176,13 +175,80 @@ function dpFinish(g, mat, plane, tex, id, shw) {
   const sh = new THREE.Mesh(new THREE.CircleGeometry(shw || .55, 14), new THREE.MeshBasicMaterial({ color: 0x1a1030, transparent: true, opacity: .32, depthWrite: false })); sh.rotation.x = -Math.PI / 2; sh.position.y = .03; g.add(sh);
   return { g, parts: { headMesh: { material: [0, 0, 0, 0, { map: null }] } }, mats: [], sprite: true, spriteMat: mat, tex, plane, id, flashOn: false, redOn: false, walk: 0, talkT: 0, flipX: 1 };
 }
+const DPSPEC = {
+  mike: { kind: 'dog', fur: '#ffc800', fur2: '#ff9a00', muzzle: '#ffe480', cape: '#1a9a8a', bolt: '#e0a000' },
+  willy: { kind: 'dog', fur: '#34343f', fur2: '#1c1c24', muzzle: '#55556a', tail: true, small: .62 },
+  exe: { kind: 'dog', fur: '#c89a10', fur2: '#7a5a08', muzzle: '#e8c060', cape: '#2a0a14', red: true },
+  ambrosio: { kind: 'human', skin: '#e08a5a', hair: '#14101a', hs: 'swoosh', shirt: '#ddc000', pants: '#2a3a5c', bag: '#6a4a2a' },
+  aquela: { kind: 'cat', fur: '#2ab8e0', chest: '#e8f8ff', ears: '#1c3a9a' },
+  trolino: { kind: 'human', skin: '#f8d0a8', hair: '#101018', hs: 'bangs', shirt: '#e89018', pants: '#3aa8e8', crown: true },
+  timba: { kind: 'human', skin: '#f8d0b0', hair: '#2a7af0', hs: 'spiky', shirt: '#e03030', pants: '#2850d8', goggles: true },
+  esparta: { kind: 'human', skin: '#f0d8c0', hair: '#2a88d0', hs: 'hood', shirt: '#2a88d0', pants: '#4a4a55', calm: true },
+  raptor: { kind: 'human', skin: '#f8d0b0', hair: '#d82828', hs: 'hood', shirt: '#d82828', pants: '#2a5a9a' },
+  rius: { kind: 'bird', fur: '#fff0dc', shirt: '#f4a820', comb: '#d82020', beak: '#ff8c10' },
+  mayo: { kind: 'robot', skin: '#dcd6e0', shirt: '#f4f4fa', visor: '#5a4a80' },
+  invictor: { kind: 'human', skin: '#f8d8c0', hair: '#a8501e', hs: 'helmet', shirt: '#2a2a34', pants: '#d82828', cape: '#c01c1c', helm: '#2e2e3a', crest: '#e02a2a' },
+  acenix: { kind: 'cat', fur: '#a4a9b6', chest: '#e6e8ee', ears: '#f0a8b0' }
+};
+function dpSpecFor(id, seed) {
+  if (DPSPEC[id]) return DPSPEC[id];
+  const n = parseInt(id.slice(7)) || seed || 1, pick = (a, k) => a[(n * 7 + k * 3) % a.length];
+  return { kind: 'human', skin: pick(['#f8d0b0', '#e0a070', '#c68a5a', '#f0c8a0', '#8a5a3a'], 1), hair: pick(['#2a1a10', '#101018', '#7a4a2a', '#d8b040', '#c04a2a', '#6a6a7a'], 2), hs: pick(['bangs', 'swoosh', 'spiky', 'short'], 3), shirt: pick(['#e04a4a', '#4a8ae0', '#58b848', '#e8a020', '#a050d0', '#30b8b8', '#e86aa0'], 4), pants: pick(['#2a3a5c', '#4a4a55', '#6a4a2a', '#2a5a3a'], 5), small: .9 };
+}
+function dpPx(c, x, y, w, h, col) { c.fillStyle = col; c.fillRect(x, y, w, h); }
+// dibuja un cuadro de 24x28 visto desde arriba (dir: 0 frente, 1 espalda, 2 izquierda)
+function dpDraw(c, ox, oy, S, dir, fr) {
+  const P = (x, y, w, h, col) => dpPx(c, ox + x, oy + y, w, h, col), k = S.kind, bob = fr % 2 === 1 ? 1 : 0, sw = fr === 1 ? 1 : fr === 3 ? -1 : 0;
+  const skin = S.skin || S.fur || '#f8d0b0', fur = S.fur || skin, shirt = S.shirt || S.fur || '#888', pants = S.pants || S.fur2 || '#445', hair = S.hair || S.fur2 || '#222', animal = k === 'dog' || k === 'cat' || k === 'bird';
+  const eye = (x, y, big) => { P(x, y, 3, big ? 4 : 3, '#101018'); P(x + 1, y + 1, 1, big ? 2 : 1, '#ffffff'); if (S.red) P(x + 1, y + 1, 1, big ? 2 : 1, '#ff2a2a'); };
+  if (dir === 2) { // de lado (izquierda)
+    if (S.cape) P(12, 13, 8, 12, S.cape); if (S.tail) { P(15, 18, 4, 2, fur); P(18, 16, 2, 3, fur); }
+    P(10, 22 + (sw > 0 ? -1 : 0), 3, 5 - (sw > 0 ? 1 : 0), pants); P(12, 22 + (sw < 0 ? -1 : 0), 3, 5 - (sw < 0 ? 1 : 0), S.fur2 || pants);
+    P(8, 14 + bob, 8, 9, k === 'dog' || k === 'cat' ? fur : shirt); if (S.chest) P(8, 16 + bob, 3, 6, S.chest); P(9 + sw, 16 + bob, 3, 7, animal ? S.fur2 || fur : shirt); P(9 + sw, 22 + bob, 3, 1, skin);
+    P(6, 2 + bob, 12, 12, skin); if (k === 'dog') { P(6, 9 + bob, 4, 5, S.muzzle); P(6, 9 + bob, 2, 2, '#101018'); P(14, 4 + bob, 4, 9, S.fur2); } if (k === 'cat') { P(8, 0 + bob, 3, 3, S.ears || fur); P(14, 0 + bob, 3, 3, S.ears || fur); }
+    if (k === 'human') { P(9, 1 + bob, 9, 5, hair); P(13, 4 + bob, 5, 9, hair); if (S.hs === 'spiky') { P(10, 0, 2, 2, hair); P(14, 0, 2, 2, hair); } if (S.hs === 'hood') { P(7, 2 + bob, 11, 12, hair); P(6, 6 + bob, 4, 8, skin); } if (S.hs === 'helmet') { P(7, 1 + bob, 11, 6, S.helm); P(11, -1 + bob, 3, 7, S.crest); } if (S.crown) P(8, 0 + bob, 8, 2, '#ffd24a'); }
+    if (k === 'bird') { P(6, 9 + bob, 3, 2, S.beak); P(9, 0 + bob, 4, 3, S.comb); } if (k === 'robot') { P(6, 6 + bob, 6, 4, S.visor); P(7, 7 + bob, 2, 2, '#40e0ff'); P(11, -1 + bob, 1, 3, '#ff4a4a'); }
+    eye(7, 6 + bob, k === 'dog'); if (S.goggles) P(6, 5 + bob, 5, 1, '#4a4a5a');
+  } else {
+    const front = dir === 0;
+    if (S.cape) P(front ? 5 : 6, front ? 15 : 13, front ? 14 : 12, front ? 9 : 12, S.cape);
+    if (S.tail && !front) { P(10, 24, 4, 2, fur); }
+    P(8, 22 + (sw > 0 ? -1 : 0), 3, 5 - (sw > 0 ? 1 : 0), pants); P(13, 22 + (sw < 0 ? -1 : 0), 3, 5 - (sw < 0 ? 1 : 0), S.fur2 || pants);
+    P(7, 14 + bob, 10, 9, animal ? fur : shirt); if (front && S.chest) P(9, 15 + bob, 6, 7, S.chest); if (front && S.bolt) P(11, 16 + bob, 2, 4, S.bolt); if (S.bag && !front) P(8, 15 + bob, 8, 6, S.bag);
+    P(4, 15 + bob + sw, 3, 7, animal ? S.fur2 || fur : shirt); P(17, 15 + bob - sw, 3, 7, animal ? S.fur2 || fur : shirt); P(4, 22 + bob + sw, 3, 1, skin); P(17, 22 + bob - sw, 3, 1, skin);
+    P(5, 2 + bob, 14, 12, skin);
+    if (k === 'dog') { P(1, 4 + bob, 4, 9, S.fur2); P(19, 4 + bob, 4, 9, S.fur2); if (front) { P(8, 8 + bob, 8, 6, S.muzzle); P(11, 8 + bob, 2, 1, '#101018'); P(11, 12 + bob, 2, 1, '#c03040'); } }
+    if (k === 'cat') { P(5, 0 + bob, 3, 3, S.ears || fur); P(16, 0 + bob, 3, 3, S.ears || fur); P(5, 2 + bob, 2, 1, fur); if (front) { P(7, 9 + bob, 10, 5, S.chest || fur); P(11, 11 + bob, 2, 1, '#e07080'); } }
+    if (k === 'bird') { P(8, 0 + bob, 3, 3, S.comb); P(11, -1 + bob, 3, 4, S.comb); P(14, 0 + bob, 3, 3, S.comb); if (front) P(10, 9 + bob, 4, 3, S.beak); }
+    if (k === 'robot') { if (front) { P(6, 6 + bob, 12, 4, S.visor); P(8, 7 + bob, 2, 2, '#40e0ff'); P(14, 7 + bob, 2, 2, '#40e0ff'); } else P(6, 6 + bob, 12, 3, '#9a9aa8'); P(11, -2 + bob, 2, 4, '#ff4a4a'); }
+    if (k === 'human') {
+      if (S.hs === 'hood') { P(4, 1 + bob, 16, 13, hair); if (front) P(6, 6 + bob, 12, 8, skin); } else if (S.hs === 'helmet') { P(4, 1 + bob, 16, 8, S.helm); P(5, 8 + bob, 2, 5, S.helm); P(17, 8 + bob, 2, 5, S.helm); P(11, -2 + bob, 2, 10, S.crest); if (front) { P(6, 8 + bob, 3, 3, hair); P(15, 8 + bob, 3, 3, hair); } }
+      else { P(4, 1 + bob, 16, 5, hair); P(4, 4 + bob, 3, 7, hair); P(17, 4 + bob, 3, 7, hair); if (S.hs === 'spiky') { for (const x of [5, 8, 11, 14, 17]) P(x, -1 + ((x % 2)), 2, 3, hair); } if (!front) P(5, 5 + bob, 14, 8, hair); else if (S.hs === 'bangs') P(5, 6 + bob, 14, 2, hair); else if (S.hs === 'swoosh') P(5, 6 + bob, 8, 2, hair); }
+      if (S.crown) P(7, -1 + bob, 10, 3, '#ffd24a');
+    }
+    if (front) { eye(8, 7 + bob, k === 'dog'); eye(13, 7 + bob, k === 'dog'); if (k === 'human' || k === 'cat') P(11, 12 + bob, 2, 1, '#6a2a2a'); if (S.goggles) { P(6, 6 + bob, 12, 1, '#4a4a5a'); } }
+  }
+}
+function dpOutline(c, ox, oy) {
+  const img = c.getImageData(ox, oy, 24, 28), d = img.data, out = new Uint8ClampedArray(d), at = (x, y) => (y * 24 + x) * 4 + 3;
+  for (let y = 0; y < 28; y++) for (let x = 0; x < 24; x++) { if (d[at(x, y)] > 0) continue; let n = false; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx >= 0 && yy >= 0 && xx < 24 && yy < 28 && d[at(xx, yy)] > 0) n = true; } if (n) { const i = (y * 24 + x) * 4; out[i] = 24; out[i + 1] = 14; out[i + 2] = 36; out[i + 3] = 255; } }
+  c.putImageData(new ImageData(out, 24, 28), ox, oy);
+}
+const DP_SHEETS = {};
+function dpSheet(id, seed) {
+  const key = id.startsWith('citizen') ? 'c' + (parseInt(id.slice(7)) || seed || 1) : id; if (DP_SHEETS[key]) return DP_SHEETS[key];
+  const S = dpSpecFor(id, seed), cv = document.createElement('canvas'); cv.width = 96; cv.height = 112; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false;
+  for (let fr = 0; fr < 4; fr++) { for (const dir of [0, 1, 2]) dpDraw(c, fr * 24, dir * 28, S, dir, fr);
+    // derecha = espejo de izquierda
+    c.save(); c.translate(fr * 24 + 24, 3 * 28); c.scale(-1, 1); c.drawImage(cv, fr * 24, 2 * 28, 24, 28, 0, 0, 24, 28); c.restore();
+    for (let d = 0; d < 4; d++) dpOutline(c, fr * 24, d * 28); }
+  return DP_SHEETS[key] = { cv, S };
+}
 function makeSpriteChar(id, seed) {
-  const g = new THREE.Group(); let name;
-  if (id.startsWith('citizen')) { const n = parseInt(id.slice(7)) || seed || 1; name = ['09_chico_capucha_azul', '10_chico_gorro_rojo', '11_chico_pelo_azul', '12_chico_pelo_negro', '04_cartero', '13_romano'][n % 6]; } else name = (CH[id] || CH.mike);
-  const tex = new THREE.TextureLoader().load((window.SPR_DATA && window.SPR_DATA[name]) || ('assets/' + name + '_caminar_4frames.png')); tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(.25, 1); tex.offset.set(0, 0);
-  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: .35, side: THREE.DoubleSide }), geo = new THREE.PlaneGeometry(1.55, 1.8); geo.translate(0, .9, 0);
-  const plane = new THREE.Mesh(geo, mat); plane.rotation.x = -.42; g.add(plane);
-  return dpFinish(g, mat, plane, tex, id, .6);
+  const g = new THREE.Group(), sh = dpSheet(id, seed), tex = new THREE.CanvasTexture(sh.cv); tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(.25, .25);
+  const sz = (sh.S.small || 1), mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: .35, side: THREE.DoubleSide }), geo = new THREE.PlaneGeometry(1.4 * sz, 1.63 * sz); geo.translate(0, .81 * sz, 0);
+  const plane = new THREE.Mesh(geo, mat); plane.rotation.x = -1.22; g.add(plane);
+  const B = dpFinish(g, mat, plane, tex, id, .5 * sz); B.dpDir = true; return B;
 }
 function pixCanvas(w, h, fn) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; fn(x); return c; }
 function blob(x, cx, cy, rx, ry, col) { for (let y = -ry; y <= ry; y++) { const hw = Math.round(rx * Math.sqrt(1 - (y / ry) * (y / ry))); x.fillStyle = col; x.fillRect(cx - hw, cy + y, hw * 2, 1); } }
@@ -191,13 +257,13 @@ function makeSpriteSlime(corrupt) {
   const sheet = pixCanvas(64, 20, x => { for (let f = 0; f < 2; f++) { const ox = f * 32, sq = f ? 1 : 0; blob(x, ox + 16, 13 + sq, 11 + sq, 7 - sq, base[0]); blob(x, ox + 16, 13 + sq, 10 + sq, 6 - sq, base[1]); x.fillStyle = base[2]; x.fillRect(ox + 9, 9 + sq, 4, 2); x.fillStyle = '#101018'; x.fillRect(ox + 11, 12 + sq, 3, 4); x.fillRect(ox + 18, 12 + sq, 3, 4); x.fillStyle = corrupt ? '#ff3040' : '#ffffff'; x.fillRect(ox + 12, 12 + sq, 1, 2); x.fillRect(ox + 19, 12 + sq, 1, 2); } });
   const t = new THREE.CanvasTexture(sheet); t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.SRGBColorSpace; t.repeat.set(.5, 1);
   const mat = new THREE.MeshBasicMaterial({ map: t, transparent: true, alphaTest: .35 }), geo = new THREE.PlaneGeometry(1.5, .94); geo.translate(0, .47, 0);
-  const pl = new THREE.Mesh(geo, mat); pl.rotation.x = -.42; const g = new THREE.Group(); g.add(pl);
+  const pl = new THREE.Mesh(geo, mat); pl.rotation.x = -1.1; const g = new THREE.Group(); g.add(pl);
   const B = dpFinish(g, mat, pl, t, 'slime', .5); B.body = pl; mat.emissiveIntensity = 0; B.slimeSheet = true; return B;
 }
 function makeSpriteFlyer() {
   const sheet = pixCanvas(64, 20, x => { for (let f = 0; f < 2; f++) { const ox = f * 32, wy = f ? 3 : 8; x.fillStyle = '#2a1050'; blob(x, ox + 16, 10, 5, 5, '#2a1050'); blob(x, ox + 16, 10, 4, 4, '#6a3aaa'); for (const s of [-1, 1]) { for (let i = 0; i < 9; i++) { x.fillStyle = i < 2 ? '#2a1050' : '#9a6ae0'; x.fillRect(ox + 16 + s * (5 + i) - (s < 0 ? 0 : 0), wy + Math.floor(i * (f ? .6 : -.3)) + 2, 1, 5 - Math.floor(i / 3)); } } x.fillStyle = '#ff3040'; x.fillRect(ox + 13, 9, 2, 2); x.fillRect(ox + 17, 9, 2, 2); } });
   const t = new THREE.CanvasTexture(sheet); t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.SRGBColorSpace; t.repeat.set(.5, 1);
   const mat = new THREE.MeshBasicMaterial({ map: t, transparent: true, alphaTest: .35 }), geo = new THREE.PlaneGeometry(1.6, 1.0); geo.translate(0, .5, 0);
-  const pl = new THREE.Mesh(geo, mat); pl.rotation.x = -.42; const g = new THREE.Group(); g.add(pl);
+  const pl = new THREE.Mesh(geo, mat); pl.rotation.x = -1.1; const g = new THREE.Group(); g.add(pl);
   const B = dpFinish(g, mat, pl, t, 'flyer', .35); B.wl = { rotation: { z: 0 } }; B.wr = { rotation: { z: 0 } }; B.flyerSheet = true; return B;
 }

@@ -35,7 +35,7 @@ function camClear() { S.camShot = null; }
 function glMood(dark) {
   if (!GL.ok) return; const L = S.lvl;
   if (dark) { GL.scene.background = new THREE.Color(0x2a0a1a); GL.scene.fog = new THREE.Fog(0x4a1228, 20, 70); GL.amb.color.set(0xff8ca0); GL.amb.intensity = .85; GL.hemi.color.set(0xff6a8a); GL.hemi.groundColor.set(0x3a0a1a); GL.sun.color.set(0xff5070); GL.sun.intensity = 1.6; GL.snow = false; }
-  else if (L) glThemeMood(L);
+  else if (L) { glThemeMood(L); if (typeof dpFlatLight === 'function') dpFlatLight(); }
 }
 function openStationGate() {
   S.flags.gateOpen = true; const L = S.lvlId === 53 ? S.lvl : (ZONES[53] && ZONES[53].L);

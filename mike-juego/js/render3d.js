@@ -71,6 +71,7 @@ function glThemeMood(L) {
   else if (th === 'indoor') { sc.background = new THREE.Color(0x2a1e1c); sc.fog = new THREE.Fog(0x2a1e1c, 30, 60); GL.amb.color.set(0xffe2c0); GL.amb.intensity = 1.0; GL.hemi.color.set(0xffd9b0); GL.hemi.groundColor.set(0x6a4a32); GL.hemi.intensity = .7; GL.sun.color.set(0xffd9a0); GL.sun.intensity = 1.1; GL.plight.intensity = 28; GL.plight.color.set(0xffd9a0); }
   else { sc.background = new THREE.Color(0xc9d9ee); sc.fog = new THREE.Fog(0xd3deef, 32, 95); GL.amb.color.set(0xe6edff); GL.amb.intensity = 1.0; GL.hemi.color.set(0xdce8ff); GL.hemi.groundColor.set(0x667a66); GL.hemi.intensity = .55; GL.sun.color.set(0xffe4b4); GL.sun.intensity = 2.1; GL.plight.intensity = 0; GL.snow = true; }
 }
+function dpFlatLight() { if (window.STYLE_DP) { GL.amb.intensity = Math.max(GL.amb.intensity, 1.5); GL.hemi.intensity = .25; GL.sun.intensity = Math.min(GL.sun.intensity, 1.0); } }
 function glBuildLevel(L) {
   if (!GL.ok) return; glClearLevel(); GL.lvlRef = L; GL.trainX = 0; GL.exeShow = 0; GL.blds = [];
   const g = new THREE.Group(); GL.lvlGroup = g; GL.scene.add(g);
@@ -80,7 +81,7 @@ function glBuildLevel(L) {
   if (dm) { sc.background = new THREE.Color(0x140e36); sc.fog = new THREE.Fog(0x241a58, 14, 46); GL.amb.color.set(0x8a7ad0); GL.amb.intensity = 1.05; GL.hemi.color.set(0x8a8aff); GL.hemi.groundColor.set(0x2a1a60); GL.hemi.intensity = .45; GL.sun.color.set(0xb4bcff); GL.sun.intensity = 1.5; GL.plight.intensity = 26; GL.plight.color.set(0xffe2b0); }
   else { sc.background = new THREE.Color(0x8fd3ff); sc.fog = new THREE.Fog(0xb4e2ff, 34, 100); GL.amb.color.set(0xffffff); GL.amb.intensity = 1.15; GL.hemi.color.set(0xbfe0ff); GL.hemi.groundColor.set(0x5a7a3a); GL.hemi.intensity = .5; GL.sun.color.set(0xfff0d4); GL.sun.intensity = 2.5; GL.plight.intensity = 0; }
   const TH = THEME[L.theme] || null, sw = L.theme === 'sweet'; if (sw) { sc.background = new THREE.Color(0xffc4e4); sc.fog = new THREE.Fog(0xffd6ee, 30, 90); GL.amb.color.set(0xfff0f8); GL.amb.intensity = 1.2; GL.hemi.color.set(0xffd0f0); GL.hemi.groundColor.set(0xc08ad0); GL.sun.color.set(0xfff4d0); GL.sun.intensity = 2.3; }
-  glThemeMood(L); GL.blight.intensity = 0;
+  glThemeMood(L); dpFlatLight(); GL.blight.intensity = 0;
   // --- suelo (instanciado por tipo/variante)
   const floors = {}, add = (k, x, z) => (floors[k] || (floors[k] = [])).push({ x: x + .5, y: -.15, z: z + .5 });
   const stoneV = [], trees = [], rocks = [], bushes = [], blocks = { W: [], R: [] }, flowers = [], mushes = [], waters = [];
