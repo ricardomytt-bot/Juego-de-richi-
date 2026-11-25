@@ -6,7 +6,7 @@ function initGL() {
   try {
     if (!V3) return; const canvas = document.getElementById('gl'); if (!canvas) return;
     const r = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-    r.setPixelRatio(1); r.setSize(Math.round(W * .6667), Math.round(H * .6667), false); r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = .92; r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
+    r.setPixelRatio(1); r.setSize(Math.round(W * (window.STYLE_DP ? .42 : .6667)), Math.round(H * (window.STYLE_DP ? .42 : .6667)), false); r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = .92; r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
     GL.r = r; GL.scene = new THREE.Scene(); GL.cam = new THREE.PerspectiveCamera(38, W / H, .1, 220);
     GL.root = new THREE.Group(); GL.scene.add(GL.root);
     GL.amb = new THREE.AmbientLight(0xffffff, 1); GL.hemi = new THREE.HemisphereLight(0xbfe0ff, 0x4a6a3a, .5);
@@ -28,7 +28,7 @@ function roundBox(w, h, d, r) {
   }
   return g;
 }
-const geoBox = (w, h, d) => { const k = 'b' + w + ',' + h + ',' + d; if (!GEO[k]) { const r = Math.min(.1, Math.min(w, h, d) * .38); GEO[k] = r < .02 ? new THREE.BoxGeometry(w, h, d) : roundBox(w, h, d, r); } return GEO[k]; };
+const geoBox = (w, h, d) => { const k = 'b' + w + ',' + h + ',' + d; if (!GEO[k]) { const r = Math.min(.1, Math.min(w, h, d) * .38); GEO[k] = (r < .02 || window.STYLE_DP) ? new THREE.BoxGeometry(w, h, d) : roundBox(w, h, d, r); } return GEO[k]; };
 const MATS = {};
 function lam(c, o) { const k = c + (o ? JSON.stringify(o) : ''); return MATS[k] || (MATS[k] = new THREE.MeshLambertMaterial(Object.assign({ color: c }, o || {}))); }
 function cTex(canvas, rep) {

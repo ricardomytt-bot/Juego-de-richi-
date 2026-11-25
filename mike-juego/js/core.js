@@ -6,7 +6,7 @@ cv.width = W; cv.height = H;
 ctx.imageSmoothingEnabled = false;
 function fit() {
   const asp = innerWidth / innerHeight, nw = Math.max(720, Math.min(1300, Math.round(H * asp / 2) * 2));
-  if (nw !== W) { W = nw; cv.width = W; try { if (GL.ok) { GL.r.setSize(Math.round(W * .6667), Math.round(H * .6667), false); GL.cam.aspect = W / H; GL.cam.updateProjectionMatrix(); } } catch (e) { } }
+  if (nw !== W) { W = nw; cv.width = W; try { if (GL.ok) { GL.r.setSize(Math.round(W * (window.STYLE_DP ? .42 : .6667)), Math.round(H * (window.STYLE_DP ? .42 : .6667)), false); GL.cam.aspect = W / H; GL.cam.updateProjectionMatrix(); } } catch (e) { } }
   const s = Math.min(innerWidth / W, innerHeight / H);
   const w = Math.round(W * s) + 'px', h = Math.round(H * s) + 'px', wr = document.getElementById('wrap'), gl = document.getElementById('gl');
   cv.style.width = w; cv.style.height = h;

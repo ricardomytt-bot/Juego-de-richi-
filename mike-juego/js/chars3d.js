@@ -135,16 +135,24 @@ function citizenSpec(seed) {
   return { skin, shirt: P(['#e04a4a', '#4a8ae0', '#58b848', '#e8a020', '#a050d0', '#30b8b8', '#e86aa0']), pants: P(['#2a3a5c', '#4a4a55', '#6a4a2a', '#2a5a3a']), shoes: '#3a2a2a', hair: { type: P(['short', 'bangs', 'curly', 'long', 'spiky']), color: hair }, face: { skin, eyes: 'cute', mouth: P(['smile', 'open', 'tiny']), blush: q() < .4, iris: P(['#2a2a3a', '#2060c0', '#208040']) }, scale: .66 + q() * .1 };
 }
 function makeChar(id, seed) {
+  if (window.STYLE_DP) { const B = makeSpriteChar(id, seed); B.id = id; return B; }
   let B; if (id.startsWith('citizen')) B = humanoid(citizenSpec(parseInt(id.slice(7)) || seed || 1)); else B = (CHAR_DEF[id] || CHAR_DEF.mike)();
   B.id = id; B.flashOn = false; B.redOn = false; B.walk = 0; B.talkT = 0;
   return B;
 }
 function setFlash(B, on, red) {
   if (B.flashOn === on && B.redOn === !!red) return; B.flashOn = on; B.redOn = !!red;
+  if (B.sprite) { B.spriteMat.color.setHex(on ? 0xffb0b0 : red ? 0xff8a9a : 0xffffff); return; }
   for (const m of B.mats) { if (!m.emissive) continue; if (on) { m.emissive.setHex(0xffffff); m.emissiveIntensity = .75; } else if (red) { m.emissive.setHex(0xff1030); m.emissiveIntensity = .38; } else { m.emissive.setHex(0x000000); m.emissiveIntensity = 1; } }
 }
 // animación de caminar/atacar/hablar (t: tiempo, sp: 0..1 velocidad)
 function animChar(B, t, sp, o = {}) {
+  if (B.sprite) {
+    const moving = sp > .05, yaw = B.outer ? B.outer.rotation.y : 0, s2 = Math.sin(yaw); B.g.rotation.y = -yaw;
+    if (B.slimeSheet || B.flyerSheet) B.tex.offset.x = (Math.floor(t * (B.flyerSheet ? 12 : 4)) % 2) * .5; else B.tex.offset.x = (moving ? Math.floor(t * 9) % 4 : 0) * .25;
+    if (Math.abs(s2) > .35) B.flipX = s2 > 0 ? 1 : -1; B.plane.scale.x = B.flipX;
+    B.g.position.y = (o.lift || 0) + (moving ? Math.abs(Math.sin(t * 11)) * .07 : Math.sin(t * 2.2) * .015) + (o.talk ? Math.abs(Math.sin(t * 14)) * .05 : 0); return;
+  }
   const p = B.parts, s = Math.sin(t * 11) * sp * .9;
   if (p.legs) { p.legs[0].rotation.x = s; p.legs[3].rotation.x = s; p.legs[1].rotation.x = -s; p.legs[2].rotation.x = -s; if (p.tail) p.tail.rotation.y = Math.sin(t * 8) * .5; }
   if (p.legL) { p.legL.rotation.x = s; p.legR.rotation.x = -s; }
@@ -155,4 +163,41 @@ function animChar(B, t, sp, o = {}) {
   const bob = sp > .05 ? Math.abs(Math.sin(t * 11)) * .09 : Math.sin(t * 2.2) * .02; B.g.position.y = (o.lift || 0) + bob;
   if (p.head) { p.head.rotation.x = o.talk ? Math.sin(t * 14) * .07 : 0; p.head.rotation.y = o.look || 0; }
   if (p.tail && !p.legs) p.tail.rotation.y = Math.sin(t * 6) * .4;
+}
+
+// ===== Modo pixel estilo Pokémon Diamante y Perla: sprites 2D sobre un mundo 3D =====
+const DPX = () => !!window.STYLE_DP;
+const SPR_CACHE = {};
+function sprTex(name) {
+  if (SPR_CACHE[name]) return SPR_CACHE[name];
+  const t = new THREE.TextureLoader().load((window.SPR_DATA && window.SPR_DATA[name]) || ('assets/' + name + '_caminar_4frames.png')); t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.SRGBColorSpace; return SPR_CACHE[name] = t;
+}
+function dpFinish(g, mat, plane, tex, id, shw) {
+  const sh = new THREE.Mesh(new THREE.CircleGeometry(shw || .55, 14), new THREE.MeshBasicMaterial({ color: 0x1a1030, transparent: true, opacity: .32, depthWrite: false })); sh.rotation.x = -Math.PI / 2; sh.position.y = .03; g.add(sh);
+  return { g, parts: { headMesh: { material: [0, 0, 0, 0, { map: null }] } }, mats: [], sprite: true, spriteMat: mat, tex, plane, id, flashOn: false, redOn: false, walk: 0, talkT: 0, flipX: 1 };
+}
+function makeSpriteChar(id, seed) {
+  const g = new THREE.Group(); let name;
+  if (id.startsWith('citizen')) { const n = parseInt(id.slice(7)) || seed || 1; name = ['09_chico_capucha_azul', '10_chico_gorro_rojo', '11_chico_pelo_azul', '12_chico_pelo_negro', '04_cartero', '13_romano'][n % 6]; } else name = (CH[id] || CH.mike);
+  const tex = new THREE.TextureLoader().load((window.SPR_DATA && window.SPR_DATA[name]) || ('assets/' + name + '_caminar_4frames.png')); tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace; tex.repeat.set(.25, 1); tex.offset.set(0, 0);
+  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: .35, side: THREE.DoubleSide }), geo = new THREE.PlaneGeometry(1.55, 1.8); geo.translate(0, .9, 0);
+  const plane = new THREE.Mesh(geo, mat); plane.rotation.x = -.42; g.add(plane);
+  return dpFinish(g, mat, plane, tex, id, .6);
+}
+function pixCanvas(w, h, fn) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; fn(x); return c; }
+function blob(x, cx, cy, rx, ry, col) { for (let y = -ry; y <= ry; y++) { const hw = Math.round(rx * Math.sqrt(1 - (y / ry) * (y / ry))); x.fillStyle = col; x.fillRect(cx - hw, cy + y, hw * 2, 1); } }
+function makeSpriteSlime(corrupt) {
+  const base = corrupt ? ['#3a1a5a', '#9a3aff', '#c87aff'] : ['#1f5a2e', '#62d874', '#b4f4bc'];
+  const sheet = pixCanvas(64, 20, x => { for (let f = 0; f < 2; f++) { const ox = f * 32, sq = f ? 1 : 0; blob(x, ox + 16, 13 + sq, 11 + sq, 7 - sq, base[0]); blob(x, ox + 16, 13 + sq, 10 + sq, 6 - sq, base[1]); x.fillStyle = base[2]; x.fillRect(ox + 9, 9 + sq, 4, 2); x.fillStyle = '#101018'; x.fillRect(ox + 11, 12 + sq, 3, 4); x.fillRect(ox + 18, 12 + sq, 3, 4); x.fillStyle = corrupt ? '#ff3040' : '#ffffff'; x.fillRect(ox + 12, 12 + sq, 1, 2); x.fillRect(ox + 19, 12 + sq, 1, 2); } });
+  const t = new THREE.CanvasTexture(sheet); t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.SRGBColorSpace; t.repeat.set(.5, 1);
+  const mat = new THREE.MeshBasicMaterial({ map: t, transparent: true, alphaTest: .35 }), geo = new THREE.PlaneGeometry(1.5, .94); geo.translate(0, .47, 0);
+  const pl = new THREE.Mesh(geo, mat); pl.rotation.x = -.42; const g = new THREE.Group(); g.add(pl);
+  const B = dpFinish(g, mat, pl, t, 'slime', .5); B.body = pl; mat.emissiveIntensity = 0; B.slimeSheet = true; return B;
+}
+function makeSpriteFlyer() {
+  const sheet = pixCanvas(64, 20, x => { for (let f = 0; f < 2; f++) { const ox = f * 32, wy = f ? 3 : 8; x.fillStyle = '#2a1050'; blob(x, ox + 16, 10, 5, 5, '#2a1050'); blob(x, ox + 16, 10, 4, 4, '#6a3aaa'); for (const s of [-1, 1]) { for (let i = 0; i < 9; i++) { x.fillStyle = i < 2 ? '#2a1050' : '#9a6ae0'; x.fillRect(ox + 16 + s * (5 + i) - (s < 0 ? 0 : 0), wy + Math.floor(i * (f ? .6 : -.3)) + 2, 1, 5 - Math.floor(i / 3)); } } x.fillStyle = '#ff3040'; x.fillRect(ox + 13, 9, 2, 2); x.fillRect(ox + 17, 9, 2, 2); } });
+  const t = new THREE.CanvasTexture(sheet); t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.SRGBColorSpace; t.repeat.set(.5, 1);
+  const mat = new THREE.MeshBasicMaterial({ map: t, transparent: true, alphaTest: .35 }), geo = new THREE.PlaneGeometry(1.6, 1.0); geo.translate(0, .5, 0);
+  const pl = new THREE.Mesh(geo, mat); pl.rotation.x = -.42; const g = new THREE.Group(); g.add(pl);
+  const B = dpFinish(g, mat, pl, t, 'flyer', .35); B.wl = { rotation: { z: 0 } }; B.wr = { rotation: { z: 0 } }; B.flyerSheet = true; return B;
 }

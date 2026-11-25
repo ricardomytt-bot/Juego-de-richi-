@@ -2,6 +2,7 @@
 // ===== Sincroniza la lógica del juego (2D) con la escena 3D: entidades, cámara, efectos y textos proyectados =====
 function faceTex(o) { return cTex(faceCanvas(o)); }
 function makeSlime(corrupt) {
+  if (window.STYLE_DP) return makeSpriteSlime(corrupt);
   const B = CB(), { g, mt, bx } = B, col = corrupt ? '#a03aff' : '#62d874', face = faceCanvas({ skin: col, eyes: corrupt ? 'red' : 'cute', ey: 12, ex: 7, mouth: corrupt ? 'teeth' : 'smile', iris: '#101018' });
   const sk = new THREE.MeshLambertMaterial({ color: col, emissive: corrupt ? 0x5a1a9a : 0x000000, emissiveIntensity: .5 }), fm = new THREE.MeshLambertMaterial({ map: cTex(face), emissive: corrupt ? 0x3a0a6a : 0x000000, emissiveIntensity: .4 });
   const body = new THREE.Mesh(geoBox(.9, .8, .9), [sk, sk, sk, sk, fm, sk]); body.position.y = .4; body.castShadow = true; g.add(body); B.mats.push(sk, fm);
@@ -9,6 +10,7 @@ function makeSlime(corrupt) {
   return B;
 }
 function makeFlyer(corrupt) {
+  if (window.STYLE_DP) return makeSpriteFlyer();
   const B = CB(), { g, mt, bx, pv } = B, fm = new THREE.MeshLambertMaterial({ map: cTex(faceCanvas({ skin: '#4b2a7a', eyes: 'red', ey: 12, ex: 7, mouth: 'tiny' })), emissive: 0x2a0a4a, emissiveIntensity: .5 });
   const body = new THREE.Mesh(geoBox(.7, .7, .7), [mt('#4b2a7a'), mt('#4b2a7a'), mt('#4b2a7a'), mt('#4b2a7a'), fm, mt('#4b2a7a')]); body.castShadow = true; g.add(body);
   B.wl = pv(g, -.36, .1, 0); B.wr = pv(g, .36, .1, 0); bx(B.wl, .9, .06, .6, '#8a5acd', -.45, 0, 0); bx(B.wr, .9, .06, .6, '#8a5acd', .45, 0, 0); B.mats.push(fm); return B;
@@ -59,12 +61,12 @@ function glSync(dt) {
         const hop = e.hopT > 0 ? Math.sin(clamp(e.hopT / .35, 0, 1) * Math.PI) : 0, born = e.born > 0 ? (e.born -= dt, 1 - e.born / .4) : 1;
         o.outer.position.set(e.x / T, hop * .7, e.y / T); const sc0 = e.sc || 1; o.outer.scale.set(sc0 * born * (1 - hop * .14), sc0 * born * (1 + hop * .22), sc0 * born * (1 - hop * .14)); o.body.scale.y = 1;
         o.outer.rotation.y = yawTo(o.outer.rotation.y, Math.atan2(P.x - e.x, P.y - e.y), .1); setFlash(o, e.flash > 0);
-        if (e.corrupt) o.body.material[0].emissiveIntensity = .5 + Math.sin(t * 12) * .3; break;
+        if (e.corrupt && o.body.material[0] && o.body.material[0].emissive) o.body.material[0].emissiveIntensity = .5 + Math.sin(t * 12) * .3; if (o.sprite) animChar(o, t + e.x, 0, {}); break;
       }
       case 'flyer': {
         const o = glGet(e, () => wrapOuter(makeFlyer(e.corrupt)));
         o.outer.position.set(e.x / T, 1.5 + Math.sin(t * 5 + e.x) * .12, e.y / T); o.outer.rotation.y = yawTo(o.outer.rotation.y, Math.atan2(P.x - e.x, P.y - e.y), .1);
-        const w = Math.sin(t * 22 + e.x) * .8; o.wl.rotation.z = w; o.wr.rotation.z = -w; setFlash(o, e.flash > 0); break;
+        const w = Math.sin(t * 22 + e.x) * .8; o.wl.rotation.z = w; o.wr.rotation.z = -w; setFlash(o, e.flash > 0); if (o.sprite) animChar(o, t + e.x, 0, {}); break;
       }
       case 'dummy': { const o = glGet(e, () => wrapOuter(makeDummy())); o.outer.position.set(e.x / T, 0, e.y / T); o.outer.rotation.z = e.hit > 0 ? Math.sin(e.hit * 60) * .15 : 0; setFlash(o, e.hit > 0); break; }
       case 'bonfire': { const o = glGet(e, () => { const g = new THREE.Group(); for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; g.add(mesh(geoBox(.34, .3, .34), lam(0x7a7a88), Math.cos(a) * .62, .15, Math.sin(a) * .62)); } for (let i = 0; i < 3; i++) { const lg = mesh(geoBox(.18, .18, 1.0), lam(0x5a3a1a), 0, .28, 0); lg.rotation.y = i * 1.05; lg.rotation.z = .25; g.add(lg); } const fl = new THREE.Group(); fl.add(mesh(geoBox(.5, .6, .5), new THREE.MeshBasicMaterial({ color: 0xff7a1a }), 0, .65, 0, false), mesh(geoBox(.32, .6, .32), new THREE.MeshBasicMaterial({ color: 0xffd24a }), 0, .95, 0, false), mesh(geoBox(.16, .4, .16), new THREE.MeshBasicMaterial({ color: 0xfff6c0 }), 0, 1.25, 0, false)); g.add(fl); const gl = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 4.2), new THREE.MeshBasicMaterial({ map: glowTex('#ffb04a'), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: .75 })); gl.position.y = 1.0; gl.userData.billboard = true; g.add(gl); return { group: g, fl, gl }; }); gp(o, e.x, 0, e.y); o.fl.scale.set(1 + Math.sin(t * 13 + e.t) * .08, 1 + Math.sin(t * 9 + e.t * 2) * .16, 1); o.gl.material.opacity = .6 + Math.sin(t * 7 + e.t) * .12 + (e.near ? .15 : 0); break; }
@@ -119,7 +121,7 @@ function glSync(dt) {
     pl.outer.visible = !(P.inv > 0 && Math.floor(P.inv * 18) % 2 === 0); pl.outer.position.set(P.x / T, 0, P.y / T);
     const aim = P.atk > 0 ? Math.atan2(P.adx, P.ady) : Math.atan2(P.dx, P.dy); pl.outer.rotation.y = yawTo(pl.outer.rotation.y, aim, P.atk > 0 ? .5 : .28);
     if (pl.parts.wm) { const cw = curW(), mk2 = cw.model || (cw.ranged ? 'bow' : cw.heavy ? 'hammer' : 'dagger'); for (const k2 in pl.parts.wm) pl.parts.wm[k2].visible = k2 === mk2; pl.parts.wm.dagger.scale.setScalar(cw.msc || .6); pl.parts.wm.hammer.scale.setScalar(cw.msc || 1); if (cw.id === 'diamondsword') pl.parts.wm.dagger.children.forEach(c => { if (c.material && c.material.emissive) c.material.color.set(0x7df3ff); }); }
-    if (!pl.armorKits) pl.armorKits = buildArmorKits(pl.parts); for (const id in pl.armorKits) pl.armorKits[id].visible = P.armor === id;
+    if (!pl.armorKits) pl.armorKits = pl.parts.body ? buildArmorKits(pl.parts) : {}; for (const id in pl.armorKits) pl.armorKits[id].visible = P.armor === id;
     const k = P.atk > 0 && !curW().ranged ? 1 - P.atk / (P.atkMax || .26) : null; if (S.cineAuto && S.dialog && S.dialog.who !== 'mike' && !P.moving) { const s0 = S.ents.find(q => q.id === S.dialog.who); if (s0) { P.dx = (s0.x - P.x) / 100; P.dy = (s0.y - P.y) / 100; } } if (S.dialog && S.dialog.who === 'mike' && S.dialog.shown < S.dialog.text.length) pl.outer.position.y += Math.abs(Math.sin(t * 11)) * .1;
     animChar(pl, P.anim * 1.25, P.moving ? 1 : 0, { atk: k, talk: S.dialog && S.dialog.who === 'mike', wave: S.dialog && S.dialog.who === 'mike' && Math.sin(t * 2.2) > .6 });
     pl.slash.position.set(P.x / T, .9, P.y / T); pl.slash.rotation.z = Math.atan2(-P.ady, P.adx); pl.slash.material.opacity = k != null ? Math.sin(clamp(k, 0, 1) * Math.PI) * .75 : 0; pl.slash.visible = k != null;
