@@ -705,6 +705,7 @@ function drawStage() {
     drawChar(c.id, x + jit, c.y + bob + fy + hop, { scale: scl, flip: c.face < 0, frame: fr, red: c.red, alpha: (c.alpha != null ? c.alpha : 1) * (sp && !talk && c.id !== 'exe' ? .72 : 1) });
     if (c.glitch && Math.sin(t * 9 + c.x) > .7) { ctx.fillStyle = 'rgba(255,0,200,.35)'; ctx.fillRect(x - 30 * scl, c.y - 70 * scl + rnd(0, 50 * scl), 60 * scl, 5); }
   }
+  if (st.snow) { ctx.fillStyle = '#fff'; for (let i = 0; i < 90; i++) { const sx2 = (i * 97 + t * (18 + i % 7 * 4)) % (W + 40) - 20, sy2 = (i * 53 + t * (40 + i % 5 * 14)) % (H + 20) - 10; ctx.globalAlpha = .5 + (i % 4) * .12; ctx.fillRect(Math.round(sx2), Math.round(sy2), 2 + i % 2, 2 + i % 2); } ctx.globalAlpha = 1; }
   // motas flotando
   ctx.globalCompositeOperation = 'lighter';
   for (const f of FLY) { const a = (Math.sin(t * 2 + f.p) + 1) / 2; ctx.globalAlpha = .2 + a * .55; ctx.fillStyle = st.dark ? '#ff8aa0' : '#bfe9ff'; ctx.fillRect(Math.round((f.x + Math.sin(t * .6 + f.p) * 40) % W), Math.round(60 + (f.y * .8 + Math.cos(t * .5 + f.p) * 24) % 400), 3, 3); }

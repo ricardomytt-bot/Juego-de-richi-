@@ -241,7 +241,35 @@ async function gatherMove(list, timeout = 6) {
   let t = 0; while (t < timeout && !S.skip && list.some(([e]) => !e._arr)) { await wait(.1); t += .1; }
   for (const [e, tx, ty] of list) { if (!e._arr) { e.goto = null; e.vx = e.vy = 0; e.x = tx * T; e.y = ty * T; } }
 }
+async function seriesCard(t1, t2, secs = 2.6) {
+  S.stage.card = t1; S.stage.card2 = t2 || null; await wait(secs); S.stage.card = null; S.stage.card2 = null; await wait(.4);
+}
+async function csSeriesIntro() {
+  S.skip = false; S.busy = true; S.stage = newStage({ dark: false }); S.stage.snow = true; setMusic('title'); S.fade = 1;
+  const st = S.stage; st.barT = 0;
+  await wait(.8); await fadeTo(0, 2);
+  await seriesCard('MIKECRACK', 'Y LAS ESTRELLAS OSCURAS', 3.4);
+  await say('narr', 'Hace mucho, siete estrellas brillaban sobre la ciudad de Diamantia y cuidaban los sueños de todos...');
+  const mk = addChar('mike', -80, 344, { scale: 2, face: 1, anim: 'walk' }), wl = addChar('willy', -200, 344, { scale: 2, face: 1, anim: 'walk' });
+  await seriesCard('EPISODIO 1', 'Un viaje de Navidad', 2.6);
+  setMusic('story');
+  await say('narr', 'Víspera de Navidad. La nieve cae despacio, y una luz cálida se asoma en cada ventana.');
+  moveChar(wl, 330, 90); await moveChar(mk, 450, 90); await wait(.3); mk.anim = 'idle'; wl.anim = 'idle';
+  await say('mike', 'Qué noche tan bonita, Willy. Mañana viajamos todos juntos en tren. ¡Va a ser la mejor Navidad!');
+  await say('willy', '¡Guau! (Traducción: ¡y yo llevo el hueso!)');
+  const tr = addChar('trolino', W + 80, 344, { scale: 2, face: -1, anim: 'walk' }); await moveChar(tr, 640, 130); tr.anim = 'idle';
+  await say('trolino', 'Mike, no se te olvide: mañana temprano, todos en la estación. ¡Duerme bien!');
+  await say('mike', '¡Dormiré como Timba! ...Bueno, casi.');
+  st.dark = true; bang(true); sfx.boss(); st.snow = false; setMusic('dark');
+  const ex = addChar('exe', 760, 190, { scale: 3, float: true, face: -1, glitch: true });
+  await say('exe', 'Siete estrellas... y una sola noche. Mañana, nadie viajará solo... porque todos viajarán conmigo.', { red: true });
+  await say('narr', 'Pero en lo alto del cielo, alguien los observaba.');
+  st.flash = 1; removeChar(ex); await wait(.5); st.dark = false; await fadeTo(1, 1.2);
+  await seriesCard('A LA MAÑANA SIGUIENTE...', null, 2.2);
+  S.stage = null; S.busy = false;
+}
 async function csOpening() {
+  if (!window.NO_SERIES_INTRO) { await csSeriesIntro(); }
   S.skip = false; S.busy = true; S.flags.zona0 = true; S.cineAuto = true;
   loadLevel(10); S.q.gotLetters = false; setMusic('story'); setAmbient('day'); glMood(false);
   P.x = 4.5 * T; P.y = 3 * T + 20; P.dx = 0; P.dy = 1; initWilly(); S.willy.x = P.x + 50; S.willy.y = P.y + 20;
