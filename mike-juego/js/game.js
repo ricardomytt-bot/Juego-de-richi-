@@ -666,7 +666,7 @@ function update(dt) {
   const had = !!S.dialog;
   updateDialog(dt);
   if (S.stage) { updateStage(dt); updateFx(dt); return; }
-  if (had || S.dialog || S.busy) { updateFx(dt); if (S.lvl) updateCamera(dt, false); return; }
+  if (had || S.dialog || S.busy) { if (S.lvl) { for (const e of S.ents) if (e.goto || e.type === 'exe3d') updateEnt(e, dt); if (S.busy && !S.dialog && S.willy) updateWilly(dt); } updateFx(dt); if (S.lvl) updateCamera(dt, false); return; }
   if (S.hitstop > 0) { S.hitstop -= dt; return; }
   S.playTime += dt;
   updatePlayer(dt);

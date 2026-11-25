@@ -77,7 +77,7 @@ function glSync(dt) {
       case 'key': { const o = glGet(e, () => makeKey(e.k)); gp(o, e.x, .85 + Math.sin(t * 3 + e.t) * .12, e.y); o.spin.rotation.y = t * 2.2; break; }
       case 'npc': case 'citizen': case 'exe3d': {
         const id = e.type === 'exe3d' ? 'exe' : e.id, o = glGet(e, () => { const B = makeCharObj(id); if (e.type === 'exe3d') B.g.scale.multiplyScalar(2.6); return B; });
-        const sp = Math.hypot(e.vx || 0, e.vy || 0) > 12 ? 1 : 0, ex = e.type === 'exe3d' ? (e.lift != null ? e.lift : 3) : 0;
+        const dd0 = o.lx == null ? 0 : Math.hypot(e.x - o.lx, e.y - o.ly) / Math.max(.001, dt) / T; o.lx = e.x; o.ly = e.y; o.spd = lerp(o.spd || 0, dd0, .25); const sp = (Math.hypot(e.vx || 0, e.vy || 0) > 12 || o.spd > .5) ? 1 : 0, ex = e.type === 'exe3d' ? (e.lift != null ? e.lift : 3) : 0;
         o.outer.position.set(e.x / T, ex + (e.type === 'exe3d' ? Math.sin(t * 1.5) * .25 : 0), e.y / T); o.outer.rotation.y = yawTo(o.outer.rotation.y, e.face || 0, .15);
         const spk = S.dialog && S.dialog.who === id; if (S.cineAuto && S.dialog && !spk && e.tag) { const w = S.dialog.who, s0 = w === 'mike' ? P : S.ents.find(q => q.id === w); if (s0) e.face = Math.atan2(s0.x - e.x, s0.y - e.y); } if (spk && S.dialog.shown < S.dialog.text.length) o.outer.position.y += Math.abs(Math.sin(t * 11)) * .1; animChar(o, t + (e.seed || 0), sp, { talk: spk, wave: e.wave || (spk && Math.sin(t * 2.2) > .55) });
         setFlash(o, false, e.corrupt); if (e.corrupt) o.outer.position.x += (Math.random() - .5) * .05; break;
@@ -146,7 +146,7 @@ function glParticles() {
 function glCamera(dt) {
   const L = S.lvl, c = GL.cam; let tx, tz, td = L.theme === 'indoor' ? 9.5 : 13.5;
   if (S.camShot) { tx = S.camShot.x; tz = S.camShot.z; td = S.camShot.dist || 14; }
-  else if (S.cineAuto && S.dialog && !S.camShot) { const w = S.dialog.who, sp = w === 'mike' ? P : S.ents.find(e => e.id === w && !e.hidden); if (sp) { tx = (sp.x * 2 + P.x) / 3 / T; tz = sp.y / T - 1.1; td = L.theme === 'indoor' ? 5.8 : 7.8; } else { tx = P.x / T; tz = P.y / T - .6; td = 9; } }
+  else if (S.cineAuto && S.dialog && !S.camShot) { const w = S.dialog.who, sp = w === 'mike' ? P : S.ents.find(e => e.id === w && !e.hidden); if (sp) { tx = (sp.x * 2 + P.x) / 3 / T; tz = sp.y / T - 1.1; td = L.theme === 'indoor' ? 3.9 : 5.2; } else { tx = P.x / T; tz = P.y / T - .6; td = 9; } }
   else if (S.bossLock && GL.arenaC) { const bb = S.boss; tx = (P.x / T * 2 + (bb ? bb.x / T : GL.arenaC[0])) / 3; tz = (P.y / T * 2 + (bb ? bb.y / T : GL.arenaC[1])) / 3 - .3; td = 17; }
   else { tx = P.x / T + P.dx * 1.4; tz = P.y / T + P.dy * .9 - .5; }
   const k = 1 - Math.exp(-dt * (GL.camInit ? 4.5 : 100)); GL.camInit = true;

@@ -291,7 +291,7 @@ async function csOpening() {
   S.skip = false; S.busy = true; S.flags.zona0 = true; S.cineAuto = true;
   loadLevel(10); S.q.gotLetters = false; setMusic('story'); setAmbient('day'); glMood(false);
   P.x = 4.5 * T; P.y = 3 * T + 20; P.dx = 0; P.dy = 1; initWilly(); S.willy.x = P.x + 50; S.willy.y = P.y + 20;
-  const tro = { type: 'npc', id: 'trolino', x: 7.5 * T, y: 9.2 * T, hw: 10, hh: 10, face: Math.PI, vx: 0, vy: 0, tag: 'gather' }; S.ents.push(tro);
+  const tro = { type: 'npc', id: 'trolino', x: 7.5 * T, y: 8.5 * T, hw: 10, hh: 10, face: Math.PI, vx: 0, vy: 0, tag: 'gather' }; S.ents.push(tro);
   S.camShot = { x: 7.5, z: 4.6, dist: 10.5 }; if (GL.ok) GL.camInit = false;
   await fadeTo(0, 1.6);
   await say('narr', '24 de diciembre. Diamantia amanece fría, pero con una luz cálida en cada ventana.');
@@ -306,16 +306,16 @@ async function csOpening() {
   else if (r === 1) { await say('trolino', '¡El viaje de Navidad! ¡Lo hablamos hace una semana! ¡Con el tren y todos los compas!'); await M('Ah. ¡Ese viaje! Obvio. Totalmente.'); }
   else { await say('trolino', 'Claro que sí. De hecho, creo que sin chocolate el tren no arranca.'); await M('¡Entonces es una cuestión de seguridad!'); fav('trolino', 2); }
   await say('trolino', 'Yo voy a hacer la mía. ¡Haz la tuya, Mike! ¡Nos vemos más tarde!');
-  tro.goto = { x: 7.5 * T, y: 9.4 * T, speed: 210, done: () => { tro.hidden = true; } };
-  await wait(1.5);
+  tro.goto = { x: 7.5 * T, y: 8.6 * T, speed: 120, done: () => { tro.hidden = true; sfx.door(); } };
+  await wait(4.2);
   await M('Maleta, maleta... capa, chocolate, otro chocolate...');
   await walkP(11 * T, 3.2 * T, 100); await wait(.4); sfx.pop(); floater(P.x - 40, P.y - 80, '¡Maleta lista!', '#ffe14a');
   await M('¡Listo, Willy! Ahora sí: ¡a divertirse!');
   // llega corriendo Ambrosio
-  const amb = { type: 'npc', id: 'ambrosio', x: 7.5 * T, y: 9.6 * T, hw: 10, hh: 10, face: Math.PI, vx: 0, vy: 0, tag: 'gather' }; S.ents.push(amb); sfx.door();
-  amb.goto = { x: 8.5 * T, y: 5.2 * T, speed: 300, done: () => { } };
+  const amb = { type: 'npc', id: 'ambrosio', x: 7.5 * T, y: 8.6 * T, hw: 10, hh: 10, face: Math.PI, vx: 0, vy: 0, tag: 'gather' }; S.ents.push(amb); sfx.door();
+  amb.goto = { x: 8.5 * T, y: 5.2 * T, speed: 150, done: () => { } };
   await say('willy', '¡Guau! ¡Guau! (Traducción: ¡viene alguien corriendo!)');
-  await wait(1.6);
+  await wait(2.6);
   await say('ambrosio', '¡HOLAAA Mike! ...eh... ¿Mike? Sí, Mike. Perdón, vine corriendo y se me olvidó para qué. ¡Lag!');
   await say('ambrosio', 'Ah, ya me acordé. Soy el cartero. Creo. Me dieron una mochila y todo.');
   const r2 = await ask('ambrosio', 'Necesito un favor... o un... ¿faborr? ¿Se escribe con v? ¿Me ayudas?', ['Claro, dime el favor', '¿Un qué?', 'Estoy haciendo mi maleta']);
@@ -328,8 +328,8 @@ async function csOpening() {
   S.q.gotLetters = true; sfx.key(); S.shake = .1; spawnP(P.x, P.y - 30, 16, '#ffe14a', 220, .8);
   await say('narr', 'Recibiste 7 cartas. Cada casa del barrio y de la ciudad tiene un dueño esperándote.');
   await say('ambrosio', '¡Gracias, gracias! ¡Me voy corriendo! ...¿Por dónde era la puerta? ¡Ah, ahí!');
-  amb.goto = { x: 7.5 * T, y: 9.6 * T, speed: 300, done: () => { amb.hidden = true; } };
-  await wait(1.6);
+  amb.goto = { x: 7.5 * T, y: 8.6 * T, speed: 150, done: () => { amb.hidden = true; sfx.door(); } };
+  await wait(4);
   S.ents = S.ents.filter(e => e.tag !== 'gather');
   S.flags.trolino1 = true; S.camShot = null; S.cineAuto = false; S.busy = false;
   showHint('Sal de tu casa (camina hacia ↓ en la puerta) y reparte las 7 cartas', 8);
