@@ -22,7 +22,7 @@ function menuItems() {
       const U = P.up, mapNext = [1, 2, 3, 4, 5, 6, 7, 8].find(i => !S.maps[i]);
       const it = (t, price, can, buy) => ({ t: t + (can ? '   ' + price + ' 🪙' : '   (agotado)'), go: () => { if (!can) { sfx.back(); return; } if (S.coins < price) { sfx.low(); showHint('No te alcanzan las monedas', 1.5); return; } S.coins -= price; buy(); sfx.key(); } });
       const list = [];
-      if (mapNext) list.push(it('🗺️ Mapa: ' + ZNAME[mapNext], 20 + mapNext * 8, true, () => { S.maps[mapNext] = true; if (S.lvlId === mapNext && S.lvl.seen) S.lvl.seen.fill(1); }));
+      if (mapNext) list.push(it('🗺️ Mapa: ' + ZNAME[mapNext], 20 + mapNext * 8, true, () => { S.maps[mapNext] = true; if (S.lvlId === mapNext && S.lvl.seen) { S.lvl.seen.fill(1); S.lvl.allSeen = 1; if (MM) { MM.drawn.fill(0); MM.full = false; } } }));
       list.push(it('🍫 Chocolate mejorado (+10% cura)', [40, 60, 80][U.choco] || 0, U.choco < 3, () => { U.choco++; P.chocoHeal = Math.min(1, P.chocoHeal + .1); }));
       list.push(it('⏱️ Chocolate rápido (recarga -6 s)', 80, U.fast < 1, () => { U.fast++; CHOCO_CD = Math.max(8, CHOCO_CD - 6); }));
       list.push(it('🧣 Bufanda térmica (-12% daño)', [60, 90][U.scarf] || 0, U.scarf < 2, () => { U.scarf++; P.defMul *= .88; }));

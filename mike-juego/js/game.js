@@ -277,7 +277,8 @@ function updateEnt(e, dt) {
     e.t += dt; e.near = !S.busy && dist(e.x, e.y, P.x, P.y) < 70;
     if (e.near && wasPressed(K.act) && !S.dialog) {
       P.hp = P.maxHp; P.chocoCd = 0; S.checkpoint = [e.x, e.y + 36]; S.cpZone = S.lvlId; sfx.heal(); spawnP(e.x, e.y - 20, 30, '#ffb04a', 220, 1.1); floater(e.x - 70, e.y - 90, '¡Descansas junto a la fogata!', '#ffb04a');
-      showHint('Punto de control guardado · vida y chocolate restaurados', 3); if (typeof saveGame === 'function') saveGame(true);
+      if (L.seen && !L.allSeen) { L.seen.fill(1); L.allSeen = 1; if (MM) { MM.drawn.fill(0); MM.full = false; } floater(e.x - 60, e.y - 120, '🗺️ ¡Mapa revelado!', '#9ad0ff'); }
+      showHint('Punto de control guardado · vida y chocolate restaurados · mapa de la zona revelado', 3); if (typeof saveGame === 'function') saveGame(true);
     }
   } else if (e.type === 'chest') {
     e.t += dt; if (!e.opened && dist(e.x, e.y, P.x, P.y) < 34) { e.opened = true; e.t = 0; spawnP(e.x, e.y - 20, 24, '#ffe14a', 260, 1); grantWeapon(e.w); }
@@ -369,7 +370,7 @@ function updatePlayer(dt) {
   S.stepT -= dt;
   if (p.moving && S.stepT <= 0) { S.stepT = .24; sfx.step(); S.particles.push({ x: p.x + rnd(-4, 4), y: p.y - 1, vx: rnd(-10, 10), vy: rnd(-10, 10), life: .35, max: .35, color: S.lvl.theme === 'dream' ? '#9a8cf0' : '#cfa86a', size: 4 }); }
   // revelar minimapa
-  if (L.seen) {
+  if (false) {
     const cx = Math.floor(p.x / T), cy = Math.floor(p.y / T);
     for (let y = cy - 9; y <= cy + 9; y++) for (let x = cx - 9; x <= cx + 9; x++) if (x >= 0 && y >= 0 && x < L.w && y < L.h && (x - cx) * (x - cx) + (y - cy) * (y - cy) <= 81) L.seen[y * L.w + x] = 1;
   }

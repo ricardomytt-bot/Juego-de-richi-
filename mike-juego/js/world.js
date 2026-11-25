@@ -23,7 +23,7 @@ async function enterZone(id, spawn) {
   if (ZONES[id]) activateZone(id); else { loadLevel(id); ZONES[id] = null; }
   P.hp = hp; P.chocoCd = cd; P.x = (spawn[0] + .5) * T; P.y = (spawn[1] + 1) * T - 8; P.vx = P.vy = 0; P.dead = false; { const fs = freeSpot(S.lvl, P.x, P.y, P.hw, P.hh); P.x = fs[0]; P.y = fs[1]; }
   S.checkpoint = [P.x, P.y]; S.cpZone = id; initWilly(); updateCamera(0, true); if (GL.ok) GL.camInit = false; glMood(false); S.camShot = null;
-  if (S.maps[id] && S.lvl.seen) S.lvl.seen.fill(1);
+  if (S.maps[id] && S.lvl.seen && !S.lvl.allSeen) { S.lvl.seen.fill(1); S.lvl.allSeen = 1; if (MM) { MM.drawn.fill(0); MM.full = false; } }
   await fadeTo(0, .5);
   S.busy = false; zoning = false; zoneT = S.t;
   if (!S.flags['zona' + id]) {
@@ -71,7 +71,7 @@ function buildZone(id, d) {
   S.lvl = L; S.lvlId = id; spawnEnts(L); S.ents.forEach((e, i) => e._i = i); const n = S.ents.length, dd = new Set(d.dead);
   L.seen = new Uint8Array(L.w * L.h); for (let i = 0; i < d.seen.length && i < L.seen.length; i++) L.seen[i] = d.seen.charCodeAt(i) === 49 ? 1 : 0;
   if (L.trials && d.trials) L.trials.forEach((t, i) => { t.done = !!d.trials[i]; });
-  minimapReset();
+  minimapReset(); if (L.seen.every(v => v === 1)) { L.allSeen = 1; MM.full = false; }
   ZONES[id] = { L, ents: S.ents.filter(e => !dd.has(e._i)).concat((d.chests || []).map(([x, y, w]) => ({ type: 'chest', x, y, w, opened: false, t: 0 }))), nSpawn: n, dia: d.dia, keys: d.keys, gateOpen: d.gateOpen, bossDefeated: d.bossDefeated, bossStarted: d.bossStarted, MM };
 }
 function resetPlayerStats() { Object.assign(P, { armors: [], armor: null, cds: {}, chocoHeal: .7, defMul: 1, speedMul: 1, up: { choco: 0, boots: 0, sharp: 0, scarf: 0, fast: 0 }, hp: 100, sel: 0, owned: ['dagger', 'hammer', 'bow'], equip: ['dagger', 'hammer', 'bow'], special: false, dmgMul: 1, kills: 0, chocoCd: 0, dead: false }); CHOCO_CD = 30; }

@@ -196,10 +196,10 @@ const HOUSE = mk(7 * T + 40, 5 * T + 24, g => {
 let MM = null;
 function minimapReset() { const L = S.lvl; MM = { c: mk(L.w, L.h, () => { }), drawn: new Uint8Array(L.w * L.h) }; }
 function minimapUpdate() {
-  if (S.lvl && S.lvl.seen && !S.lvl.allSeen) { S.lvl.seen.fill(1); S.lvl.allSeen = 1; if (MM) MM.drawn.fill(0); }
+  if (S.lvl && S.lvl.allSeen && MM && !MM.full) { /* revelado por fogata */ }
   const L = S.lvl; if (!MM || !L.seen) return; const g = MM.c.getContext('2d'), dm = L.theme === 'dream';
   const cx = Math.floor(P.x / T), cy = Math.floor(P.y / T);
-  const R0 = L.allSeen && !MM.full ? 999 : 10; if (R0 === 999) MM.full = true;
+  const R0 = L.allSeen && !MM.full ? 999 : 0; if (R0 === 999) MM.full = true;
   for (let y = Math.max(0, cy - R0); y <= Math.min(L.h - 1, cy + R0); y++) for (let x = Math.max(0, cx - R0); x <= Math.min(L.w - 1, cx + R0); x++) {
     const i = y * L.w + x; if (!L.seen[i] || MM.drawn[i]) continue; MM.drawn[i] = 1;
     const c = L.g[y][x]; let col;
