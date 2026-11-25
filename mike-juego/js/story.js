@@ -38,7 +38,8 @@ function glMood(dark) {
   else if (L) glThemeMood(L);
 }
 function openStationGate() {
-  const L = S.lvl; for (const [x, y] of L.gate.tiles) L.set(x, y, 'a'); S.gateOpen = true; sfx.door(); S.shake = .25; spawnP(L.gate.x + 24, L.gate.y + 96, 40, '#ffe14a', 320, 1);
+  S.flags.gateOpen = true; const L = S.lvlId === 53 ? S.lvl : (ZONES[53] && ZONES[53].L);
+  if (L && L.gate) { for (const [x, y] of L.gate.tiles) L.set(x, y, 'a'); if (S.lvlId === 53) { S.gateOpen = true; sfx.door(); S.shake = .25; spawnP(L.gate.x + 24, L.gate.y + 96, 40, '#ffe14a', 320, 1); } }
 }
 async function deliver(id) {
   S.q.delivered[id] = true; S.q.count++; sfx.key(); floater(P.x - 50, P.y - 80, '¡Carta entregada!', '#ffe14a'); spawnP(P.x, P.y - 30, 16, '#ffe14a', 220, .8);
@@ -107,24 +108,14 @@ const CITY = {
   async ambrosio() {
     const q = S.q;
     if (S.flags.trainDone) {
-      await say('ambrosio', S.restored >= 7 ? '¡Mike! Soy cartero, tendero, cocinero, mecánico y ahora alcalde provisional. ¡Todo con descuento de héroe!' : '¡Mike! No me llevó Exe porque estaba repartiendo cartas... y vendiendo perritos... y arreglando el semáforo. Tengo todos los trabajos, ¿recuerdas?');
+      await say('ambrosio', S.restored >= 7 ? '¡Mike! Soy cartero, tendero, cocinero, mecánico y ahora alcalde provisional. ¡Todo con descuento de héroe! ...Creo.' : '¡Mike! A mí no me llevó Exe porque estaba repartiendo cartas... y vendiendo perritos... y arreglando el semáforo. Tengo todos los trabajos, ¿recuerdas? ¡Soy un noob multitarea!');
       const r = await ask('ambrosio', '¿Qué necesitas hoy?', ['Ver la tienda', 'Solo saludar']);
-      if (r === 0) setTimeout(() => openMenu('shop'), 50); else await say('ambrosio', '¡Pues aquí estaré! En Correos, en el puesto, en la estación... en todos lados. ¡Soy una persona muy ocupada!');
+      if (r === 0) setTimeout(() => openMenu('shop'), 50); else await say('ambrosio', '¡Pues aquí estaré! En Correos, en el puesto, en la estación... en todos lados. ¡Soy una persona muy ocupada! ...¿Qué estaba diciendo?');
       return;
     }
-    if (!q.gotLetters) {
-      await say('ambrosio', '¡Mike! ¡Gracias al cielo! Se me juntaron TODAS las cartas del mes y mi bicicleta se hizo bolita.');
-      const r = await ask('ambrosio', 'Necesito ayuda para repartir las cartas de tus amigos. ¿Me ayudas?', ['¡Claro, cuenta conmigo!', '¿Y por qué no las repartes tú?', '¿Me pagas?']);
-      if (r === 0) { await say('ambrosio', '¡Eres un héroe! ¡Héroe! ¡Héroe! Te lo voy a decir mil veces.'); fav('ambrosio', 2); }
-      else if (r === 1) { await say('ambrosio', 'Porque... tengo una cita muy importante. Con mi almohada.'); await M('Está bien, está bien.'); }
-      else { await say('ambrosio', 'Te pago con... mi eterna gratitud y un sello postal.'); await M('...Acepto el sello.'); fav('ambrosio', 1); }
-      q.gotLetters = true; sfx.key(); S.shake = .1;
-      await say('narr', 'Recibiste 7 cartas: para Timba, Rius, Mayo, Esparta, Raptor, Invictor y Acenix.');
-      await say('ambrosio', 'Cada compa vive en una calle distinta, así que explora la ciudad. Cuando termines, ¡corre a la estación!');
-      showHint('Objetivo: entrega las 7 cartas  (arriba a la izquierda ves el progreso)', 6);
-    } else if (!q.done) {
-      const left = q.total - q.count; await say('ambrosio', left === 1 ? '¡Solo falta una carta! Mira el mapa o sigue la flecha amarilla.' : 'Todavía faltan ' + left + ' cartas. ¡Tú puedes, héroe!'); await talkAgain('ambrosio');
-    } else await say('ambrosio', '¡Entregaste todas! Eres el mejor cartero sin sueldo que he visto. ¡Ve al tren!');
+    if (!q.gotLetters) { await say('ambrosio', '¡Mike! ¿Dónde estaban mis cartas? Ah, ya... eh... ¡las tengo yo! Toma.'); q.gotLetters = true; await say('narr', 'Recibiste 7 cartas.'); return; }
+    if (!q.done) { const left = q.total - q.count; await say('ambrosio', left === 1 ? '¡Solo falta una carta! ...Eh... ¿o eran dos? No, una. ¡Mira la flecha amarilla!' : 'Todavía faltan ' + left + ' cartas. ¡Tú puedes! Yo me quedo aquí, perdido. ¡Digo, trabajando!'); await talkAgain('ambrosio'); return; }
+    await say('ambrosio', '¡Entregaste todas! ¡GG, Mike! Ahora ve al tren, que si no se va sin ti... y sin mí. Bueno, yo no voy. ¿O sí?');
   },
   async timba() {
     if (!needLetter('timba')) { await talkAgain('timba'); return; }
@@ -211,10 +202,10 @@ async function citizenTalk(e) {
   await say(e.id, c[2][r], { name: 'Vecino', seed, portrait: false });
 }
 const JOBS = {
-  perritos: { name: 'Puesto de perritos', lines: ['¡Perritos calientes! ¡Calientes como el chocolate de Rius! ...Perdón, no vendo chocolate. Bueno, sí. También vendo chocolate.'], shop: true },
-  conductor: { name: 'Jefe de estación', lines: ['¡Atención, pasajeros! Soy el jefe de estación, el conductor, el que pone el sello, el que barre... y el que silba el tren.', '¿Que yo soy el cartero? Sí. ¿Y el conductor? Sí. ¿Y el que vende los boletos? También. Los lunes soy tres personas.'] },
-  mesero: { name: 'Mesero', lines: ['¡Bienvenido al Restaurante La Estrella! Soy el mesero, el cocinero, el que lava los platos y el que escribe el menú.', 'Hoy hay pizza. Y mañana también. Es que el cocinero soy yo y solo me sé una receta.'] },
-  dj: { name: 'DJ Ambrosio', lines: ['¡Dame un aplauso! Soy DJ Ambrosio, locutor de la radio y mecánico de bicicletas. ¡Todo al mismo tiempo!', 'Si escuchas la radio de Diamantia: sí, soy yo. El pronóstico, las noticias y la canción. ¡Y también soy la lluvia, a veces!'] }
+  perritos: { name: 'Puesto de perritos', lines: ['¡Peeerritos calientes! ...eh... ¿calientes? Sí. Los calenté yo. Con la mano. ¡Es broma! Con un microondas.'], shop: true },
+  conductor: { name: 'Jefe de estación', lines: ['¡Atención, pasaje... pasajeros! Soy el jefe de estación. Y el conductor. Y el que silba. ¡Chu-chu! ...Perdón, a veces me emociono.', '¿Que yo soy el cartero? Sí. ¿Y el conductor? Sí. ¿Y el que vende los boletos? También. Los lunes soy tres personas. Los martes me pierdo.'] },
+  mesero: { name: 'Mesero', lines: ['¡Bienvenido al Rest... al Restaurante La Estrella! Soy el mesero. Y el cocinero. Y el que lava platos. ¡Y el que escribe el menú! Con faltas.', 'Hoy hay pizza. Y mañana también. Es que solo me sé una receta. Y me salió media quemada. ¡Pero con cariño!'] },
+  dj: { name: 'DJ Ambrosio', lines: ['¡Un aplauso para el DJ! ...Soy yo. Soy DJ Ambrosio. También arreglo bicicletas. Pero esas las arreglo peor.', 'Si escuchas la radio de Diamantia: sí, soy yo. El pronóstico, las noticias y la canción. ¡Y a veces el eco! ...eco, eco, eco.'] }
 };
 async function jobTalk(e) {
   const J = JOBS[e.job] || JOBS.perritos;
@@ -263,60 +254,50 @@ async function csOpening() {
   await M('(bostezo) ...Cinco minutitos más... ¿Willy? ¿Por qué estás en mi cama?');
   tro.goto = { x: 7.5 * T, y: 5.2 * T, speed: 130, done: () => { } };
   await wait(1.4);
-  await say('trolino', '¡Por fin despiertas! Hoy es el gran día: nos vamos de viaje todos juntos por Navidad.');
-  const r = await ask('trolino', 'Quedamos con los compas en el parque dentro de un rato. ¿Vienes?', ['¡Voy volando!', 'Cinco minutitos más...', '¿Habrá chocolate caliente?']);
-  if (r === 0) { await M('¡Ni me peino! ...Bueno, es que no tengo peine.'); await say('trolino', 'Así me gusta. Con ese ánimo hasta el tren se apura.'); fav('trolino', 1); }
-  else if (r === 1) { await say('trolino', 'Mike. Tu cama se queda aquí. El viaje no. ¡Arriba, arriba!'); await M('Está bien, está bien...'); }
-  else { await say('trolino', 'Hay chocolate caliente en la estación. Y en el tren. Y creo que Rius trajo un termo del tamaño de él.'); await M('¡Eso es una buena noticia!'); fav('trolino', 2); }
-  await say('trolino', 'Yo me adelanto a juntar a todos. Nos vemos en el parque. ¡No tardes!');
+  await say('trolino', '¡Por fin despiertas! Hoy es el gran día: nos vamos todos de viaje por Navidad, en tren.');
+  const r = await ask('trolino', 'Solo vine a avisarte para que hagas tu maleta. ¿Ya sabías?', ['¡Claro, lo tengo todo listo!', '¿Qué viaje?', '¿Puedo llevar chocolate?']);
+  if (r === 0) { await M('¡Mi maleta está lista desde... eh... hace cinco minutos!'); await say('trolino', 'Mentira. Mike, tu maleta es una caja de chocolates con ruedas.'); fav('trolino', 1); }
+  else if (r === 1) { await say('trolino', '¡El viaje de Navidad! ¡Lo hablamos hace una semana! ¡Con el tren y todos los compas!'); await M('Ah. ¡Ese viaje! Obvio. Totalmente.'); }
+  else { await say('trolino', 'Claro que sí. De hecho, creo que sin chocolate el tren no arranca.'); await M('¡Entonces es una cuestión de seguridad!'); fav('trolino', 2); }
+  await say('trolino', 'Yo voy a hacer la mía. ¡Haz la tuya, Mike! ¡Nos vemos más tarde!');
   tro.goto = { x: 7.5 * T, y: 9.4 * T, speed: 210, done: () => { tro.hidden = true; } };
   await wait(1.5);
-  await M('Bueno, Willy... a abrigarnos. Hoy empieza una gran aventura.');
-  await say('willy', '¡Guau! (Traducción: yo llevo el hueso. Tú lleva el chocolate.)');
-  await walkP(7.5 * T, 8.2 * T, 110);
-  S.busy = false; await enterZone(0, INTERIOR_INFO[10].out); S.busy = true; S.camShot = null; S.cineAuto = true;
-  await wait(.4);
-  await M('¡Brrr! Qué frío... pero qué bonito se ve todo con las luces y la nieve.');
-  await say('narr', 'Más tarde, en el Parque de las Estrellas...');
-  await fadeTo(1, .6);
-  const gat = [['timba', 64, 29], ['rius', 66, 31], ['mayo', 70, 31], ['esparta', 72, 29], ['raptor', 70, 26], ['invictor', 66, 26], ['acenix', 67, 33], ['aquela', 63, 31], ['trolino', 69, 30]];
-  for (const e of S.ents) if (e.type === 'npc' && (e.id === 'trolino' || e.id === 'aquela') && !e.tag) e.hidden = true;
-  const crowd = gat.map(([id, x, y], i) => { const e = { type: 'npc', id, x: 77.6 * T, y: (24 + i * 1.2) * T, hw: 10, hh: 10, face: -1.5, vx: 0, vy: 0, tag: 'gather' }; S.ents.push(e); return [e, x, y]; });
-  P.x = 77.5 * T; P.y = 31 * T - 8; P.dx = -1; P.dy = 0; if (S.willy) { S.willy.x = P.x + 30; S.willy.y = P.y; }
-  S.camShot = { x: 71, z: 29.5, dist: 14 }; if (GL.ok) GL.camInit = false; await fadeTo(0, .8);
-  gatherMove(crowd); await walkP(68.5 * T, 32 * T - 8, 120); await wait(.8);
-  S.camShot = null;
-  await say('aquela', 'Llegó Mike. Ya estamos todos. Qué buena vibra tiene este grupo, incluso con este frío.');
-  await say('rius', '¡Cocoricó! ¡Ya tengo mi termo de chocolate! Y mi bufanda. Y mi otra bufanda.');
-  await say('mayo', 'Beep. Reporte: temperatura 2 grados. Probabilidad de nieve: 14%. Probabilidad de chocolate caliente: 100%. Beep.');
-  await say('timba', '(bostezo) Yo traje mi almohada. Y otra, por si acaso. Y otra para la almohada.');
-  await say('esparta', 'Mmm... Qué lindo se ve el parque con la nieve. Si nos quedamos aquí mirando... ¿perdemos el tren?');
-  await say('raptor', '¡Shhh! ¡Estoy leyendo el itinerario! ...Dice que el tren sale a mediodía y que el destino es "un lugar nevado y bonito".');
-  await say('invictor', '¡HOLA HOLA! ¡Mike! ¡Qué felicidad! ¡Vamos a pasar la Navidad todos juntos! ¡Jajaja!');
-  await say('acenix', 'Miau. Horneé un pastel para el viaje. De chocolate. Es el único que sé hacer. Miau.');
-  const r2 = await ask('trolino', 'Entonces, Mike, ¿listos para el viaje por Navidad?', ['¡Listísimos!', 'Nos falta ayudar a Ambrosio', 'Solo si hay pastel de Acenix']);
-  if (r2 === 0) { await say('trolino', '¡Esa es la actitud! ¡Que empiece la aventura!'); fav('trolino', 1); }
-  else if (r2 === 1) { await say('trolino', 'Cierto. Ambrosio me dijo que te buscaba en Correos. Algo de cartas.'); fav('ambrosio', 1); }
-  else { await say('acenix', 'Hay pastel para todos. Pero tú te llevas la porción grande. Miau.'); fav('acenix', 2); }
-  await say('trolino', 'Hagamos así: cada uno va por su equipaje y nos vemos en la estación. Mike, pasa primero por Correos: Ambrosio te necesita.');
-  await M('¡Entendido! ¡Nos vemos en el tren!');
-  const gone = S.ents.filter(e => e.tag === 'gather'); S.camShot = { x: 72, z: 29, dist: 14 };
-  await gatherMove(gone.map((e, i) => [e, 77.8, 24 + i * 1.2]), 5); sfx.pop();
+  await M('Maleta, maleta... capa, chocolate, otro chocolate...');
+  await walkP(11 * T, 3.2 * T, 100); await wait(.4); sfx.pop(); floater(P.x - 40, P.y - 80, '¡Maleta lista!', '#ffe14a');
+  await M('¡Listo, Willy! Ahora sí: ¡a divertirse!');
+  // llega corriendo Ambrosio
+  const amb = { type: 'npc', id: 'ambrosio', x: 7.5 * T, y: 9.6 * T, hw: 10, hh: 10, face: Math.PI, vx: 0, vy: 0, tag: 'gather' }; S.ents.push(amb); sfx.door();
+  amb.goto = { x: 8.5 * T, y: 5.2 * T, speed: 300, done: () => { } };
+  await say('willy', '¡Guau! ¡Guau! (Traducción: ¡viene alguien corriendo!)');
+  await wait(1.6);
+  await say('ambrosio', '¡HOLAAA Mike! ...eh... ¿Mike? Sí, Mike. Perdón, vine corriendo y se me olvidó para qué. ¡Lag!');
+  await say('ambrosio', 'Ah, ya me acordé. Soy el cartero. Creo. Me dieron una mochila y todo.');
+  const r2 = await ask('ambrosio', 'Necesito un favor... o un... ¿faborr? ¿Se escribe con v? ¿Me ayudas?', ['Claro, dime el favor', '¿Un qué?', 'Estoy haciendo mi maleta']);
+  if (r2 === 0) { await say('ambrosio', '¡Eres un jugador pro! ...Yo soy más bien noob. Pero muy simpático.'); fav('ambrosio', 2); }
+  else if (r2 === 1) { await say('ambrosio', 'Un favor. ¡Un favor, Mike! Es cuando uno hace algo por otro. Como cuando me prestas tu lápiz y yo no lo devuelvo.'); fav('ambrosio', 1); }
+  else { await say('ambrosio', '¡Ah, qué bueno! Yo no tengo maleta. Tengo una bolsa. Con un sándwich. Que ya me comí.'); fav('ambrosio', 1); }
+  await say('ambrosio', 'Es que... se me juntaron las cartas del mes y... eh... el mapa se me perdió. ¿Tú sabes dónde vive Rius? ¿Es un gallo o un pollo? No me acuerdo.');
+  await M('Rius es un gallo. Y sí, sé dónde vive todo el mundo.');
+  await say('ambrosio', '¡GG, Mike! Toma las 7 cartas. Son para Timba, Rius, Mayo, Esparta, Raptor, Invictor y Acenix. ¡Si pierdes una, no pasa nada! ...Bueno, sí pasa. Pero poquito.');
+  S.q.gotLetters = true; sfx.key(); S.shake = .1; spawnP(P.x, P.y - 30, 16, '#ffe14a', 220, .8);
+  await say('narr', 'Recibiste 7 cartas. Cada casa del barrio y de la ciudad tiene un dueño esperándote.');
+  await say('ambrosio', '¡Gracias, gracias! ¡Me voy corriendo! ...¿Por dónde era la puerta? ¡Ah, ahí!');
+  amb.goto = { x: 7.5 * T, y: 9.6 * T, speed: 300, done: () => { amb.hidden = true; } };
+  await wait(1.6);
   S.ents = S.ents.filter(e => e.tag !== 'gather');
-  for (const e of S.ents) if (e.type === 'npc' && (e.id === 'trolino' || e.id === 'aquela')) e.hidden = false;
   S.flags.trolino1 = true; S.camShot = null; S.cineAuto = false; S.busy = false;
-  showHint('Entra a Correos por su puerta (camina hacia ↑ junto a ella) y habla con Ambrosio', 8);
+  showHint('Sal de tu casa (camina hacia ↓ en la puerta) y reparte las 7 cartas', 8);
 }
 
 // ---------- el tren ----------
 async function csTrain() {
   S.busy = true; S.skip = false; const L = S.lvl;
-  await fadeTo(1, .4); P.x = 97.5 * T; P.y = 46.5 * T; P.vx = P.vy = 0; P.dx = 0; P.dy = -1; if (S.willy) { S.willy.x = P.x - 40; S.willy.y = P.y + 10; }
+  await fadeTo(1, .4); P.x = 9.5 * T; P.y = 45.5 * T; P.vx = P.vy = 0; P.dx = 0; P.dy = -1; if (S.willy) { S.willy.x = P.x - 40; S.willy.y = P.y + 10; }
   const crew = [['timba', 92], ['rius', 94.2], ['mayo', 96.4], ['esparta', 98.6], ['raptor', 100.8], ['invictor', 103], ['acenix', 105]];
-  for (const [id, x] of crew) S.ents.push({ type: 'npc', id, x: x * T, y: 43.5 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, corrupt: false, tag: 'crew' });
-  S.ents.push({ type: 'npc', id: 'trolino', x: 90 * T, y: 44 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, tag: 'crew' });
+  for (const [id, x] of crew) S.ents.push({ type: 'npc', id, x: (x - 88) * T, y: 42.5 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, corrupt: false, tag: 'crew' });
+  S.ents.push({ type: 'npc', id: 'trolino', x: 2 * T, y: 43 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, tag: 'crew' });
   for (const e of S.ents) if ((e.type === 'npc' && !e.tag && e.id !== 'aquela') || e.type === 'citizen') e.hidden = true;
-  S.camShot = { x: 98, z: 41, dist: 14 }; if (GL.ok) GL.camInit = false; setMusic('story'); await fadeTo(0, .6); S.cineAuto = true; await wait(.8); S.camShot = null;
+  S.camShot = { x: 10, z: 40, dist: 14 }; if (GL.ok) GL.camInit = false; setMusic('story'); await fadeTo(0, .6); S.cineAuto = true; await wait(.8); S.camShot = null;
   const f = (id, a, b) => say(id, (S.fav[id] || 0) >= 2 ? a : b);
   await say('narr', 'En la estación todos esperaban el tren, con maletas, bocadillos y mucho sueño.');
   await f('timba', '¡Mike! Tu carta me hizo el día. Zzz... digo, ¡qué alegría verte!', '(bostezo) Mike... llegaste. Zzz...');
@@ -331,7 +312,7 @@ async function csTrain() {
   sfx.boss(); GL.trainShake = true; await wait(.8); GL.trainShake = false;
   // llega Exe
   setMusic('dark'); glMood(true); S.shake = .6; sfx.boss();
-  S.ents.push({ type: 'exe3d', id: 'exe', x: 98 * T, y: 38 * T, lift: 6.5 }); S.camShot = { x: 98, z: 39, dist: 20 }; await wait(1.2); S.camShot = null;
+  S.ents.push({ type: 'exe3d', id: 'exe', x: 10 * T, y: 37 * T, lift: 6.5 }); S.camShot = { x: 10, z: 38, dist: 20 }; await wait(1.2); S.camShot = null;
   await say('exe', '¡MUAJAJAJÁ! ¡Qué reunión tan bonita! ¡Y qué tren tan bonito! ¡Y qué amigos tan... míos!');
   await M('¡Exe! ¿Qué haces aquí? ¡Y baja de ahí, que vas a romper el techo!');
   await say('exe', 'Con el poder de las estrellas oscuras, ¡tus amigos viajarán conmigo! ¡Tienen seguro de viaje y todo!');
@@ -351,13 +332,13 @@ async function csTrain() {
   S.ents = S.ents.filter(e => !(e.tag === 'crew')); S.camShot = null; S.cineAuto = false; setMusic('chase'); S.busy = false; startWave(1);
 }
 async function csTrainEnd() {
-  S.busy = true; S.skip = false; S.camShot = { x: 98, z: 40, dist: 17 }; sfx.win();
+  S.busy = true; S.skip = false; S.camShot = { x: 10, z: 39, dist: 17 }; sfx.win();
   await say('exe', '¡Ja! No está mal, perrito. Tus amigos y yo nos vamos de viaje. ¡Alcánzanos si puedes!');
   await M('¡Exe! ¡Devuélvelos! ¡Te voy a restaurar a ti también!');
   await say('exe', 'Los espero en el Valle del Sueño. Ahí empieza lo bueno. ¡Muajajá!');
   GL.trainShake = true; sfx.boss(); const t0 = S.t; while (S.t - t0 < 3.2 && !S.skip) { GL.trainX += 11 * (S.dtv || .016) * (1 + (S.t - t0) * 1.4); await wait(.016); } GL.trainShake = false;
-  S.ents = S.ents.filter(e => e.type !== 'exe3d'); glMood(false); setMusic('story'); S.camShot = { x: 98, z: 42, dist: 13 };
-  const aq = S.ents.find(e => e.id === 'aquela'); if (aq) { aq.hidden = false; aq.x = 94 * T; aq.y = 46 * T; aq.face = 0; }
+  S.ents = S.ents.filter(e => e.type !== 'exe3d'); glMood(false); setMusic('story'); S.camShot = { x: 10, z: 41, dist: 13 };
+  let aq = S.ents.find(e => e.id === 'aquela'); if (!aq) { aq = { type: 'npc', id: 'aquela', x: 6 * T, y: 45 * T, hw: 10, hh: 10, face: 0, vx: 0, vy: 0, tag: 'tmp' }; S.ents.push(aq); } aq.hidden = false; aq.x = 6 * T; aq.y = 45 * T; aq.face = 0;
   await say('aquela', 'Mike, el tren se fue... pero conozco un atajo: el portal del Valle del Sueño. Ahí es donde Exe llevó a los compas.');
   await M('¡Vamos! ¡Willy, a trabajar!'); await say('willy', '¡Guau! (Traducción: ¡por fin hago algo!)');
   S.camShot = null; S.flags.trainDone = true; await enterZone(1, [60, 77]);
@@ -468,7 +449,7 @@ async function csEnding() {
     }
     else if (q.has('boss')) { loadLevel(parseInt(q.get('boss')) || 1); S.dia = 3; for (const e of S.ents) if (e.type === 'dia') e.dead = true; openGate(); P.x = 26.5 * T; P.y = 21.5 * T; initWilly(); updateCamera(0, true); }
     else if (q.has('end')) { loadLevel(1); S.dia = 3; csEnding(); }
-    else if (q.has('train')) { loadLevel(0); S.q.gotLetters = true; S.q.done = true; openStationGate(); P.x = 87 * T; P.y = 39.5 * T; initWilly(); }
+    else if (q.has('train')) { loadLevel(53); S.q.gotLetters = true; S.q.done = true; openStationGate(); P.x = 3 * T; P.y = 39.5 * T; initWilly(); }
     else loadLevel(parseInt(q.get('lvl')) || 0);
   }
   let last = performance.now();

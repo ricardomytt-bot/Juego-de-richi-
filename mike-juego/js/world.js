@@ -1,6 +1,8 @@
 'use strict';
 // ===== Mundo conectado: zonas unidas por portales, estado persistente por zona y guardado de partida =====
-const ZONES = {}, WSAVE = 'mike_world_save_v1', ZNAME = ['la Ciudad de Diamantia', 'el Valle del Sueño', 'Pastelandia', 'la Granja del Amanecer', 'la Fábrica de Pizza', 'el Jardín de Nubes', 'la Ciudad Neón', 'el Coliseo Romano', 'el Código Corrupto'], ZINTRO = { 1: 'El Valle del Sueño: un mundo de zonas conectadas con laberintos, llaves y puertas. Aquí todo flota, es suave y bonito... y probablemente peligroso.', 2: 'Pastelandia: todo es dulce, esponjoso y huele delicioso... y probablemente tiene trampa.', 3: 'Granja del Amanecer: campos dorados, graneros y un gallinero con mucho carácter... y probablemente huevos explosivos.', 4: 'Fábrica de Pizza: tuberías, hornos y cintas de masa... y probablemente un robot con hambre.', 5: 'Jardín de Nubes: caminas sobre algodón blanco y todo está en calma... demasiada calma.', 6: 'Ciudad Neón: luces rosas y azules, carteles de anime y un silencio muy ninja.', 7: 'Coliseo Romano: arena, columnas y un romano que se ríe demasiado.', 8: 'Código Corrupto: el mundo se rompe en píxeles. Aquí espera Mike Maligno, el último guardián.' };
+const ZONES = {}, WSAVE = 'mike_world_save_v1', ZNAME = ['la Ciudad de Diamantia', 'el Valle del Sueño', 'Pastelandia', 'la Granja del Amanecer', 'la Fábrica de Pizza', 'el Jardín de Nubes', 'la Ciudad Neón', 'el Coliseo Romano', 'el Código Corrupto'];
+ZNAME[51] = 'la Plaza y el Parque'; ZNAME[52] = 'las Calles del Sur'; ZNAME[53] = 'la Estación y el Este'; ZNAME[0] = 'el Barrio de Mike';
+const ZINTRO = { 1: 'El Valle del Sueño: un mundo de zonas conectadas con laberintos, llaves y puertas. Aquí todo flota, es suave y bonito... y probablemente peligroso.', 2: 'Pastelandia: todo es dulce, esponjoso y huele delicioso... y probablemente tiene trampa.', 3: 'Granja del Amanecer: campos dorados, graneros y un gallinero con mucho carácter... y probablemente huevos explosivos.', 4: 'Fábrica de Pizza: tuberías, hornos y cintas de masa... y probablemente un robot con hambre.', 5: 'Jardín de Nubes: caminas sobre algodón blanco y todo está en calma... demasiada calma.', 6: 'Ciudad Neón: luces rosas y azules, carteles de anime y un silencio muy ninja.', 7: 'Coliseo Romano: arena, columnas y un romano que se ríe demasiado.', 8: 'Código Corrupto: el mundo se rompe en píxeles. Aquí espera Mike Maligno, el último guardián.' };
 const zoneMusic = L => L.theme === 'dream' ? 'dream' : L.theme === 'sweet' ? 'day' : L.theme === 'indoor' ? 'story' : 'city';
 function lockOK(k) { if (!k) return true; if (k === 'train') return !!(S.flags && S.flags.trainDone); if (k === 'boss') return !!(S.defeated && S.defeated[S.lvlId]); return true; }
 function stashZone() {
@@ -19,7 +21,7 @@ async function enterZone(id, spawn) {
   await fadeTo(1, .4);
   const hp = P.hp, cd = P.chocoCd; stashZone();
   if (ZONES[id]) activateZone(id); else { loadLevel(id); ZONES[id] = null; }
-  P.hp = hp; P.chocoCd = cd; P.x = (spawn[0] + .5) * T; P.y = (spawn[1] + 1) * T - 8; P.vx = P.vy = 0; P.dead = false;
+  P.hp = hp; P.chocoCd = cd; P.x = (spawn[0] + .5) * T; P.y = (spawn[1] + 1) * T - 8; P.vx = P.vy = 0; P.dead = false; { const fs = freeSpot(S.lvl, P.x, P.y, P.hw, P.hh); P.x = fs[0]; P.y = fs[1]; }
   S.checkpoint = [P.x, P.y]; S.cpZone = id; initWilly(); updateCamera(0, true); if (GL.ok) GL.camInit = false; glMood(false); S.camShot = null;
   if (S.maps[id] && S.lvl.seen) S.lvl.seen.fill(1);
   await fadeTo(0, .5);
@@ -28,14 +30,20 @@ async function enterZone(id, spawn) {
     S.flags['zona' + id] = true; S.busy = true;
     await say('narr', ZINTRO[id] || ''); if (id === 1) { await say('willy', '¡Guau! (Traducción: huele a almohada con maldad.)'); showHint('Explora las zonas, busca llaves y consigue 3 diamantes', 6); } else await say('willy', '¡Guau! (Traducción: huele a problemas... y a monedas.)');
     S.busy = false;
-  } else if (id < 10) showHint('Zona: ' + ZNAME[id], 2.5);
+  } else if (id < 10 || (id >= 50 && id < 60)) showHint('Zona: ' + ZNAME[id], 2.5);
 }
 const _ct = checkTriggers;
 checkTriggers = function () {
   _ct();
   const L = S.lvl; if (!L || !L.exits || S.busy || zoning || S.wave || P.dead) return;
   const tx = P.x / T, ty = (P.y - 8) / T;
-  for (const ex of L.exits) if (ex.door) {
+  for (const ex of L.exits) if (ex.edge) {
+    if (S.t - zoneT < 1.0) continue;
+    const ptx = Math.floor(P.x / T), pty = Math.floor((P.y - 4) / T);
+    if (ptx < ex.x0 || ptx > ex.x1 || pty < ex.y0 || pty > ex.y1) continue;
+    const bt = ex.axis === 'x' ? L.get(ex.bpos, pty) : L.get(ptx, ex.bpos); if (SOLID.includes(bt)) continue;
+    enterZone(ex.to, [ex.sx != null ? ex.sx : ptx + (ex.ox || 0), ex.sy != null ? ex.sy : pty + (ex.oy || 0)]); return;
+  } else if (ex.door) {
     if (S.t - zoneT < 1.3) continue;
     const px = Math.floor(P.x / T), py = Math.floor((P.y - 4) / T);
     if (px === ex.x0 && py === ex.y0 && (ex.key === 'up' ? (isDown(K.up) || (JOY.active && JOY.y < -.4)) : (isDown(K.down) || (JOY.active && JOY.y > .4)))) { enterZone(ex.to, ex.spawn); return; }

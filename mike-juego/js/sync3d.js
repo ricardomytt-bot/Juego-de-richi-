@@ -207,7 +207,7 @@ function drawOverlay3D() {
     const sp = toScreen(e.x / T, 2.3, e.y / T); if (!sp.vis || sp.x < -50 || sp.x > W + 50) continue;
     const near = S.nearNpc === e;
     if (near) { txt(NAMES[e.id] || 'Vecino', sp.x, sp.y - 30, { size: 17, align: 'center', color: '#ffe14a' }); ctx.fillStyle = '#fff'; rrect(sp.x - 13, sp.y - 8, 26, 26, 6); ctx.fill(); ctx.fillStyle = '#1a1020'; rrect(sp.x - 11, sp.y - 6, 22, 22, 5); ctx.fill(); txt('E', sp.x, sp.y - 4, { size: 17, align: 'center', outline: false }); }
-    else if (S.lvlId === 0 && npcNeedsLetter(e)) { const by = Math.sin(t * 4) * 4; txt('!', sp.x, sp.y - 18 + by, { size: 28, align: 'center', color: '#ffe14a', lw: 5 }); }
+    else if (npcNeedsLetter(e)) { const by = Math.sin(t * 4) * 4; txt('!', sp.x, sp.y - 18 + by, { size: 28, align: 'center', color: '#ffe14a', lw: 5 }); }
   }
   for (const e of S.ents) if (e.mini && !e.dead && !e.hidden) { const sp = toScreen(e.x / T, 3.4, e.y / T); if (!sp.vis) continue; txt(e.name || 'Mini jefe', sp.x, sp.y - 30, { size: 15, align: 'center', color: '#ffb0ff' }); ctx.fillStyle = '#1a1020'; ctx.fillRect(sp.x - 42, sp.y - 8, 84, 10); ctx.fillStyle = '#c26aff'; ctx.fillRect(sp.x - 40, sp.y - 6, 80 * Math.max(0, e.hp / e.max), 6); }
   for (const e of S.ents) if (e.type === 'bonfire' && e.near && !S.dialog) { const sp = toScreen(e.x / T, 1.9, e.y / T); if (sp.vis) txt('ACTUAR: descansar', sp.x, sp.y - 20, { size: 16, align: 'center', color: '#ffb04a' }); }
